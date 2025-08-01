@@ -1,0 +1,90 @@
+[
+  {
+    "name": "Rajdhani Express",
+    "route": "New Delhi - Mumbai",
+    "duration": "16 hours",
+    "price_range": "$$",
+    "rating": 4.2,
+    "description": "Premium express train connecting Delhi and Mumbai",
+    "amenities": ["AC Sleeper", "Food Service", "WiFi", "Cleanliness"],
+    "departure_time": "16:55",
+    "arrival_time": "08:55"
+  },
+  {
+    "name": "Shatabdi Express",
+    "route": "New Delhi - Agra",
+    "duration": "2 hours",
+    "price_range": "$",
+    "rating": 4.0,
+    "description": "Fast day train to Agra for Taj Mahal visits",
+    "amenities": ["AC Chair Car", "Food Service", "Punctual"],
+    "departure_time": "06:00",
+    "arrival_time": "08:00"
+  },
+  {
+    "name": "Duronto Express",
+    "route": "Mumbai - Kolkata",
+    "duration": "24 hours",
+    "price_range": "$$",
+    "rating": 4.1,
+    "description": "Non-stop express service between major cities",
+    "amenities": ["AC Sleeper", "Food Service", "Non-stop"],
+    "departure_time": "23:00",
+    "arrival_time": "23:00"
+  },
+  {
+    "name": "Palace on Wheels",
+    "route": "Rajasthan Circuit",
+    "duration": "7 days",
+    "price_range": "$$$$",
+    "rating": 4.8,
+    "description": "Luxury tourist train through Rajasthan",
+    "amenities": ["Luxury Cabins", "Fine Dining", "Guided Tours", "Spa"],
+    "departure_time": "16:00",
+    "arrival_time": "16:00"
+  },
+  {
+    "name": "Deccan Queen",
+    "route": "Mumbai - Pune",
+    "duration": "3 hours",
+    "price_range": "$",
+    "rating": 4.3,
+    "description": "Popular commuter train with scenic Western Ghats views",
+    "amenities": ["AC Chair Car", "Scenic Views", "Food Service"],
+    "departure_time": "07:15",
+    "arrival_time": "10:25"
+  },
+  {
+    "name": "Golden Chariot",
+    "route": "Karnataka - Goa",
+    "duration": "7 days",
+    "price_range": "$$$$",
+    "rating": 4.7,
+    "description": "Luxury train exploring South India",
+    "amenities": ["Luxury Cabins", "Fine Dining", "Cultural Tours"],
+    "departure_time": "16:00",
+    "arrival_time": "16:00"
+  },
+  {
+    "name": "Maharajas' Express",
+    "route": "Delhi - Mumbai",
+    "duration": "7 days",
+    "price_range": "$$$$",
+    "rating": 4.9,
+    "description": "Ultra-luxury train with royal experience",
+    "amenities": ["Royal Suites", "Butler Service", "Fine Dining", "Spa"],
+    "departure_time": "16:00",
+    "arrival_time": "16:00"
+  },
+  {
+    "name": "Konkan Railway",
+    "route": "Mumbai - Mangalore",
+    "duration": "12 hours",
+    "price_range": "$$",
+    "rating": 4.4,
+    "description": "Scenic route along the Western Ghats",
+    "amenities": ["AC Sleeper", "Scenic Views", "Food Service"],
+    "departure_time": "23:00",
+    "arrival_time": "11:00"
+  }
+] 

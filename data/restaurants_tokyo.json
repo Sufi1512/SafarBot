@@ -1,0 +1,47 @@
+[
+  {
+    "name": "Sukiyabashi Jiro",
+    "cuisine": "Sushi",
+    "address": "4-2-15 Ginza, Chuo City, Tokyo",
+    "price_range": "$$$$",
+    "rating": 4.9,
+    "specialties": ["Omakase", "Traditional Sushi", "Premium Fish"],
+    "description": "Legendary sushi restaurant by Jiro Ono, featured in 'Jiro Dreams of Sushi'"
+  },
+  {
+    "name": "Narisawa",
+    "cuisine": "French-Japanese",
+    "address": "2-6-15 Minato, Minato City, Tokyo",
+    "price_range": "$$$$",
+    "rating": 4.8,
+    "specialties": ["Innovative Cuisine", "Seasonal Menu", "Artistic Presentation"],
+    "description": "Two-Michelin-starred restaurant offering innovative French-Japanese fusion cuisine"
+  },
+  {
+    "name": "Ichiran Ramen",
+    "cuisine": "Ramen",
+    "address": "Multiple locations across Tokyo",
+    "price_range": "$",
+    "rating": 4.5,
+    "specialties": ["Tonkotsu Ramen", "Private Dining", "24/7 Service"],
+    "description": "Popular ramen chain known for its rich tonkotsu broth and private dining booths"
+  },
+  {
+    "name": "Tsukiji Outer Market",
+    "cuisine": "Seafood",
+    "address": "4-16-2 Tsukiji, Chuo City, Tokyo",
+    "price_range": "$$",
+    "rating": 4.6,
+    "specialties": ["Fresh Sushi", "Seafood", "Market Experience"],
+    "description": "Famous fish market area with numerous sushi restaurants and seafood stalls"
+  },
+  {
+    "name": "Gonpachi",
+    "cuisine": "Japanese",
+    "address": "1-13-11 Nishi-Azabu, Minato City, Tokyo",
+    "price_range": "$$$",
+    "rating": 4.4,
+    "specialties": ["Robatayaki", "Sake", "Traditional Atmosphere"],
+    "description": "Traditional Japanese restaurant known for robatayaki (charcoal grill) cooking"
+  }
+] 

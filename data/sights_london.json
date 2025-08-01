@@ -1,0 +1,90 @@
+[
+  {
+    "name": "Big Ben & Houses of Parliament",
+    "category": "Historic",
+    "address": "Westminster, London SW1A 0AA",
+    "price_range": "Free",
+    "rating": 4.7,
+    "description": "Iconic clock tower and seat of the UK Parliament",
+    "best_time": "Morning",
+    "duration": "2 hours",
+    "highlights": ["Clock Tower", "Parliament Tours", "River Views"]
+  },
+  {
+    "name": "Tower of London",
+    "category": "Historic",
+    "address": "St Katharine's & Wapping, London EC3N 4AB",
+    "price_range": "$$",
+    "rating": 4.6,
+    "description": "Historic castle and fortress with Crown Jewels",
+    "best_time": "Morning",
+    "duration": "3 hours",
+    "highlights": ["Crown Jewels", "Beefeaters", "Medieval History"]
+  },
+  {
+    "name": "British Museum",
+    "category": "Cultural",
+    "address": "Great Russell St, Bloomsbury, London WC1B 3DG",
+    "price_range": "Free",
+    "rating": 4.8,
+    "description": "World-famous museum with vast collection of human history",
+    "best_time": "Afternoon",
+    "duration": "4 hours",
+    "highlights": ["Rosetta Stone", "Parthenon Marbles", "Egyptian Mummies"]
+  },
+  {
+    "name": "Buckingham Palace",
+    "category": "Royal",
+    "address": "Westminster, London SW1A 1AA",
+    "price_range": "$$$",
+    "rating": 4.5,
+    "description": "Official residence of the British monarch",
+    "best_time": "Morning",
+    "duration": "2 hours",
+    "highlights": ["Changing of the Guard", "State Rooms", "Royal Gardens"]
+  },
+  {
+    "name": "London Eye",
+    "category": "Modern",
+    "address": "Riverside Building, County Hall, London SE1 7PB",
+    "price_range": "$$",
+    "rating": 4.4,
+    "description": "Giant observation wheel on the South Bank",
+    "best_time": "Sunset",
+    "duration": "1 hour",
+    "highlights": ["City Views", "River Thames", "Photo Opportunities"]
+  },
+  {
+    "name": "Westminster Abbey",
+    "category": "Religious",
+    "address": "20 Deans Yd, Westminster, London SW1P 3PA",
+    "price_range": "$$",
+    "rating": 4.6,
+    "description": "Historic church and site of royal coronations",
+    "best_time": "Morning",
+    "duration": "2 hours",
+    "highlights": ["Royal Tombs", "Gothic Architecture", "Coronation Chair"]
+  },
+  {
+    "name": "Trafalgar Square",
+    "category": "Public Space",
+    "address": "Trafalgar Square, London WC2N 5DN",
+    "price_range": "Free",
+    "rating": 4.3,
+    "description": "Famous square with Nelson's Column and fountains",
+    "best_time": "Any time",
+    "duration": "1 hour",
+    "highlights": ["Nelson's Column", "Fountains", "Street Performers"]
+  },
+  {
+    "name": "Covent Garden",
+    "category": "Shopping",
+    "address": "Covent Garden, London WC2E 8RF",
+    "price_range": "Free",
+    "rating": 4.4,
+    "description": "Popular market area with shops, restaurants, and street performers",
+    "best_time": "Afternoon",
+    "duration": "2 hours",
+    "highlights": ["Market Stalls", "Street Performers", "Apple Market"]
+  }
+] 

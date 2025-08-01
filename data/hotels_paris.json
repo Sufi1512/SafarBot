@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Hôtel Ritz Paris",
+    "address": "15 Place Vendôme, 75001 Paris",
+    "price_range": "$$$$",
+    "rating": 4.8,
+    "amenities": ["WiFi", "Spa", "Restaurant", "Bar", "Concierge", "Room Service"],
+    "description": "Luxury 5-star hotel in the heart of Paris, steps from the Louvre and Tuileries Garden",
+    "booking_url": "https://example.com/ritz-paris"
+  },
+  {
+    "name": "Le Meurice",
+    "address": "228 Rue de Rivoli, 75001 Paris",
+    "price_range": "$$$$",
+    "rating": 4.7,
+    "amenities": ["WiFi", "Spa", "Restaurant", "Bar", "Concierge", "Pool"],
+    "description": "Historic luxury hotel with views of the Tuileries Garden and Eiffel Tower",
+    "booking_url": "https://example.com/le-meurice"
+  },
+  {
+    "name": "Hôtel de Crillon",
+    "address": "10 Place de la Concorde, 75008 Paris",
+    "price_range": "$$$$",
+    "rating": 4.6,
+    "amenities": ["WiFi", "Spa", "Restaurant", "Bar", "Concierge", "Fitness Center"],
+    "description": "Iconic luxury hotel on Place de la Concorde with stunning city views",
+    "booking_url": "https://example.com/crillon"
+  },
+  {
+    "name": "Hôtel Lutetia",
+    "address": "45 Boulevard Raspail, 75006 Paris",
+    "price_range": "$$$",
+    "rating": 4.4,
+    "amenities": ["WiFi", "Spa", "Restaurant", "Bar", "Concierge"],
+    "description": "Art Deco luxury hotel in the Saint-Germain-des-Prés district",
+    "booking_url": "https://example.com/lutetia"
+  },
+  {
+    "name": "Hôtel Plaza Athénée",
+    "address": "25 Avenue Montaigne, 75008 Paris",
+    "price_range": "$$$$",
+    "rating": 4.5,
+    "amenities": ["WiFi", "Spa", "Restaurant", "Bar", "Concierge", "Pool"],
+    "description": "Elegant luxury hotel on the prestigious Avenue Montaigne",
+    "booking_url": "https://example.com/plaza-athenee"
+  },
+  {
+    "name": "Hôtel Costes",
+    "address": "239 Rue Saint-Honoré, 75001 Paris",
+    "price_range": "$$$",
+    "rating": 4.3,
+    "amenities": ["WiFi", "Restaurant", "Bar", "Concierge"],
+    "description": "Boutique hotel with a trendy atmosphere and excellent restaurant",
+    "booking_url": "https://example.com/costes"
+  },
+  {
+    "name": "Hôtel du Louvre",
+    "address": "Place André Malraux, 75001 Paris",
+    "price_range": "$$$",
+    "rating": 4.2,
+    "amenities": ["WiFi", "Restaurant", "Bar", "Concierge"],
+    "description": "Historic hotel opposite the Louvre Museum",
+    "booking_url": "https://example.com/du-louvre"
+  },
+  {
+    "name": "Hôtel Regina",
+    "address": "2 Place des Pyramides, 75001 Paris",
+    "price_range": "$$$",
+    "rating": 4.1,
+    "amenities": ["WiFi", "Restaurant", "Bar", "Concierge"],
+    "description": "Belle Époque hotel with views of the Louvre and Tuileries",
+    "booking_url": "https://example.com/regina"
+  }
+] 

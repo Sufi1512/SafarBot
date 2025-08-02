@@ -7,6 +7,8 @@ SafarBot is a full-stack AI travel planning application that creates personalize
 - **AI-Powered Itinerary Generation**: Create personalized travel plans based on preferences, budget, and interests
 - **Real-time Chat Assistant**: Interactive AI chatbot for travel advice and recommendations
 - **Smart Hotel & Restaurant Recommendations**: Find the perfect accommodations and dining options
+- **Flight Booking with Google SERP API**: Real flight search and booking using Google's flight data
+- **Hotel Booking System**: Complete hotel search and reservation functionality
 - **Responsive Web Interface**: Beautiful, modern UI built with React and Tailwind CSS
 - **Vector Database Integration**: ChromaDB for enhanced AI responses with contextual information
 - **Docker Deployment**: Containerized application ready for production deployment
@@ -34,6 +36,10 @@ SafarBot is a full-stack AI travel planning application that creates personalize
 ### Infrastructure
 - **Docker** for containerization
 - **Docker Compose** for multi-service orchestration
+
+### External APIs
+- **Google SERP API** for real flight search data
+- **Google Gemini API** for AI-powered itinerary generation
 
 ## 📁 Project Structure
 
@@ -75,7 +81,13 @@ SafarBot/
 ### Environment Setup
 1. Create a `.env` file in the root directory:
 ```bash
+# Google Gemini API Key (for AI itinerary generation)
 GOOGLE_API_KEY=your_google_gemini_api_key_here
+
+# Google SERP API Key (for real flight search data)
+SERP_API_KEY=your_serp_api_key_here
+
+# Other configuration
 CHROMA_PERSIST_DIRECTORY=./chroma_db
 ```
 
@@ -86,6 +98,25 @@ docker-compose up --build
 
 # Access the application
 open http://localhost:8000
+
+## 🔑 API Configuration
+
+### Google SERP API Setup
+1. Sign up for a Google SERP API account at [serpapi.com](https://serpapi.com)
+2. Get your API key from the dashboard
+3. Add the API key to your `.env` file:
+   ```bash
+   SERP_API_KEY=your_actual_serp_api_key
+   ```
+
+The application will automatically use real flight data when a valid SERP API key is provided. If no key is available, it will fall back to mock data for demonstration purposes.
+
+### Google Gemini API Setup
+1. Get a Google Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Add the API key to your `.env` file:
+   ```bash
+   GOOGLE_API_KEY=your_actual_gemini_api_key
+   ```
 ```
 
 ### Development Setup

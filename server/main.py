@@ -5,11 +5,11 @@ from fastapi.responses import FileResponse
 import os
 from dotenv import load_dotenv
 
-from routers import itinerary, chat, hotels, restaurants
-from config import settings
+# Load environment variables first
+load_dotenv('.env')
 
-# Load environment variables
-load_dotenv()
+from routers import itinerary, chat, hotels, restaurants, flights, bookings
+from config import settings
 
 app = FastAPI(
     title="SafarBot API",
@@ -31,6 +31,8 @@ app.include_router(itinerary.router, prefix="/api/v1", tags=["itinerary"])
 app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
 app.include_router(hotels.router, prefix="/api/v1", tags=["hotels"])
 app.include_router(restaurants.router, prefix="/api/v1", tags=["restaurants"])
+app.include_router(flights.router, prefix="/api/v1", tags=["flights"])
+app.include_router(bookings.router, prefix="/api/v1", tags=["bookings"])
 
 # Serve static files (React build)
 if os.path.exists("client/build"):

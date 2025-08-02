@@ -26,8 +26,10 @@ class ItineraryGenerator:
             except:
                 pass
         
-        if not api_key:
-            raise ValueError("GOOGLE_API_KEY environment variable is required")
+        # If no API key is available, return None to use fallback
+        if not api_key or api_key == "your_google_gemini_api_key_here":
+            logger.warning("No valid Google API key found. Using mock data fallback.")
+            return None
         
         genai.configure(api_key=api_key)
         
@@ -44,15 +46,25 @@ class ItineraryGenerator:
     ) -> Dict[str, Any]:
         """Generate a travel itinerary using Google Gemini"""
         try:
+            # If no LLM is available, use mock data
+            if self.llm is None:
+                logger.info("Using mock itinerary data (no API key configured)")
+                return self._generate_mock_itinerary(destination, days, interests, budget, travelers)
+            
             # Create the prompt
             prompt = self._create_itinerary_prompt(
                 destination, days, interests, budget, travelers, accommodation_type
             )
             
-            # Generate response
-            response = await asyncio.to_thread(
-                self.llm.generate_content, prompt
-            )
+            # Generate response with timeout
+            try:
+                response = await asyncio.wait_for(
+                    asyncio.to_thread(self.llm.generate_content, prompt),
+                    timeout=90.0  # 90 second timeout for AI generation
+                )
+            except asyncio.TimeoutError:
+                logger.error(f"AI generation timed out for destination: {destination}")
+                raise Exception("AI generation is taking too long. Please try again with simpler preferences.")
             
             # Parse the response
             itinerary = self._parse_itinerary_response(response.text)
@@ -93,23 +105,56 @@ class ItineraryGenerator:
         
         Interests: {interests_text}
         
-        Please provide a day-by-day itinerary with the following structure for each day:
-        - Day X: [Day Title]
-          - Morning: [Activity 1] (Duration: X hours, Cost: $X)
-          - Afternoon: [Activity 2] (Duration: X hours, Cost: $X)
-          - Evening: [Activity 3] (Duration: X hours, Cost: $X)
-          - Meals: [Restaurant recommendations]
-          - Accommodation: [Hotel/hostel recommendation]
+        Please provide the response in the following JSON format:
+        {{
+            "daily_plans": [
+                {{
+                    "day": 1,
+                    "date": "2024-12-01",
+                    "activities": [
+                        {{
+                            "time": "09:00",
+                            "title": "Activity Name",
+                            "description": "Detailed description of the activity",
+                            "location": "Location name",
+                            "duration": "2 hours",
+                            "cost": 25,
+                            "type": "sightseeing"
+                        }}
+                    ],
+                    "meals": [
+                        {{
+                            "name": "Restaurant Name",
+                            "cuisine": "Local",
+                            "rating": 4.5,
+                            "priceRange": "$$",
+                            "description": "Restaurant description",
+                            "location": "Restaurant location"
+                        }}
+                    ],
+                    "accommodation": {{
+                        "name": "Hotel Name",
+                        "rating": 4.3,
+                        "price": 120,
+                        "amenities": ["WiFi", "Pool"],
+                        "location": "Hotel location",
+                        "description": "Hotel description"
+                    }}
+                }}
+            ]
+        }}
         
-        Include:
-        1. Popular attractions and hidden gems
-        2. Local cuisine recommendations
-        3. Transportation options between activities
-        4. Estimated costs for each activity
-        5. Best times to visit each location
-        6. Cultural tips and etiquette
+        Requirements:
+        1. Include 3-5 activities per day with realistic times and durations
+        2. Include 3 meal recommendations per day (breakfast, lunch, dinner)
+        3. Include accommodation only for day 1
+        4. Use realistic costs in USD
+        5. Activity types should be: "sightseeing", "restaurant", "transport", or "hotel"
+        6. Make sure all times are in 24-hour format (HH:MM)
+        7. Consider travel time between locations
+        8. Include popular attractions and local experiences
         
-        Make the itinerary realistic and enjoyable, considering travel time between locations.
+        Generate ONLY the JSON response, no additional text.
         """
         
         return prompt
@@ -117,7 +162,37 @@ class ItineraryGenerator:
     def _parse_itinerary_response(self, response: str) -> List[Dict[str, Any]]:
         """Parse the AI response into structured daily plans"""
         try:
-            # Simple parsing - split by days and extract activities
+            import json
+            
+            # Clean the response - remove any markdown formatting
+            response = response.strip()
+            if response.startswith('```json'):
+                response = response[7:]
+            if response.endswith('```'):
+                response = response[:-3]
+            response = response.strip()
+            
+            # Parse JSON response
+            parsed_response = json.loads(response)
+            
+            if "daily_plans" in parsed_response:
+                return parsed_response["daily_plans"]
+            else:
+                # If the response is already the daily_plans array
+                return parsed_response if isinstance(parsed_response, list) else []
+                
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON parsing error: {str(e)}")
+            logger.error(f"Raw response: {response[:500]}...")  # Log first 500 chars
+            # Try fallback text parsing
+            return self._fallback_text_parsing(response)
+        except Exception as e:
+            logger.error(f"Error parsing itinerary response: {str(e)}")
+            return []
+    
+    def _fallback_text_parsing(self, response: str) -> List[Dict[str, Any]]:
+        """Fallback text parsing when JSON parsing fails"""
+        try:
             lines = response.split('\n')
             daily_plans = []
             current_day = None
@@ -125,32 +200,82 @@ class ItineraryGenerator:
             
             for line in lines:
                 line = line.strip()
-                if line.startswith('Day ') and ':' in line:
+                if 'Day ' in line and ('1' in line or '2' in line or '3' in line):
                     # Save previous day if exists
-                    if current_day:
+                    if current_day is not None:
                         daily_plans.append({
-                            "day": current_day,
-                            "activities": current_activities
+                            "day": current_day + 1,
+                            "date": "2024-12-01",  # Default date
+                            "activities": [
+                                {
+                                    "time": "09:00",
+                                    "title": activity,
+                                    "description": f"Explore {activity}",
+                                    "location": activity,
+                                    "duration": "2 hours",
+                                    "cost": 25,
+                                    "type": "sightseeing"
+                                } for activity in current_activities[:3]
+                            ],
+                            "meals": [
+                                {"name": "Local Restaurant", "cuisine": "Local", "rating": 4.0, "priceRange": "$$", "description": "Local cuisine", "location": "Downtown"},
+                                {"name": "Café", "cuisine": "International", "rating": 4.2, "priceRange": "$", "description": "Light meals", "location": "City Center"},
+                                {"name": "Fine Dining", "cuisine": "International", "rating": 4.5, "priceRange": "$$$", "description": "Upscale dining", "location": "Downtown"}
+                            ],
+                            "accommodation": {
+                                "name": "City Hotel",
+                                "rating": 4.0,
+                                "price": 100,
+                                "amenities": ["WiFi", "Breakfast"],
+                                "location": "City Center",
+                                "description": "Comfortable accommodation"
+                            } if current_day == 0 else None
                         })
                     
                     # Start new day
-                    current_day = line
+                    current_day = len(daily_plans)
                     current_activities = []
-                elif line and current_day and (line.startswith('- ') or line.startswith('• ')):
-                    current_activities.append(line[2:])  # Remove bullet point
+                elif line and current_day is not None and (line.startswith('- ') or line.startswith('• ') or 'visit' in line.lower() or 'explore' in line.lower()):
+                    activity = line.replace('- ', '').replace('• ', '')
+                    if activity:
+                        current_activities.append(activity)
             
             # Add the last day
-            if current_day:
+            if current_day is not None:
                 daily_plans.append({
-                    "day": current_day,
-                    "activities": current_activities
+                    "day": current_day + 1,
+                    "date": "2024-12-01",
+                    "activities": [
+                        {
+                            "time": "09:00",
+                            "title": activity,
+                            "description": f"Explore {activity}",
+                            "location": activity,
+                            "duration": "2 hours",
+                            "cost": 25,
+                            "type": "sightseeing"
+                        } for activity in current_activities[:3]
+                    ],
+                    "meals": [
+                        {"name": "Local Restaurant", "cuisine": "Local", "rating": 4.0, "priceRange": "$$", "description": "Local cuisine", "location": "Downtown"},
+                        {"name": "Café", "cuisine": "International", "rating": 4.2, "priceRange": "$", "description": "Light meals", "location": "City Center"},
+                        {"name": "Fine Dining", "cuisine": "International", "rating": 4.5, "priceRange": "$$$", "description": "Upscale dining", "location": "Downtown"}
+                    ],
+                    "accommodation": {
+                        "name": "City Hotel",
+                        "rating": 4.0,
+                        "price": 100,
+                        "amenities": ["WiFi", "Breakfast"],
+                        "location": "City Center",
+                        "description": "Comfortable accommodation"
+                    } if current_day == 0 else None
                 })
             
             return daily_plans
             
         except Exception as e:
-            logger.error(f"Error parsing itinerary response: {str(e)}")
-            return self._generate_mock_daily_plans()
+            logger.error(f"Fallback parsing error: {str(e)}")
+            return []
     
     def _calculate_total_cost(self, itinerary: List[Dict[str, Any]]) -> float:
         """Calculate total estimated cost from itinerary"""
@@ -239,6 +364,11 @@ class ItineraryGenerator:
     ) -> Dict[str, Any]:
         """Predict travel costs for the destination"""
         try:
+            # If no LLM is available, use estimated costs
+            if self.llm is None:
+                logger.info("Using estimated costs (no API key configured)")
+                return self._estimate_costs(destination, days, travelers, accommodation_type)
+            
             prompt = f"""
             Estimate the total travel cost for {travelers} traveler(s) visiting {destination} for {days} days.
             
@@ -254,9 +384,14 @@ class ItineraryGenerator:
             Format the response as a JSON object with categories and amounts.
             """
             
-            response = await asyncio.to_thread(
-                self.llm.generate_content, prompt
-            )
+            try:
+                response = await asyncio.wait_for(
+                    asyncio.to_thread(self.llm.generate_content, prompt),
+                    timeout=60.0  # 60 second timeout for price prediction
+                )
+            except asyncio.TimeoutError:
+                logger.warning(f"Price prediction timed out for destination: {destination}")
+                return self._estimate_costs(destination, days, travelers, accommodation_type)
             
             # Try to parse JSON response
             try:

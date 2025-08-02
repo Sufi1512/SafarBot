@@ -8,4 +8,5 @@ langchain-google-genai
 chromadb
 python-dotenv
 httpx
-aiofiles 
+aiofiles
+google-search-results 

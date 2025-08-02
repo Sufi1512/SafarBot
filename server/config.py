@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     # Google Gemini API
     google_api_key: Optional[str] = None
     
+    # Google SERP API (for flight search)
+    serp_api_key: Optional[str] = None
+    
     # ChromaDB Configuration
     chroma_persist_directory: str = "./chroma_db"
     
@@ -25,5 +28,7 @@ class Settings(BaseSettings):
         # Fallback to environment variable if not set
         if not self.google_api_key:
             self.google_api_key = os.getenv("GOOGLE_API_KEY")
+        if not self.serp_api_key:
+            self.serp_api_key = os.getenv("SERP_API_KEY")
 
 settings = Settings() 

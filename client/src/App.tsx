@@ -2,6 +2,9 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import ResultsPage from './pages/ResultsPage';
+import FlightBookingPage from './pages/FlightBookingPage';
+import HotelBookingPage from './pages/HotelBookingPage';
+import BookingConfirmationPage from './pages/BookingConfirmationPage';
 import ChatWidget from './components/ChatWidget';
 import './App.css';
 
@@ -12,6 +15,9 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/results" element={<ResultsPage />} />
+          <Route path="/flights" element={<FlightBookingPage />} />
+          <Route path="/hotels" element={<HotelBookingPage />} />
+          <Route path="/booking-confirmation" element={<BookingConfirmationPage />} />
         </Routes>
         <ChatWidget />
       </div>

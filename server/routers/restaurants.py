@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
-from ..models import RestaurantRequest, RestaurantInfo, APIResponse
-from ..services.restaurant_service import RestaurantService
+from models import RestaurantRequest, RestaurantInfo, APIResponse
+from services.restaurant_service import RestaurantService
 import logging
 
 router = APIRouter()

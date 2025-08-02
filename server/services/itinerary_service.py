@@ -2,8 +2,8 @@ import asyncio
 from datetime import date, timedelta
 from typing import List, Dict, Any, Optional
 import logging
-from ..models import ItineraryResponse, DailyPlan
-from ..config import settings
+from models import ItineraryResponse, DailyPlan
+from config import settings
 import sys
 import os
 

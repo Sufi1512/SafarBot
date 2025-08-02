@@ -1,0 +1,17 @@
+{
+  "name": "safarbot",
+  "version": "1.0.0",
+  "description": "AI-Powered Travel Planner",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "server:dev": "cd server && uvicorn main:app --reload --host 0.0.0.0 --port 8000",
+    "client:dev": "cd client && npm run dev",
+    "install:all": "npm install && cd server && pip install -r requirements.txt && cd ../client && npm install",
+    "build": "cd client && npm run build",
+    "start": "cd server && uvicorn main:app --host 0.0.0.0 --port 8000"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}

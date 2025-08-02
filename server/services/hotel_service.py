@@ -3,7 +3,7 @@ import os
 from typing import List, Dict, Any, Optional
 from datetime import date
 import logging
-from ..models import HotelInfo
+from models import HotelInfo
 
 logger = logging.getLogger(__name__)
 

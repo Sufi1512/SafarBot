@@ -38,7 +38,7 @@ class VectorStore:
                 raise ValueError("GOOGLE_API_KEY environment variable is required")
             
             return GoogleGenerativeAIEmbeddings(
-                model="models/embedding-001",
+                model="models/text-embedding-004",
                 google_api_key=api_key
             )
         except Exception as e:

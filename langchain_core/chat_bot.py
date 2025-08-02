@@ -19,7 +19,7 @@ class ChatBot:
         
         genai.configure(api_key=api_key)
         
-        return genai.GenerativeModel('gemini-pro')
+        return genai.GenerativeModel('gemini-2.0-flash-exp')
     
     async def get_response(
         self,

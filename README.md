@@ -1,6 +1,6 @@
 # SafarBot.com - AI-Powered Travel Planner
 
-SafarBot is a full-stack AI travel planning application that creates personalized itineraries using Google Gemini Pro API, LangChain, and LangGraph.
+SafarBot is a full-stack AI travel planning application that creates personalized itineraries using Google Gemini 2.0 Flash API, LangChain, and LangGraph.
 
 ## 🚀 Features
 
@@ -26,7 +26,7 @@ SafarBot is a full-stack AI travel planning application that creates personalize
 - **Uvicorn** for ASGI server
 
 ### AI & ML
-- **Google Gemini Pro API** for AI capabilities
+- **Google Gemini 2.0 Flash API** for AI capabilities
 - **LangChain** for LLM orchestration
 - **LangGraph** for complex AI workflows
 - **ChromaDB** for vector storage
@@ -98,7 +98,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 # Frontend setup (in another terminal)
 cd client
 npm install
-npm start
+npm run dev
 ```
 
 ## 📋 API Endpoints
@@ -129,7 +129,7 @@ npm start
 ## 🔧 Configuration
 
 ### Environment Variables
-- `GOOGLE_API_KEY`: Your Google Gemini Pro API key
+- `GOOGLE_API_KEY`: Your Google Gemini 2.0 Flash API key
 - `CHROMA_PERSIST_DIRECTORY`: Directory for ChromaDB persistence
 - `REACT_APP_API_URL`: Frontend API base URL (defaults to localhost:8000)
 

@@ -57,7 +57,7 @@ npm start
 
 ## API Key Setup
 
-1. Get a Google Gemini Pro API key from: https://makersuite.google.com/app/apikey
+1. Get a Google Gemini 2.0 Flash API key from: https://aistudio.google.com/apikey
 2. Add the API key to your `.env` file
 3. Restart the application
 

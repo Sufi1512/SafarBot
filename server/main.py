@@ -5,8 +5,8 @@ from fastapi.responses import FileResponse
 import os
 from dotenv import load_dotenv
 
-from .routers import itinerary, chat, hotels, restaurants
-from .config import settings
+from routers import itinerary, chat, hotels, restaurants
+from config import settings
 
 # Load environment variables
 load_dotenv()

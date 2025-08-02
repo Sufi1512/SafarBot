@@ -2,7 +2,7 @@ import json
 import os
 from typing import List, Dict, Any, Optional
 import logging
-from ..models import RestaurantInfo
+from models import RestaurantInfo
 
 logger = logging.getLogger(__name__)
 

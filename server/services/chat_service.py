@@ -1,7 +1,7 @@
 import asyncio
 from typing import Dict, Any, Optional
 import logging
-from ..config import settings
+from config import settings
 import sys
 import os
 

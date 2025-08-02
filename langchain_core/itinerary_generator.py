@@ -13,13 +13,25 @@ class ItineraryGenerator:
         
     def _initialize_llm(self):
         """Initialize Google Gemini LLM"""
+        # Try multiple ways to get the API key
         api_key = os.getenv("GOOGLE_API_KEY")
+        
+        # If not found in environment, try to import from config
+        if not api_key:
+            try:
+                import sys
+                sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'server'))
+                from config import settings
+                api_key = settings.google_api_key
+            except:
+                pass
+        
         if not api_key:
             raise ValueError("GOOGLE_API_KEY environment variable is required")
         
         genai.configure(api_key=api_key)
         
-        return genai.GenerativeModel('gemini-pro')
+        return genai.GenerativeModel('gemini-2.5-flash')
     
     async def generate_itinerary(
         self,

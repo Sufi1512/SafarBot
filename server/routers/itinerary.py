@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
-from ..models import ItineraryRequest, ItineraryResponse, APIResponse
-from ..services.itinerary_service import ItineraryService
+from models import ItineraryRequest, ItineraryResponse, APIResponse
+from services.itinerary_service import ItineraryService
 import logging
 
 router = APIRouter()

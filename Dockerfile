@@ -5,8 +5,7 @@ WORKDIR /app/client
 COPY client/package*.json ./
 RUN npm install
 COPY client/ ./
-# Ensure Tailwind CSS is properly built
-RUN npm install -D tailwindcss@^3.4.17 postcss@^8.4.32 autoprefixer@^10.4.16
+# Build with Vite
 RUN npm run build
 
 FROM python:3.11-slim AS backend-builder
@@ -33,7 +32,7 @@ COPY server/ ./server/
 COPY langchain_core/ ./langchain_core/
 COPY data/ ./data/
 
-# Copy frontend build
+# Copy frontend build (Vite outputs to build directory)
 COPY --from=frontend-builder /app/client/build ./client/build
 
 # Create non-root user

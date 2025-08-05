@@ -6,8 +6,8 @@ from dotenv import load_dotenv
 # Load environment variables first
 load_dotenv('.env')
 
-# Only import the flights router to avoid dependency issues
-from routers import flights
+# Import routers
+from routers import flights, chat
 from config import settings
 
 app = FastAPI(
@@ -30,8 +30,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include only the flights router
+# Include routers
 app.include_router(flights.router, prefix="/api/v1", tags=["flights"])
+app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
 
 @app.get("/health")
 async def health_check():
@@ -47,7 +48,9 @@ async def root():
             "search_flights": "/api/v1/flights/search",
             "booking_options": "/api/v1/flights/booking-options/{booking_token}",
             "popular_flights": "/api/v1/flights/popular",
-            "airport_suggestions": "/api/v1/flights/airports"
+            "airport_suggestions": "/api/v1/flights/airports",
+            "chat": "/api/v1/chat",
+            "chat_history": "/api/v1/chat/history"
         }
     }
 

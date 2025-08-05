@@ -1,13 +1,17 @@
 import axios, { AxiosResponse } from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+// Base URL for API - will be relative in production
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? '/api/v1' 
+  : 'http://localhost:8000/api/v1';
 
+// Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // 30 seconds timeout
 });
 
 // Request interceptor for logging

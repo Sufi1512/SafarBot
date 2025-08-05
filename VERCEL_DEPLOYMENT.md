@@ -81,10 +81,13 @@ After deployment, your application will be available at:
 ```
 SafarBot/
 ├── vercel.json              # Vercel configuration
+├── .vercelignore            # Files to exclude from deployment
 ├── package.json             # Root package.json
 ├── client/                  # React frontend
 │   ├── package.json
 │   ├── vite.config.ts
+│   ├── tsconfig.json        # TypeScript config (fixed)
+│   ├── tsconfig.node.json   # Node TypeScript config
 │   └── src/
 ├── server/                  # FastAPI backend
 │   ├── main.py
@@ -108,26 +111,37 @@ SafarBot/
 - Configures build output directory as `dist`
 - Optimizes bundle splitting for production
 
+### tsconfig.json (Fixed)
+- Excludes `vite.config.ts` from main compilation
+- Uses `tsc --noEmit` for type checking only
+- Prevents TypeScript build errors during deployment
+
 ## Troubleshooting
 
 ### Common Issues:
 
-1. **Build Failures**:
+1. **TypeScript Build Errors**:
+   - **Error**: `Output file '/vercel/path0/client/vite.config.d.ts' has not been built`
+   - **Solution**: Fixed by updating `tsconfig.json` to exclude `vite.config.ts` from main compilation
+   - **Prevention**: Use `tsc --noEmit` in build script for type checking only
+
+2. **Build Failures**:
    - Check that all dependencies are in `requirements.txt`
    - Ensure Node.js version is compatible (>=18.0.0)
    - Verify environment variables are set correctly
+   - Check that `.vercelignore` excludes unnecessary files
 
-2. **API Not Working**:
+3. **API Not Working**:
    - Check that `SERP_API_KEY` is set in Vercel environment variables
    - Verify CORS settings in `server/main.py`
    - Check Vercel function logs for errors
 
-3. **Frontend Not Loading**:
+4. **Frontend Not Loading**:
    - Ensure build output directory is `client/dist`
    - Check that all React dependencies are installed
    - Verify Vite configuration
 
-4. **Environment Variables Not Working**:
+5. **Environment Variables Not Working**:
    - Redeploy after adding environment variables
    - Check variable names match exactly (case-sensitive)
    - Verify variables are set for all environments (Production, Preview, Development)
@@ -146,6 +160,18 @@ SafarBot/
    
    # Test frontend
    cd client && npm run dev
+   
+   # Test build process
+   cd client && npm run build
+   ```
+
+3. **TypeScript Issues**:
+   ```bash
+   # Check TypeScript compilation
+   cd client && npx tsc --noEmit
+   
+   # Check Vite build
+   cd client && npx vite build
    ```
 
 ## Performance Optimization
@@ -185,4 +211,5 @@ If you encounter issues:
 1. Check Vercel documentation: [vercel.com/docs](https://vercel.com/docs)
 2. Review Vercel community forums
 3. Check your project's function logs in the Vercel dashboard
-4. Verify all environment variables are correctly set 
+4. Verify all environment variables are correctly set
+5. Check the troubleshooting section above for common issues 

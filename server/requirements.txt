@@ -9,4 +9,5 @@ chromadb
 python-dotenv
 httpx
 aiofiles
-google-search-results 
+google-search-results
+langsmith 

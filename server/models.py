@@ -66,6 +66,108 @@ class RestaurantInfo(BaseModel):
     specialties: List[str]
     description: str
 
+# Flight Models
+class FlightSegment(BaseModel):
+    id: str
+    airline: str
+    airline_logo: Optional[str] = None
+    flight_number: str
+    departure: Dict[str, Any]
+    arrival: Dict[str, Any]
+    duration: str
+    duration_minutes: int
+    amenities: List[str]
+    aircraft: str
+    travel_class: str
+    legroom: Optional[str] = None
+    overnight: bool = False
+    often_delayed: bool = False
+    ticket_also_sold_by: List[str] = []
+    plane_and_crew_by: Optional[str] = None
+
+class Layover(BaseModel):
+    duration: int
+    airport: str
+    airport_name: str
+    overnight: bool = False
+
+class CarbonEmissions(BaseModel):
+    this_flight: int
+    typical_for_route: int
+    difference_percent: int
+
+class Flight(BaseModel):
+    id: str
+    price: float
+    currency: str = "INR"
+    stops: int
+    total_duration: str
+    total_duration_minutes: int
+    flight_type: str
+    airline_logo: Optional[str] = None
+    departure_token: Optional[str] = None
+    booking_token: Optional[str] = None
+    carbon_emissions: CarbonEmissions
+    extensions: List[str] = []
+    flight_segments: List[FlightSegment]
+    layovers: List[Layover]
+    rating: float
+    amenities: List[str]
+
+# Booking Options Models
+class LocalPrice(BaseModel):
+    currency: str
+    price: float
+
+class BookingRequest(BaseModel):
+    url: str
+    post_data: Optional[str] = None
+
+class BookingOption(BaseModel):
+    book_with: str
+    airline_logos: List[str]
+    marketed_as: List[str]
+    price: float
+    local_prices: List[LocalPrice]
+    option_title: Optional[str] = None
+    extensions: List[str] = []
+    baggage_prices: List[str] = []
+    booking_request: Optional[Dict[str, Any]] = None
+    booking_phone: Optional[str] = None
+    estimated_phone_service_fee: Optional[float] = None
+
+class BookingOptionGroup(BaseModel):
+    separate_tickets: bool = False
+    together: Optional[BookingOption] = None
+    departing: Optional[BookingOption] = None
+    returning: Optional[BookingOption] = None
+
+class PriceInsights(BaseModel):
+    lowest_price: int
+    price_level: str
+    typical_price_range: List[int]
+    price_history: Optional[List[List[int]]] = None
+
+class BookingOptionsResponse(BaseModel):
+    selected_flights: List[Dict[str, Any]]
+    baggage_prices: Dict[str, List[str]]
+    booking_options: List[BookingOptionGroup]
+    price_insights: Optional[PriceInsights] = None
+
+class FlightSearchRequest(BaseModel):
+    from_location: str = Field(..., description="Departure location")
+    to_location: str = Field(..., description="Arrival location")
+    departure_date: date = Field(..., description="Departure date")
+    return_date: Optional[date] = Field(None, description="Return date")
+    passengers: int = Field(default=1, description="Number of passengers")
+    class_type: str = Field(default="economy", description="Travel class")
+
+class FlightSearchResponse(BaseModel):
+    success: bool
+    flights: List[Flight]
+    total_count: int
+    message: str = ""
+
 class APIResponse(BaseModel):
     success: bool
     message: str

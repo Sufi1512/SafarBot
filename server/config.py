@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     # Google SERP API (for flight search)
     serp_api_key: Optional[str] = None
     
+    # LangSmith Configuration
+    langsmith_api_key: Optional[str] = None
+    langsmith_project: str = "safarbot"
+    langsmith_endpoint: str = "https://api.smith.langchain.com"
+    
     # ChromaDB Configuration
     chroma_persist_directory: str = "./chroma_db"
     
@@ -22,6 +27,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = False
+        extra = "ignore"  # Ignore extra fields not defined in the model
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -30,5 +36,7 @@ class Settings(BaseSettings):
             self.google_api_key = os.getenv("GOOGLE_API_KEY")
         if not self.serp_api_key:
             self.serp_api_key = os.getenv("SERP_API_KEY")
+        if not self.langsmith_api_key:
+            self.langsmith_api_key = os.getenv("LANGSMITH_API_KEY")
 
 settings = Settings() 

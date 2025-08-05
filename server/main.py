@@ -11,6 +11,34 @@ load_dotenv('.env')
 from routers import itinerary, chat, hotels, restaurants, flights, bookings
 from config import settings
 
+# LangSmith setup function
+def setup_langsmith():
+    """
+    Initialize LangSmith tracking
+    """
+    try:
+        # Set LangSmith environment variables
+        if settings.langsmith_api_key:
+            os.environ["LANGSMITH_API_KEY"] = settings.langsmith_api_key
+            os.environ["LANGSMITH_PROJECT"] = settings.langsmith_project
+            os.environ["LANGSMITH_ENDPOINT"] = settings.langsmith_endpoint
+            
+            # Enable LangSmith tracing
+            os.environ["LANGCHAIN_TRACING_V2"] = "true"
+            os.environ["LANGCHAIN_PROJECT"] = settings.langsmith_project
+            
+            print("LangSmith tracking initialized successfully")
+            return True
+        else:
+            print("LangSmith API key not found. LangSmith tracking will be disabled.")
+            return False
+    except Exception as e:
+        print(f"Failed to initialize LangSmith: {str(e)}")
+        return False
+
+# Initialize LangSmith tracking
+setup_langsmith()
+
 app = FastAPI(
     title="SafarBot API",
     description="AI-powered travel planning API",

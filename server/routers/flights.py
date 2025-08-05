@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional
-from pydantic import BaseModel
 from datetime import date
 from services.flight_service import FlightService
+from models import FlightSearchRequest, FlightSearchResponse, Flight, BookingOptionsResponse
 import logging
 
 router = APIRouter()
@@ -10,32 +10,6 @@ logger = logging.getLogger(__name__)
 
 # Initialize flight service
 flight_service = FlightService()
-
-class FlightSearchRequest(BaseModel):
-    from_location: str
-    to_location: str
-    departure_date: date
-    return_date: Optional[date] = None
-    passengers: int = 1
-    class_type: str = "economy"
-
-class Flight(BaseModel):
-    id: str
-    airline: str
-    flight_number: str
-    departure: dict
-    arrival: dict
-    duration: str
-    price: float
-    stops: int
-    rating: float
-    amenities: List[str]
-
-class FlightSearchResponse(BaseModel):
-    success: bool
-    flights: List[Flight]
-    total_count: int
-    message: str = ""
 
 @router.get("/flights/popular", response_model=List[Flight])
 async def get_popular_flights():
@@ -72,6 +46,38 @@ async def search_flights(request: FlightSearchRequest):
         logger.error(f"Error searching flights: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error searching flights: {str(e)}")
 
+@router.get("/flights/booking-options/{booking_token}")
+async def get_booking_options(booking_token: str):
+    """Get booking options for a specific flight using booking token"""
+    try:
+        logger.info(f"Getting booking options for token: {booking_token}")
+        logger.info(f"Flight service instance: {flight_service}")
+        logger.info(f"Flight service use_real_api: {flight_service.use_real_api}")
+        
+        booking_options = await flight_service.get_booking_options(booking_token)
+        logger.info(f"Booking options result: {booking_options}")
+        logger.info(f"Booking options keys: {list(booking_options.keys()) if booking_options else 'None'}")
+        
+        return booking_options
+    except Exception as e:
+        logger.error(f"Error getting booking options: {str(e)}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error getting booking options: {str(e)}")
+
+@router.get("/flights/airports/suggestions")
+async def get_airport_suggestions(query: str):
+    """Get airport suggestions for autocomplete"""
+    try:
+        if len(query) < 2:
+            return []
+        
+        suggestions = await flight_service.get_airport_suggestions(query)
+        return suggestions
+    except Exception as e:
+        logger.error(f"Error getting airport suggestions: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting airport suggestions: {str(e)}")
+
 @router.get("/flights/{flight_id}", response_model=Flight)
 async def get_flight_details(flight_id: str):
     """Get detailed information about a specific flight"""
@@ -99,17 +105,4 @@ async def book_flight(flight_id: str, passengers: int = 1):
             "total_price": 850.0 * passengers
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error booking flight: {str(e)}")
-
-@router.get("/flights/airports/suggestions")
-async def get_airport_suggestions(query: str):
-    """Get airport suggestions for autocomplete"""
-    try:
-        if len(query) < 2:
-            return []
-        
-        suggestions = await flight_service.get_airport_suggestions(query)
-        return suggestions
-    except Exception as e:
-        logger.error(f"Error getting airport suggestions: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error getting airport suggestions: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"Error booking flight: {str(e)}") 

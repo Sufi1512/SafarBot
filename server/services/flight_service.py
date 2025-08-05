@@ -13,7 +13,8 @@ class FlightService:
         self.use_real_api = bool(self.serp_api_key and self.serp_api_key != "your_serp_api_key_here")
         
         if not self.use_real_api:
-            logger.warning("No valid SERP API key found. Using mock flight data.")
+            logger.error("No valid SERP API key found. Please set SERP_API_KEY in your environment variables.")
+            raise ValueError("SERP_API_KEY is required. Please set it in your environment variables.")
     
     async def search_flights(
         self,
@@ -28,13 +29,9 @@ class FlightService:
         Search for flights using Google SERP API
         """
         try:
-            if self.use_real_api:
-                return await self._search_with_serp_api(
-                    from_location, to_location, departure_date, return_date, passengers, class_type
-                )
-            else:
-                logger.warning("No valid SERP API key found. Please add SERP_API_KEY to your .env file.")
-                return []
+            return await self._search_with_serp_api(
+                from_location, to_location, departure_date, return_date, passengers, class_type
+            )
         except Exception as e:
             logger.error(f"Error searching flights: {str(e)}")
             return []
@@ -62,26 +59,25 @@ class FlightService:
                 "arrival_id": to_location,
                 "outbound_date": departure_date.strftime("%Y-%m-%d"),
                 "adults": passengers,
-                "currency": "USD",
+                "currency": "INR",
                 "hl": "en"
             }
             
-            # For one-way flights, we need to explicitly set return_date to None or omit it
             # For round-trip flights, include return_date
             if return_date:
                 search_params["return_date"] = return_date.strftime("%Y-%m-%d")
-            else:
-                # For one-way flights, we might need to handle this differently
-                # Let's try without return_date for one-way
-                pass
             
             # Add class type if specified
             if class_type != "economy":
                 search_params["travel_class"] = class_type
             
+            logger.info(f"Calling SerpApi with params: {search_params}")
+            
             # Perform the search
             search = GoogleSearch(search_params)
             results = search.get_dict()
+            
+            logger.info(f"SERP API response keys: {list(results.keys())}")
             
             # Parse the results
             flights = []
@@ -89,13 +85,15 @@ class FlightService:
             # Handle best_flights and other_flights from SERP API
             if "best_flights" in results:
                 for flight_option in results["best_flights"][:5]:  # Limit to 5 best flights
-                    parsed_flights = self._parse_serp_flight_option(flight_option, from_location, to_location)
-                    flights.extend(parsed_flights)
+                    parsed_flight = self._parse_serp_flight_option(flight_option, from_location, to_location)
+                    if parsed_flight:
+                        flights.append(parsed_flight)
             
             if "other_flights" in results:
                 for flight_option in results["other_flights"][:10]:  # Limit to 10 other flights
-                    parsed_flights = self._parse_serp_flight_option(flight_option, from_location, to_location)
-                    flights.extend(parsed_flights)
+                    parsed_flight = self._parse_serp_flight_option(flight_option, from_location, to_location)
+                    if parsed_flight:
+                        flights.append(parsed_flight)
             
             # If no structured flights found, try legacy format
             if not flights and "flights" in results and "options" in results["flights"]:
@@ -111,7 +109,7 @@ class FlightService:
             logger.error(f"SERP API error: {str(e)}")
             raise e
     
-    def _parse_serp_flight_option(self, flight_option: Dict[str, Any], from_location: str, to_location: str) -> List[Dict[str, Any]]:
+    def _parse_serp_flight_option(self, flight_option: Dict[str, Any], from_location: str, to_location: str) -> Optional[Dict[str, Any]]:
         """
         Parse SERP API flight option (best_flights/other_flights format) into our standard format
         """
@@ -121,9 +119,14 @@ class FlightService:
             total_duration = flight_option.get("total_duration", 0)
             price = flight_option.get("price", 0)
             carbon_emissions = flight_option.get("carbon_emissions", {})
+            departure_token = flight_option.get("departure_token", "")
+            booking_token = flight_option.get("booking_token", "")
+            flight_type = flight_option.get("type", "One way")
+            airline_logo = flight_option.get("airline_logo", "")
+            extensions = flight_option.get("extensions", [])
             
-            parsed_flights = []
-            
+            # Parse individual flight segments
+            flight_segments = []
             for i, flight in enumerate(flights):
                 departure_airport = flight.get("departure_airport", {})
                 arrival_airport = flight.get("arrival_airport", {})
@@ -157,13 +160,10 @@ class FlightService:
                 duration_minutes = flight.get("duration", 0)
                 duration = f"{duration_minutes // 60}h {duration_minutes % 60}m" if duration_minutes > 0 else "N/A"
                 
-                # Calculate stops
-                stops = len(layovers) if layovers else 0
-                
                 # Extract amenities from extensions
-                extensions = flight.get("extensions", [])
+                flight_extensions = flight.get("extensions", [])
                 amenities = []
-                for ext in extensions:
+                for ext in flight_extensions:
                     if "Wi-Fi" in ext or "WiFi" in ext:
                         amenities.append("WiFi")
                     if "power" in ext.lower() or "usb" in ext.lower():
@@ -172,44 +172,96 @@ class FlightService:
                         amenities.append("Entertainment")
                     if "meal" in ext.lower() or "food" in ext.lower():
                         amenities.append("Meal")
+                    if "legroom" in ext.lower():
+                        amenities.append("Premium Legroom")
+                    if "suite" in ext.lower():
+                        amenities.append("Individual Suite")
+                    if "lie flat" in ext.lower():
+                        amenities.append("Lie Flat Seat")
                 
                 # Default amenities if none found
                 if not amenities:
                     amenities = ["WiFi", "Entertainment"]
                 
-                # Create flight object
-                parsed_flight = {
-                    "id": f"serp_{hash(str(flight_option))}_{i}",
+                # Create flight segment
+                flight_segment = {
+                    "id": f"segment_{i}",
                     "airline": flight.get("airline", "Unknown"),
+                    "airline_logo": flight.get("airline_logo", ""),
                     "flight_number": flight.get("flight_number", "N/A"),
                     "departure": {
                         "airport": departure_airport.get("id", from_location.upper()[:3]),
+                        "airport_name": departure_airport.get("name", ""),
                         "time": departure_time,
                         "date": departure_date
                     },
                     "arrival": {
                         "airport": arrival_airport.get("id", to_location.upper()[:3]),
+                        "airport_name": arrival_airport.get("name", ""),
                         "time": arrival_time,
                         "date": arrival_date
                     },
                     "duration": duration,
-                    "price": price,
-                    "stops": stops,
-                    "rating": 4.0 + (i * 0.1),  # Vary rating slightly
+                    "duration_minutes": duration_minutes,
                     "amenities": amenities,
                     "aircraft": flight.get("airplane", "Unknown"),
                     "travel_class": flight.get("travel_class", "Economy"),
-                    "carbon_emissions": carbon_emissions.get("this_flight", 0),
-                    "total_duration": total_duration
+                    "legroom": flight.get("legroom", ""),
+                    "overnight": flight.get("overnight", False),
+                    "often_delayed": flight.get("often_delayed_by_over_30_min", False),
+                    "ticket_also_sold_by": flight.get("ticket_also_sold_by", []),
+                    "plane_and_crew_by": flight.get("plane_and_crew_by", "")
                 }
                 
-                parsed_flights.append(parsed_flight)
+                flight_segments.append(flight_segment)
             
-            return parsed_flights
+            # Parse layovers
+            layover_info = []
+            for layover in layovers:
+                layover_info.append({
+                    "duration": layover.get("duration", 0),
+                    "airport": layover.get("id", ""),
+                    "airport_name": layover.get("name", ""),
+                    "overnight": layover.get("overnight", False)
+                })
+            
+            # Calculate total duration in hours and minutes
+            total_hours = total_duration // 60
+            total_minutes = total_duration % 60
+            total_duration_str = f"{total_hours}h {total_minutes}m" if total_duration > 0 else "N/A"
+            
+            # Calculate stops
+            stops = len(layovers) if layovers else 0
+            
+            # Create comprehensive flight object
+            parsed_flight = {
+                "id": f"serp_{hash(str(flight_option))}",
+                "price": price,
+                "currency": "INR",
+                "stops": stops,
+                "total_duration": total_duration_str,
+                "total_duration_minutes": total_duration,
+                "flight_type": flight_type,
+                "airline_logo": airline_logo,
+                "departure_token": departure_token,
+                "booking_token": booking_token,
+                "carbon_emissions": {
+                    "this_flight": carbon_emissions.get("this_flight", 0),
+                    "typical_for_route": carbon_emissions.get("typical_for_this_route", 0),
+                    "difference_percent": carbon_emissions.get("difference_percent", 0)
+                },
+                "extensions": extensions,
+                "flight_segments": flight_segments,
+                "layovers": layover_info,
+                "rating": 4.0,  # Default rating
+                "amenities": list(set([amenity for segment in flight_segments for amenity in segment.get("amenities", [])]))
+            }
+            
+            return parsed_flight
             
         except Exception as e:
             logger.error(f"Error parsing SERP flight option: {str(e)}")
-            return []
+            return None
 
     def _parse_serp_flight(self, option: Dict[str, Any], from_location: str, to_location: str) -> Optional[Dict[str, Any]]:
         """
@@ -259,141 +311,86 @@ class FlightService:
             logger.error(f"Error parsing SERP flight: {str(e)}")
             return None
     
-    def _get_mock_flights(
-        self,
-        from_location: str,
-        to_location: str,
-        departure_date: date,
-        return_date: Optional[date] = None,
-        passengers: int = 1,
-        class_type: str = "economy"
-    ) -> List[Dict[str, Any]]:
-        """
-        Generate mock flight data
-        """
-        airlines = ["Emirates", "British Airways", "Air France", "Lufthansa", "Delta", "American Airlines"]
-        
-        mock_flights = []
-        for i, airline in enumerate(airlines[:6]):
-            # Generate different departure times
-            departure_hours = [10, 14, 18, 22, 6, 12]
-            departure_time = f"{departure_hours[i % len(departure_hours)]:02d}:30"
-            
-            # Calculate arrival time (add 2-8 hours)
-            arrival_hour = (departure_hours[i % len(departure_hours)] + 2 + (i % 6)) % 24
-            arrival_time = f"{arrival_hour:02d}:45"
-            
-            # Calculate duration
-            duration_hours = 2 + (i % 6)
-            duration = f"{duration_hours}h 15m"
-            
-            # Calculate price based on class and distance
-            base_price = 200 + (i * 50)
-            if class_type == "business":
-                base_price *= 2.5
-            elif class_type == "first":
-                base_price *= 4
-            
-            flight = {
-                "id": str(i + 1),
-                "airline": airline,
-                "flight_number": f"{airline[:2].upper()}{100 + i}",
-                "departure": {
-                    "airport": from_location.upper()[:3],
-                    "time": departure_time,
-                    "date": str(departure_date)
-                },
-                "arrival": {
-                    "airport": to_location.upper()[:3],
-                    "time": arrival_time,
-                    "date": str(departure_date)
-                },
-                "duration": duration,
-                "price": base_price,
-                "stops": i % 2,  # Alternate between direct and 1 stop
-                "rating": 4.0 + (i * 0.1),
-                "amenities": ["WiFi", "Entertainment", "Meal"] if i % 2 == 0 else ["WiFi", "Entertainment"]
-            }
-            mock_flights.append(flight)
-        
-        return mock_flights
+
     
     async def get_popular_flights(self) -> List[Dict[str, Any]]:
         """
-        Get popular flight routes
+        Get popular flight routes using real SerpApi data
         """
-        popular_routes = [
-            ("JFK", "LHR", "New York to London"),
-            ("LAX", "NRT", "Los Angeles to Tokyo"),
-            ("CDG", "DXB", "Paris to Dubai"),
-            ("SIN", "SYD", "Singapore to Sydney"),
-            ("FRA", "JFK", "Frankfurt to New York")
-        ]
-        
-        popular_flights = []
-        for i, (from_airport, to_airport, route_name) in enumerate(popular_routes):
-            flight = {
-                "id": f"popular_{i + 1}",
-                "airline": ["Emirates", "British Airways", "Air France", "Singapore Airlines", "Lufthansa"][i],
-                "flight_number": f"POP{i + 1}",
-                "departure": {
-                    "airport": from_airport,
-                    "time": "10:30",
-                    "date": "2025-01-15"
-                },
-                "arrival": {
-                    "airport": to_airport,
-                    "time": "08:45",
-                    "date": "2025-01-16"
-                },
-                "duration": "8h 15m",
-                "price": 600 + (i * 100),
-                "stops": 0,
-                "rating": 4.5,
-                "amenities": ["WiFi", "Entertainment", "Meal"],
-                "route_name": route_name
-            }
-            popular_flights.append(flight)
-        
-        return popular_flights
+        try:
+            # Use a future date for popular flights search
+            from datetime import timedelta
+            future_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
+            
+            popular_routes = [
+                ("JFK", "LHR", "New York to London"),
+                ("LAX", "NRT", "Los Angeles to Tokyo"),
+                ("CDG", "DXB", "Paris to Dubai"),
+                ("SIN", "SYD", "Singapore to Sydney"),
+                ("FRA", "JFK", "Frankfurt to New York")
+            ]
+            
+            popular_flights = []
+            for from_airport, to_airport, route_name in popular_routes:
+                try:
+                    # Search for real flights for each popular route
+                    flights = await self._search_with_serp_api(
+                        from_airport, to_airport, 
+                        datetime.strptime(future_date, "%Y-%m-%d").date(),
+                        passengers=1, class_type="economy"
+                    )
+                    
+                    if flights:
+                        # Take the first flight and add route name
+                        flight = flights[0]
+                        flight["route_name"] = route_name
+                        popular_flights.append(flight)
+                        
+                        # Limit to 5 popular flights
+                        if len(popular_flights) >= 5:
+                            break
+                            
+                except Exception as e:
+                    logger.warning(f"Failed to get real data for {route_name}: {str(e)}")
+                    continue
+            
+            return popular_flights
+            
+        except Exception as e:
+            logger.error(f"Error getting popular flights: {str(e)}")
+            return []
     
     async def get_flight_details(self, flight_id: str) -> Optional[Dict[str, Any]]:
         """
-        Get detailed information about a specific flight
+        Get detailed information about a specific flight using SerpApi
         """
-        # For now, return mock details
-        # In a real implementation, you would query the SERP API for specific flight details
-        return {
-            "id": flight_id,
-            "airline": "Emirates",
-            "flight_number": "EK123",
-            "departure": {
-                "airport": "JFK",
-                "time": "10:30",
-                "date": "2025-01-15",
-                "terminal": "Terminal 4"
-            },
-            "arrival": {
-                "airport": "DXB",
-                "time": "08:45",
-                "date": "2025-01-16",
-                "terminal": "Terminal 3"
-            },
-            "duration": "14h 15m",
-            "price": 850.0,
-            "stops": 0,
-            "rating": 4.8,
-            "amenities": ["WiFi", "Entertainment", "Meal", "Premium Seating", "Lounge Access"],
-            "aircraft": "Boeing 777-300ER",
-            "seat_map": "Available",
-            "baggage_allowance": "30kg checked, 7kg carry-on"
-        } 
+        try:
+            # Extract booking token from flight_id if it contains one
+            if "booking_token" in flight_id:
+                # This would require a separate API call to get flight details
+                # For now, return a message indicating this feature needs implementation
+                return {
+                    "id": flight_id,
+                    "message": "Flight details retrieval requires booking token. Use booking options endpoint instead.",
+                    "suggestion": "Use /api/v1/flights/booking-options/{booking_token} for detailed flight information"
+                }
+            else:
+                # Try to search for flights with this ID pattern
+                # This is a simplified approach - in production you'd want a more robust system
+                return {
+                    "id": flight_id,
+                    "message": "Flight details not available. Please use flight search to get current flight information.",
+                    "suggestion": "Use /api/v1/flights/search to find current flights"
+                }
+        except Exception as e:
+            logger.error(f"Error getting flight details: {str(e)}")
+            return None 
 
     async def get_airport_suggestions(self, query: str) -> List[Dict[str, Any]]:
         """
-        Get airport suggestions for autocomplete
+        Get airport suggestions for autocomplete using comprehensive airport database
         """
-        # Major airports database
+        # Comprehensive airports database (keeping this as SerpApi doesn't have airport search)
         airports = [
             {"code": "JFK", "name": "John F. Kennedy International Airport", "city": "New York", "country": "USA"},
             {"code": "LAX", "name": "Los Angeles International Airport", "city": "Los Angeles", "country": "USA"},
@@ -648,3 +645,235 @@ class FlightService:
         ))
         
         return suggestions[:10]  # Return top 10 suggestions 
+
+    async def get_booking_options(self, booking_token: str) -> Dict[str, Any]:
+        """
+        Get booking options for a specific flight using booking token
+        """
+        try:
+            logger.info(f"Getting booking options for token: {booking_token}")
+            return await self._get_booking_options_with_serp_api(booking_token)
+        except Exception as e:
+            logger.error(f"Error getting booking options: {str(e)}")
+            raise e
+
+    async def _get_booking_options_with_serp_api(self, booking_token: str) -> Dict[str, Any]:
+        """
+        Get booking options using SerpApi Google Flights Booking Options API
+        """
+        try:
+            from serpapi import GoogleSearch
+            
+            # Prepare search parameters for booking options
+            search_params = {
+                "engine": "google_flights",
+                "api_key": self.serp_api_key,
+                "booking_token": booking_token,
+                "currency": "INR",
+                "hl": "en"
+            }
+            
+            logger.info(f"Calling SerpApi with params: {search_params}")
+            
+            # Perform the search
+            search = GoogleSearch(search_params)
+            results = search.get_dict()
+            
+            logger.info(f"SERP API response keys: {list(results.keys())}")
+            
+            # Parse and structure the booking options response
+            booking_data = {
+                "selected_flights": self._parse_selected_flights(results.get("selected_flights", [])),
+                "baggage_prices": results.get("baggage_prices", {}),
+                "booking_options": self._parse_booking_options(results.get("booking_options", [])),
+                "price_insights": results.get("price_insights", {})
+            }
+            
+            logger.info(f"Parsed booking options count: {len(booking_data['booking_options'])}")
+            return booking_data
+            
+        except Exception as e:
+            logger.error(f"Error getting booking options from SerpApi: {str(e)}")
+            raise e
+
+    def _parse_selected_flights(self, selected_flights: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Parse selected flights from SerpApi response
+        """
+        parsed_flights = []
+        
+        for flight_data in selected_flights:
+            try:
+                flights = flight_data.get("flights", [])
+                if not flights:
+                    continue
+                
+                # Parse the first flight segment
+                flight = flights[0]
+                departure_airport = flight.get("departure_airport", {})
+                arrival_airport = flight.get("arrival_airport", {})
+                
+                # Parse departure time
+                departure_time_str = departure_airport.get("time", "")
+                departure_time = ""
+                departure_date = ""
+                if departure_time_str:
+                    try:
+                        dt = datetime.strptime(departure_time_str, "%Y-%m-%d %H:%M")
+                        departure_time = dt.strftime("%H:%M")
+                        departure_date = dt.strftime("%Y-%m-%d")
+                    except:
+                        departure_time = departure_time_str
+                
+                # Parse arrival time
+                arrival_time_str = arrival_airport.get("time", "")
+                arrival_time = ""
+                arrival_date = ""
+                if arrival_time_str:
+                    try:
+                        dt = datetime.strptime(arrival_time_str, "%Y-%m-%d %H:%M")
+                        arrival_time = dt.strftime("%H:%M")
+                        arrival_date = dt.strftime("%Y-%m-%d")
+                    except:
+                        arrival_time = arrival_time_str
+                
+                # Calculate duration
+                duration_minutes = flight.get("duration", 0)
+                duration = f"{duration_minutes // 60}h {duration_minutes % 60}m" if duration_minutes > 0 else "N/A"
+                
+                # Create flight segments
+                flight_segments = [{
+                    "id": "segment_1",
+                    "airline": flight.get("airline", "Unknown"),
+                    "airline_logo": flight.get("airline_logo", ""),
+                    "flight_number": flight.get("flight_number", "N/A"),
+                    "departure": {
+                        "airport": departure_airport.get("id", ""),
+                        "airport_name": departure_airport.get("name", ""),
+                        "time": departure_time,
+                        "date": departure_date
+                    },
+                    "arrival": {
+                        "airport": arrival_airport.get("id", ""),
+                        "airport_name": arrival_airport.get("name", ""),
+                        "time": arrival_time,
+                        "date": arrival_date
+                    },
+                    "duration": duration,
+                    "duration_minutes": duration_minutes,
+                    "amenities": self._extract_amenities_from_extensions(flight.get("extensions", [])),
+                    "aircraft": flight.get("airplane", "Unknown"),
+                    "travel_class": flight.get("travel_class", "Economy"),
+                    "legroom": flight.get("legroom", ""),
+                    "overnight": False,
+                    "often_delayed": False,
+                    "ticket_also_sold_by": [],
+                    "plane_and_crew_by": ""
+                }]
+                
+                # Create parsed flight object
+                parsed_flight = {
+                    "id": f"selected_{hash(str(flight_data))}",
+                    "price": 0,  # Price will come from booking options
+                    "currency": "INR",
+                    "stops": 0,
+                    "total_duration": duration,
+                    "total_duration_minutes": duration_minutes,
+                    "flight_type": flight_data.get("type", "One way"),
+                    "airline_logo": flight_data.get("airline_logo", ""),
+                    "departure_token": flight_data.get("departure_token", ""),
+                    "booking_token": "",  # This is the input token
+                    "carbon_emissions": flight_data.get("carbon_emissions", {
+                        "this_flight": 0,
+                        "typical_for_route": 0,
+                        "difference_percent": 0
+                    }),
+                    "extensions": flight.get("extensions", []),
+                    "flight_segments": flight_segments,
+                    "layovers": [],
+                    "rating": 4.0,
+                    "amenities": self._extract_amenities_from_extensions(flight.get("extensions", []))
+                }
+                
+                parsed_flights.append(parsed_flight)
+                
+            except Exception as e:
+                logger.error(f"Error parsing selected flight: {str(e)}")
+                continue
+        
+        return parsed_flights
+
+    def _extract_amenities_from_extensions(self, extensions: List[str]) -> List[str]:
+        """
+        Extract amenities from flight extensions
+        """
+        amenities = []
+        for ext in extensions:
+            ext_lower = ext.lower()
+            if "wi-fi" in ext_lower or "wifi" in ext_lower:
+                amenities.append("WiFi")
+            if "usb" in ext_lower or "power" in ext_lower or "outlet" in ext_lower:
+                amenities.append("Power Outlets")
+            if "entertainment" in ext_lower or "video" in ext_lower:
+                amenities.append("Entertainment")
+            if "meal" in ext_lower or "food" in ext_lower:
+                amenities.append("Meal")
+            if "legroom" in ext_lower:
+                amenities.append("Premium Legroom")
+            if "suite" in ext_lower:
+                amenities.append("Individual Suite")
+            if "lie flat" in ext_lower:
+                amenities.append("Lie Flat Seat")
+        
+        # Default amenities if none found
+        if not amenities:
+            amenities = ["WiFi", "Entertainment"]
+        
+        return list(set(amenities))  # Remove duplicates
+
+    def _parse_booking_options(self, booking_options: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Parse booking options from SERP API response
+        """
+        parsed_options = []
+        
+        for option in booking_options:
+            parsed_option = {
+                "separate_tickets": option.get("separate_tickets", False)
+            }
+            
+            # Parse together option
+            if "together" in option:
+                parsed_option["together"] = self._parse_booking_option_detail(option["together"])
+            
+            # Parse departing option (for separate tickets)
+            if "departing" in option:
+                parsed_option["departing"] = self._parse_booking_option_detail(option["departing"])
+            
+            # Parse returning option (for separate tickets)
+            if "returning" in option:
+                parsed_option["returning"] = self._parse_booking_option_detail(option["returning"])
+            
+            parsed_options.append(parsed_option)
+        
+        return parsed_options
+
+    def _parse_booking_option_detail(self, option_detail: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Parse individual booking option detail
+        """
+        return {
+            "book_with": option_detail.get("book_with", ""),
+            "airline_logos": option_detail.get("airline_logos", []),
+            "marketed_as": option_detail.get("marketed_as", []),
+            "price": option_detail.get("price", 0),
+            "local_prices": option_detail.get("local_prices", []),
+            "option_title": option_detail.get("option_title", ""),
+            "extensions": option_detail.get("extensions", []),
+            "baggage_prices": option_detail.get("baggage_prices", []),
+            "booking_request": option_detail.get("booking_request", {}),
+            "booking_phone": option_detail.get("booking_phone", ""),
+            "estimated_phone_service_fee": option_detail.get("estimated_phone_service_fee", 0)
+        }
+
+ 

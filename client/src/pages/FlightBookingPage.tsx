@@ -447,7 +447,7 @@ const FlightBookingPage: React.FC = () => {
                       onChange={(e) => setFilters(prev => ({ ...prev, maxPrice: parseInt(e.target.value) }))}
                       className="w-full"
                     />
-                    <div className="text-sm text-gray-600">${filters.maxPrice}</div>
+                                         <div className="text-sm text-gray-600">₹{filters.maxPrice}</div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Max Stops</label>
@@ -491,59 +491,189 @@ const FlightBookingPage: React.FC = () => {
                   }`}
                   onClick={() => handleFlightSelect(flight)}
                 >
-                  <div className="flex items-center justify-between">
+                  {/* Main Flight Info */}
+                  <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-6">
                       {/* Airline Info */}
                       <div className="text-center">
-                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-2">
-                          <Plane className="w-6 h-6 text-blue-600" />
+                        {flight.airline_logo ? (
+                          <img src={flight.airline_logo} alt="Airline" className="w-12 h-12 mb-2" />
+                        ) : (
+                          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-2">
+                            <Plane className="w-6 h-6 text-blue-600" />
+                          </div>
+                        )}
+                        <div className="text-sm font-medium text-gray-900">
+                          {flight.flight_segments[0]?.airline || 'Multiple Airlines'}
                         </div>
-                        <div className="text-sm font-medium text-gray-900">{flight.airline}</div>
-                        <div className="text-xs text-gray-500">{flight.flight_number}</div>
+                        <div className="text-xs text-gray-500">{flight.flight_type}</div>
                       </div>
 
                       {/* Flight Route */}
                       <div className="flex items-center space-x-4">
                         <div className="text-center">
-                          <div className="text-lg font-bold text-gray-900">{flight.departure.time}</div>
-                          <div className="text-sm text-gray-600">{flight.departure.airport}</div>
+                          <div className="text-lg font-bold text-gray-900">
+                            {flight.flight_segments[0]?.departure.time}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {flight.flight_segments[0]?.departure.airport}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {flight.flight_segments[0]?.departure.airport_name}
+                          </div>
                         </div>
                         <div className="flex flex-col items-center">
-                          <div className="text-sm text-gray-500">{flight.duration}</div>
+                          <div className="text-sm text-gray-500">{flight.total_duration}</div>
                           <div className="w-16 h-px bg-gray-300 my-2"></div>
                           <div className="text-xs text-gray-500">
                             {flight.stops === 0 ? 'Direct' : `${flight.stops} stop${flight.stops > 1 ? 's' : ''}`}
                           </div>
                         </div>
                         <div className="text-center">
-                          <div className="text-lg font-bold text-gray-900">{flight.arrival.time}</div>
-                          <div className="text-sm text-gray-600">{flight.arrival.airport}</div>
+                          <div className="text-lg font-bold text-gray-900">
+                            {flight.flight_segments[flight.flight_segments.length - 1]?.arrival.time}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {flight.flight_segments[flight.flight_segments.length - 1]?.arrival.airport}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {flight.flight_segments[flight.flight_segments.length - 1]?.arrival.airport_name}
+                          </div>
                         </div>
                       </div>
 
-                      {/* Amenities */}
-                      <div className="flex space-x-2">
-                        {flight.amenities.map((amenity, index) => (
-                          <span
-                            key={index}
-                            className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full"
-                          >
-                            {amenity}
-                          </span>
-                        ))}
+                      {/* Carbon Emissions */}
+                      <div className="text-center">
+                        <div className="text-xs text-gray-500">Carbon Emissions</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {Math.round(flight.carbon_emissions.this_flight / 1000)}kg CO₂
+                        </div>
+                        <div className={`text-xs ${
+                          flight.carbon_emissions.difference_percent < 0 ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {flight.carbon_emissions.difference_percent > 0 ? '+' : ''}
+                          {flight.carbon_emissions.difference_percent}% vs typical
+                        </div>
                       </div>
                     </div>
 
                     {/* Price and Rating */}
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-gray-900">${flight.price}</div>
+                      <div className="text-2xl font-bold text-gray-900">
+                        ₹{flight.price}
+                        <span className="text-sm font-normal text-gray-500 ml-1">{flight.currency}</span>
+                      </div>
                       <div className="flex items-center justify-end text-sm text-gray-600 mb-2">
                         <Star className="w-4 h-4 text-yellow-400 mr-1" />
                         {flight.rating}
                       </div>
-                      <button className="btn-primary text-sm px-4 py-2">
-                        Select
-                      </button>
+                      <div className="space-y-2">
+                        <button 
+                          onClick={() => handleFlightSelect(flight)}
+                          className="btn-primary text-sm px-4 py-2 w-full"
+                        >
+                          Select
+                        </button>
+                        {flight.booking_token ? (
+                          <button 
+                            onClick={() => {
+                              console.log('Navigating to booking options with token:', flight.booking_token);
+                              navigate(`/booking-options/${encodeURIComponent(flight.booking_token!)}`);
+                            }}
+                            className="btn-secondary text-sm px-4 py-2 w-full"
+                          >
+                            View Booking Options
+                          </button>
+                        ) : (
+                          <div className="text-xs text-gray-500 text-center py-2">
+                            Booking options not available
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Flight Segments Details */}
+                  <div className="border-t border-gray-200 pt-4">
+                    <div className="space-y-3">
+                      {flight.flight_segments.map((segment, index) => (
+                        <div key={segment.id} className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            {/* Segment Route */}
+                            <div className="flex items-center space-x-3">
+                              <div className="text-center">
+                                <div className="text-sm font-medium text-gray-900">{segment.departure.time}</div>
+                                <div className="text-xs text-gray-600">{segment.departure.airport}</div>
+                              </div>
+                              <div className="flex flex-col items-center">
+                                <div className="text-xs text-gray-500">{segment.duration}</div>
+                                <div className="w-12 h-px bg-gray-300 my-1"></div>
+                                <div className="text-xs text-gray-500">{segment.aircraft}</div>
+                              </div>
+                              <div className="text-center">
+                                <div className="text-sm font-medium text-gray-900">{segment.arrival.time}</div>
+                                <div className="text-xs text-gray-600">{segment.arrival.airport}</div>
+                              </div>
+                            </div>
+
+                            {/* Flight Details */}
+                            <div className="flex items-center space-x-2">
+                              <div className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                {segment.airline} {segment.flight_number}
+                              </div>
+                              <div className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                                {segment.travel_class}
+                              </div>
+                              {segment.overnight && (
+                                <div className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">
+                                  Overnight
+                                </div>
+                              )}
+                              {segment.often_delayed && (
+                                <div className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
+                                  Often Delayed
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Amenities */}
+                          <div className="flex space-x-1">
+                            {segment.amenities.slice(0, 3).map((amenity, amenityIndex) => (
+                              <span
+                                key={amenityIndex}
+                                className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full"
+                                title={amenity}
+                              >
+                                {amenity}
+                              </span>
+                            ))}
+                            {segment.amenities.length > 3 && (
+                              <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+                                +{segment.amenities.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Layovers */}
+                      {flight.layovers.length > 0 && (
+                        <div className="border-t border-gray-200 pt-3">
+                          <div className="text-sm font-medium text-gray-700 mb-2">Layovers:</div>
+                          <div className="space-y-2">
+                            {flight.layovers.map((layover, index) => (
+                              <div key={index} className="flex items-center space-x-2 text-xs text-gray-600">
+                                <Clock className="w-3 h-3" />
+                                <span>
+                                  {layover.duration}min at {layover.airport} ({layover.airport_name})
+                                  {layover.overnight && ' - Overnight'}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -559,12 +689,16 @@ const FlightBookingPage: React.FC = () => {
               <div>
                 <h3 className="font-semibold text-gray-900">Selected Flight</h3>
                 <p className="text-sm text-gray-600">
-                  {selectedFlight.airline} {selectedFlight.flight_number} • {selectedFlight.departure.airport} → {selectedFlight.arrival.airport}
+                  {selectedFlight.flight_segments[0]?.airline} {selectedFlight.flight_segments[0]?.flight_number} • 
+                  {selectedFlight.flight_segments[0]?.departure.airport} → {selectedFlight.flight_segments[selectedFlight.flight_segments.length - 1]?.arrival.airport}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {selectedFlight.total_duration} • {selectedFlight.stops === 0 ? 'Direct' : `${selectedFlight.stops} stop${selectedFlight.stops > 1 ? 's' : ''}`}
                 </p>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-gray-900">${selectedFlight.price}</div>
+                  <div className="text-2xl font-bold text-gray-900">₹{selectedFlight.price}</div>
                   <div className="text-sm text-gray-600">per passenger</div>
                 </div>
                 <button

@@ -5,6 +5,7 @@ import ResultsPage from './pages/ResultsPage';
 import FlightBookingPage from './pages/FlightBookingPage';
 import HotelBookingPage from './pages/HotelBookingPage';
 import BookingConfirmationPage from './pages/BookingConfirmationPage';
+import BookingOptionsPage from './pages/BookingOptionsPage';
 import ChatWidget from './components/ChatWidget';
 import './App.css';
 
@@ -18,6 +19,7 @@ function App() {
           <Route path="/flights" element={<FlightBookingPage />} />
           <Route path="/hotels" element={<HotelBookingPage />} />
           <Route path="/booking-confirmation" element={<BookingConfirmationPage />} />
+          <Route path="/booking-options/:bookingToken" element={<BookingOptionsPage />} />
         </Routes>
         <ChatWidget />
       </div>

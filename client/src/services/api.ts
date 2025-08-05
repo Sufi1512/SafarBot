@@ -100,23 +100,63 @@ export interface FlightSearchRequest {
   class_type: string;
 }
 
-export interface Flight {
+export interface FlightSegment {
   id: string;
   airline: string;
+  airline_logo?: string;
   flight_number: string;
   departure: {
     airport: string;
+    airport_name: string;
     time: string;
     date: string;
   };
   arrival: {
     airport: string;
+    airport_name: string;
     time: string;
     date: string;
   };
   duration: string;
+  duration_minutes: number;
+  amenities: string[];
+  aircraft: string;
+  travel_class: string;
+  legroom?: string;
+  overnight: boolean;
+  often_delayed: boolean;
+  ticket_also_sold_by: string[];
+  plane_and_crew_by?: string;
+}
+
+export interface Layover {
+  duration: number;
+  airport: string;
+  airport_name: string;
+  overnight: boolean;
+}
+
+export interface CarbonEmissions {
+  this_flight: number;
+  typical_for_route: number;
+  difference_percent: number;
+}
+
+export interface Flight {
+  id: string;
   price: number;
+  currency: string;
   stops: number;
+  total_duration: string;
+  total_duration_minutes: number;
+  flight_type: string;
+  airline_logo?: string;
+  departure_token?: string;
+  booking_token?: string;
+  carbon_emissions: CarbonEmissions;
+  extensions: string[];
+  flight_segments: FlightSegment[];
+  layovers: Layover[];
   rating: number;
   amenities: string[];
 }
@@ -126,6 +166,58 @@ export interface FlightSearchResponse {
   flights: Flight[];
   total_count: number;
   message: string;
+}
+
+// Booking Options Types
+export interface BookingOption {
+  separate_tickets?: boolean;
+  together?: BookingOptionDetails;
+  departing?: BookingOptionDetails;
+  returning?: BookingOptionDetails;
+}
+
+export interface BookingOptionDetails {
+  book_with: string;
+  airline_logos: string[];
+  marketed_as: string[];
+  price: number;
+  local_prices: LocalPrice[];
+  option_title: string;
+  extensions: string[];
+  baggage_prices: string[];
+  booking_request: BookingRequest;
+  booking_phone?: string;
+  estimated_phone_service_fee?: number;
+}
+
+export interface LocalPrice {
+  currency: string;
+  price: number;
+}
+
+export interface BookingRequest {
+  url: string;
+  post_data: string;
+}
+
+export interface BaggagePrices {
+  together?: string[];
+  departing?: string[];
+  returning?: string[];
+}
+
+export interface PriceInsights {
+  lowest_price: number;
+  price_level: string;
+  typical_price_range: number[];
+  price_history?: number[][];
+}
+
+export interface BookingOptionsResponse {
+  selected_flights: any[];
+  baggage_prices: BaggagePrices;
+  booking_options: BookingOption[];
+  price_insights?: PriceInsights;
 }
 
 export interface AirportSuggestion {
@@ -318,6 +410,18 @@ export const flightAPI = {
       return response.data;
     } catch (error: any) {
       throw new Error(error.userMessage || 'Failed to get airport suggestions');
+    }
+  },
+
+  getBookingOptions: async (bookingToken: string): Promise<BookingOptionsResponse> => {
+    try {
+      console.log('Fetching booking options for token:', bookingToken);
+      const response = await api.get(`/api/v1/flights/booking-options/${encodeURIComponent(bookingToken)}`);
+      console.log('Booking options response:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error fetching booking options:', error);
+      throw new Error(error.userMessage || 'Failed to get booking options');
     }
   },
 };

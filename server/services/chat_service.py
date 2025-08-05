@@ -4,6 +4,7 @@ import logging
 from config import settings
 import sys
 import os
+from langsmith import Client
 
 # Add langchain_core to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'langchain_core'))
@@ -14,6 +15,14 @@ logger = logging.getLogger(__name__)
 class ChatService:
     def __init__(self):
         self.chat_bot = ChatBot()
+        # Initialize LangSmith client if API key is available
+        self.langsmith_client = None
+        if settings.langsmith_api_key:
+            try:
+                self.langsmith_client = Client()
+                logger.info("LangSmith client initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize LangSmith client: {str(e)}")
         
     async def get_response(
         self,

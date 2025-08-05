@@ -58,33 +58,49 @@ const BookingConfirmationPage: React.FC = () => {
             <Plane className="w-6 h-6 text-blue-600" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">{booking.airline}</h3>
-            <p className="text-sm text-gray-600">Flight {booking.flightNumber}</p>
+            <h3 className="text-lg font-semibold text-gray-900">
+              {booking.flight_segments[0]?.airline || 'Multiple Airlines'}
+            </h3>
+            <p className="text-sm text-gray-600">
+              Flight {booking.flight_segments[0]?.flight_number || 'N/A'}
+            </p>
           </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">{booking.departure.time}</div>
-            <div className="text-sm text-gray-600">{booking.departure.airport}</div>
-            <div className="text-xs text-gray-500">{formatDate(booking.departure.date)}</div>
+            <div className="text-2xl font-bold text-gray-900">
+              {booking.flight_segments[0]?.departure.time || 'N/A'}
+            </div>
+            <div className="text-sm text-gray-600">
+              {booking.flight_segments[0]?.departure.airport || 'N/A'}
+            </div>
+            <div className="text-xs text-gray-500">
+              {booking.flight_segments[0]?.departure.airport_name || 'N/A'}
+            </div>
           </div>
           <div className="flex flex-col items-center justify-center">
-            <div className="text-sm text-gray-500 mb-2">{booking.duration}</div>
+            <div className="text-sm text-gray-500 mb-2">{booking.total_duration}</div>
             <div className="w-16 h-px bg-gray-300"></div>
             <div className="text-xs text-gray-500 mt-2">
               {booking.stops === 0 ? 'Direct' : `${booking.stops} stop${booking.stops > 1 ? 's' : ''}`}
             </div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">{booking.arrival.time}</div>
-            <div className="text-sm text-gray-600">{booking.arrival.airport}</div>
-            <div className="text-xs text-gray-500">{formatDate(booking.arrival.date)}</div>
+            <div className="text-2xl font-bold text-gray-900">
+              {booking.flight_segments[booking.flight_segments.length - 1]?.arrival.time || 'N/A'}
+            </div>
+            <div className="text-sm text-gray-600">
+              {booking.flight_segments[booking.flight_segments.length - 1]?.arrival.airport || 'N/A'}
+            </div>
+            <div className="text-xs text-gray-500">
+              {booking.flight_segments[booking.flight_segments.length - 1]?.arrival.airport_name || 'N/A'}
+            </div>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {booking.amenities.map((amenity: string, index: number) => (
+          {booking.amenities && booking.amenities.map((amenity: string, index: number) => (
             <span
               key={index}
               className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full"
@@ -205,18 +221,18 @@ const BookingConfirmationPage: React.FC = () => {
                 {bookingData.type === 'flight' ? (
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Flight Ticket × {bookingData.passengers}</span>
-                    <span className="font-medium">${bookingData.booking.price} × {bookingData.passengers}</span>
+                    <span className="font-medium">₹{bookingData.booking.price} × {bookingData.passengers}</span>
                   </div>
                 ) : (
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Room Rate × {Math.ceil((new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) / (1000 * 60 * 60 * 24))} nights</span>
-                    <span className="font-medium">${bookingData.room.price} × {Math.ceil((new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) / (1000 * 60 * 60 * 24))}</span>
+                    <span className="font-medium">{bookingData.room.price} × {Math.ceil((new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) / (1000 * 60 * 60 * 24))}</span>
                   </div>
                 )}
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold text-gray-900">Total</span>
-                    <span className="text-2xl font-bold text-gray-900">${calculateTotal()}</span>
+                    <span className="text-2xl font-bold text-gray-900">₹{calculateTotal()}</span>
                   </div>
                 </div>
               </div>
@@ -295,7 +311,7 @@ const BookingConfirmationPage: React.FC = () => {
               ) : (
                 <div className="flex items-center justify-center space-x-2">
                   <DollarSign className="w-5 h-5" />
-                  <span>Pay ${calculateTotal()}</span>
+                  <span>Pay ₹{calculateTotal()}</span>
                 </div>
               )}
             </button>
@@ -331,7 +347,7 @@ const BookingConfirmationPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Total Paid:</span>
-                  <span className="font-medium">${calculateTotal()}</span>
+                  <span className="font-medium">₹{calculateTotal()}</span>
                 </div>
               </div>
             </div>

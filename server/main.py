@@ -6,40 +6,13 @@ from dotenv import load_dotenv
 # Load environment variables first
 load_dotenv('.env')
 
-from routers import itinerary, chat, hotels, restaurants, flights, bookings
+# Only import the flights router to avoid dependency issues
+from routers import flights
 from config import settings
-
-# LangSmith setup function
-def setup_langsmith():
-    """
-    Initialize LangSmith tracking
-    """
-    try:
-        # Set LangSmith environment variables
-        if settings.langsmith_api_key:
-            os.environ["LANGSMITH_API_KEY"] = settings.langsmith_api_key
-            os.environ["LANGSMITH_PROJECT"] = settings.langsmith_project
-            os.environ["LANGSMITH_ENDPOINT"] = settings.langsmith_endpoint
-            
-            # Enable LangSmith tracing
-            os.environ["LANGCHAIN_TRACING_V2"] = "true"
-            os.environ["LANGCHAIN_PROJECT"] = settings.langsmith_project
-            
-            print("LangSmith tracking initialized successfully")
-            return True
-        else:
-            print("LangSmith API key not found. LangSmith tracking will be disabled.")
-            return False
-    except Exception as e:
-        print(f"Failed to initialize LangSmith: {str(e)}")
-        return False
-
-# Initialize LangSmith tracking
-setup_langsmith()
 
 app = FastAPI(
     title="SafarBot API",
-    description="AI-powered travel planning API",
+    description="AI-powered travel planning API - Flight Booking Service",
     version="1.0.0"
 )
 
@@ -57,17 +30,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(itinerary.router, prefix="/api/v1", tags=["itinerary"])
-app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
-app.include_router(hotels.router, prefix="/api/v1", tags=["hotels"])
-app.include_router(restaurants.router, prefix="/api/v1", tags=["restaurants"])
+# Include only the flights router
 app.include_router(flights.router, prefix="/api/v1", tags=["flights"])
-app.include_router(bookings.router, prefix="/api/v1", tags=["bookings"])
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "service": "SafarBot API"}
+    return {"status": "healthy", "service": "SafarBot Flight API"}
+
+@app.get("/")
+async def root():
+    return {
+        "message": "SafarBot Flight API",
+        "version": "1.0.0",
+        "endpoints": {
+            "health": "/health",
+            "search_flights": "/api/v1/flights/search",
+            "booking_options": "/api/v1/flights/booking-options/{booking_token}",
+            "popular_flights": "/api/v1/flights/popular",
+            "airport_suggestions": "/api/v1/flights/airports"
+        }
+    }
 
 if __name__ == "__main__":
     import uvicorn

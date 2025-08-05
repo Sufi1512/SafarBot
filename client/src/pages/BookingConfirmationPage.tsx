@@ -5,14 +5,12 @@ import {
   Plane, 
   Hotel, 
   Calendar, 
-  MapPin, 
   Users, 
   DollarSign,
   ArrowLeft,
   Download,
   Share2,
   Mail,
-  Phone,
   CreditCard,
   Shield
 } from 'lucide-react';
@@ -50,7 +48,7 @@ const BookingConfirmationPage: React.FC = () => {
   };
 
   const renderFlightDetails = () => {
-    const { booking, passengers } = bookingData;
+    const { booking } = bookingData;
     return (
       <div className="space-y-4">
         <div className="flex items-center space-x-3">

@@ -8,7 +8,6 @@ import {
   Heart, 
   Plane, 
   Hotel, 
-  Utensils, 
   AlertCircle,
   Search,
   Star,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { flightAPI, BookingOptionsResponse, BookingOption, Flight } from '../services/api';
+import { flightAPI, BookingOptionsResponse, BookingOption } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorDisplay from '../components/ErrorDisplay';
 
@@ -84,7 +84,7 @@ const BookingOptionsPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {flight.flight_segments?.map((segment, index) => (
+        {flight.flight_segments?.map((segment: any, index: number) => (
           <div key={index} className="border rounded-lg p-4">
             <div className="flex justify-between items-center mb-2">
               <div>
@@ -113,7 +113,7 @@ const BookingOptionsPage: React.FC = () => {
       {flight.layovers && flight.layovers.length > 0 && (
         <div className="mt-4">
           <h4 className="text-sm font-semibold text-gray-700 mb-2">Layovers</h4>
-          {flight.layovers.map((layover, index) => (
+          {flight.layovers.map((layover: any, index: number) => (
             <div key={index} className="text-sm text-gray-600">
               {layover.duration || 0} min at {layover.airport || 'Unknown'} ({layover.airport_name || ''})
               {layover.overnight && ' - Overnight'}
@@ -221,11 +221,11 @@ const BookingOptionsPage: React.FC = () => {
   }
 
   if (error) {
-    return <ErrorDisplay message={error} onRetry={loadBookingOptions} />;
+    return <ErrorDisplay error={error} onRetry={loadBookingOptions} />;
   }
 
   if (!bookingData) {
-    return <ErrorDisplay message="No booking data available" />;
+    return <ErrorDisplay error="No booking data available" />;
   }
 
   return (

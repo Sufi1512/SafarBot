@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Calendar, Users, DollarSign, Clock, Star, Phone, Globe, Heart, AlertCircle } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, DollarSign, Clock, Star, AlertCircle, Hotel, Utensils } from 'lucide-react';
 import { itineraryAPI, hotelAPI, restaurantAPI } from '../services/api';
 
 interface DailyPlan {

@@ -9,12 +9,8 @@ import {
   Filter, 
   Star, 
   Clock, 
-  DollarSign,
   ArrowRight,
-  ArrowLeft,
-  AlertCircle,
-  CheckCircle,
-  X
+  ArrowLeft
 } from 'lucide-react';
 import { flightAPI, Flight, FlightSearchRequest, AirportSuggestion } from '../services/api';
 
@@ -38,7 +34,6 @@ const FlightBookingPage: React.FC = () => {
     maxStops: 2,
     airlines: [] as string[]
   });
-  const [popularFlights, setPopularFlights] = useState<Flight[]>([]);
   const [fromSuggestions, setFromSuggestions] = useState<AirportSuggestion[]>([]);
   const [toSuggestions, setToSuggestions] = useState<AirportSuggestion[]>([]);
   const [showFromSuggestions, setShowFromSuggestions] = useState(false);
@@ -48,8 +43,8 @@ const FlightBookingPage: React.FC = () => {
   useEffect(() => {
     const loadPopularFlights = async () => {
       try {
-        const flights = await flightAPI.getPopularFlights();
-        setPopularFlights(flights);
+        await flightAPI.getPopularFlights();
+        // Popular flights loaded but not used in current UI
       } catch (error) {
         console.error('Error loading popular flights:', error);
       }
@@ -596,7 +591,7 @@ const FlightBookingPage: React.FC = () => {
                   {/* Flight Segments Details */}
                   <div className="border-t border-gray-200 pt-4">
                     <div className="space-y-3">
-                      {flight.flight_segments.map((segment, index) => (
+                      {flight.flight_segments.map((segment, _index) => (
                         <div key={segment.id} className="flex items-center justify-between">
                           <div className="flex items-center space-x-4">
                             {/* Segment Route */}
@@ -639,9 +634,9 @@ const FlightBookingPage: React.FC = () => {
 
                           {/* Amenities */}
                           <div className="flex space-x-1">
-                            {segment.amenities.slice(0, 3).map((amenity, amenityIndex) => (
+                            {segment.amenities.slice(0, 3).map((amenity, _amenityIndex) => (
                               <span
-                                key={amenityIndex}
+                                key={_amenityIndex}
                                 className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full"
                                 title={amenity}
                               >

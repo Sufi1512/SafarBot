@@ -719,9 +719,9 @@ const ResultsPage: React.FC = () => {
                           {dailyPlans.map((plan) => {
                             const dayCost = plan.activities.reduce((sum, activity) => sum + (activity.cost || 0), 0);
                             return (
-                              <div key={plan.day} className="flex justify-between text-sm">
-                                <span>Day {plan.day}</span>
-                                <span className="font-medium">${dayCost}</span>
+                              <div key={plan.day} className="flex justify-between text-sm text-blue600">
+                                <span className="font-medium text-blue-600">Day {plan.day}</span>
+                                <span className="font-medium text-blue-600">${dayCost}</span>
                               </div>
                             );
                           })}

@@ -179,16 +179,17 @@ const HomePage: React.FC = () => {
 
       {/* Header */}
       <header className="glass-dark sticky top-0 z-50 border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-3">
+            {/* Left side - Logo and Name */}
+            <div className="flex items-center space-x-1">
               <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center pulse-glow">
                 <Plane className="w-7 h-7 text-white" />
               </div>
               <h1 className="text-3xl font-bold gradient-text">SafarBot</h1>
             </div>
             
-            {/* Desktop Navigation */}
+            {/* Right side - Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
               <a href="#features" className="nav-link">Features</a>
               <a href="#destinations" className="nav-link">Destinations</a>
@@ -208,7 +209,7 @@ const HomePage: React.FC = () => {
               <button className="btn-primary px-6 py-2">Sign In</button>
             </nav>
 
-            {/* Mobile menu button */}
+            {/* Right side - Mobile menu button */}
             <button
               className="md:hidden p-2 hover:bg-white/10 rounded-lg transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

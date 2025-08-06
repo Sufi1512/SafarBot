@@ -196,8 +196,9 @@ const HotelBookingPage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-6">
+            {/* Left side - Back button and Logo/Name */}
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => navigate('/')}
@@ -212,6 +213,7 @@ const HotelBookingPage: React.FC = () => {
                 <h1 className="text-2xl font-bold text-gray-900">Hotel Booking</h1>
               </div>
             </div>
+            {/* Right side - Description */}
             <p className="text-sm text-gray-500">Find the perfect place to stay</p>
           </div>
         </div>

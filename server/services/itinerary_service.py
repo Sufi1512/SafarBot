@@ -2,7 +2,7 @@ import asyncio
 from datetime import date, timedelta
 from typing import List, Dict, Any, Optional
 import logging
-from models import ItineraryResponse, DailyPlan, Activity, Restaurant, Hotel
+from models import ItineraryResponse, DailyPlan
 from config import settings
 import google.generativeai as genai
 import json
@@ -113,7 +113,7 @@ class ItineraryService:
                     activities=day_data.get('activities', []),
                     meals=day_data.get('meals', []),
                     accommodation=day_data.get('accommodation'),
-                    totalCost=day_data.get('total_cost', 0)
+                    transport=day_data.get('transport', [])
                 )
                 daily_plans.append(daily_plan)
                 current_date += timedelta(days=1)

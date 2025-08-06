@@ -18,11 +18,7 @@ import {
   ArrowRight,
   Menu,
   X,
-  Sparkles,
-  Compass,
-  Map,
-  Clock,
-  TrendingUp
+  Sparkles
 } from 'lucide-react';
 
 interface TravelForm {
@@ -517,7 +513,7 @@ const HomePage: React.FC = () => {
               { name: 'Dubai', country: 'UAE', image: '🏜️', rating: 4.6, price: 'From $900', color: 'from-orange-500 to-red-500' },
               { name: 'London', country: 'UK', image: '🇬🇧', rating: 4.8, price: 'From $700', color: 'from-blue-500 to-indigo-500' },
               { name: 'Singapore', country: 'Singapore', image: '🌴', rating: 4.7, price: 'From $1000', color: 'from-green-500 to-teal-500' }
-            ].map((dest, index) => (
+            ].map((dest) => (
               <div key={dest.name} className="card-3d overflow-hidden hover-lift">
                 <div className={`h-48 bg-gradient-to-br ${dest.color} flex items-center justify-center relative overflow-hidden`}>
                   <div className="text-6xl z-10">{dest.image}</div>

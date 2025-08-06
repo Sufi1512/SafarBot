@@ -2,20 +2,27 @@ import asyncio
 from datetime import date, timedelta
 from typing import List, Dict, Any, Optional
 import logging
-from models import ItineraryResponse, DailyPlan
+from models import ItineraryResponse, DailyPlan, Activity, Restaurant, Hotel
 from config import settings
-import sys
-import os
-
-# Add langchain_core to path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'langchain_core'))
-from itinerary_generator import ItineraryGenerator
+import google.generativeai as genai
+import json
 
 logger = logging.getLogger(__name__)
 
 class ItineraryService:
     def __init__(self):
-        self.generator = ItineraryGenerator()
+        # Initialize Google Gemini API
+        if settings.google_api_key:
+            try:
+                genai.configure(api_key=settings.google_api_key)
+                self.model = genai.GenerativeModel('gemini-pro')
+                logger.info("Google Gemini API initialized for itinerary generation")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Google Gemini API: {str(e)}")
+                self.model = None
+        else:
+            logger.warning("No Google API key provided")
+            self.model = None
         
     async def generate_itinerary(
         self,
@@ -31,18 +38,69 @@ class ItineraryService:
         Generate a personalized travel itinerary using AI
         """
         try:
+            if not self.model:
+                raise Exception("AI service is not properly configured")
+            
             # Calculate trip duration
             total_days = (end_date - start_date).days + 1
             
-            # Generate itinerary using LangChain
-            itinerary_data = await self.generator.generate_itinerary(
-                destination=destination,
-                days=total_days,
-                interests=interests,
-                budget=budget,
-                travelers=travelers,
-                accommodation_type=accommodation_type
-            )
+            # Create prompt for itinerary generation
+            prompt = f"""
+            Create a detailed travel itinerary for {destination} for {total_days} days.
+            
+            Trip Details:
+            - Destination: {destination}
+            - Duration: {total_days} days
+            - Travelers: {travelers}
+            - Budget: ${budget if budget else 'Flexible'}
+            - Interests: {', '.join(interests) if interests else 'General sightseeing'}
+            - Accommodation: {accommodation_type if accommodation_type else 'Standard'}
+            
+            Please provide a JSON response with the following structure:
+            {{
+                "daily_plans": [
+                    {{
+                        "day": 1,
+                        "activities": [
+                            {{
+                                "time": "09:00",
+                                "title": "Activity name",
+                                "description": "Description",
+                                "location": "Location",
+                                "duration": "2 hours",
+                                "cost": 50,
+                                "type": "sightseeing"
+                            }}
+                        ],
+                        "meals": [
+                            {{
+                                "name": "Restaurant name",
+                                "cuisine": "Cuisine type",
+                                "rating": 4.5,
+                                "price_range": "$$",
+                                "description": "Description"
+                            }}
+                        ],
+                        "accommodation": {{
+                            "name": "Hotel name",
+                            "rating": 4.0,
+                            "price": 150,
+                            "amenities": ["WiFi", "Pool"],
+                            "location": "Location"
+                        }}
+                    }}
+                ],
+                "budget_estimate": 2000,
+                "recommendations": {{
+                    "hotels": [],
+                    "restaurants": [],
+                    "tips": []
+                }}
+            }}
+            """
+            
+            response = self.model.generate_content(prompt)
+            itinerary_data = json.loads(response.text)
             
             # Create daily plans
             daily_plans = []
@@ -55,22 +113,21 @@ class ItineraryService:
                     activities=day_data.get('activities', []),
                     meals=day_data.get('meals', []),
                     accommodation=day_data.get('accommodation'),
-                    transport=day_data.get('transport', [])
+                    totalCost=day_data.get('total_cost', 0)
                 )
                 daily_plans.append(daily_plan)
                 current_date += timedelta(days=1)
             
             # Create response
-            response = ItineraryResponse(
+            response_obj = ItineraryResponse(
                 destination=destination,
                 total_days=total_days,
                 budget_estimate=itinerary_data.get('budget_estimate', 0.0),
                 daily_plans=daily_plans,
-                recommendations=itinerary_data.get('recommendations', {}),
-                weather_info=itinerary_data.get('weather_info')
+                recommendations=itinerary_data.get('recommendations', {})
             )
             
-            return response
+            return response_obj
             
         except Exception as e:
             logger.error(f"Error generating itinerary: {str(e)}")
@@ -88,14 +145,30 @@ class ItineraryService:
         Predict travel costs for the given destination and dates
         """
         try:
+            if not self.model:
+                raise Exception("AI service is not properly configured")
+            
             total_days = (end_date - start_date).days + 1
             
-            price_prediction = await self.generator.predict_prices(
-                destination=destination,
-                days=total_days,
-                travelers=travelers,
-                accommodation_type=accommodation_type
-            )
+            prompt = f"""
+            Estimate travel costs for {destination} for {total_days} days with {travelers} travelers.
+            
+            Please provide a JSON response with cost estimates:
+            {{
+                "accommodation_cost": 1200,
+                "food_cost": 800,
+                "transportation_cost": 400,
+                "activities_cost": 600,
+                "total_estimated_cost": 3000,
+                "cost_breakdown": {{
+                    "per_day": 300,
+                    "per_person": 1500
+                }}
+            }}
+            """
+            
+            response = self.model.generate_content(prompt)
+            price_prediction = json.loads(response.text)
             
             return price_prediction
             

@@ -2,27 +2,24 @@ import asyncio
 from typing import Dict, Any, Optional
 import logging
 from config import settings
-import sys
-import os
-from langsmith import Client
-
-# Add langchain_core to path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'langchain_core'))
-from chat_bot import ChatBot
+import google.generativeai as genai
 
 logger = logging.getLogger(__name__)
 
 class ChatService:
     def __init__(self):
-        self.chat_bot = ChatBot()
-        # Initialize LangSmith client if API key is available
-        self.langsmith_client = None
-        if settings.langsmith_api_key:
+        # Initialize Google Gemini API
+        if settings.google_api_key:
             try:
-                self.langsmith_client = Client()
-                logger.info("LangSmith client initialized")
+                genai.configure(api_key=settings.google_api_key)
+                self.model = genai.GenerativeModel('gemini-pro')
+                logger.info("Google Gemini API initialized")
             except Exception as e:
-                logger.warning(f"Failed to initialize LangSmith client: {str(e)}")
+                logger.warning(f"Failed to initialize Google Gemini API: {str(e)}")
+                self.model = None
+        else:
+            logger.warning("No Google API key provided")
+            self.model = None
         
     async def get_response(
         self,
@@ -33,12 +30,22 @@ class ChatService:
         Get AI response for user message
         """
         try:
-            response = await self.chat_bot.get_response(
-                message=message,
-                context=context
-            )
+            if not self.model:
+                return "I apologize, but the AI service is not properly configured. Please check the API configuration."
             
-            return response
+            # Create a travel-focused prompt
+            travel_prompt = f"""
+            You are a helpful AI travel assistant. Please provide helpful travel advice and recommendations.
+            
+            User message: {message}
+            
+            Context: {context or 'No specific context provided'}
+            
+            Please provide a helpful, informative response about travel planning, destinations, or travel-related questions.
+            """
+            
+            response = self.model.generate_content(travel_prompt)
+            return response.text
             
         except Exception as e:
             logger.error(f"Error in chat service: {str(e)}")
@@ -53,12 +60,23 @@ class ChatService:
         Get specific travel advice for a destination
         """
         try:
-            advice = await self.chat_bot.get_travel_advice(
-                destination=destination,
-                question=question
-            )
+            if not self.model:
+                return "I apologize, but the AI service is not properly configured. Please check the API configuration."
             
-            return advice
+            advice_prompt = f"""
+            Please provide specific travel advice for {destination}.
+            
+            Question: {question}
+            
+            Please include:
+            - Practical tips for visiting {destination}
+            - Recommendations based on the question
+            - Safety considerations
+            - Best times to visit
+            """
+            
+            response = self.model.generate_content(advice_prompt)
+            return response.text
             
         except Exception as e:
             logger.error(f"Error getting travel advice: {str(e)}")

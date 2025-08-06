@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv('.env')
 
 # Import routers
-from routers import flights, chat
+from routers import flights, chat, itinerary
 from config import settings
 
 app = FastAPI(
@@ -37,6 +37,7 @@ app.add_middleware(
 # Include routers
 app.include_router(flights.router, prefix="/api/v1", tags=["flights"])
 app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
+app.include_router(itinerary.router, prefix="/api/v1", tags=["itinerary"])
 
 @app.get("/health")
 async def health_check():
@@ -54,7 +55,9 @@ async def root():
             "popular_flights": "/api/v1/flights/popular",
             "airport_suggestions": "/api/v1/flights/airports",
             "chat": "/api/v1/chat",
-            "chat_history": "/api/v1/chat/history"
+            "chat_history": "/api/v1/chat/history",
+            "generate_itinerary": "/api/v1/generate-itinerary",
+            "predict_prices": "/api/v1/predict-prices"
         }
     }
 

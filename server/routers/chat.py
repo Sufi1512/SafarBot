@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import Response
 from models import ChatRequest, ChatResponse, APIResponse
 from services.chat_service import ChatService
 import logging
@@ -7,6 +8,21 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 chat_service = ChatService()
+
+@router.options("/chat")
+async def chat_options():
+    """
+    Handle OPTIONS requests for CORS preflight
+    """
+    return Response(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Max-Age": "86400",
+        }
+    )
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat_with_bot(request: ChatRequest):

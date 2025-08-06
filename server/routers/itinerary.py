@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import Response
 from models import ItineraryRequest, ItineraryResponse, APIResponse
 from services.itinerary_service import ItineraryService
 import logging
@@ -7,6 +8,36 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 itinerary_service = ItineraryService()
+
+@router.options("/generate-itinerary")
+async def generate_itinerary_options():
+    """
+    Handle OPTIONS requests for CORS preflight
+    """
+    return Response(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Max-Age": "86400",
+        }
+    )
+
+@router.options("/predict-prices")
+async def predict_prices_options():
+    """
+    Handle OPTIONS requests for CORS preflight
+    """
+    return Response(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Max-Age": "86400",
+        }
+    )
 
 @router.post("/generate-itinerary", response_model=ItineraryResponse)
 async def generate_itinerary(request: ItineraryRequest):

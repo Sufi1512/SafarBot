@@ -15,7 +15,7 @@ class ItineraryService:
         if settings.google_api_key:
             try:
                 genai.configure(api_key=settings.google_api_key)
-                self.model = genai.GenerativeModel('gemini-pro')
+                self.model = genai.GenerativeModel('gemini-2.5-flash')
                 logger.info("Google Gemini API initialized for itinerary generation")
             except Exception as e:
                 logger.warning(f"Failed to initialize Google Gemini API: {str(e)}")

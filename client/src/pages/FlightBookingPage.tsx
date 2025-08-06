@@ -170,44 +170,44 @@ const FlightBookingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-x-hidden">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className="glass-dark sticky top-0 z-50 border-b border-white/10">
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-6">
             {/* Left side - Back button and Logo/Name */}
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => navigate('/')}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
+                <ArrowLeft className="w-5 h-5 text-white" />
               </button>
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center pulse-glow">
                   <Plane className="w-6 h-6 text-white" />
                 </div>
-                <h1 className="text-2xl font-bold text-gray-900">Flight Booking</h1>
+                <h1 className="text-2xl font-bold gradient-text">Flight Booking</h1>
               </div>
             </div>
             {/* Right side - Description */}
-            <p className="text-sm text-gray-500">Find the best flights for your journey</p>
+            <p className="text-sm text-gray-300">Find the best flights for your journey</p>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search Form */}
-        <div className="card mb-8">
+        <div className="card-3d mb-8">
           <form onSubmit={handleSearch} className="space-y-6">
             {/* Trip Type Selector */}
             <div className="flex items-center space-x-6 mb-4">
-              <label className="text-sm font-medium text-gray-700">Trip Type:</label>
+              <label className="text-sm font-medium text-white">Trip Type:</label>
               <div className="flex items-center space-x-2">
                 <label className={`flex items-center px-4 py-2 rounded-lg border-2 cursor-pointer transition-all ${
                   searchForm.tripType === 'one-way' 
-                    ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                    : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400'
+                    ? 'border-blue-400 bg-blue-500/20 text-blue-300' 
+                    : 'border-white/30 bg-white/10 text-gray-300 hover:border-white/50'
                 }`}>
                   <input
                     type="radio"
@@ -215,14 +215,14 @@ const FlightBookingPage: React.FC = () => {
                     value="one-way"
                     checked={searchForm.tripType === 'one-way'}
                     onChange={(e) => handleTripTypeChange(e.target.value)}
-                    className="mr-2 text-blue-600 focus:ring-blue-500"
+                    className="mr-2 text-blue-400 focus:ring-blue-400"
                   />
                   <span className="text-sm font-medium">One Way</span>
                 </label>
                 <label className={`flex items-center px-4 py-2 rounded-lg border-2 cursor-pointer transition-all ${
                   searchForm.tripType === 'round-trip' 
-                    ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                    : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400'
+                    ? 'border-blue-400 bg-blue-500/20 text-blue-300' 
+                    : 'border-white/30 bg-white/10 text-gray-300 hover:border-white/50'
                 }`}>
                   <input
                     type="radio"
@@ -230,7 +230,7 @@ const FlightBookingPage: React.FC = () => {
                     value="round-trip"
                     checked={searchForm.tripType === 'round-trip'}
                     onChange={(e) => handleTripTypeChange(e.target.value)}
-                    className="mr-2 text-blue-600 focus:ring-blue-500"
+                    className="mr-2 text-blue-400 focus:ring-blue-400"
                   />
                   <span className="text-sm font-medium">Round Trip</span>
                 </label>
@@ -242,7 +242,7 @@ const FlightBookingPage: React.FC = () => {
             }`}>
               {/* From */}
               <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-white mb-2">
                   <MapPin className="w-4 h-4 inline mr-2" />
                   From
                 </label>
@@ -257,16 +257,16 @@ const FlightBookingPage: React.FC = () => {
                   required
                 />
                 {showFromSuggestions && fromSuggestions.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  <div className="absolute z-10 w-full mt-1 glass-dark border border-white/20 rounded-md shadow-lg max-h-60 overflow-y-auto">
                     {fromSuggestions.map((airport, index) => (
                       <div
                         key={index}
-                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                        className="px-4 py-2 hover:bg-white/10 cursor-pointer border-b border-white/10 last:border-b-0"
                         onClick={() => selectFromAirport(airport)}
                       >
-                        <div className="font-medium text-gray-900">{airport.code}</div>
-                        <div className="text-sm text-gray-600">{airport.name}</div>
-                        <div className="text-xs text-gray-500">{airport.city}, {airport.country}</div>
+                        <div className="font-medium text-white">{airport.code}</div>
+                        <div className="text-sm text-gray-300">{airport.name}</div>
+                        <div className="text-xs text-gray-400">{airport.city}, {airport.country}</div>
                       </div>
                     ))}
                   </div>
@@ -275,7 +275,7 @@ const FlightBookingPage: React.FC = () => {
 
               {/* To */}
               <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-white mb-2">
                   <MapPin className="w-4 h-4 inline mr-2" />
                   To
                 </label>
@@ -290,16 +290,16 @@ const FlightBookingPage: React.FC = () => {
                   required
                 />
                 {showToSuggestions && toSuggestions.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  <div className="absolute z-10 w-full mt-1 glass-dark border border-white/20 rounded-md shadow-lg max-h-60 overflow-y-auto">
                     {toSuggestions.map((airport, index) => (
                       <div
                         key={index}
-                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                        className="px-4 py-2 hover:bg-white/10 cursor-pointer border-b border-white/10 last:border-b-0"
                         onClick={() => selectToAirport(airport)}
                       >
-                        <div className="font-medium text-gray-900">{airport.code}</div>
-                        <div className="text-sm text-gray-600">{airport.name}</div>
-                        <div className="text-xs text-gray-500">{airport.city}, {airport.country}</div>
+                        <div className="font-medium text-white">{airport.code}</div>
+                        <div className="text-sm text-gray-300">{airport.name}</div>
+                        <div className="text-xs text-gray-400">{airport.city}, {airport.country}</div>
                       </div>
                     ))}
                   </div>
@@ -308,7 +308,7 @@ const FlightBookingPage: React.FC = () => {
 
               {/* Departure Date */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-white mb-2">
                   <Calendar className="w-4 h-4 inline mr-2" />
                   Departure
                 </label>
@@ -324,7 +324,7 @@ const FlightBookingPage: React.FC = () => {
               {/* Return Date - Only show for round-trip */}
               {searchForm.tripType === 'round-trip' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-white mb-2">
                     <Calendar className="w-4 h-4 inline mr-2" />
                     Return
                   </label>
@@ -341,7 +341,7 @@ const FlightBookingPage: React.FC = () => {
 
               {/* Passengers */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-white mb-2">
                   <Users className="w-4 h-4 inline mr-2" />
                   Passengers
                 </label>
@@ -359,10 +359,10 @@ const FlightBookingPage: React.FC = () => {
 
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-300">
                   <span className="font-medium">Trip:</span> {searchForm.tripType === 'one-way' ? 'One Way' : 'Round Trip'}
                   {searchForm.tripType === 'round-trip' && searchForm.returnDate && (
-                    <span className="ml-2 text-gray-500">
+                    <span className="ml-2 text-gray-400">
                       ({searchForm.departureDate} → {searchForm.returnDate})
                     </span>
                   )}
@@ -370,7 +370,7 @@ const FlightBookingPage: React.FC = () => {
                 <select
                   value={searchForm.class}
                   onChange={(e) => setSearchForm(prev => ({ ...prev, class: e.target.value }))}
-                  className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
+                  className="text-sm border border-white/30 rounded-md px-3 py-2 glass bg-white/10 text-white"
                 >
                   <option value="economy">Economy</option>
                   <option value="premium">Premium Economy</option>
@@ -397,17 +397,17 @@ const FlightBookingPage: React.FC = () => {
 
         {/* Popular Destinations */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Popular Destinations</h2>
+          <h2 className="text-xl font-semibold text-white mb-4">Popular Destinations</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {popularDestinations.map((dest) => (
               <button
                 key={dest.code}
                 onClick={() => setSearchForm(prev => ({ ...prev, to: dest.name }))}
-                className="p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 text-center"
+                className="p-4 card-3d hover-lift text-center"
               >
                 <div className="text-2xl mb-2">✈️</div>
-                <div className="font-medium text-gray-900">{dest.name}</div>
-                <div className="text-sm text-gray-500">{dest.country}</div>
+                <div className="font-medium text-white">{dest.name}</div>
+                <div className="text-sm text-gray-300">{dest.country}</div>
               </button>
             ))}
           </div>
@@ -418,12 +418,12 @@ const FlightBookingPage: React.FC = () => {
           <div className="space-y-6">
             {/* Filters */}
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-xl font-semibold text-white">
                 {flights.length} flights found
               </h2>
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="flex items-center space-x-2 px-4 py-2 glass border border-white/30 rounded-lg hover:bg-white/10"
               >
                 <Filter className="w-4 h-4" />
                 <span>Filters</span>
@@ -432,10 +432,10 @@ const FlightBookingPage: React.FC = () => {
 
             {/* Filters Panel */}
             {showFilters && (
-              <div className="card bg-gray-50">
+              <div className="card-3d bg-white/10">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Max Price</label>
+                    <label className="block text-sm font-medium text-white mb-2">Max Price</label>
                     <input
                       type="range"
                       min="100"
@@ -444,10 +444,10 @@ const FlightBookingPage: React.FC = () => {
                       onChange={(e) => setFilters(prev => ({ ...prev, maxPrice: parseInt(e.target.value) }))}
                       className="w-full"
                     />
-                                         <div className="text-sm text-gray-600">₹{filters.maxPrice}</div>
+                                         <div className="text-sm text-gray-300">₹{filters.maxPrice}</div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Max Stops</label>
+                    <label className="block text-sm font-medium text-white mb-2">Max Stops</label>
                     <select
                       value={filters.maxStops}
                       onChange={(e) => setFilters(prev => ({ ...prev, maxStops: parseInt(e.target.value) }))}
@@ -459,15 +459,15 @@ const FlightBookingPage: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Airlines</label>
+                    <label className="block text-sm font-medium text-white mb-2">Airlines</label>
                     <div className="space-y-2">
                       {['Emirates', 'British Airways', 'Air France', 'Lufthansa'].map(airline => (
                         <label key={airline} className="flex items-center">
                           <input
                             type="checkbox"
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            className="rounded border-white/30 text-blue-400 focus:ring-blue-400"
                           />
-                          <span className="ml-2 text-sm text-gray-700">{airline}</span>
+                          <span className="ml-2 text-sm text-gray-300">{airline}</span>
                         </label>
                       ))}
                     </div>
@@ -481,10 +481,10 @@ const FlightBookingPage: React.FC = () => {
               {flights.map((flight) => (
                 <div
                   key={flight.id}
-                  className={`card cursor-pointer transition-all duration-200 ${
+                  className={`card-3d cursor-pointer transition-all duration-200 ${
                     selectedFlight?.id === flight.id 
-                      ? 'ring-2 ring-blue-500 bg-blue-50' 
-                      : 'hover:shadow-lg'
+                      ? 'ring-2 ring-blue-400 bg-blue-500/20' 
+                      : 'hover-lift'
                   }`}
                   onClick={() => handleFlightSelect(flight)}
                 >
@@ -496,44 +496,44 @@ const FlightBookingPage: React.FC = () => {
                         {flight.airline_logo ? (
                           <img src={flight.airline_logo} alt="Airline" className="w-12 h-12 mb-2" />
                         ) : (
-                          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-2">
-                            <Plane className="w-6 h-6 text-blue-600" />
+                          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mb-2 pulse-glow">
+                            <Plane className="w-6 h-6 text-white" />
                           </div>
                         )}
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-white">
                           {flight.flight_segments[0]?.airline || 'Multiple Airlines'}
                         </div>
-                        <div className="text-xs text-gray-500">{flight.flight_type}</div>
+                        <div className="text-xs text-gray-300">{flight.flight_type}</div>
                       </div>
 
                       {/* Flight Route */}
                       <div className="flex items-center space-x-4">
                         <div className="text-center">
-                          <div className="text-lg font-bold text-gray-900">
+                          <div className="text-lg font-bold text-white">
                             {flight.flight_segments[0]?.departure.time}
                           </div>
-                          <div className="text-sm text-gray-600">
+                          <div className="text-sm text-gray-300">
                             {flight.flight_segments[0]?.departure.airport}
                           </div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-400">
                             {flight.flight_segments[0]?.departure.airport_name}
                           </div>
                         </div>
                         <div className="flex flex-col items-center">
-                          <div className="text-sm text-gray-500">{flight.total_duration}</div>
-                          <div className="w-16 h-px bg-gray-300 my-2"></div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-sm text-gray-300">{flight.total_duration}</div>
+                          <div className="w-16 h-px bg-white/30 my-2"></div>
+                          <div className="text-xs text-gray-400">
                             {flight.stops === 0 ? 'Direct' : `${flight.stops} stop${flight.stops > 1 ? 's' : ''}`}
                           </div>
                         </div>
                         <div className="text-center">
-                          <div className="text-lg font-bold text-gray-900">
+                          <div className="text-lg font-bold text-white">
                             {flight.flight_segments[flight.flight_segments.length - 1]?.arrival.time}
                           </div>
-                          <div className="text-sm text-gray-600">
+                          <div className="text-sm text-gray-300">
                             {flight.flight_segments[flight.flight_segments.length - 1]?.arrival.airport}
                           </div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-400">
                             {flight.flight_segments[flight.flight_segments.length - 1]?.arrival.airport_name}
                           </div>
                         </div>
@@ -541,12 +541,12 @@ const FlightBookingPage: React.FC = () => {
 
                       {/* Carbon Emissions */}
                       <div className="text-center">
-                        <div className="text-xs text-gray-500">Carbon Emissions</div>
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-xs text-gray-400">Carbon Emissions</div>
+                        <div className="text-sm font-medium text-white">
                           {Math.round(flight.carbon_emissions.this_flight / 1000)}kg CO₂
                         </div>
                         <div className={`text-xs ${
-                          flight.carbon_emissions.difference_percent < 0 ? 'text-green-600' : 'text-red-600'
+                          flight.carbon_emissions.difference_percent < 0 ? 'text-green-400' : 'text-red-400'
                         }`}>
                           {flight.carbon_emissions.difference_percent > 0 ? '+' : ''}
                           {flight.carbon_emissions.difference_percent}% vs typical
@@ -556,11 +556,11 @@ const FlightBookingPage: React.FC = () => {
 
                     {/* Price and Rating */}
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-gray-900">
+                      <div className="text-2xl font-bold text-white">
                         ₹{flight.price}
-                        <span className="text-sm font-normal text-gray-500 ml-1">{flight.currency}</span>
+                        <span className="text-sm font-normal text-gray-300 ml-1">{flight.currency}</span>
                       </div>
-                      <div className="flex items-center justify-end text-sm text-gray-600 mb-2">
+                      <div className="flex items-center justify-end text-sm text-gray-300 mb-2">
                         <Star className="w-4 h-4 text-yellow-400 mr-1" />
                         {flight.rating}
                       </div>
@@ -582,7 +582,7 @@ const FlightBookingPage: React.FC = () => {
                             View Booking Options
                           </button>
                         ) : (
-                          <div className="text-xs text-gray-500 text-center py-2">
+                          <div className="text-xs text-gray-400 text-center py-2">
                             Booking options not available
                           </div>
                         )}
@@ -591,7 +591,7 @@ const FlightBookingPage: React.FC = () => {
                   </div>
 
                   {/* Flight Segments Details */}
-                  <div className="border-t border-gray-200 pt-4">
+                  <div className="border-t border-white/20 pt-4">
                     <div className="space-y-3">
                       {flight.flight_segments.map((segment, _index) => (
                         <div key={segment.id} className="flex items-center justify-between">
@@ -599,35 +599,35 @@ const FlightBookingPage: React.FC = () => {
                             {/* Segment Route */}
                             <div className="flex items-center space-x-3">
                               <div className="text-center">
-                                <div className="text-sm font-medium text-gray-900">{segment.departure.time}</div>
-                                <div className="text-xs text-gray-600">{segment.departure.airport}</div>
+                                <div className="text-sm font-medium text-white">{segment.departure.time}</div>
+                                <div className="text-xs text-gray-300">{segment.departure.airport}</div>
                               </div>
                               <div className="flex flex-col items-center">
-                                <div className="text-xs text-gray-500">{segment.duration}</div>
-                                <div className="w-12 h-px bg-gray-300 my-1"></div>
-                                <div className="text-xs text-gray-500">{segment.aircraft}</div>
+                                <div className="text-xs text-gray-400">{segment.duration}</div>
+                                <div className="w-12 h-px bg-white/30 my-1"></div>
+                                <div className="text-xs text-gray-400">{segment.aircraft}</div>
                               </div>
                               <div className="text-center">
-                                <div className="text-sm font-medium text-gray-900">{segment.arrival.time}</div>
-                                <div className="text-xs text-gray-600">{segment.arrival.airport}</div>
+                                <div className="text-sm font-medium text-white">{segment.arrival.time}</div>
+                                <div className="text-xs text-gray-300">{segment.arrival.airport}</div>
                               </div>
                             </div>
 
                             {/* Flight Details */}
                             <div className="flex items-center space-x-2">
-                              <div className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                              <div className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded border border-blue-400/30">
                                 {segment.airline} {segment.flight_number}
                               </div>
-                              <div className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                              <div className="text-xs bg-white/10 text-gray-300 px-2 py-1 rounded border border-white/20">
                                 {segment.travel_class}
                               </div>
                               {segment.overnight && (
-                                <div className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">
+                                <div className="text-xs bg-orange-500/20 text-orange-300 px-2 py-1 rounded border border-orange-400/30">
                                   Overnight
                                 </div>
                               )}
                               {segment.often_delayed && (
-                                <div className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
+                                <div className="text-xs bg-red-500/20 text-red-300 px-2 py-1 rounded border border-red-400/30">
                                   Often Delayed
                                 </div>
                               )}
@@ -639,14 +639,14 @@ const FlightBookingPage: React.FC = () => {
                             {segment.amenities.slice(0, 3).map((amenity, _amenityIndex) => (
                               <span
                                 key={_amenityIndex}
-                                className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full"
+                                className="px-2 py-1 bg-green-500/20 text-green-300 text-xs rounded-full border border-green-400/30"
                                 title={amenity}
                               >
                                 {amenity}
                               </span>
                             ))}
                             {segment.amenities.length > 3 && (
-                              <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+                              <span className="px-2 py-1 bg-white/10 text-gray-300 text-xs rounded-full border border-white/20">
                                 +{segment.amenities.length - 3}
                               </span>
                             )}
@@ -656,11 +656,11 @@ const FlightBookingPage: React.FC = () => {
 
                       {/* Layovers */}
                       {flight.layovers.length > 0 && (
-                        <div className="border-t border-gray-200 pt-3">
-                          <div className="text-sm font-medium text-gray-700 mb-2">Layovers:</div>
+                        <div className="border-t border-white/20 pt-3">
+                          <div className="text-sm font-medium text-white mb-2">Layovers:</div>
                           <div className="space-y-2">
                             {flight.layovers.map((layover, index) => (
-                              <div key={index} className="flex items-center space-x-2 text-xs text-gray-600">
+                              <div key={index} className="flex items-center space-x-2 text-xs text-gray-300">
                                 <Clock className="w-3 h-3" />
                                 <span>
                                   {layover.duration}min at {layover.airport} ({layover.airport_name})
@@ -681,22 +681,22 @@ const FlightBookingPage: React.FC = () => {
 
         {/* Booking Summary */}
         {selectedFlight && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
+          <div className="fixed bottom-0 left-0 right-0 glass-dark border-t border-white/20 p-4">
             <div className="max-w-7xl mx-auto flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-gray-900">Selected Flight</h3>
-                <p className="text-sm text-gray-600">
+                <h3 className="font-semibold text-white">Selected Flight</h3>
+                <p className="text-sm text-gray-300">
                   {selectedFlight.flight_segments[0]?.airline} {selectedFlight.flight_segments[0]?.flight_number} • 
                   {selectedFlight.flight_segments[0]?.departure.airport} → {selectedFlight.flight_segments[selectedFlight.flight_segments.length - 1]?.arrival.airport}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-400">
                   {selectedFlight.total_duration} • {selectedFlight.stops === 0 ? 'Direct' : `${selectedFlight.stops} stop${selectedFlight.stops > 1 ? 's' : ''}`}
                 </p>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-gray-900">₹{selectedFlight.price}</div>
-                  <div className="text-sm text-gray-600">per passenger</div>
+                  <div className="text-2xl font-bold text-white">₹{selectedFlight.price}</div>
+                  <div className="text-sm text-gray-300">per passenger</div>
                 </div>
                 <button
                   onClick={handleBooking}

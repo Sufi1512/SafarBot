@@ -384,28 +384,28 @@ const ResultsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-x-hidden">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className="glass-dark sticky top-0 z-50 border-b border-white/10">
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-6">
             {/* Left side - Back button and Logo/Name */}
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => navigate('/')}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
+                <ArrowLeft className="w-5 h-5 text-white" />
               </button>
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center pulse-glow">
                   <MapPin className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
+                  <h1 className="text-2xl font-bold gradient-text">
                     {itineraryData.destination} Itinerary
                   </h1>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-300">
                     {itineraryData.days} days • {itineraryData.travelers} traveler{itineraryData.travelers > 1 ? 's' : ''}
                   </p>
                 </div>
@@ -413,7 +413,7 @@ const ResultsPage: React.FC = () => {
             </div>
             
             {/* Right side - Trip details */}
-            <div className="flex items-center space-x-6 text-sm text-gray-600">
+            <div className="flex items-center space-x-6 text-sm text-gray-300">
               <div className="flex items-center">
                 <Calendar className="w-4 h-4 mr-2" />
                 <span className="hidden sm:inline">
@@ -437,8 +437,8 @@ const ResultsPage: React.FC = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Tabs */}
         <div className="mb-8">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
+          <div className="tab-container">
+            <nav className="flex space-x-2 p-2">
               {[
                 { id: 'itinerary', label: 'Itinerary', icon: '🗓️' },
                 { id: 'hotels', label: 'Hotels', icon: '🏨' },
@@ -447,11 +447,7 @@ const ResultsPage: React.FC = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === tab.id
-                      ? 'border-primary-500 text-primary-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
+                  className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
                 >
                   <span className="mr-2">{tab.icon}</span>
                   {tab.label}
@@ -464,9 +460,9 @@ const ResultsPage: React.FC = () => {
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-              <p className="text-lg text-gray-600 mb-2">Generating your perfect itinerary...</p>
-              <p className="text-sm text-gray-500">This may take up to 2 minutes. Please be patient while our AI creates the best travel plan for you.</p>
+              <div className="loading-spinner mx-auto mb-4"></div>
+              <p className="text-lg text-white mb-2">Generating your perfect itinerary...</p>
+              <p className="text-sm text-gray-300">This may take up to 2 minutes. Please be patient while our AI creates the best travel plan for you.</p>
               <div className="mt-4 text-xs text-gray-400">
                 ✈️ Analyzing destinations • 🏨 Finding accommodations • 🍽️ Selecting restaurants
               </div>
@@ -475,59 +471,59 @@ const ResultsPage: React.FC = () => {
         ) : error ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center max-w-md">
-              <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-              <p className="text-lg text-red-600 mb-2">
+              <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+              <p className="text-lg text-red-300 mb-2">
                 {error.includes('timeout') ? 'Request Timed Out' : 'Something went wrong'}
               </p>
               <p className="text-gray-600 mb-4">{error}</p>
               {error.includes('timeout') && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                  <p className="text-sm text-yellow-800">
-                    💡 <strong>Tip:</strong> AI itinerary generation can take time. Try simplifying your request or check your internet connection.
-                  </p>
-                </div>
-              )}
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <button
-                  onClick={() => itineraryData && generateRealItinerary(itineraryData)}
-                  className="btn-primary"
-                >
-                  Try Again
-                </button>
-                {error.includes('timeout') && (
-                  <button
-                    onClick={() => itineraryData && generateMockItinerary(itineraryData)}
-                    className="btn-secondary"
-                  >
-                    Use Sample Itinerary
-                  </button>
-                )}
+                              <div className="glass-dark border border-yellow-400/30 rounded-lg p-4 mb-4">
+                <p className="text-sm text-yellow-200">
+                  💡 <strong>Tip:</strong> AI itinerary generation can take time. Try simplifying your request or check your internet connection.
+                </p>
               </div>
+            )}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => itineraryData && generateRealItinerary(itineraryData)}
+                className="btn-primary"
+              >
+                Try Again
+              </button>
+              {error.includes('timeout') && (
+                <button
+                  onClick={() => itineraryData && generateMockItinerary(itineraryData)}
+                  className="btn-secondary"
+                >
+                  Use Sample Itinerary
+                </button>
+              )}
+            </div>
             </div>
           </div>
         ) : (
           <div className="space-y-8">
             {/* Itinerary Summary */}
             {activeTab === 'itinerary' && itinerarySummary && (
-              <div className="card bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+              <div className="card-3d bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-blue-400/30">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-blue-600 mb-2">
+                    <div className="text-3xl font-bold gradient-text mb-2">
                       {itinerarySummary.total_days}
                     </div>
-                    <div className="text-sm text-gray-600">Total Days</div>
+                    <div className="text-sm text-gray-300">Total Days</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-green-600 mb-2">
+                    <div className="text-3xl font-bold text-green-400 mb-2">
                       ${itinerarySummary.budget_estimate.toLocaleString()}
                     </div>
-                    <div className="text-sm text-gray-600">Estimated Budget</div>
+                    <div className="text-sm text-gray-300">Estimated Budget</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-purple-600 mb-2">
+                    <div className="text-3xl font-bold text-purple-400 mb-2">
                       {dailyPlans.length}
                     </div>
-                    <div className="text-sm text-gray-600">Planned Days</div>
+                    <div className="text-sm text-gray-300">Planned Days</div>
                   </div>
                 </div>
               </div>
@@ -537,15 +533,15 @@ const ResultsPage: React.FC = () => {
               <>
                 {/* Weather Information */}
                 {weatherInfo && (
-                  <div className="card bg-blue-50 border-blue-200">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <div className="card-3d bg-blue-500/20 border-blue-400/30">
+                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                       🌤️ Weather Information
                     </h3>
-                    <div className="text-gray-700">
+                    <div className="text-gray-300">
                       {typeof weatherInfo === 'string' ? (
                         <p>{weatherInfo}</p>
                       ) : (
-                        <pre className="text-sm whitespace-pre-wrap">{JSON.stringify(weatherInfo, null, 2)}</pre>
+                        <pre className="text-sm whitespace-pre-wrap text-gray-300">{JSON.stringify(weatherInfo, null, 2)}</pre>
                       )}
                     </div>
                   </div>
@@ -553,15 +549,15 @@ const ResultsPage: React.FC = () => {
 
                 {/* Travel Tips */}
                 {tips.length > 0 && (
-                  <div className="card bg-yellow-50 border-yellow-200">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <div className="card-3d bg-yellow-500/20 border-yellow-400/30">
+                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                       💡 Travel Tips
                     </h3>
                     <div className="space-y-2">
                       {tips.map((tip, index) => (
                         <div key={index} className="flex items-start space-x-2">
-                          <span className="text-yellow-600 mt-1">•</span>
-                          <p className="text-gray-700">{tip}</p>
+                          <span className="text-yellow-300 mt-1">•</span>
+                          <p className="text-gray-300">{tip}</p>
                         </div>
                       ))}
                     </div>
@@ -569,17 +565,17 @@ const ResultsPage: React.FC = () => {
                 )}
 
                 {dailyPlans.map((plan) => (
-                  <div key={plan.day} className="card">
+                  <div key={plan.day} className="card-3d hover-lift">
                     <div className="flex items-center justify-between mb-6">
                       <div>
-                        <h2 className="text-2xl font-bold text-gray-900">Day {plan.day}</h2>
-                        <p className="text-gray-600">{plan.date}</p>
+                        <h2 className="text-2xl font-bold gradient-text">Day {plan.day}</h2>
+                        <p className="text-gray-300">{plan.date}</p>
                       </div>
                       {plan.accommodation && (
                         <div className="text-right">
-                          <p className="text-sm text-gray-500">Staying at</p>
-                          <p className="font-medium text-gray-900">{plan.accommodation.name}</p>
-                          <div className="flex items-center text-sm text-yellow-500">
+                          <p className="text-sm text-gray-400">Staying at</p>
+                          <p className="font-medium text-white">{plan.accommodation.name}</p>
+                          <div className="flex items-center text-sm text-yellow-400">
                             <Star className="w-4 h-4 mr-1" />
                             {plan.accommodation.rating}
                           </div>
@@ -589,30 +585,30 @@ const ResultsPage: React.FC = () => {
 
                     {/* Accommodation Info */}
                     {plan.accommodation && (
-                      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                        <h4 className="font-semibold text-gray-900 mb-2">🏨 Accommodation</h4>
+                      <div className="mb-6 p-4 glass bg-blue-500/10 rounded-lg">
+                        <h4 className="font-semibold text-white mb-2">🏨 Accommodation</h4>
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="font-medium text-gray-900">{plan.accommodation.name}</p>
-                            <p className="text-sm text-gray-600">{plan.accommodation.location}</p>
+                            <p className="font-medium text-white">{plan.accommodation.name}</p>
+                            <p className="text-sm text-gray-300">{plan.accommodation.location}</p>
                             {plan.accommodation.description && (
-                              <p className="text-sm text-gray-600 mt-1">{plan.accommodation.description}</p>
+                              <p className="text-sm text-gray-300 mt-1">{plan.accommodation.description}</p>
                             )}
                           </div>
                           <div className="text-right">
-                            <div className="flex items-center text-yellow-500 mb-1">
+                            <div className="flex items-center text-yellow-400 mb-1">
                               <Star className="w-4 h-4 mr-1" />
                               <span className="font-medium">{plan.accommodation.rating}</span>
                             </div>
                             {plan.accommodation.price && (
-                              <p className="text-sm text-gray-600">${plan.accommodation.price}/night</p>
+                              <p className="text-sm text-gray-300">${plan.accommodation.price}/night</p>
                             )}
                           </div>
                         </div>
                         {plan.accommodation.amenities && plan.accommodation.amenities.length > 0 && (
                           <div className="mt-3 flex flex-wrap gap-2">
                             {plan.accommodation.amenities.map((amenity, idx) => (
-                              <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                              <span key={idx} className="px-2 py-1 bg-blue-500/20 text-blue-300 text-xs rounded-full border border-blue-400/30">
                                 {amenity}
                               </span>
                             ))}
@@ -626,17 +622,17 @@ const ResultsPage: React.FC = () => {
                       {plan.activities.map((activity, index) => (
                         <div key={index} className="flex space-x-4">
                           <div className="flex-shrink-0">
-                            <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
-                              <Clock className="w-5 h-5 text-primary-600" />
+                            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center pulse-glow">
+                              <Clock className="w-5 h-5 text-white" />
                             </div>
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
-                              <h3 className="text-lg font-semibold text-gray-900">{activity.title}</h3>
-                              <span className="text-sm text-gray-500">{activity.time}</span>
+                              <h3 className="text-lg font-semibold text-white">{activity.title}</h3>
+                              <span className="text-sm text-gray-300">{activity.time}</span>
                             </div>
-                            <p className="text-gray-600 mt-1">{activity.description}</p>
-                            <div className="flex items-center mt-2 space-x-4 text-sm text-gray-500">
+                            <p className="text-gray-300 mt-1">{activity.description}</p>
+                            <div className="flex items-center mt-2 space-x-4 text-sm text-gray-400">
                               <div className="flex items-center">
                                 <MapPin className="w-4 h-4 mr-1" />
                                 {activity.location}
@@ -659,17 +655,17 @@ const ResultsPage: React.FC = () => {
 
                     {/* Transport Information */}
                     {plan.transport && plan.transport.length > 0 && (
-                      <div className="mt-6 pt-6 border-t border-gray-200">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">🚗 Transportation</h3>
+                      <div className="mt-6 pt-6 border-t border-white/20">
+                        <h3 className="text-lg font-semibold text-white mb-4">🚗 Transportation</h3>
                         <div className="space-y-3">
                           {plan.transport.map((transport, index) => (
-                            <div key={index} className="bg-gray-50 rounded-lg p-4">
+                            <div key={index} className="glass bg-green-500/10 rounded-lg p-4">
                               <div className="flex items-center justify-between">
                                 <div>
-                                  <h4 className="font-medium text-gray-900">{transport.title || `Transport ${index + 1}`}</h4>
-                                  <p className="text-sm text-gray-600">{transport.description}</p>
+                                  <h4 className="font-medium text-white">{transport.title || `Transport ${index + 1}`}</h4>
+                                  <p className="text-sm text-gray-300">{transport.description}</p>
                                   {transport.location && (
-                                    <p className="text-xs text-gray-500 mt-1">
+                                    <p className="text-xs text-gray-400 mt-1">
                                       <MapPin className="w-3 h-3 inline mr-1" />
                                       {transport.location}
                                     </p>
@@ -677,10 +673,10 @@ const ResultsPage: React.FC = () => {
                                 </div>
                                 <div className="text-right">
                                   {transport.cost && (
-                                    <p className="text-sm font-medium text-gray-900">${transport.cost}</p>
+                                    <p className="text-sm font-medium text-white">${transport.cost}</p>
                                   )}
                                   {transport.duration && (
-                                    <p className="text-xs text-gray-500">{transport.duration}</p>
+                                    <p className="text-xs text-gray-400">{transport.duration}</p>
                                   )}
                                 </div>
                               </div>
@@ -702,14 +698,14 @@ const ResultsPage: React.FC = () => {
                                 <span className="text-sm font-medium text-gray-900">{mealTimes[index]}</span>
                                 <div className="flex items-center">
                                   <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                                  <span className="text-sm text-gray-600">{restaurant.rating}</span>
+                                  <span className="text-sm text-gray-300">{restaurant.rating}</span>
                                 </div>
                               </div>
-                              <h4 className="font-medium text-gray-900">{restaurant.name}</h4>
-                              <p className="text-sm text-gray-600">{restaurant.cuisine} • {restaurant.priceRange}</p>
-                              <p className="text-xs text-gray-500 mt-1">{restaurant.description}</p>
+                              <h4 className="font-medium text-white">{restaurant.name}</h4>
+                              <p className="text-sm text-gray-300">{restaurant.cuisine} • {restaurant.priceRange}</p>
+                              <p className="text-xs text-gray-400 mt-1">{restaurant.description}</p>
                               {restaurant.location && (
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-xs text-gray-400 mt-1">
                                   <MapPin className="w-3 h-3 inline mr-1" />
                                   {restaurant.location}
                                 </p>
@@ -724,32 +720,32 @@ const ResultsPage: React.FC = () => {
 
                 {/* Total Cost Summary */}
                 {dailyPlans.length > 0 && (
-                  <div className="card bg-green-50 border-green-200">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">💰 Cost Summary</h3>
+                  <div className="card-3d bg-green-500/20 border-green-400/30">
+                    <h3 className="text-lg font-semibold text-white mb-4">💰 Cost Summary</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <h4 className="font-medium text-gray-900 mb-2">Daily Breakdown</h4>
+                        <h4 className="font-medium text-white mb-2">Daily Breakdown</h4>
                         <div className="space-y-2">
                           {dailyPlans.map((plan) => {
                             const dayCost = plan.activities.reduce((sum, activity) => sum + (activity.cost || 0), 0);
                             return (
-                              <div key={plan.day} className="flex justify-between text-sm text-blue600">
-                                <span className="font-medium text-blue-600">Day {plan.day}</span>
-                                <span className="font-medium text-blue-600">${dayCost}</span>
+                              <div key={plan.day} className="flex justify-between text-sm">
+                                <span className="font-medium text-blue-300">Day {plan.day}</span>
+                                <span className="font-medium text-blue-300">${dayCost}</span>
                               </div>
                             );
                           })}
                         </div>
                       </div>
                       <div>
-                        <h4 className="font-medium text-gray-900 mb-2">Total Estimated Cost</h4>
-                        <div className="text-2xl font-bold text-green-600">
+                        <h4 className="font-medium text-white mb-2">Total Estimated Cost</h4>
+                        <div className="text-2xl font-bold text-green-400">
                           ${dailyPlans.reduce((total, plan) => {
                             const dayCost = plan.activities.reduce((sum, activity) => sum + (activity.cost || 0), 0);
                             return total + dayCost;
                           }, 0).toLocaleString()}
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">Activities only (excluding accommodation & meals)</p>
+                        <p className="text-sm text-gray-300 mt-1">Activities only (excluding accommodation & meals)</p>
                       </div>
                     </div>
                   </div>
@@ -762,29 +758,29 @@ const ResultsPage: React.FC = () => {
                 {hotelsLoading ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                      <p className="text-gray-600">Loading hotels...</p>
+                      <div className="loading-spinner mx-auto mb-4"></div>
+                      <p className="text-gray-300">Loading hotels...</p>
                     </div>
                   </div>
                 ) : (
                   <>
                     {/* Hotels Summary */}
-                    <div className="card bg-blue-50 border-blue-200 mb-6">
+                    <div className="card-3d bg-blue-500/20 border-blue-400/30 mb-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">🏨 Hotel Recommendations</h3>
-                      <p className="text-sm text-gray-600">
+                      <h3 className="text-lg font-semibold text-white mb-2">🏨 Hotel Recommendations</h3>
+                      <p className="text-sm text-gray-300">
                         {hotels.length} hotel{hotels.length !== 1 ? 's' : ''} found for {itineraryData?.destination}
                       </p>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-blue-600">
+                      <div className="text-2xl font-bold text-blue-400">
                         {hotels.length > 0 ? 
                           Math.round(hotels.reduce((sum, hotel) => sum + (hotel.rating || 0), 0) / hotels.length * 10) / 10 
                           : 0
                         }
                       </div>
-                      <div className="text-sm text-gray-600">Average Rating</div>
+                      <div className="text-sm text-gray-300">Average Rating</div>
                     </div>
                   </div>
                 </div>
@@ -793,21 +789,21 @@ const ResultsPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {hotels.length > 0 ? (
                     hotels.map((hotel, index) => (
-                      <div key={index} className="card hover:shadow-lg transition-shadow duration-200">
+                      <div key={index} className="card-3d hover-lift">
                         <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-xl font-bold text-gray-900">{hotel.name}</h3>
-                          <div className="flex items-center text-yellow-500">
+                          <h3 className="text-xl font-bold text-white">{hotel.name}</h3>
+                          <div className="flex items-center text-yellow-400">
                             <Star className="w-5 h-5 mr-1" />
                             <span className="font-medium">{hotel.rating}</span>
                           </div>
                         </div>
-                        <p className="text-gray-600 mb-4">{hotel.description}</p>
+                        <p className="text-gray-300 mb-4">{hotel.description}</p>
                         <div className="space-y-2 mb-4">
-                          <div className="flex items-center text-sm text-gray-500">
+                          <div className="flex items-center text-sm text-gray-400">
                             <MapPin className="w-4 h-4 mr-2" />
                             {hotel.location}
                           </div>
-                          <div className="flex items-center text-sm text-gray-500">
+                          <div className="flex items-center text-sm text-gray-400">
                             <DollarSign className="w-4 h-4 mr-2" />
                             {hotel.price ? `$${hotel.price}/night` : hotel.price_range || 'Price on request'}
                           </div>
@@ -815,13 +811,13 @@ const ResultsPage: React.FC = () => {
                         {hotel.amenities && hotel.amenities.length > 0 && (
                           <div className="flex flex-wrap gap-2 mb-4">
                             {hotel.amenities.map((amenity, idx) => (
-                              <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                              <span key={idx} className="px-2 py-1 bg-blue-500/20 text-blue-300 text-xs rounded-full border border-blue-400/30">
                                 {amenity}
                               </span>
                             ))}
                           </div>
                         )}
-                        <div className="pt-4 border-t border-gray-200">
+                        <div className="pt-4 border-t border-white/20">
                           <button className="w-full btn-primary text-sm py-2">
                             View Details
                           </button>
@@ -833,8 +829,8 @@ const ResultsPage: React.FC = () => {
                       <div className="text-gray-400 mb-4">
                         <Hotel className="w-16 h-16 mx-auto" />
                       </div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">No Hotels Found</h3>
-                      <p className="text-gray-600">We couldn't find any hotels for this destination. Please try again later.</p>
+                      <h3 className="text-lg font-medium text-white mb-2">No Hotels Found</h3>
+                      <p className="text-gray-300">We couldn't find any hotels for this destination. Please try again later.</p>
                     </div>
                   )}
                 </div>
@@ -848,29 +844,29 @@ const ResultsPage: React.FC = () => {
                 {restaurantsLoading ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
-                      <p className="text-gray-600">Loading restaurants...</p>
+                      <div className="loading-spinner mx-auto mb-4"></div>
+                      <p className="text-gray-300">Loading restaurants...</p>
                     </div>
                   </div>
                 ) : (
                   <>
                     {/* Restaurants Summary */}
-                    <div className="card bg-green-50 border-green-200 mb-6">
+                    <div className="card-3d bg-green-500/20 border-green-400/30 mb-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">🍽️ Restaurant Recommendations</h3>
-                      <p className="text-sm text-gray-600">
+                      <h3 className="text-lg font-semibold text-white mb-2">🍽️ Restaurant Recommendations</h3>
+                      <p className="text-sm text-gray-300">
                         {restaurants.length} restaurant{restaurants.length !== 1 ? 's' : ''} found for {itineraryData?.destination}
                       </p>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-green-600">
+                      <div className="text-2xl font-bold text-green-400">
                         {restaurants.length > 0 ? 
                           Math.round(restaurants.reduce((sum, restaurant) => sum + (restaurant.rating || 0), 0) / restaurants.length * 10) / 10 
                           : 0
                         }
                       </div>
-                      <div className="text-sm text-gray-600">Average Rating</div>
+                      <div className="text-sm text-gray-300">Average Rating</div>
                     </div>
                   </div>
                 </div>
@@ -878,12 +874,12 @@ const ResultsPage: React.FC = () => {
                 {/* Cuisine Filter */}
                 {restaurants.length > 0 && (
                   <div className="mb-6">
-                    <h4 className="text-sm font-medium text-gray-700 mb-3">Filter by Cuisine</h4>
+                    <h4 className="text-sm font-medium text-white mb-3">Filter by Cuisine</h4>
                     <div className="flex flex-wrap gap-2">
                       {Array.from(new Set(restaurants.map(r => r.cuisine))).map((cuisine) => (
                         <button
                           key={cuisine}
-                          className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors"
+                          className="px-3 py-1 text-sm glass text-white rounded-full hover:bg-white/20 transition-colors"
                         >
                           {cuisine}
                         </button>
@@ -896,26 +892,26 @@ const ResultsPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {restaurants.length > 0 ? (
                     restaurants.map((restaurant, index) => (
-                      <div key={index} className="card hover:shadow-lg transition-shadow duration-200">
+                      <div key={index} className="card-3d hover-lift">
                         <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-xl font-bold text-gray-900">{restaurant.name}</h3>
-                          <div className="flex items-center text-yellow-500">
+                          <h3 className="text-xl font-bold text-white">{restaurant.name}</h3>
+                          <div className="flex items-center text-yellow-400">
                             <Star className="w-5 h-5 mr-1" />
                             <span className="font-medium">{restaurant.rating}</span>
                           </div>
                         </div>
-                        <p className="text-gray-600 mb-4">{restaurant.description}</p>
+                        <p className="text-gray-300 mb-4">{restaurant.description}</p>
                         <div className="space-y-2 mb-4">
-                          <div className="flex items-center text-sm text-gray-500">
+                          <div className="flex items-center text-sm text-gray-400">
                             <MapPin className="w-4 h-4 mr-2" />
                             {restaurant.location}
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-gray-900">{restaurant.cuisine}</span>
-                            <span className="text-sm text-gray-600">{restaurant.priceRange || restaurant.price_range || '$$'}</span>
+                            <span className="text-sm font-medium text-white">{restaurant.cuisine}</span>
+                            <span className="text-sm text-gray-300">{restaurant.priceRange || restaurant.price_range || '$$'}</span>
                           </div>
                         </div>
-                        <div className="pt-4 border-t border-gray-200">
+                        <div className="pt-4 border-t border-white/20">
                           <button className="w-full btn-secondary text-sm py-2">
                             View Menu
                           </button>
@@ -927,8 +923,8 @@ const ResultsPage: React.FC = () => {
                       <div className="text-gray-400 mb-4">
                         <Utensils className="w-16 h-16 mx-auto" />
                       </div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">No Restaurants Found</h3>
-                      <p className="text-gray-600">We couldn't find any restaurants for this destination. Please try again later.</p>
+                      <h3 className="text-lg font-medium text-white mb-2">No Restaurants Found</h3>
+                      <p className="text-gray-300">We couldn't find any restaurants for this destination. Please try again later.</p>
                     </div>
                   )}
                 </div>

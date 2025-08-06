@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   MapPin, 
   Calendar, 
@@ -32,6 +33,7 @@ interface TravelForm {
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState<TravelForm>({
     destination: '',
     startDate: '',
@@ -205,8 +207,41 @@ const HomePage: React.FC = () => {
               >
                 Hotels
               </button>
+              <button 
+                onClick={() => navigate('/dashboard')}
+                className="nav-link hover:text-purple-400 transition-colors"
+              >
+                Dashboard
+              </button>
               <a href="#about" className="nav-link">About</a>
-              <button className="btn-primary px-6 py-2">Sign In</button>
+              {isAuthenticated ? (
+                <>
+                  <button 
+                    onClick={() => navigate('/dashboard')}
+                    className="btn-secondary px-4 py-2 mr-2"
+                  >
+                    Dashboard
+                  </button>
+                  <span className="text-gray-300 px-4 py-2">
+                    Welcome, {user?.firstName}!
+                  </span>
+                </>
+              ) : (
+                <>
+                  <button 
+                    onClick={() => navigate('/login')}
+                    className="btn-secondary px-4 py-2 mr-2"
+                  >
+                    Sign In
+                  </button>
+                  <button 
+                    onClick={() => navigate('/signup')}
+                    className="btn-primary px-6 py-2"
+                  >
+                    Sign Up
+                  </button>
+                </>
+              )}
             </nav>
 
             {/* Right side - Mobile menu button */}
@@ -242,8 +277,53 @@ const HomePage: React.FC = () => {
                 >
                   Hotels
                 </button>
+                <button 
+                  onClick={() => {
+                    navigate('/dashboard');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="nav-link hover:text-purple-400 transition-colors text-left"
+                >
+                  Dashboard
+                </button>
                 <a href="#about" className="nav-link">About</a>
-                <button className="btn-primary px-6 py-2 w-full">Sign In</button>
+                {isAuthenticated ? (
+                  <>
+                    <button 
+                      onClick={() => {
+                        navigate('/dashboard');
+                        setMobileMenuOpen(false);
+                      }}
+                      className="btn-secondary px-4 py-2 w-full mb-2"
+                    >
+                      Dashboard
+                    </button>
+                    <span className="text-gray-300 px-4 py-2 text-center">
+                      Welcome, {user?.firstName}!
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <button 
+                      onClick={() => {
+                        navigate('/login');
+                        setMobileMenuOpen(false);
+                      }}
+                      className="btn-secondary px-4 py-2 w-full mb-2"
+                    >
+                      Sign In
+                    </button>
+                    <button 
+                      onClick={() => {
+                        navigate('/signup');
+                        setMobileMenuOpen(false);
+                      }}
+                      className="btn-primary px-6 py-2 w-full"
+                    >
+                      Sign Up
+                    </button>
+                  </>
+                )}
               </div>
             </nav>
           )}

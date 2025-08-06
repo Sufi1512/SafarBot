@@ -193,40 +193,40 @@ const HotelBookingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-x-hidden">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className="glass-dark sticky top-0 z-50 border-b border-white/10">
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-6">
             {/* Left side - Back button and Logo/Name */}
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => navigate('/')}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
+                <ArrowLeft className="w-5 h-5 text-white" />
               </button>
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-green-600 to-blue-600 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg flex items-center justify-center pulse-glow">
                   <Hotel className="w-6 h-6 text-white" />
                 </div>
-                <h1 className="text-2xl font-bold text-gray-900">Hotel Booking</h1>
+                <h1 className="text-2xl font-bold gradient-text">Hotel Booking</h1>
               </div>
             </div>
             {/* Right side - Description */}
-            <p className="text-sm text-gray-500">Find the perfect place to stay</p>
+            <p className="text-sm text-gray-300">Find the perfect place to stay</p>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search Form */}
-        <div className="card mb-8">
+        <div className="card-3d mb-8">
           <form onSubmit={handleSearch} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               {/* Destination */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-white mb-2">
                   <MapPin className="w-4 h-4 inline mr-2" />
                   Destination
                 </label>
@@ -242,7 +242,7 @@ const HotelBookingPage: React.FC = () => {
 
               {/* Check-in */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-white mb-2">
                   <Calendar className="w-4 h-4 inline mr-2" />
                   Check-in
                 </label>
@@ -257,7 +257,7 @@ const HotelBookingPage: React.FC = () => {
 
               {/* Check-out */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-white mb-2">
                   <Calendar className="w-4 h-4 inline mr-2" />
                   Check-out
                 </label>
@@ -272,7 +272,7 @@ const HotelBookingPage: React.FC = () => {
 
               {/* Guests */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-white mb-2">
                   <Users className="w-4 h-4 inline mr-2" />
                   Guests
                 </label>
@@ -289,7 +289,7 @@ const HotelBookingPage: React.FC = () => {
 
               {/* Rooms */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-white mb-2">
                   <Hotel className="w-4 h-4 inline mr-2" />
                   Rooms
                 </label>
@@ -306,7 +306,7 @@ const HotelBookingPage: React.FC = () => {
             </div>
 
             <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-300">
                 {calculateNights() > 0 && `${calculateNights()} night${calculateNights() > 1 ? 's' : ''}`}
               </div>
               <button
@@ -323,17 +323,17 @@ const HotelBookingPage: React.FC = () => {
 
         {/* Popular Destinations */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Popular Destinations</h2>
+          <h2 className="text-xl font-semibold text-white mb-4">Popular Destinations</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {popularDestinations.map((dest) => (
               <button
                 key={dest.name}
                 onClick={() => setSearchForm(prev => ({ ...prev, destination: dest.name }))}
-                className="p-4 bg-white rounded-lg border border-gray-200 hover:border-green-300 hover:shadow-md transition-all duration-200 text-center"
+                className="p-4 card-3d hover-lift text-center"
               >
                 <div className="text-3xl mb-2">{dest.image}</div>
-                <div className="font-medium text-gray-900">{dest.name}</div>
-                <div className="text-sm text-gray-500">{dest.country}</div>
+                <div className="font-medium text-white">{dest.name}</div>
+                <div className="text-sm text-gray-300">{dest.country}</div>
               </button>
             ))}
           </div>
@@ -344,12 +344,12 @@ const HotelBookingPage: React.FC = () => {
           <div className="space-y-6">
             {/* Filters */}
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-xl font-semibold text-white">
                 {hotels.length} hotels found
               </h2>
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="flex items-center space-x-2 px-4 py-2 glass border border-white/30 rounded-lg hover:bg-white/10"
               >
                 <Filter className="w-4 h-4" />
                 <span>Filters</span>
@@ -358,10 +358,10 @@ const HotelBookingPage: React.FC = () => {
 
             {/* Filters Panel */}
             {showFilters && (
-              <div className="card bg-gray-50">
+              <div className="card-3d bg-white/10">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Max Price per Night</label>
+                    <label className="block text-sm font-medium text-white mb-2">Max Price per Night</label>
                     <input
                       type="range"
                       min="50"
@@ -370,10 +370,10 @@ const HotelBookingPage: React.FC = () => {
                       onChange={(e) => setFilters(prev => ({ ...prev, maxPrice: parseInt(e.target.value) }))}
                       className="w-full"
                     />
-                    <div className="text-sm text-gray-600">${filters.maxPrice}</div>
+                    <div className="text-sm text-gray-300">${filters.maxPrice}</div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Minimum Rating</label>
+                    <label className="block text-sm font-medium text-white mb-2">Minimum Rating</label>
                     <select
                       value={filters.minRating}
                       onChange={(e) => setFilters(prev => ({ ...prev, minRating: parseInt(e.target.value) }))}
@@ -386,15 +386,15 @@ const HotelBookingPage: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Amenities</label>
+                    <label className="block text-sm font-medium text-white mb-2">Amenities</label>
                     <div className="grid grid-cols-2 gap-2">
                       {['WiFi', 'Pool', 'Spa', 'Gym', 'Restaurant', 'Parking'].map(amenity => (
                         <label key={amenity} className="flex items-center">
                           <input
                             type="checkbox"
-                            className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                            className="rounded border-white/30 text-green-400 focus:ring-green-400"
                           />
-                          <span className="ml-2 text-sm text-gray-700">{amenity}</span>
+                          <span className="ml-2 text-sm text-gray-300">{amenity}</span>
                         </label>
                       ))}
                     </div>
@@ -408,15 +408,15 @@ const HotelBookingPage: React.FC = () => {
               {hotels.map((hotel) => (
                 <div
                   key={hotel.id}
-                  className={`card cursor-pointer transition-all duration-200 ${
+                  className={`card-3d cursor-pointer transition-all duration-200 ${
                     selectedHotel?.id === hotel.id 
-                      ? 'ring-2 ring-green-500 bg-green-50' 
-                      : 'hover:shadow-lg'
+                      ? 'ring-2 ring-green-400 bg-green-500/20' 
+                      : 'hover-lift'
                   }`}
                   onClick={() => handleHotelSelect(hotel)}
                 >
                   {/* Hotel Image Placeholder */}
-                  <div className="h-48 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg mb-4 flex items-center justify-center">
+                  <div className="h-48 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg mb-4 flex items-center justify-center pulse-glow">
                     <Hotel className="w-16 h-16 text-white opacity-50" />
                   </div>
 
@@ -424,52 +424,52 @@ const HotelBookingPage: React.FC = () => {
                     {/* Hotel Info */}
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-900 mb-1">{hotel.name}</h3>
+                        <h3 className="text-xl font-bold text-white mb-1">{hotel.name}</h3>
                         <div className="flex items-center space-x-2 mb-2">
                           <MapPin className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-600">{hotel.location}</span>
+                          <span className="text-sm text-gray-300">{hotel.location}</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <div className="flex items-center">
                             <Star className="w-4 h-4 text-yellow-400 mr-1" />
                             <span className="text-sm font-medium">{hotel.rating}</span>
                           </div>
-                          <span className="text-sm text-gray-500">({hotel.reviews.count} reviews)</span>
+                          <span className="text-sm text-gray-400">({hotel.reviews.count} reviews)</span>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-2xl font-bold text-gray-900">${hotel.price}</div>
-                        <div className="text-sm text-gray-600">per night</div>
+                        <div className="text-2xl font-bold text-white">${hotel.price}</div>
+                        <div className="text-sm text-gray-300">per night</div>
                       </div>
                     </div>
 
                     {/* Description */}
-                    <p className="text-gray-600 text-sm">{hotel.description}</p>
+                    <p className="text-gray-300 text-sm">{hotel.description}</p>
 
                     {/* Amenities */}
                     <div className="flex flex-wrap gap-2">
                       {hotel.amenities.slice(0, 4).map((amenity, index) => (
                         <span
                           key={index}
-                          className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full"
+                          className="px-2 py-1 bg-green-500/20 text-green-300 text-xs rounded-full border border-green-400/30"
                         >
                           {amenity}
                         </span>
                       ))}
                       {hotel.amenities.length > 4 && (
-                        <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                        <span className="px-2 py-1 bg-white/10 text-gray-300 text-xs rounded-full border border-white/20">
                           +{hotel.amenities.length - 4} more
                         </span>
                       )}
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                    <div className="flex items-center justify-between pt-4 border-t border-white/20">
                       <div className="flex space-x-2">
-                        <button className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                        <button className="p-2 text-gray-400 hover:text-red-400 transition-colors">
                           <Heart className="w-5 h-5" />
                         </button>
-                        <button className="p-2 text-gray-400 hover:text-blue-500 transition-colors">
+                        <button className="p-2 text-gray-400 hover:text-blue-400 transition-colors">
                           <Eye className="w-5 h-5" />
                         </button>
                       </div>
@@ -487,43 +487,43 @@ const HotelBookingPage: React.FC = () => {
         {/* Hotel Details Modal */}
         {selectedHotel && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="glass-dark rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">{selectedHotel.name}</h2>
+                  <h2 className="text-2xl font-bold text-white">{selectedHotel.name}</h2>
                   <button
                     onClick={() => setSelectedHotel(null)}
-                    className="p-2 hover:bg-gray-100 rounded-lg"
+                    className="p-2 hover:bg-white/10 rounded-lg"
                   >
-                    <X className="w-6 h-6" />
+                    <X className="w-6 h-6 text-white" />
                   </button>
                 </div>
 
                 {/* Hotel Details */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div>
-                    <h3 className="text-lg font-semibold mb-2">Hotel Information</h3>
-                    <p className="text-gray-600 mb-4">{selectedHotel.description}</p>
+                    <h3 className="text-lg font-semibold mb-2 text-white">Hotel Information</h3>
+                    <p className="text-gray-300 mb-4">{selectedHotel.description}</p>
                     <div className="space-y-2">
                       <div className="flex items-center">
                         <MapPin className="w-4 h-4 text-gray-400 mr-2" />
-                        <span className="text-sm text-gray-600">{selectedHotel.location}</span>
+                        <span className="text-sm text-gray-300">{selectedHotel.location}</span>
                       </div>
                       <div className="flex items-center">
                         <Star className="w-4 h-4 text-yellow-400 mr-2" />
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm text-gray-300">
                           {selectedHotel.rating} ({selectedHotel.reviews.count} reviews)
                         </span>
                       </div>
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold mb-2">Amenities</h3>
+                    <h3 className="text-lg font-semibold mb-2 text-white">Amenities</h3>
                     <div className="grid grid-cols-2 gap-2">
                       {selectedHotel.amenities.map((amenity, index) => (
                         <div key={index} className="flex items-center">
-                          <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                          <span className="text-sm text-gray-600">{amenity}</span>
+                          <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                          <span className="text-sm text-gray-300">{amenity}</span>
                         </div>
                       ))}
                     </div>
@@ -532,27 +532,27 @@ const HotelBookingPage: React.FC = () => {
 
                 {/* Available Rooms */}
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">Available Rooms</h3>
+                  <h3 className="text-lg font-semibold mb-4 text-white">Available Rooms</h3>
                   <div className="space-y-4">
                     {selectedHotel.rooms.map((room) => (
                       <div
                         key={room.id}
                         className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
                           selectedRoom?.id === room.id 
-                            ? 'border-green-500 bg-green-50' 
-                            : 'border-gray-200 hover:border-gray-300'
+                            ? 'border-green-400 bg-green-500/20' 
+                            : 'border-white/20 hover:border-white/40'
                         }`}
                         onClick={() => handleRoomSelect(room)}
                       >
                         <div className="flex items-center justify-between">
                           <div>
-                            <h4 className="font-semibold text-gray-900">{room.type}</h4>
-                            <p className="text-sm text-gray-600 mb-2">{room.description}</p>
-                            <div className="flex items-center space-x-4 text-sm text-gray-500">
+                            <h4 className="font-semibold text-white">{room.type}</h4>
+                            <p className="text-sm text-gray-300 mb-2">{room.description}</p>
+                            <div className="flex items-center space-x-4 text-sm text-gray-400">
                               <span>Capacity: {room.capacity} guests</span>
                               <div className="flex space-x-1">
                                 {room.amenities.slice(0, 3).map((amenity, index) => (
-                                  <span key={index} className="px-2 py-1 bg-gray-100 rounded text-xs">
+                                  <span key={index} className="px-2 py-1 bg-white/10 rounded text-xs text-gray-300 border border-white/20">
                                     {amenity}
                                   </span>
                                 ))}
@@ -560,8 +560,8 @@ const HotelBookingPage: React.FC = () => {
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="text-xl font-bold text-gray-900">${room.price}</div>
-                            <div className="text-sm text-gray-600">per night</div>
+                            <div className="text-xl font-bold text-white">${room.price}</div>
+                            <div className="text-sm text-gray-300">per night</div>
                           </div>
                         </div>
                       </div>
@@ -571,19 +571,19 @@ const HotelBookingPage: React.FC = () => {
 
                 {/* Booking Button */}
                 {selectedRoom && (
-                  <div className="mt-6 pt-6 border-t border-gray-200">
+                  <div className="mt-6 pt-6 border-t border-white/20">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-semibold text-gray-900">Selected Room</h4>
-                        <p className="text-sm text-gray-600">
+                        <h4 className="font-semibold text-white">Selected Room</h4>
+                        <p className="text-sm text-gray-300">
                           {selectedRoom.type} • ${selectedRoom.price} × {calculateNights()} nights
                         </p>
                       </div>
                       <div className="text-right">
-                        <div className="text-2xl font-bold text-gray-900">
+                        <div className="text-2xl font-bold text-white">
                           ${selectedRoom.price * calculateNights()}
                         </div>
-                        <div className="text-sm text-gray-600">Total</div>
+                        <div className="text-sm text-gray-300">Total</div>
                       </div>
                     </div>
                     <button

@@ -430,4 +430,319 @@ export const flightAPI = {
   },
 };
 
+// Price Alerts API
+export const alertsAPI = {
+  createAlert: async (data: {
+    destination: string;
+    current_price: number;
+    target_price: number;
+    alert_type: 'flight' | 'hotel';
+    check_in_date?: string;
+    check_out_date?: string;
+    departure_date?: string;
+    return_date?: string;
+    passengers?: number;
+    guests?: number;
+  }): Promise<APIResponse> => {
+    try {
+      const response = await api.post('/alerts/create', data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to create price alert');
+    }
+  },
+
+  getAlerts: async (params?: {
+    user_id?: string;
+    alert_type?: 'flight' | 'hotel';
+    status?: 'active' | 'inactive' | 'triggered';
+  }): Promise<APIResponse> => {
+    try {
+      const response = await api.get('/alerts', { params });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to get price alerts');
+    }
+  },
+
+  updateAlert: async (alertId: string, data: {
+    target_price?: number;
+    is_active?: boolean;
+  }): Promise<APIResponse> => {
+    try {
+      const response = await api.put(`/alerts/${alertId}`, data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to update price alert');
+    }
+  },
+
+  deleteAlert: async (alertId: string): Promise<APIResponse> => {
+    try {
+      const response = await api.delete(`/alerts/${alertId}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to delete price alert');
+    }
+  },
+
+  toggleAlert: async (alertId: string): Promise<APIResponse> => {
+    try {
+      const response = await api.post(`/alerts/${alertId}/toggle`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to toggle price alert');
+    }
+  },
+
+  getNotifications: async (params?: {
+    user_id?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<APIResponse> => {
+    try {
+      const response = await api.get('/alerts/notifications', { params });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to get notifications');
+    }
+  },
+
+  getAlertStats: async (user_id?: string): Promise<APIResponse> => {
+    try {
+      const response = await api.get('/alerts/stats', { params: { user_id } });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to get alert statistics');
+    }
+  },
+
+  predictPrices: async (destination: string, alert_type: 'flight' | 'hotel', date_range: string): Promise<APIResponse> => {
+    try {
+      const response = await api.post('/alerts/predict-prices', null, {
+        params: { destination, alert_type, date_range }
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to predict prices');
+    }
+  }
+};
+
+// Affiliate API
+export const affiliateAPI = {
+  trackClick: async (data: {
+    platform: string;
+    destination: string;
+    price?: number;
+    search_query?: string;
+    user_id?: string;
+  }): Promise<APIResponse> => {
+    try {
+      const response = await api.post('/affiliate/track-click', data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to track affiliate click');
+    }
+  },
+
+  trackBooking: async (data: {
+    click_id: string;
+    booking_reference: string;
+    booking_type: string;
+    booking_amount: number;
+    travel_date?: string;
+    platform_booking_id?: string;
+    customer_info?: any;
+  }): Promise<APIResponse> => {
+    try {
+      const response = await api.post('/affiliate/track-booking', data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to track affiliate booking');
+    }
+  },
+
+  getClicks: async (params?: {
+    platform?: string;
+    user_id?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<APIResponse> => {
+    try {
+      const response = await api.get('/affiliate/clicks', { params });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to get affiliate clicks');
+    }
+  },
+
+  getBookings: async (params?: {
+    platform?: string;
+    user_id?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<APIResponse> => {
+    try {
+      const response = await api.get('/affiliate/bookings', { params });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to get affiliate bookings');
+    }
+  },
+
+  getReports: async (start_date: string, end_date: string, platform?: string): Promise<APIResponse> => {
+    try {
+      const response = await api.get('/affiliate/reports', {
+        params: { start_date, end_date, platform }
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to get commission reports');
+    }
+  },
+
+  getStats: async (): Promise<APIResponse> => {
+    try {
+      const response = await api.get('/affiliate/stats');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to get affiliate statistics');
+    }
+  },
+
+  getLinks: async (): Promise<APIResponse> => {
+    try {
+      const response = await api.get('/affiliate/links');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to get affiliate links');
+    }
+  }
+};
+
+// Authentication API
+export const authAPI = {
+  login: async (data: {
+    email: string;
+    password: string;
+  }): Promise<APIResponse> => {
+    try {
+      const response = await api.post('/auth/login', data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Login failed');
+    }
+  },
+
+  signup: async (data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    password: string;
+  }): Promise<APIResponse> => {
+    try {
+      const response = await api.post('/auth/signup', data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Registration failed');
+    }
+  },
+
+  logout: async (): Promise<APIResponse> => {
+    try {
+      const response = await api.post('/auth/logout');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Logout failed');
+    }
+  },
+
+  refreshToken: async (): Promise<APIResponse> => {
+    try {
+      const response = await api.post('/auth/refresh');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Token refresh failed');
+    }
+  },
+
+  forgotPassword: async (email: string): Promise<APIResponse> => {
+    try {
+      const response = await api.post('/auth/forgot-password', { email });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Password reset request failed');
+    }
+  },
+
+  resetPassword: async (data: {
+    token: string;
+    password: string;
+  }): Promise<APIResponse> => {
+    try {
+      const response = await api.post('/auth/reset-password', data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Password reset failed');
+    }
+  },
+
+  verifyEmail: async (token: string): Promise<APIResponse> => {
+    try {
+      const response = await api.post('/auth/verify-email', { token });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Email verification failed');
+    }
+  },
+
+  resendVerification: async (email: string): Promise<APIResponse> => {
+    try {
+      const response = await api.post('/auth/resend-verification', { email });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Verification email resend failed');
+    }
+  },
+
+  getProfile: async (): Promise<APIResponse> => {
+    try {
+      const response = await api.get('/auth/profile');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to get profile');
+    }
+  },
+
+  updateProfile: async (data: {
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    preferences?: any;
+  }): Promise<APIResponse> => {
+    try {
+      const response = await api.put('/auth/profile', data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to update profile');
+    }
+  },
+
+  changePassword: async (data: {
+    currentPassword: string;
+    newPassword: string;
+  }): Promise<APIResponse> => {
+    try {
+      const response = await api.post('/auth/change-password', data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Password change failed');
+    }
+  }
+};
+
 export default api; 

@@ -1,3 +1,12 @@
 fastapi
 uvicorn
-python-dotenv 
+python-dotenv
+requests
+pydantic
+pydantic-settings
+python-multipart
+google-search-results
+google-generativeai
+langsmith
+langchain
+langchain-core 

@@ -16,14 +16,17 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS middleware - updated for production
+# CORS middleware - updated for Vercel deployment
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000", 
         "http://localhost:5173",
         "https://*.vercel.app",
-        "https://*.vercel.com"
+        "https://*.vercel.com",
+        "https://safarbot.vercel.app",
+        "https://safarbot-git-main-sufi1512.vercel.app",
+        "https://safarbot-sufi1512.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],

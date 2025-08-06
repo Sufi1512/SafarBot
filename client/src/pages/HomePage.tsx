@@ -484,8 +484,8 @@ const HomePage: React.FC = () => {
                 description: "Get help anytime with our round-the-clock customer support team",
                 color: "from-orange-500 to-red-500"
               }
-            ].map((feature, index) => (
-              <div key={index} className="card-3d text-center hover-lift">
+                         ].map((feature) => (
+                             <div key={feature.title} className="card-3d text-center hover-lift">
                 <div className={`w-16 h-16 bg-gradient-to-r ${feature.color} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
                   {feature.icon}
                 </div>

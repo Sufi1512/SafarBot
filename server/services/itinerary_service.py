@@ -46,7 +46,7 @@ class ItineraryService:
             
             # Create prompt for itinerary generation
             prompt = f"""
-            Create a detailed travel itinerary for {destination} for {total_days} days.
+            You are a travel planning AI assistant. Create a detailed travel itinerary for {destination} for {total_days} days.
             
             Trip Details:
             - Destination: {destination}
@@ -56,7 +56,9 @@ class ItineraryService:
             - Interests: {', '.join(interests) if interests else 'General sightseeing'}
             - Accommodation: {accommodation_type if accommodation_type else 'Standard'}
             
-            Please provide a JSON response with the following structure:
+            IMPORTANT: Respond ONLY with valid JSON. Do not include any text before or after the JSON.
+            
+            Required JSON structure:
             {{
                 "daily_plans": [
                     {{
@@ -87,7 +89,14 @@ class ItineraryService:
                             "price": 150,
                             "amenities": ["WiFi", "Pool"],
                             "location": "Location"
-                        }}
+                        }},
+                        "transport": [
+                            {{
+                                "type": "walking",
+                                "description": "Walk to next location",
+                                "duration": "15 minutes"
+                            }}
+                        ]
                     }}
                 ],
                 "budget_estimate": 2000,
@@ -100,7 +109,16 @@ class ItineraryService:
             """
             
             response = self.model.generate_content(prompt)
-            itinerary_data = json.loads(response.text)
+            
+            # Check if response is valid
+            if not response.text or response.text.strip() == "":
+                raise Exception("AI service returned empty response")
+            
+            try:
+                itinerary_data = json.loads(response.text)
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse JSON response: {response.text[:200]}...")
+                raise Exception(f"Invalid JSON response from AI service: {str(e)}")
             
             # Create daily plans
             daily_plans = []

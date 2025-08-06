@@ -46,8 +46,10 @@ In your Render dashboard, add these environment variables:
 ```
 GOOGLE_API_KEY=your_google_api_key_here
 SERP_API_KEY=your_serp_api_key_here (optional)
-LANGSMITH_API_KEY=your_langsmith_key_here (optional)
+LANGSMITH_API_KEY=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
 ```
+
+**Note**: The LANGSMITH_API_KEY is already configured in `render.yaml` and will be automatically set.
 
 ### 4. Get Your Backend URL
 
@@ -118,6 +120,10 @@ services:
         value: 3.9.16
       - key: GOOGLE_API_KEY
         sync: false
+      - key: SERP_API_KEY
+        sync: false
+      - key: LANGSMITH_API_KEY
+        value: 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
 ```
 
 ### vercel.json (Frontend)

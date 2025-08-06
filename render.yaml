@@ -13,4 +13,4 @@ services:
       - key: SERP_API_KEY
         sync: false
       - key: LANGSMITH_API_KEY
-        sync: false 
+        value: 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 

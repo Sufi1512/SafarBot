@@ -60,7 +60,10 @@ class ItineraryService:
             - Interests: {', '.join(interests) if interests else 'General sightseeing'}
             - Accommodation: {accommodation_type if accommodation_type else 'Standard'}
             
-            IMPORTANT: Respond ONLY with valid JSON. Do not include any text before or after the JSON.
+            IMPORTANT: 
+            1. Respond ONLY with valid JSON. Do not include any text before or after the JSON.
+            2. Do NOT use markdown formatting (no asterisks, bold, etc.) in any text fields.
+            3. Write tips in plain text without any formatting.
             
             Required JSON structure:
             {{
@@ -110,6 +113,11 @@ class ItineraryService:
                     "tips": []
                 }}
             }}
+            
+            Note: Write all tips in plain text without markdown formatting. For example:
+            "Transportation: Use local trains for cost-effective travel. Auto-rickshaws are great for short distances."
+            Instead of:
+            "**Transportation:** Use local trains for cost-effective travel. Auto-rickshaws are great for short distances."
             """
             
             response = self.model.generate_content(prompt)
@@ -310,6 +318,11 @@ class ItineraryService:
             recommendations={
                 "hotels": [f"Look for hotels in {destination}"],
                 "restaurants": [f"Try local restaurants in {destination}"],
-                "tips": ["AI service is temporarily unavailable. This is a basic itinerary."]
+                "tips": [
+                    "AI service is temporarily unavailable. This is a basic itinerary.",
+                    "Transportation: Use local public transport for cost-effective travel.",
+                    "Safety: Always be aware of your surroundings and keep belongings secure.",
+                    "Culture: Respect local customs and dress appropriately for religious sites."
+                ]
             }
         ) 

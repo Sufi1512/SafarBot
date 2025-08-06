@@ -39,7 +39,11 @@ class ItineraryService:
         """
         try:
             if not self.model:
-                raise Exception("AI service is not properly configured")
+                # Return a fallback itinerary when AI is not available
+                logger.warning("AI service not configured, returning fallback itinerary")
+                return await self._generate_fallback_itinerary(
+                    destination, start_date, end_date, budget, interests, travelers, accommodation_type
+                )
             
             # Calculate trip duration
             total_days = (end_date - start_date).days + 1
@@ -160,7 +164,16 @@ class ItineraryService:
             
         except Exception as e:
             logger.error(f"Error generating itinerary: {str(e)}")
-            raise Exception(f"Failed to generate itinerary: {str(e)}")
+            
+            # Check if it's a Google API error
+            if "500 An internal error has occurred" in str(e):
+                raise Exception("AI service is temporarily unavailable. Please try again in a few minutes.")
+            elif "API key" in str(e).lower() or "authentication" in str(e).lower():
+                raise Exception("AI service configuration error. Please contact support.")
+            elif "quota" in str(e).lower() or "rate limit" in str(e).lower():
+                raise Exception("AI service is currently busy. Please try again later.")
+            else:
+                raise Exception(f"Failed to generate itinerary: {str(e)}")
     
     async def predict_prices(
         self,
@@ -219,4 +232,84 @@ class ItineraryService:
             
         except Exception as e:
             logger.error(f"Error predicting prices: {str(e)}")
-            raise Exception(f"Failed to predict prices: {str(e)}") 
+            raise Exception(f"Failed to predict prices: {str(e)}")
+    
+    async def _generate_fallback_itinerary(
+        self,
+        destination: str,
+        start_date: date,
+        end_date: date,
+        budget: Optional[float] = None,
+        interests: List[str] = [],
+        travelers: int = 1,
+        accommodation_type: Optional[str] = None
+    ) -> ItineraryResponse:
+        """
+        Generate a basic fallback itinerary when AI service is unavailable
+        """
+        total_days = (end_date - start_date).days + 1
+        current_date = start_date
+        
+        daily_plans = []
+        for day_num in range(1, total_days + 1):
+            daily_plan = DailyPlan(
+                day=day_num,
+                date=current_date.strftime("%Y-%m-%d"),
+                activities=[
+                    {
+                        "time": "09:00",
+                        "title": f"Explore {destination}",
+                        "description": f"Discover the beautiful city of {destination}",
+                        "location": destination,
+                        "duration": "4 hours",
+                        "cost": 20,
+                        "type": "sightseeing"
+                    },
+                    {
+                        "time": "14:00",
+                        "title": "Local Cuisine",
+                        "description": f"Try local food in {destination}",
+                        "location": destination,
+                        "duration": "2 hours",
+                        "cost": 15,
+                        "type": "food"
+                    }
+                ],
+                meals=[
+                    {
+                        "name": f"Local Restaurant in {destination}",
+                        "cuisine": "Local",
+                        "rating": 4.0,
+                        "price_range": "$$",
+                        "description": f"Enjoy local cuisine in {destination}"
+                    }
+                ],
+                accommodation={
+                    "name": f"Hotel in {destination}",
+                    "rating": 3.5,
+                    "price": 80,
+                    "amenities": ["WiFi", "Air Conditioning"],
+                    "location": destination
+                },
+                transport=[
+                    {
+                        "type": "walking",
+                        "description": "Explore on foot",
+                        "duration": "30 minutes"
+                    }
+                ]
+            )
+            daily_plans.append(daily_plan)
+            current_date += timedelta(days=1)
+        
+        return ItineraryResponse(
+            destination=destination,
+            total_days=total_days,
+            budget_estimate=budget or 1000.0,
+            daily_plans=daily_plans,
+            recommendations={
+                "hotels": [f"Look for hotels in {destination}"],
+                "restaurants": [f"Try local restaurants in {destination}"],
+                "tips": ["AI service is temporarily unavailable. This is a basic itinerary."]
+            }
+        ) 

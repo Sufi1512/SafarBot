@@ -1,212 +1,195 @@
-# SafarBot.com - AI-Powered Travel Planner
+# SafarBot - AI-Powered Travel Planning API
 
-SafarBot is a full-stack AI travel planning application that creates personalized itineraries using Google Gemini 2.0 Flash API, LangChain, and LangGraph.
+A modern FastAPI-based travel planning application with AI-powered chat functionality, deployed on **Render (Backend)** and **Vercel (Frontend)**.
 
 ## 🚀 Features
 
-- **AI-Powered Itinerary Generation**: Create personalized travel plans based on preferences, budget, and interests
-- **Real-time Chat Assistant**: Interactive AI chatbot for travel advice and recommendations
-- **Smart Hotel & Restaurant Recommendations**: Find the perfect accommodations and dining options
-- **Flight Booking with Google SERP API**: Real flight search and booking using Google's flight data
-- **Hotel Booking System**: Complete hotel search and reservation functionality
-- **Responsive Web Interface**: Beautiful, modern UI built with React and Tailwind CSS
-- **Vector Database Integration**: ChromaDB for enhanced AI responses with contextual information
-- **Docker Deployment**: Containerized application ready for production deployment
-
-## 🛠️ Tech Stack
-
-### Frontend
-- **React 18** with TypeScript
-- **Tailwind CSS** for styling
-- **React Router** for navigation
-- **Axios** for API communication
-- **Lucide React** for icons
-
-### Backend
-- **FastAPI** (Python) for REST API
-- **Pydantic** for data validation
-- **Uvicorn** for ASGI server
-
-### AI & ML
-- **Google Gemini 2.0 Flash API** for AI capabilities
-- **LangChain** for LLM orchestration
-- **LangGraph** for complex AI workflows
-- **ChromaDB** for vector storage
-
-### Infrastructure
-- **Docker** for containerization
-- **Docker Compose** for multi-service orchestration
-
-### External APIs
-- **Google SERP API** for real flight search data
-- **Google Gemini API** for AI-powered itinerary generation
+- **FastAPI Backend**: Modern, fast web framework for building APIs
+- **AI Chat Integration**: Intelligent travel planning assistance
+- **Flight Search**: Real-time flight search and booking options
+- **CORS Support**: Cross-origin resource sharing for frontend integration
+- **Render Deployment**: Reliable backend hosting with automatic scaling
+- **Vercel Deployment**: Fast frontend hosting with global CDN
+- **Health Monitoring**: Built-in health check endpoints
 
 ## 📁 Project Structure
 
 ```
 SafarBot/
-├── client/                 # React frontend
+├── client/                   # React frontend (Vite) - Deployed on Vercel
 │   ├── src/
-│   │   ├── components/    # React components
-│   │   ├── pages/        # Page components
-│   │   ├── services/     # API services
+│   │   ├── components/      # React components
+│   │   ├── pages/          # Page components
+│   │   ├── services/       # API services
 │   │   └── ...
-│   └── ...
-├── server/                # FastAPI backend
-│   ├── routers/          # API route handlers
-│   ├── services/         # Business logic
-│   ├── models.py         # Pydantic models
-│   └── main.py           # FastAPI app
-├── langchain_core/       # AI/ML components
-│   ├── itinerary_generator.py
-│   ├── chat_bot.py
-│   ├── vector_store.py
-│   └── tools.py
-├── data/                 # Mock data files
-│   ├── hotels_paris.json
-│   ├── restaurants_paris.json
-│   └── ...
-├── Dockerfile            # Multi-stage Docker build
-├── docker-compose.yml    # Docker Compose config
-└── README.md
+│   ├── public/
+│   └── package.json
+├── server/                   # FastAPI backend - Deployed on Render
+│   ├── main.py              # Main FastAPI application
+│   ├── config.py            # Configuration settings
+│   ├── models.py            # Pydantic models
+│   ├── routers/             # API route handlers
+│   │   ├── chat.py         # Chat functionality
+│   │   ├── flights.py      # Flight search
+│   │   └── ...
+│   ├── services/            # Business logic services
+│   └── requirements.txt     # Python dependencies
+├── render.yaml              # Render deployment configuration
+├── vercel.json              # Vercel deployment configuration
+├── requirements.txt         # Root requirements for Render
+├── DEPLOYMENT.md            # Detailed deployment guide
+└── README.md               # This file
 ```
 
-## 🚀 Quick Start
+## 🛠️ Setup & Installation
 
 ### Prerequisites
-- Docker and Docker Compose
-- Node.js 18+ (for development)
-- Python 3.11+ (for development)
+- Python 3.8+
+- Node.js 16+
+- Render account (for backend)
+- Vercel account (for frontend)
 
-### Environment Setup
-1. Create a `.env` file in the root directory:
-```bash
-# Google Gemini API Key (for AI itinerary generation)
-GOOGLE_API_KEY=your_google_gemini_api_key_here
+### Local Development
 
-# Google SERP API Key (for real flight search data)
-SERP_API_KEY=your_serp_api_key_here
-
-# Other configuration
-CHROMA_PERSIST_DIRECTORY=./chroma_db
-```
-
-### Using Docker (Recommended)
-```bash
-# Build and start the application
-docker-compose up --build
-
-# Access the application
-open http://localhost:8000
-
-## 🔑 API Configuration
-
-### Google SERP API Setup
-1. Sign up for a Google SERP API account at [serpapi.com](https://serpapi.com)
-2. Get your API key from the dashboard
-3. Add the API key to your `.env` file:
+1. **Clone the repository**
    ```bash
-   SERP_API_KEY=your_actual_serp_api_key
+   git clone https://github.com/Sufi1512/SafarBot.git
+   cd SafarBot
    ```
 
-The application will automatically use real flight data when a valid SERP API key is provided. If no key is available, it will fall back to mock data for demonstration purposes.
-
-### Google Gemini API Setup
-1. Get a Google Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Add the API key to your `.env` file:
+2. **Setup Backend**
    ```bash
-   GOOGLE_API_KEY=your_actual_gemini_api_key
+   cd server
+   pip install -r requirements.txt
+   uvicorn main:app --reload
    ```
+
+3. **Setup Frontend**
+   ```bash
+   cd client
+   npm install
+   npm run dev
+   ```
+
+### Environment Variables
+
+Create a `.env` file in the server directory:
+```env
+GOOGLE_API_KEY=your_google_api_key_here
+SERP_API_KEY=your_serp_api_key_here (optional)
 ```
 
-### Development Setup
-```bash
-# Backend setup
-cd server
-pip install -r requirements.txt
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+## 🌐 API Endpoints
 
-# Frontend setup (in another terminal)
-cd client
-npm install
-npm run dev
-```
+### Health & Status
+- `GET /` - API root and status
+- `GET /health` - Health check endpoint
 
-## 📋 API Endpoints
-
-### Itinerary Generation
-- `POST /api/v1/generate-itinerary` - Generate personalized travel itinerary
-- `POST /api/v1/predict-prices` - Predict travel costs
-
-### Chat
-- `POST /api/v1/chat` - Send message to AI assistant
+### Chat Functionality
+- `POST /api/v1/chat` - Chat with AI travel planner
 - `GET /api/v1/chat/history` - Get chat history
 
-### Hotels
-- `POST /api/v1/search-hotels` - Search for hotels
-- `GET /api/v1/hotels/{location}/popular` - Get popular hotels
+### Flight Services
+- `POST /api/v1/flights/search` - Search for flights
+- `GET /api/v1/flights/popular` - Get popular flights
+- `GET /api/v1/flights/airports` - Airport suggestions
+- `GET /api/v1/flights/booking-options/{token}` - Get booking options
 
-### Restaurants
-- `POST /api/v1/recommend-restaurants` - Get restaurant recommendations
-- `GET /api/v1/restaurants/{location}/popular` - Get popular restaurants
+## 🚀 Deployment
 
-## 🎯 Usage
+### Quick Deploy
 
-1. **Homepage**: Enter your destination, travel dates, budget, and interests
-2. **Generate Itinerary**: Click "Generate My Itinerary" to create your personalized plan
-3. **View Results**: Browse day-wise activities, hotels, and restaurant recommendations
-4. **Chat Assistant**: Use the floating chat widget for additional travel advice
+1. **Backend (Render)**
+   ```bash
+   # Push to GitHub
+   git push origin main
+   
+   # Connect to Render
+   # Render will auto-deploy using render.yaml
+   ```
+
+2. **Frontend (Vercel)**
+   ```bash
+   # Install Vercel CLI
+   npm i -g vercel
+   
+   # Deploy
+   vercel --prod
+   ```
+
+### Detailed Deployment Guide
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for comprehensive deployment instructions.
 
 ## 🔧 Configuration
 
-### Environment Variables
-- `GOOGLE_API_KEY`: Your Google Gemini 2.0 Flash API key
-- `CHROMA_PERSIST_DIRECTORY`: Directory for ChromaDB persistence
-- `REACT_APP_API_URL`: Frontend API base URL (defaults to localhost:8000)
-
-### Customization
-- Modify mock data in `/data/` directory
-- Update AI prompts in `langchain_core/`
-- Customize UI components in `client/src/`
-
-## 🐳 Docker Deployment
-
-The application is containerized and ready for deployment:
-
-```bash
-# Production build
-docker-compose -f docker-compose.yml up --build -d
-
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
+### Render Configuration (`render.yaml`)
+```yaml
+services:
+  - type: web
+    name: safarbot-backend
+    env: python
+    plan: free
+    buildCommand: pip install -r server/requirements.txt
+    startCommand: cd server && uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
 
-## 🧪 Development
-
-### Running Tests
-```bash
-# Frontend tests
-cd client
-npm test
-
-# Backend tests (when implemented)
-cd server
-pytest
+### Vercel Configuration (`vercel.json`)
+```json
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "client/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist",
+        "buildCommand": "npm run build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/client/$1"
+    }
+  ]
+}
 ```
 
-### Code Quality
-```bash
-# Frontend linting
-cd client
-npm run lint
+## 📊 API Documentation
 
-# Backend formatting
-cd server
-black .
-isort .
+Once deployed:
+- **Backend API Docs**: `https://safarbot-backend.onrender.com/docs`
+- **Health Check**: `https://safarbot-backend.onrender.com/health`
+- **Frontend**: `https://your-app.vercel.app`
+
+## 🌐 Production URLs
+
+After deployment:
+- **Backend**: `https://safarbot-backend.onrender.com`
+- **Frontend**: `https://your-app-name.vercel.app`
+- **API Base**: `https://safarbot-backend.onrender.com/api/v1`
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+1. **CORS Errors**: Check CORS origins in `server/main.py`
+2. **API Timeouts**: Render free tier has 30-second limit
+3. **Environment Variables**: Verify in Render dashboard
+4. **Build Failures**: Check logs in deployment platforms
+
+### Testing
+
+```bash
+# Test backend
+curl https://safarbot-backend.onrender.com/health
+
+# Test API
+curl -X POST https://safarbot-backend.onrender.com/api/v1/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Hello"}'
 ```
 
 ## 🤝 Contributing
@@ -214,10 +197,10 @@ isort .
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests if applicable
+4. Test thoroughly
 5. Submit a pull request
 
-## 📄 License
+## 📝 License
 
 This project is licensed under the MIT License.
 
@@ -225,20 +208,6 @@ This project is licensed under the MIT License.
 
 For support and questions:
 - Create an issue on GitHub
-- Check the documentation in `/docs/`
-- Review the API documentation at `/docs` when running the server
-
-## 🔮 Future Enhancements
-
-- [ ] Real-time collaboration for group trips
-- [ ] Offline itinerary download (PDF)
-- [ ] Visa and documentation assistant
-- [ ] Weather-based itinerary adjustments
-- [ ] Deal tracking and price alerts
-- [ ] Integration with booking platforms
-- [ ] Mobile app development
-- [ ] Multi-language support
-
----
-
-Built with ❤️ using modern AI and web technologies. 
+- Check the API documentation at `/docs`
+- Review the deployment guide in `DEPLOYMENT.md`
+- Check the health endpoint at `/health` 

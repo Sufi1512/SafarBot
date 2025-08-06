@@ -2,14 +2,21 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/index.py",
-      "use": "@vercel/python"
+      "src": "client/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist",
+        "buildCommand": "npm run build"
+      }
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/api/index.py"
+      "dest": "/client/$1"
     }
-  ]
+  ],
+  "env": {
+    "REACT_APP_API_URL": "https://safarbot-backend.onrender.com"
+  }
 } 

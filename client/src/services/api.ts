@@ -1,8 +1,8 @@
 import axios, { AxiosResponse } from 'axios';
 
-// Base URL for API - will be relative in production
+// Base URL for API - Render backend for production, localhost for development
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? '/api/v1' 
+  ? 'https://safarbot-backend.onrender.com/api/v1' 
   : 'http://localhost:8000/api/v1';
 
 // Create axios instance

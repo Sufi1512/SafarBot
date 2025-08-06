@@ -9,8 +9,6 @@ import {
   DollarSign,
   ArrowLeft,
   Download,
-  Share2,
-  Mail,
   CreditCard,
   Shield,
   X
@@ -170,14 +168,7 @@ const BookingConfirmationPage: React.FC = () => {
     );
   };
 
-  const calculateTotal = () => {
-    if (bookingData.type === 'flight') {
-      return bookingData.booking.price * bookingData.passengers;
-    } else {
-      const nights = Math.ceil((new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) / (1000 * 60 * 60 * 24));
-      return bookingData.room.price * nights;
-    }
-  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-x-hidden">

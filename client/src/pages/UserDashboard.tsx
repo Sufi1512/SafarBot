@@ -7,7 +7,7 @@ import {
   MapPin, 
   DollarSign, 
   Bell, 
-  Heart, 
+  
   Settings, 
   LogOut, 
   Plus,
@@ -24,7 +24,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
-import { alertsAPI, affiliateAPI } from '../services/api';
+import { alertsAPI } from '../services/api';
 
 interface SavedTrip {
   id: string;
@@ -102,10 +102,10 @@ const UserDashboard: React.FC = () => {
       }
 
       // Load affiliate stats
-      const affiliateStatsResponse = await affiliateAPI.getStats();
+      // const affiliateStatsResponse = await affiliateAPI.getStats();
       
       // Load alert statistics
-      const alertStatsResponse = await alertsAPI.getAlertStats();
+      // const alertStatsResponse = await alertsAPI.getAlertStats();
       
       // For now, keep mock data for trips and profile until we have those endpoints
       loadMockData();

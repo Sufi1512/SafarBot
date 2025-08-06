@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { 
   Mail, 
   Plane, 
@@ -8,10 +8,9 @@ import {
   CheckCircle,
   ArrowLeft
 } from 'lucide-react';
-import { authAPI } from '../services/api';
+// import { authAPI } from '../services/api';
 
 const ForgotPasswordPage: React.FC = () => {
-  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

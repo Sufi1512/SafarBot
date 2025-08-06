@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { flightAPI, BookingOptionsResponse, BookingOption } from '../services/api';
-import LoadingSpinner from '../components/LoadingSpinner';
-import ErrorDisplay from '../components/ErrorDisplay';
 import { ArrowLeft, Plane, AlertCircle } from 'lucide-react';
 
 const BookingOptionsPage: React.FC = () => {
@@ -11,7 +9,7 @@ const BookingOptionsPage: React.FC = () => {
   const [bookingData, setBookingData] = useState<BookingOptionsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedOption, setSelectedOption] = useState<BookingOption | null>(null);
+
 
   useEffect(() => {
     if (bookingToken) {
@@ -41,7 +39,6 @@ const BookingOptionsPage: React.FC = () => {
   };
 
   const handleBookNow = (option: BookingOption) => {
-    setSelectedOption(option);
     // In a real application, this would redirect to the booking provider's website
     if (option.together?.booking_request?.url) {
       window.open(option.together.booking_request.url, '_blank');

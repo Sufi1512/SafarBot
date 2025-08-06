@@ -1,14 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
   TrendingDown, 
-  TrendingUp, 
   ExternalLink, 
   Star, 
-  Clock, 
   DollarSign,
-  AlertTriangle,
   CheckCircle,
-  XCircle,
   Filter,
   SortAsc,
   SortDesc
@@ -37,16 +33,12 @@ interface PriceComparisonProps {
     start: string;
     end?: string;
   };
-  passengers?: number;
-  guests?: number;
 }
 
 const PriceComparison: React.FC<PriceComparisonProps> = ({
   type,
   destination,
-  dates,
-  passengers = 1,
-  guests = 1
+  dates
 }) => {
   const [comparisonData, setComparisonData] = useState<PriceComparisonItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);

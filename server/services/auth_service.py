@@ -1,0 +1,281 @@
+from passlib.context import CryptContext
+from jose import JWTError, jwt
+from datetime import datetime, timedelta
+from typing import Optional, Dict, Any
+from bson import ObjectId
+import uuid
+import os
+from dotenv import load_dotenv
+
+from database import get_collection, USERS_COLLECTION
+from mongo_models import User, UserCreate, UserLogin, UserUpdate, UserStatus, UserRole
+
+load_dotenv()
+
+# Security configuration
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+REFRESH_TOKEN_EXPIRE_DAYS = 7
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+class AuthService:
+    @staticmethod
+    def verify_password(plain_password: str, hashed_password: str) -> bool:
+        """Verify a password against its hash."""
+        return pwd_context.verify(plain_password, hashed_password)
+
+    @staticmethod
+    def get_password_hash(password: str) -> str:
+        """Generate password hash."""
+        return pwd_context.hash(password)
+
+    @staticmethod
+    def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+        """Create JWT access token."""
+        to_encode = data.copy()
+        if expires_delta:
+            expire = datetime.utcnow() + expires_delta
+        else:
+            expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        
+        to_encode.update({"exp": expire, "type": "access"})
+        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        return encoded_jwt
+
+    @staticmethod
+    def create_refresh_token(data: dict) -> str:
+        """Create JWT refresh token."""
+        to_encode = data.copy()
+        expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        to_encode.update({"exp": expire, "type": "refresh"})
+        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        return encoded_jwt
+
+    @staticmethod
+    def verify_token(token: str) -> Optional[Dict[str, Any]]:
+        """Verify and decode JWT token."""
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            return payload
+        except JWTError:
+            return None
+
+    @staticmethod
+    async def create_user(user_data: UserCreate) -> User:
+        """Create a new user."""
+        collection = get_collection(USERS_COLLECTION)
+        
+        # Check if user already exists
+        existing_user = await collection.find_one({"email": user_data.email})
+        if existing_user:
+            raise ValueError("User with this email already exists")
+        
+        # Create user document
+        user_dict = user_data.dict()
+        user_dict["hashed_password"] = AuthService.get_password_hash(user_data.password)
+        user_dict["email_verification_token"] = str(uuid.uuid4())
+        user_dict["email_verification_expires"] = datetime.utcnow() + timedelta(hours=24)
+        
+        # Remove plain password
+        del user_dict["password"]
+        
+        # Insert user
+        result = await collection.insert_one(user_dict)
+        user_dict["_id"] = result.inserted_id
+        
+        return User(**user_dict)
+
+    @staticmethod
+    async def authenticate_user(email: str, password: str) -> Optional[User]:
+        """Authenticate user with email and password."""
+        collection = get_collection(USERS_COLLECTION)
+        
+        user_doc = await collection.find_one({"email": email})
+        if not user_doc:
+            return None
+        
+        if not AuthService.verify_password(password, user_doc["hashed_password"]):
+            # Increment login attempts
+            await collection.update_one(
+                {"_id": user_doc["_id"]},
+                {"$inc": {"login_attempts": 1}}
+            )
+            return None
+        
+        # Reset login attempts on successful login
+        await collection.update_one(
+            {"_id": user_doc["_id"]},
+            {
+                "$set": {
+                    "login_attempts": 0,
+                    "last_login": datetime.utcnow()
+                }
+            }
+        )
+        
+        return User(**user_doc)
+
+    @staticmethod
+    async def get_user_by_id(user_id: str) -> Optional[User]:
+        """Get user by ID."""
+        collection = get_collection(USERS_COLLECTION)
+        user_doc = await collection.find_one({"_id": ObjectId(user_id)})
+        return User(**user_doc) if user_doc else None
+
+    @staticmethod
+    async def get_user_by_email(email: str) -> Optional[User]:
+        """Get user by email."""
+        collection = get_collection(USERS_COLLECTION)
+        user_doc = await collection.find_one({"email": email})
+        return User(**user_doc) if user_doc else None
+
+    @staticmethod
+    async def update_user(user_id: str, update_data: UserUpdate) -> Optional[User]:
+        """Update user information."""
+        collection = get_collection(USERS_COLLECTION)
+        
+        # Remove None values
+        update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
+        update_dict["updated_at"] = datetime.utcnow()
+        
+        result = await collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": update_dict}
+        )
+        
+        if result.modified_count:
+            return await AuthService.get_user_by_id(user_id)
+        return None
+
+    @staticmethod
+    async def change_password(user_id: str, current_password: str, new_password: str) -> bool:
+        """Change user password."""
+        collection = get_collection(USERS_COLLECTION)
+        
+        user_doc = await collection.find_one({"_id": ObjectId(user_id)})
+        if not user_doc:
+            return False
+        
+        if not AuthService.verify_password(current_password, user_doc["hashed_password"]):
+            return False
+        
+        new_hash = AuthService.get_password_hash(new_password)
+        result = await collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {
+                "$set": {
+                    "hashed_password": new_hash,
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        return result.modified_count > 0
+
+    @staticmethod
+    async def create_password_reset_token(email: str) -> Optional[str]:
+        """Create password reset token."""
+        collection = get_collection(USERS_COLLECTION)
+        
+        user_doc = await collection.find_one({"email": email})
+        if not user_doc:
+            return None
+        
+        reset_token = str(uuid.uuid4())
+        reset_expires = datetime.utcnow() + timedelta(hours=1)
+        
+        await collection.update_one(
+            {"_id": user_doc["_id"]},
+            {
+                "$set": {
+                    "reset_password_token": reset_token,
+                    "reset_password_expires": reset_expires,
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        return reset_token
+
+    @staticmethod
+    async def reset_password(token: str, new_password: str) -> bool:
+        """Reset password using token."""
+        collection = get_collection(USERS_COLLECTION)
+        
+        user_doc = await collection.find_one({
+            "reset_password_token": token,
+            "reset_password_expires": {"$gt": datetime.utcnow()}
+        })
+        
+        if not user_doc:
+            return False
+        
+        new_hash = AuthService.get_password_hash(new_password)
+        result = await collection.update_one(
+            {"_id": user_doc["_id"]},
+            {
+                "$set": {
+                    "hashed_password": new_hash,
+                    "reset_password_token": None,
+                    "reset_password_expires": None,
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        return result.modified_count > 0
+
+    @staticmethod
+    async def verify_email(token: str) -> bool:
+        """Verify user email."""
+        collection = get_collection(USERS_COLLECTION)
+        
+        user_doc = await collection.find_one({
+            "email_verification_token": token,
+            "email_verification_expires": {"$gt": datetime.utcnow()}
+        })
+        
+        if not user_doc:
+            return False
+        
+        result = await collection.update_one(
+            {"_id": user_doc["_id"]},
+            {
+                "$set": {
+                    "is_email_verified": True,
+                    "status": UserStatus.ACTIVE,
+                    "email_verification_token": None,
+                    "email_verification_expires": None,
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        return result.modified_count > 0
+
+    @staticmethod
+    async def resend_verification_email(email: str) -> bool:
+        """Resend email verification token."""
+        collection = get_collection(USERS_COLLECTION)
+        
+        user_doc = await collection.find_one({"email": email})
+        if not user_doc:
+            return False
+        
+        verification_token = str(uuid.uuid4())
+        verification_expires = datetime.utcnow() + timedelta(hours=24)
+        
+        result = await collection.update_one(
+            {"_id": user_doc["_id"]},
+            {
+                "$set": {
+                    "email_verification_token": verification_token,
+                    "email_verification_expires": verification_expires,
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        return result.modified_count > 0 

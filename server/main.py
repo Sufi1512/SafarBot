@@ -7,12 +7,13 @@ from dotenv import load_dotenv
 load_dotenv('.env')
 
 # Import routers
-from routers import flights, chat, itinerary, alerts, affiliate
+from routers import flights, chat, itinerary, alerts, affiliate, auth
 from config import settings
+from database import Database
 
 app = FastAPI(
     title="SafarBot API",
-    description="AI-powered travel planning API - Flight Booking Service",
+    description="AI-powered travel planning and booking platform with MongoDB",
     version="1.0.0"
 )
 
@@ -36,7 +37,25 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
+# Database events
+@app.on_event("startup")
+async def startup_db_client():
+    """Connect to MongoDB on startup."""
+    try:
+        await Database.connect_db()
+        print("✅ Database connection established")
+    except Exception as e:
+        print(f"❌ Database connection failed: {e}")
+        raise e
+
+@app.on_event("shutdown")
+async def shutdown_db_client():
+    """Close MongoDB connection on shutdown."""
+    await Database.close_db()
+    print("✅ Database connection closed")
+
 # Include routers
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["authentication"])
 app.include_router(flights.router, prefix="/api/v1", tags=["flights"])
 app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
 app.include_router(itinerary.router, prefix="/api/v1", tags=["itinerary"])
@@ -45,15 +64,37 @@ app.include_router(affiliate.router, prefix="/api/v1", tags=["affiliate"])
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "service": "SafarBot Flight API"}
+    """Health check endpoint."""
+    try:
+        # Test database connection
+        await Database.client.admin.command('ping')
+        db_status = "connected"
+    except Exception:
+        db_status = "disconnected"
+    
+    return {
+        "status": "healthy",
+        "message": "SafarBot API is running",
+        "database": db_status,
+        "version": "1.0.0"
+    }
 
 @app.get("/")
 async def root():
     return {
-        "message": "SafarBot Flight API",
+        "message": "Welcome to SafarBot API!",
         "version": "1.0.0",
+        "database": "MongoDB",
+        "features": [
+            "AI-powered travel planning",
+            "Flight & hotel booking",
+            "Price alerts & predictions",
+            "Affiliate integration",
+            "User authentication"
+        ],
         "endpoints": {
             "health": "/health",
+            "authentication": "/api/v1/auth",
             "search_flights": "/api/v1/flights/search",
             "booking_options": "/api/v1/flights/booking-options/{booking_token}",
             "popular_flights": "/api/v1/flights/popular",

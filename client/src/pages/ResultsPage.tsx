@@ -389,6 +389,7 @@ const ResultsPage: React.FC = () => {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-6">
+            {/* Left side - Logo/Name and Back button */}
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => navigate('/')}
@@ -396,23 +397,36 @@ const ResultsPage: React.FC = () => {
               >
                 <ArrowLeft className="w-5 h-5 text-gray-600" />
               </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Your {itineraryData.destination} Itinerary
-                </h1>
-                <p className="text-sm text-gray-500">
-                  {itineraryData.days} days • {itineraryData.travelers} traveler{itineraryData.travelers > 1 ? 's' : ''}
-                </p>
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <MapPin className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    {itineraryData.destination} Itinerary
+                  </h1>
+                  <p className="text-sm text-gray-500">
+                    {itineraryData.days} days • {itineraryData.travelers} traveler{itineraryData.travelers > 1 ? 's' : ''}
+                  </p>
+                </div>
               </div>
             </div>
-            <div className="flex items-center space-x-4 text-sm text-gray-600">
+            
+            {/* Right side - Trip details */}
+            <div className="flex items-center space-x-6 text-sm text-gray-600">
               <div className="flex items-center">
-                <Calendar className="w-4 h-4 mr-1" />
-                {new Date(itineraryData.startDate).toLocaleDateString()} - {new Date(itineraryData.endDate).toLocaleDateString()}
+                <Calendar className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">
+                  {new Date(itineraryData.startDate).toLocaleDateString()} - {new Date(itineraryData.endDate).toLocaleDateString()}
+                </span>
+                <span className="sm:hidden">
+                  {new Date(itineraryData.startDate).toLocaleDateString()}
+                </span>
               </div>
               <div className="flex items-center">
-                <DollarSign className="w-4 h-4 mr-1" />
-                Budget: ${itineraryData.budget}
+                <DollarSign className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Budget: ${itineraryData.budget}</span>
+                <span className="sm:hidden">${itineraryData.budget}</span>
               </div>
             </div>
           </div>

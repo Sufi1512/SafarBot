@@ -192,6 +192,18 @@ const HomePage: React.FC = () => {
             <nav className="hidden md:flex items-center space-x-8">
               <a href="#features" className="nav-link">Features</a>
               <a href="#destinations" className="nav-link">Destinations</a>
+              <button 
+                onClick={() => navigate('/flights')}
+                className="nav-link hover:text-blue-400 transition-colors"
+              >
+                Flights
+              </button>
+              <button 
+                onClick={() => navigate('/hotels')}
+                className="nav-link hover:text-blue-400 transition-colors"
+              >
+                Hotels
+              </button>
               <a href="#about" className="nav-link">About</a>
               <button className="btn-primary px-6 py-2">Sign In</button>
             </nav>
@@ -211,6 +223,24 @@ const HomePage: React.FC = () => {
               <div className="flex flex-col space-y-4">
                 <a href="#features" className="nav-link">Features</a>
                 <a href="#destinations" className="nav-link">Destinations</a>
+                <button 
+                  onClick={() => {
+                    navigate('/flights');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="nav-link hover:text-blue-400 transition-colors text-left"
+                >
+                  Flights
+                </button>
+                <button 
+                  onClick={() => {
+                    navigate('/hotels');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="nav-link hover:text-blue-400 transition-colors text-left"
+                >
+                  Hotels
+                </button>
                 <a href="#about" className="nav-link">About</a>
                 <button className="btn-primary px-6 py-2 w-full">Sign In</button>
               </div>

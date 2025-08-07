@@ -2,7 +2,7 @@ fastapi
 uvicorn[standard]
 python-dotenv
 requests
-pydantic
+pydantic[email]
 pydantic-settings
 python-multipart
 google-search-results
@@ -14,4 +14,5 @@ langchain-google-genai>=1.0.1
 motor
 pymongo
 passlib[bcrypt]
-python-jose[cryptography] 
+python-jose[cryptography]
+email-validator

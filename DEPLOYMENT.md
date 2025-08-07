@@ -47,9 +47,17 @@ In your Render dashboard, add these environment variables:
 GOOGLE_API_KEY=your_google_api_key_here
 SERP_API_KEY=your_serp_api_key_here (optional)
 LANGSMITH_API_KEY=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
+MONGODB_URL=your_mongodb_atlas_connection_string
+JWT_SECRET_KEY=your_jwt_secret_key_here
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
 ```
 
-**Note**: The LANGSMITH_API_KEY is already configured in `render.yaml` and will be automatically set.
+**Note**: 
+- The LANGSMITH_API_KEY is already configured in `render.yaml` and will be automatically set.
+- Make sure to add your MongoDB Atlas connection string and JWT secret key.
+- The `email-validator` dependency has been added to fix deployment issues.
 
 ### 4. Get Your Backend URL
 
@@ -66,6 +74,33 @@ The frontend is configured with:
 - `vercel.json` - Vercel deployment configuration
 - `client/package.json` - React dependencies
 - Updated API service to use Render backend
+- **New Features**: Custom logout confirmation modal, enhanced error handling, MongoDB integration
+
+### 2. Latest Features Implemented
+
+✅ **Authentication System**:
+- User registration and login with MongoDB
+- JWT token management (access & refresh tokens)
+- Password hashing with bcrypt
+- Email validation and error handling
+
+✅ **User Dashboard**:
+- Real user data display from MongoDB
+- Editable profile fields
+- Custom logout confirmation modal
+- Price alerts and trip management
+
+✅ **Enhanced UI/UX**:
+- Consistent glass morphism design
+- Improved error messages and success feedback
+- Responsive design for all devices
+- Custom confirmation dialogs
+
+✅ **Backend Integration**:
+- MongoDB Atlas connection
+- Complete authentication API
+- Price alerts and affiliate tracking
+- Real-time data synchronization
 
 ### 2. Deploy to Vercel
 

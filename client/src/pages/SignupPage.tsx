@@ -15,12 +15,12 @@ import {
 } from 'lucide-react';
 
 interface SignupForm {
-  firstName: string;
-  lastName: string;
+  first_name: string;
+  last_name: string;
   email: string;
   phone: string;
   password: string;
-  confirmPassword: string;
+  confirm_password: string;
   agreeToTerms: boolean;
 }
 
@@ -28,18 +28,19 @@ const SignupPage: React.FC = () => {
   const navigate = useNavigate();
   const { signup } = useAuth();
   const [formData, setFormData] = useState<SignupForm>({
-    firstName: '',
-    lastName: '',
+    first_name: '',
+    last_name: '',
     email: '',
     phone: '',
     password: '',
-    confirmPassword: '',
+    confirm_password: '',
     agreeToTerms: false
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [particles, setParticles] = useState<Array<{id: number, x: number, y: number, delay: number}>>([]);
 
   // Generate floating particles
@@ -64,17 +65,29 @@ const SignupPage: React.FC = () => {
   };
 
   const validateForm = (): string | null => {
-    if (!formData.firstName.trim()) {
+    if (!formData.first_name.trim()) {
       return 'Please enter your first name';
     }
-    if (!formData.lastName.trim()) {
+    if (formData.first_name.trim().length < 2) {
+      return 'First name must be at least 2 characters long';
+    }
+    if (!formData.last_name.trim()) {
       return 'Please enter your last name';
+    }
+    if (formData.last_name.trim().length < 2) {
+      return 'Last name must be at least 2 characters long';
     }
     if (!formData.email.trim()) {
       return 'Please enter your email address';
     }
+    if (!formData.email.includes('@') || !formData.email.includes('.')) {
+      return 'Please enter a valid email address';
+    }
     if (!formData.phone.trim()) {
       return 'Please enter your phone number';
+    }
+    if (formData.phone.trim().length < 10) {
+      return 'Please enter a valid phone number';
     }
     if (!formData.password.trim()) {
       return 'Please enter a password';
@@ -82,7 +95,7 @@ const SignupPage: React.FC = () => {
     if (formData.password.length < 8) {
       return 'Password must be at least 8 characters long';
     }
-    if (formData.password !== formData.confirmPassword) {
+    if (formData.password !== formData.confirm_password) {
       return 'Passwords do not match';
     }
     if (!formData.agreeToTerms) {
@@ -124,20 +137,45 @@ const SignupPage: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
+      setSuccess(null);
 
       await signup({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
         email: formData.email,
         phone: formData.phone,
-        password: formData.password
+        password: formData.password,
+        confirm_password: formData.confirm_password
       });
       
-      navigate('/dashboard');
+      setSuccess('Account created successfully! Redirecting to dashboard...');
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
       
     } catch (err: any) {
       console.error('Signup error:', err);
-      setError(err.message || 'Registration failed. Please try again.');
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (err.message) {
+        if (err.message.includes('409') || err.message.includes('Conflict') || err.message.includes('already exists')) {
+          errorMessage = 'An account with this email already exists. Please try logging in instead.';
+        } else if (err.message.includes('400') || err.message.includes('Bad Request')) {
+          errorMessage = 'Please check your information and try again.';
+        } else if (err.message.includes('500') || err.message.includes('Internal Server Error')) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (err.message.includes('Network') || err.message.includes('fetch')) {
+          errorMessage = 'Network error. Please check your internet connection.';
+        } else if (err.message.includes('password')) {
+          errorMessage = 'Password does not meet security requirements.';
+        } else if (err.message.includes('email')) {
+          errorMessage = 'Please enter a valid email address.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -217,6 +255,16 @@ const SignupPage: React.FC = () => {
               </div>
             )}
 
+            {/* Success Display */}
+            {success && (
+              <div className="mb-6 bg-green-500/20 border border-green-500/30 rounded-lg p-4">
+                <div className="flex items-center space-x-2">
+                  <Check className="w-5 h-5 text-green-400" />
+                  <span className="text-green-400">{success}</span>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Name Fields */}
               <div className="grid grid-cols-2 gap-4">
@@ -230,11 +278,11 @@ const SignupPage: React.FC = () => {
                     </div>
                     <input
                       id="firstName"
-                      name="firstName"
+                      name="first_name"
                       type="text"
                       autoComplete="given-name"
                       required
-                      value={formData.firstName}
+                      value={formData.first_name}
                       onChange={handleInputChange}
                       className="input-field pl-10 w-full"
                       placeholder="First name"
@@ -251,11 +299,11 @@ const SignupPage: React.FC = () => {
                     </div>
                     <input
                       id="lastName"
-                      name="lastName"
+                      name="last_name"
                       type="text"
                       autoComplete="family-name"
                       required
-                      value={formData.lastName}
+                      value={formData.last_name}
                       onChange={handleInputChange}
                       className="input-field pl-10 w-full"
                       placeholder="Last name"
@@ -392,14 +440,14 @@ const SignupPage: React.FC = () => {
                   </div>
                   <input
                     id="confirmPassword"
-                    name="confirmPassword"
+                    name="confirm_password"
                     type={showConfirmPassword ? 'text' : 'password'}
                     autoComplete="new-password"
                     required
-                    value={formData.confirmPassword}
+                    value={formData.confirm_password}
                     onChange={handleInputChange}
                     className={`input-field pl-10 pr-10 w-full ${
-                      formData.confirmPassword && formData.password !== formData.confirmPassword
+                      formData.confirm_password && formData.password !== formData.confirm_password
                         ? 'border-red-500'
                         : ''
                     }`}
@@ -417,7 +465,7 @@ const SignupPage: React.FC = () => {
                     )}
                   </button>
                 </div>
-                {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                {formData.confirm_password && formData.password !== formData.confirm_password && (
                   <p className="mt-1 text-sm text-red-400">Passwords do not match</p>
                 )}
               </div>

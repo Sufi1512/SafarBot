@@ -40,16 +40,26 @@ api.interceptors.response.use(
     });
     
     // Transform error for better user experience
-    if (error.response?.status === 500) {
-      error.userMessage = 'Server error. Please try again later.';
+    if (error.response?.status === 401) {
+      error.userMessage = 'Invalid email or password. Please try again.';
+    } else if (error.response?.status === 403) {
+      error.userMessage = 'Access denied. Please check your credentials.';
     } else if (error.response?.status === 404) {
       error.userMessage = 'Service not found. Please check your connection.';
+    } else if (error.response?.status === 409) {
+      error.userMessage = 'An account with this email already exists.';
+    } else if (error.response?.status === 422) {
+      error.userMessage = 'Please check your input and try again.';
+    } else if (error.response?.status === 500) {
+      error.userMessage = 'Server error. Please try again later.';
     } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
       error.userMessage = 'Request timed out. The server is taking longer than expected. Please try again.';
     } else if (!error.response) {
       error.userMessage = 'Network error. Please check your connection.';
     } else {
-      error.userMessage = error.response?.data?.message || 'Something went wrong. Please try again.';
+      // Handle FastAPI error format: {"detail": "error message"}
+      const errorMessage = error.response?.data?.detail || error.response?.data?.message || 'Something went wrong. Please try again.';
+      error.userMessage = errorMessage;
     }
     
     return Promise.reject(error);
@@ -628,7 +638,22 @@ export const authAPI = {
   login: async (data: {
     email: string;
     password: string;
-  }): Promise<APIResponse> => {
+  }): Promise<{
+    access_token: string;
+    refresh_token: string;
+    token_type: string;
+    user: {
+      id: string;
+      first_name: string;
+      last_name: string;
+      email: string;
+      phone?: string;
+      is_email_verified: boolean;
+      status: string;
+      created_at: string;
+      updated_at: string;
+    };
+  }> => {
     try {
       const response = await api.post('/auth/login', data);
       return response.data;
@@ -638,12 +663,16 @@ export const authAPI = {
   },
 
   signup: async (data: {
-    firstName: string;
-    lastName: string;
+    first_name: string;
+    last_name: string;
     email: string;
-    phone: string;
+    phone?: string;
     password: string;
-  }): Promise<APIResponse> => {
+    confirm_password: string;
+  }): Promise<{
+    message: string;
+    user_id: string;
+  }> => {
     try {
       const response = await api.post('/auth/signup', data);
       return response.data;
@@ -652,7 +681,7 @@ export const authAPI = {
     }
   },
 
-  logout: async (): Promise<APIResponse> => {
+  logout: async (): Promise<{ message: string }> => {
     try {
       const response = await api.post('/auth/logout');
       return response.data;
@@ -661,16 +690,31 @@ export const authAPI = {
     }
   },
 
-  refreshToken: async (): Promise<APIResponse> => {
+  refreshToken: async (refresh_token: string): Promise<{
+    access_token: string;
+    refresh_token: string;
+    token_type: string;
+    user: {
+      id: string;
+      first_name: string;
+      last_name: string;
+      email: string;
+      phone?: string;
+      is_email_verified: boolean;
+      status: string;
+      created_at: string;
+      updated_at: string;
+    };
+  }> => {
     try {
-      const response = await api.post('/auth/refresh');
+      const response = await api.post('/auth/refresh', { refresh_token });
       return response.data;
     } catch (error: any) {
       throw new Error(error.userMessage || 'Token refresh failed');
     }
   },
 
-  forgotPassword: async (email: string): Promise<APIResponse> => {
+  forgotPassword: async (email: string): Promise<{ message: string }> => {
     try {
       const response = await api.post('/auth/forgot-password', { email });
       return response.data;
@@ -681,8 +725,9 @@ export const authAPI = {
 
   resetPassword: async (data: {
     token: string;
-    password: string;
-  }): Promise<APIResponse> => {
+    new_password: string;
+    confirm_password: string;
+  }): Promise<{ message: string }> => {
     try {
       const response = await api.post('/auth/reset-password', data);
       return response.data;
@@ -691,27 +736,19 @@ export const authAPI = {
     }
   },
 
-  verifyEmail: async (token: string): Promise<APIResponse> => {
+  getProfile: async (): Promise<{
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone?: string;
+    is_email_verified: boolean;
+    status: string;
+    created_at: string;
+    updated_at: string;
+  }> => {
     try {
-      const response = await api.post('/auth/verify-email', { token });
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.userMessage || 'Email verification failed');
-    }
-  },
-
-  resendVerification: async (email: string): Promise<APIResponse> => {
-    try {
-      const response = await api.post('/auth/resend-verification', { email });
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.userMessage || 'Verification email resend failed');
-    }
-  },
-
-  getProfile: async (): Promise<APIResponse> => {
-    try {
-      const response = await api.get('/auth/profile');
+      const response = await api.get('/auth/me');
       return response.data;
     } catch (error: any) {
       throw new Error(error.userMessage || 'Failed to get profile');
@@ -719,13 +756,22 @@ export const authAPI = {
   },
 
   updateProfile: async (data: {
-    firstName?: string;
-    lastName?: string;
+    first_name?: string;
+    last_name?: string;
     phone?: string;
-    preferences?: any;
-  }): Promise<APIResponse> => {
+  }): Promise<{
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone?: string;
+    is_email_verified: boolean;
+    status: string;
+    created_at: string;
+    updated_at: string;
+  }> => {
     try {
-      const response = await api.put('/auth/profile', data);
+      const response = await api.put('/auth/me', data);
       return response.data;
     } catch (error: any) {
       throw new Error(error.userMessage || 'Failed to update profile');
@@ -733,9 +779,10 @@ export const authAPI = {
   },
 
   changePassword: async (data: {
-    currentPassword: string;
-    newPassword: string;
-  }): Promise<APIResponse> => {
+    current_password: string;
+    new_password: string;
+    confirm_password: string;
+  }): Promise<{ message: string }> => {
     try {
       const response = await api.post('/auth/change-password', data);
       return response.data;

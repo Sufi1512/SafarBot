@@ -223,7 +223,7 @@ const HomePage: React.FC = () => {
                     Dashboard
                   </button>
                   <span className="text-gray-300 px-4 py-2">
-                    Welcome, {user?.firstName}!
+                    Welcome, {user?.first_name}!
                   </span>
                 </>
               ) : (
@@ -299,7 +299,7 @@ const HomePage: React.FC = () => {
                       Dashboard
                     </button>
                     <span className="text-gray-300 px-4 py-2 text-center">
-                      Welcome, {user?.firstName}!
+                      Welcome, {user?.first_name}!
                     </span>
                   </>
                 ) : (

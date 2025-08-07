@@ -1,5 +1,6 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import MongoClient
+from pymongo.server_api import ServerApi
 from typing import Optional
 import os
 from dotenv import load_dotenv
@@ -14,8 +15,12 @@ class Database:
     async def connect_db(cls):
         """Create database connection."""
         mongodb_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
-        cls.client = AsyncIOMotorClient(mongodb_url)
-        cls.sync_client = MongoClient(mongodb_url)
+        
+        # Create async client
+        cls.client = AsyncIOMotorClient(mongodb_url, server_api=ServerApi('1'))
+        
+        # Create sync client
+        cls.sync_client = MongoClient(mongodb_url, server_api=ServerApi('1'))
         
         # Test the connection
         try:
@@ -38,14 +43,14 @@ class Database:
         """Get database instance."""
         if not cls.client:
             raise Exception("Database not connected. Call connect_db() first.")
-        return cls.client.safarbot
+        return cls.client.SafarBot
 
     @classmethod
     def get_sync_db(cls):
         """Get synchronous database instance."""
         if not cls.sync_client:
             raise Exception("Database not connected. Call connect_db() first.")
-        return cls.sync_client.safarbot
+        return cls.sync_client.SafarBot
 
 # Database collections
 def get_collection(collection_name: str):
@@ -58,8 +63,8 @@ def get_sync_collection(collection_name: str):
     db = Database.get_sync_db()
     return db[collection_name]
 
-# Collection names
-USERS_COLLECTION = "users"
+# Collection names - Updated to match user's existing collection
+USERS_COLLECTION = "user_fields"
 FLIGHTS_COLLECTION = "flights"
 HOTELS_COLLECTION = "hotels"
 BOOKINGS_COLLECTION = "bookings"

@@ -9,7 +9,8 @@ import {
   Mail, 
   Plane, 
   AlertTriangle,
-  Loader2
+  Loader2,
+  Check
 } from 'lucide-react';
 
 interface LoginForm {
@@ -27,6 +28,7 @@ const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [particles, setParticles] = useState<Array<{id: number, x: number, y: number, delay: number}>>([]);
 
   // Generate floating particles
@@ -54,6 +56,9 @@ const LoginPage: React.FC = () => {
     if (!formData.email.trim()) {
       return 'Please enter your email address';
     }
+    if (!formData.email.includes('@')) {
+      return 'Please enter a valid email address';
+    }
     if (!formData.password.trim()) {
       return 'Please enter your password';
     }
@@ -75,13 +80,33 @@ const LoginPage: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
+      setSuccess(null);
 
       await login(formData.email, formData.password);
-      navigate('/dashboard');
+      setSuccess('Login successful! Redirecting to dashboard...');
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1500);
       
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.message || 'Login failed. Please check your credentials and try again.');
+      let errorMessage = 'Login failed. Please check your credentials and try again.';
+      
+      if (err.message) {
+        if (err.message.includes('401') || err.message.includes('Unauthorized')) {
+          errorMessage = 'Invalid email or password. Please try again.';
+        } else if (err.message.includes('404') || err.message.includes('Not Found')) {
+          errorMessage = 'User not found. Please check your email address.';
+        } else if (err.message.includes('500') || err.message.includes('Internal Server Error')) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (err.message.includes('Network') || err.message.includes('fetch')) {
+          errorMessage = 'Network error. Please check your internet connection.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -155,6 +180,16 @@ const LoginPage: React.FC = () => {
                 <div className="flex items-center space-x-2">
                   <AlertTriangle className="w-5 h-5 text-red-400" />
                   <span className="text-red-400">{error}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Success Display */}
+            {success && (
+              <div className="mb-6 bg-green-500/20 border border-green-500/30 rounded-lg p-4">
+                <div className="flex items-center space-x-2">
+                  <Check className="w-5 h-5 text-green-400" />
+                  <span className="text-green-400">{success}</span>
                 </div>
               </div>
             )}

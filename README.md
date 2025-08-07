@@ -91,8 +91,69 @@ SafarBot/
 ### Prerequisites
 - Python 3.8+
 - Node.js 16+
+- MongoDB Atlas account (for database)
 - Render account (for backend)
 - Vercel account (for frontend)
+
+### MongoDB Setup
+
+1. **Create MongoDB Atlas Cluster**
+   - Sign up at [MongoDB Atlas](https://www.mongodb.com/atlas)
+   - Create a new cluster (free tier available)
+   - Set up database access with username and password
+   - Configure network access (allow all IPs for development: 0.0.0.0/0)
+
+2. **Get Connection String**
+   - In your cluster, click "Connect"
+   - Choose "Connect your application"
+   - Copy the connection string
+   - Replace `<password>` with your actual password
+
+3. **Configure Environment Variables**
+   ```bash
+   # Copy the template file
+   cp server/env.template server/.env
+   
+   # Edit the .env file with your MongoDB connection string
+   MONGODB_URL=mongodb+srv://admin:<your_password>@cluster0.4b4rg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+   SECRET_KEY=your-super-secret-jwt-key-here-change-in-production
+   ACCESS_TOKEN_EXPIRE_MINUTES=30
+   REFRESH_TOKEN_EXPIRE_DAYS=7
+   ```
+
+4. **Test Database Connection**
+   ```bash
+   cd server
+   python test_db.py
+   ```
+
+5. **Database Collections**
+   - **Database**: `SafarBot`
+   - **User Collection**: `user_fields`
+   - **Other Collections**: `flights`, `hotels`, `bookings`, `itineraries`, `price_alerts`, etc.
+
+### Authentication System
+
+The application uses JWT (JSON Web Tokens) for authentication:
+
+1. **User Registration** (`POST /api/v1/auth/signup`)
+   - Creates new user account
+   - Password is hashed using bcrypt
+   - Email verification required (can be disabled for testing)
+
+2. **User Login** (`POST /api/v1/auth/login`)
+   - Authenticates user credentials
+   - Returns access token and refresh token
+   - Tracks login attempts for security
+
+3. **Token Management**
+   - Access tokens expire in 30 minutes
+   - Refresh tokens expire in 7 days
+   - Automatic token refresh on frontend
+
+4. **Sample User Credentials** (created by test script)
+   - Email: `demo@example.com`
+   - Password: `DemoPassword123!`
 
 ### Local Development
 

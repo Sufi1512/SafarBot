@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import ConfirmModal from '../components/ConfirmModal';
 import { 
   User, 
   Calendar, 
@@ -82,9 +83,11 @@ const UserDashboard: React.FC = () => {
   const [savedTrips, setSavedTrips] = useState<SavedTrip[]>([]);
   const [priceAlerts, setPriceAlerts] = useState<PriceAlert[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [editableProfile, setEditableProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -101,13 +104,30 @@ const UserDashboard: React.FC = () => {
         setPriceAlerts(alertsResponse.data);
       }
 
-      // Load affiliate stats
-      // const affiliateStatsResponse = await affiliateAPI.getStats();
+      // Load real user profile data from auth context
+      if (user) {
+        const realProfile: UserProfile = {
+          name: `${user.first_name} ${user.last_name}`,
+          email: user.email,
+          phone: user.phone || '+1-555-0123',
+          preferences: {
+            budgetRange: '$1000-$3000',
+            travelStyle: ['Adventure', 'Cultural', 'Luxury'],
+            preferredAirlines: ['Emirates', 'Qatar Airways', 'Turkish Airlines'],
+            preferredHotels: ['Marriott', 'Hilton', 'Hyatt']
+          },
+          stats: {
+            totalTrips: 8,
+            totalSpent: 18500,
+            averageRating: 4.6,
+            favoriteDestinations: ['Dubai', 'Tokyo', 'Paris', 'Istanbul']
+          }
+        };
+        setUserProfile(realProfile);
+        setEditableProfile(realProfile);
+      }
       
-      // Load alert statistics
-      // const alertStatsResponse = await alertsAPI.getAlertStats();
-      
-      // For now, keep mock data for trips and profile until we have those endpoints
+      // Load mock trips data (will be replaced with real API calls)
       loadMockData();
       
     } catch (err: any) {
@@ -159,7 +179,7 @@ const UserDashboard: React.FC = () => {
 
     // Create user profile from auth context
     const mockProfile: UserProfile = {
-      name: user ? `${user.firstName} ${user.lastName}` : 'User',
+      name: user ? `${user.first_name} ${user.last_name}` : 'User',
       email: user?.email || 'user@example.com',
       phone: user?.phone || '+1-555-0123',
       preferences: {
@@ -178,6 +198,7 @@ const UserDashboard: React.FC = () => {
 
     setSavedTrips(mockTrips);
     setUserProfile(mockProfile);
+    setEditableProfile(mockProfile);
   };
 
   const getStatusColor = (status: string) => {
@@ -248,6 +269,45 @@ const UserDashboard: React.FC = () => {
     console.log('Create new alert');
   };
 
+  const handleLogout = async () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = async () => {
+    try {
+      await logout();
+      navigate('/');
+    } catch (err: any) {
+      console.error('Error during logout:', err);
+      setError('Failed to logout. Please try again.');
+    }
+  };
+
+  const handleUpdateProfile = async (updatedData: Partial<UserProfile>) => {
+    try {
+      // This would call the backend API to update user profile
+      console.log('Updating profile:', updatedData);
+      setUserProfile(prev => prev ? { ...prev, ...updatedData } : null);
+      setError(null);
+    } catch (err: any) {
+      console.error('Error updating profile:', err);
+      setError('Failed to update profile. Please try again.');
+    }
+  };
+
+  const handleSavePreferences = async () => {
+    try {
+      if (editableProfile) {
+        await handleUpdateProfile(editableProfile);
+        setUserProfile(editableProfile);
+        setError(null);
+      }
+    } catch (err: any) {
+      console.error('Error saving preferences:', err);
+      setError('Failed to save preferences. Please try again.');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
@@ -312,7 +372,7 @@ const UserDashboard: React.FC = () => {
                 <Settings className="w-5 h-5" />
               </button>
               <button 
-                onClick={logout}
+                onClick={handleLogout}
                 className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
               >
                 <LogOut className="w-5 h-5" />
@@ -367,7 +427,7 @@ const UserDashboard: React.FC = () => {
                     <Settings className="w-5 h-5" />
                   </button>
                   <button 
-                    onClick={logout}
+                    onClick={handleLogout}
                     className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
                   >
                     <LogOut className="w-5 h-5" />
@@ -396,10 +456,10 @@ const UserDashboard: React.FC = () => {
             <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
               <User className="w-8 h-8" />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold">Welcome back, {userProfile?.name}!</h1>
-              <p className="text-gray-300">Manage your trips, alerts, and preferences</p>
-            </div>
+                         <div>
+               <h1 className="text-3xl font-bold">Welcome back, {userProfile?.name || user?.first_name || 'User'}!</h1>
+               <p className="text-gray-300">Manage your trips, alerts, and preferences</p>
+             </div>
           </div>
         </div>
 
@@ -679,9 +739,18 @@ const UserDashboard: React.FC = () => {
           </div>
         )}
 
-        {activeTab === 'profile' && userProfile && (
+        {activeTab === 'profile' && editableProfile && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Profile Settings</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">Profile Settings</h2>
+              <button
+                onClick={handleSavePreferences}
+                className="btn-primary px-4 py-2 flex items-center space-x-2"
+              >
+                <Edit className="w-4 h-4" />
+                <span>Save Changes</span>
+              </button>
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Personal Information */}
@@ -692,7 +761,8 @@ const UserDashboard: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-300 mb-1">Name</label>
                     <input
                       type="text"
-                      value={userProfile.name}
+                      value={editableProfile.name}
+                      onChange={(e) => setEditableProfile(prev => prev ? { ...prev, name: e.target.value } : null)}
                       className="input-field w-full"
                     />
                   </div>
@@ -700,7 +770,8 @@ const UserDashboard: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
                     <input
                       type="email"
-                      value={userProfile.email}
+                      value={editableProfile.email}
+                      onChange={(e) => setEditableProfile(prev => prev ? { ...prev, email: e.target.value } : null)}
                       className="input-field w-full"
                     />
                   </div>
@@ -708,7 +779,8 @@ const UserDashboard: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-300 mb-1">Phone</label>
                     <input
                       type="tel"
-                      value={userProfile.phone || ''}
+                      value={editableProfile.phone || ''}
+                      onChange={(e) => setEditableProfile(prev => prev ? { ...prev, phone: e.target.value } : null)}
                       className="input-field w-full"
                     />
                   </div>
@@ -721,8 +793,14 @@ const UserDashboard: React.FC = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1">Budget Range</label>
-                    <select className="input-field w-full">
-                      <option value={userProfile.preferences.budgetRange}>{userProfile.preferences.budgetRange}</option>
+                    <select 
+                      className="input-field w-full"
+                      value={editableProfile.preferences.budgetRange}
+                      onChange={(e) => setEditableProfile(prev => prev ? { 
+                        ...prev, 
+                        preferences: { ...prev.preferences, budgetRange: e.target.value }
+                      } : null)}
+                    >
                       <option value="$500-$1000">$500-$1000</option>
                       <option value="$1000-$3000">$1000-$3000</option>
                       <option value="$3000-$5000">$3000-$5000</option>
@@ -732,7 +810,7 @@ const UserDashboard: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1">Travel Style</label>
                     <div className="flex flex-wrap gap-2">
-                      {userProfile.preferences.travelStyle.map((style, index) => (
+                      {editableProfile.preferences.travelStyle.map((style, index) => (
                         <span
                           key={index}
                           className="px-3 py-1 bg-purple-600/20 border border-purple-500/30 rounded-full text-sm"
@@ -751,19 +829,19 @@ const UserDashboard: React.FC = () => {
               <h3 className="text-lg font-semibold mb-4">Travel Statistics</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-purple-400">{userProfile.stats.totalTrips}</p>
+                  <p className="text-2xl font-bold text-purple-400">{editableProfile.stats.totalTrips}</p>
                   <p className="text-sm text-gray-300">Total Trips</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-green-400">${userProfile.stats.totalSpent.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-green-400">${editableProfile.stats.totalSpent.toLocaleString()}</p>
                   <p className="text-sm text-gray-300">Total Spent</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-yellow-400">{userProfile.stats.averageRating}</p>
+                  <p className="text-2xl font-bold text-yellow-400">{editableProfile.stats.averageRating}</p>
                   <p className="text-sm text-gray-300">Avg Rating</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-400">{userProfile.stats.favoriteDestinations.length}</p>
+                  <p className="text-2xl font-bold text-blue-400">{editableProfile.stats.favoriteDestinations.length}</p>
                   <p className="text-sm text-gray-300">Favorites</p>
                 </div>
               </div>
@@ -771,6 +849,18 @@ const UserDashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={confirmLogout}
+        title="Confirm Logout"
+        message="Are you sure you want to logout? You will need to sign in again to access your dashboard."
+        confirmText="Logout"
+        cancelText="Cancel"
+        type="warning"
+      />
     </div>
   );
 };

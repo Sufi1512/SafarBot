@@ -7,7 +7,7 @@ import uuid
 import os
 from dotenv import load_dotenv
 
-from database import get_collection, USERS_COLLECTION
+from database import get_collection, USERS_COLLECTION, Database
 from mongo_models import User, UserCreate, UserLogin, UserUpdate, UserStatus, UserRole
 
 load_dotenv()
@@ -21,6 +21,11 @@ REFRESH_TOKEN_EXPIRE_DAYS = 7
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class AuthService:
+    @staticmethod
+    def is_database_available() -> bool:
+        """Check if database connection is available."""
+        return Database.client is not None
+
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
         """Verify a password against its hash."""
@@ -65,6 +70,9 @@ class AuthService:
     @staticmethod
     async def create_user(user_data: UserCreate) -> User:
         """Create a new user."""
+        if not AuthService.is_database_available():
+            raise ValueError("Database connection not available")
+            
         collection = get_collection(USERS_COLLECTION)
         
         # Check if user already exists
@@ -90,6 +98,9 @@ class AuthService:
     @staticmethod
     async def authenticate_user(email: str, password: str) -> Optional[User]:
         """Authenticate user with email and password."""
+        if not AuthService.is_database_available():
+            return None
+            
         collection = get_collection(USERS_COLLECTION)
         
         user_doc = await collection.find_one({"email": email})
@@ -120,6 +131,9 @@ class AuthService:
     @staticmethod
     async def get_user_by_id(user_id: str) -> Optional[User]:
         """Get user by ID."""
+        if not AuthService.is_database_available():
+            return None
+            
         collection = get_collection(USERS_COLLECTION)
         user_doc = await collection.find_one({"_id": ObjectId(user_id)})
         return User(**user_doc) if user_doc else None

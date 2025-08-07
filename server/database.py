@@ -16,19 +16,39 @@ class Database:
         """Create database connection."""
         mongodb_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
         
-        # Create async client
-        cls.client = AsyncIOMotorClient(mongodb_url, server_api=ServerApi('1'))
+        # MongoDB connection options for better SSL handling
+        connection_options = {
+            "server_api": ServerApi('1'),
+            "tlsAllowInvalidCertificates": True,  # For development/deployment issues
+            "tlsAllowInvalidHostnames": True,     # For development/deployment issues
+            "retryWrites": True,
+            "w": "majority",
+            "maxPoolSize": 10,
+            "minPoolSize": 1,
+            "maxIdleTimeMS": 30000,
+            "connectTimeoutMS": 20000,
+            "socketTimeoutMS": 20000,
+            "serverSelectionTimeoutMS": 30000,
+        }
         
-        # Create sync client
-        cls.sync_client = MongoClient(mongodb_url, server_api=ServerApi('1'))
-        
-        # Test the connection
         try:
+            # Create async client with connection options
+            cls.client = AsyncIOMotorClient(mongodb_url, **connection_options)
+            
+            # Create sync client with connection options
+            cls.sync_client = MongoClient(mongodb_url, **connection_options)
+            
+            # Test the connection
             await cls.client.admin.command('ping')
             print("✅ Successfully connected to MongoDB!")
+            
         except Exception as e:
             print(f"❌ Failed to connect to MongoDB: {e}")
-            raise e
+            # For deployment, we might want to continue without database
+            # but log the error for debugging
+            print("⚠️  Continuing without database connection for deployment...")
+            # Don't raise the exception to allow the app to start
+            # raise e
 
     @classmethod
     async def close_db(cls):

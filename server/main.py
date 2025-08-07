@@ -46,7 +46,9 @@ async def startup_db_client():
         print("✅ Database connection established")
     except Exception as e:
         print(f"❌ Database connection failed: {e}")
-        raise e
+        print("⚠️  Application will start without database connection")
+        # Don't raise the exception to allow the app to start
+        # This is important for deployment when MongoDB might not be available
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
@@ -66,11 +68,14 @@ app.include_router(affiliate.router, prefix="/api/v1", tags=["affiliate"])
 async def health_check():
     """Health check endpoint."""
     try:
-        # Test database connection
-        await Database.client.admin.command('ping')
-        db_status = "connected"
-    except Exception:
-        db_status = "disconnected"
+        # Test database connection if client exists
+        if Database.client:
+            await Database.client.admin.command('ping')
+            db_status = "connected"
+        else:
+            db_status = "not_initialized"
+    except Exception as e:
+        db_status = f"disconnected: {str(e)[:100]}"
     
     return {
         "status": "healthy",

@@ -310,70 +310,71 @@ const UserDashboard: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-500"></div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-50 relative overflow-hidden">
       {/* Animated Background Particles */}
-      <div className="particles">
+      <div className="absolute inset-0 overflow-hidden">
         {Array.from({ length: 20 }, (_, i) => (
           <div
             key={i}
-            className="particle"
+            className="absolute w-2 h-2 bg-blue-300/30 rounded-full animate-pulse"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 20}s`
+              animationDelay: `${Math.random() * 20}s`,
+              animationDuration: '3s'
             }}
           />
         ))}
       </div>
 
       {/* Header - Matching HomePage styling */}
-      <header className="glass-dark sticky top-0 z-50 border-b border-white/10">
+      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-blue-200 shadow-sm">
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             {/* Left side - Logo and Name */}
             <div className="flex items-center space-x-1">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center pulse-glow">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
                 <Plane className="w-7 h-7 text-white" />
               </div>
-              <h1 className="text-3xl font-bold gradient-text">SafarBot</h1>
+              <h1 className="text-3xl font-bold text-slate-800">SafarBot</h1>
             </div>
             
             {/* Right side - Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
               <button 
                 onClick={() => navigate('/')}
-                className="nav-link hover:text-blue-400 transition-colors"
+                className="text-slate-700 hover:text-blue-600 transition-colors font-medium"
               >
                 Home
               </button>
               <button 
                 onClick={() => navigate('/flights')}
-                className="nav-link hover:text-blue-400 transition-colors"
+                className="text-slate-700 hover:text-blue-600 transition-colors font-medium"
               >
                 Flights
               </button>
               <button 
                 onClick={() => navigate('/hotels')}
-                className="nav-link hover:text-blue-400 transition-colors"
+                className="text-slate-700 hover:text-blue-600 transition-colors font-medium"
               >
                 Hotels
               </button>
-              <button className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
+              <button className="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 transition-colors text-slate-700">
                 <Bell className="w-5 h-5" />
               </button>
-              <button className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
+              <button className="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 transition-colors text-slate-700">
                 <Settings className="w-5 h-5" />
               </button>
               <button 
                 onClick={handleLogout}
-                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                className="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 transition-colors text-slate-700"
               >
                 <LogOut className="w-5 h-5" />
               </button>

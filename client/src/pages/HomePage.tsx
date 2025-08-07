@@ -163,66 +163,67 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-50 relative overflow-hidden">
       {/* Animated Background Particles */}
-      <div className="particles">
+      <div className="absolute inset-0 overflow-hidden">
         {particles.map((particle) => (
           <div
             key={particle.id}
-            className="particle"
+            className="absolute w-2 h-2 bg-blue-300/30 rounded-full animate-pulse"
             style={{
               left: `${particle.x}%`,
               top: `${particle.y}%`,
-              animationDelay: `${particle.delay}s`
+              animationDelay: `${particle.delay}s`,
+              animationDuration: '3s'
             }}
           />
         ))}
       </div>
 
       {/* Header */}
-      <header className="glass-dark sticky top-0 z-50 border-b border-white/10">
+      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-blue-200 shadow-sm">
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             {/* Left side - Logo and Name */}
             <div className="flex items-center space-x-1">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center pulse-glow">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
                 <Plane className="w-7 h-7 text-white" />
               </div>
-              <h1 className="text-3xl font-bold gradient-text">SafarBot</h1>
+              <h1 className="text-3xl font-bold text-slate-800">SafarBot</h1>
             </div>
             
             {/* Right side - Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="nav-link">Features</a>
-              <a href="#destinations" className="nav-link">Destinations</a>
+              <a href="#features" className="text-slate-700 hover:text-blue-600 transition-colors font-medium">Features</a>
+              <a href="#destinations" className="text-slate-700 hover:text-blue-600 transition-colors font-medium">Destinations</a>
               <button 
                 onClick={() => navigate('/flights')}
-                className="nav-link hover:text-blue-400 transition-colors"
+                className="text-slate-700 hover:text-blue-600 transition-colors font-medium"
               >
                 Flights
               </button>
               <button 
                 onClick={() => navigate('/hotels')}
-                className="nav-link hover:text-blue-400 transition-colors"
+                className="text-slate-700 hover:text-blue-600 transition-colors font-medium"
               >
                 Hotels
               </button>
               <button 
                 onClick={() => navigate('/dashboard')}
-                className="nav-link hover:text-purple-400 transition-colors"
+                className="text-slate-700 hover:text-blue-600 transition-colors font-medium"
               >
                 Dashboard
               </button>
-              <a href="#about" className="nav-link">About</a>
+              <a href="#about" className="text-slate-700 hover:text-blue-600 transition-colors font-medium">About</a>
               {isAuthenticated ? (
                 <>
                   <button 
                     onClick={() => navigate('/dashboard')}
-                    className="btn-secondary px-4 py-2 mr-2"
+                    className="bg-white hover:bg-blue-50 text-slate-700 font-medium py-2 px-4 rounded-lg border border-blue-200 transition-colors mr-2"
                   >
                     Dashboard
                   </button>
-                  <span className="text-gray-300 px-4 py-2">
+                  <span className="text-slate-700 px-4 py-2 font-medium">
                     Welcome, {user?.first_name}!
                   </span>
                 </>
@@ -230,13 +231,13 @@ const HomePage: React.FC = () => {
                 <>
                   <button 
                     onClick={() => navigate('/login')}
-                    className="btn-secondary px-4 py-2 mr-2"
+                    className="bg-white hover:bg-blue-50 text-slate-700 font-medium py-2 px-4 rounded-lg border border-blue-200 transition-colors mr-2"
                   >
                     Sign In
                   </button>
                   <button 
                     onClick={() => navigate('/signup')}
-                    className="btn-primary px-6 py-2"
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
                   >
                     Sign Up
                   </button>
@@ -246,7 +247,7 @@ const HomePage: React.FC = () => {
 
             {/* Right side - Mobile menu button */}
             <button
-              className="md:hidden p-2 hover:bg-white/10 rounded-lg transition-colors"
+              className="md:hidden p-2 hover:bg-blue-100 rounded-lg transition-colors text-slate-700"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -255,7 +256,7 @@ const HomePage: React.FC = () => {
 
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
-            <nav className="md:hidden py-4 border-t border-white/10 slide-in-left">
+            <nav className="md:hidden py-4 border-t border-blue-200 slide-in-left">
               <div className="flex flex-col space-y-4">
                 <a href="#features" className="nav-link">Features</a>
                 <a href="#destinations" className="nav-link">Destinations</a>
@@ -337,18 +338,18 @@ const HomePage: React.FC = () => {
             <div className="mb-6">
               <Sparkles className="w-16 h-16 text-blue-400 mx-auto float-animation" />
             </div>
-            <h1 className="text-6xl md:text-7xl font-bold mb-6">
+            <h1 className="text-6xl md:text-7xl font-bold mb-6 text-slate-800">
               Your AI Travel
-              <span className="gradient-text block"> Companion</span>
+              <span className="text-blue-600 block"> Companion</span>
             </h1>
-            <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto mb-8">
+            <p className="text-xl md:text-2xl text-slate-600 max-w-3xl mx-auto mb-8">
               Plan, book, and experience unforgettable journeys with our intelligent travel assistant
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="btn-primary px-8 py-4 text-lg font-semibold hover-scale">
+              <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-lg transition-colors text-lg hover:scale-105">
                 Start Planning
               </button>
-              <button className="btn-secondary px-8 py-4 text-lg font-semibold hover-scale">
+              <button className="bg-white hover:bg-blue-50 text-slate-700 font-semibold py-4 px-8 rounded-lg border border-blue-200 transition-colors text-lg hover:scale-105">
                 Watch Demo
               </button>
             </div>
@@ -356,7 +357,7 @@ const HomePage: React.FC = () => {
 
           {/* Search Tabs */}
           <div className="max-w-5xl mx-auto">
-            <div className="card-3d p-8">
+            <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-xl border border-blue-100 p-8">
               {/* Tab Navigation */}
               <div className="tab-container mb-8">
                 <div className="flex space-x-1">

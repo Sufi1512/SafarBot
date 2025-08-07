@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Mail, 
-  Plane, 
   AlertTriangle,
   Loader2,
   CheckCircle,
@@ -15,18 +14,6 @@ const ForgotPasswordPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [particles, setParticles] = useState<Array<{id: number, x: number, y: number, delay: number}>>([]);
-
-  // Generate floating particles
-  React.useEffect(() => {
-    const newParticles = Array.from({ length: 20 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      delay: Math.random() * 20
-    }));
-    setParticles(newParticles);
-  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
@@ -74,137 +61,158 @@ const ForgotPasswordPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Animated Background Particles */}
-      <div className="particles">
-        {particles.map((particle) => (
-          <div
-            key={particle.id}
-            className="particle"
-            style={{
-              left: `${particle.x}%`,
-              top: `${particle.y}%`,
-              animationDelay: `${particle.delay}s`
-            }}
-          />
-        ))}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-50">
+      {/* Animated Background */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-300/30 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-300/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-300/30 rounded-full blur-3xl animate-pulse delay-500"></div>
       </div>
 
       {/* Header */}
-      <header className="glass-dark sticky top-0 z-50 border-b border-white/10">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            {/* Left side - Logo and Name */}
-            <div className="flex items-center space-x-1">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center pulse-glow">
-                <Plane className="w-7 h-7 text-white" />
+      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-blue-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo */}
+            <Link to="/" className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">S</span>
               </div>
-              <h1 className="text-3xl font-bold gradient-text">SafarBot</h1>
-            </div>
-            
-            {/* Right side - Navigation */}
+              <span className="text-slate-800 font-bold text-xl">SafarBot</span>
+            </Link>
+
+            {/* Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
-              <Link to="/" className="nav-link">Home</Link>
-              <Link to="/login" className="btn-primary px-6 py-2">Sign In</Link>
+              <Link to="/" className="text-slate-700 hover:text-blue-600 transition-colors font-medium">
+                Home
+              </Link>
+              <Link to="/flights" className="text-slate-700 hover:text-blue-600 transition-colors font-medium">
+                Flights
+              </Link>
+              <Link to="/hotels" className="text-slate-700 hover:text-blue-600 transition-colors font-medium">
+                Hotels
+              </Link>
+              <Link to="/chat" className="text-slate-700 hover:text-blue-600 transition-colors font-medium">
+                AI Chat
+              </Link>
             </nav>
+
+            {/* Sign In Button */}
+            <Link
+              to="/login"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+            >
+              Sign In
+            </Link>
           </div>
         </div>
       </header>
 
-      <div className="flex items-center justify-center min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          {/* Forgot Password Form Card */}
-          <div className="card-3d">
+      {/* Main Content */}
+      <div className="relative z-10 flex items-center justify-center min-h-screen px-4 py-12">
+        <div className="w-full max-w-md">
+          {/* Forgot Password Card */}
+          <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-xl border border-blue-100 p-8">
+            {/* Back Button */}
+            <Link
+              to="/login"
+              className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-6 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Sign In
+            </Link>
+
+            {/* Card Header */}
             <div className="text-center mb-8">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Mail className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-3xl font-bold gradient-text">Reset Password</h2>
-              <p className="text-gray-300 mt-2">Enter your email to receive a password reset link</p>
+              <h2 className="text-2xl font-bold text-slate-800 mb-2">Forgot Password?</h2>
+              <p className="text-slate-600">Enter your email to receive a password reset link</p>
             </div>
 
-            {!isSuccess ? (
-              <>
-                {/* Error Display */}
-                {error && (
-                  <div className="mb-6 bg-red-500/20 border border-red-500/30 rounded-lg p-4">
-                    <div className="flex items-center space-x-2">
-                      <AlertTriangle className="w-5 h-5 text-red-400" />
-                      <span className="text-red-400">{error}</span>
-                    </div>
-                  </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Email Field */}
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Mail className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        id="email"
-                        name="email"
-                        type="email"
-                        autoComplete="email"
-                        required
-                        value={email}
-                        onChange={handleInputChange}
-                        className="input-field pl-10 w-full"
-                        placeholder="Enter your email"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Submit Button */}
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="btn-primary w-full flex justify-center items-center py-3"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      'Send Reset Link'
-                    )}
-                  </button>
-                </form>
-              </>
-            ) : (
-              /* Success Message */
-              <div className="text-center space-y-6">
-                <div className="mx-auto w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-8 h-8 text-green-400" />
+            {/* Error/Success Messages */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <AlertTriangle className="w-5 h-5 text-red-500" />
+                  <p className="text-red-700 text-sm">{error}</p>
                 </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-green-400 mb-2">
-                    Check Your Email
-                  </h3>
-                  <p className="text-gray-300">
-                    We've sent a password reset link to <strong>{email}</strong>
-                  </p>
-                  <p className="text-gray-400 text-sm mt-2">
-                    Please check your inbox and follow the instructions to reset your password.
+              </div>
+            )}
+            
+            {isSuccess && (
+              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                  <p className="text-green-700 text-sm">
+                    Password reset email sent! Please check your inbox and follow the instructions.
                   </p>
                 </div>
               </div>
             )}
 
-            {/* Back to Login Link */}
-            <div className="mt-8 text-center">
-              <Link 
-                to="/login" 
-                className="inline-flex items-center text-purple-400 hover:text-purple-300 font-medium transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Sign In
-              </Link>
+            {/* Form */}
+            {!isSuccess ? (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input
+                      type="email"
+                      id="email"
+                      value={email}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 pr-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                      placeholder="Enter your email address"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-center"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Send Reset Link'
+                  )}
+                </button>
+              </form>
+            ) : (
+              <div className="text-center">
+                <p className="text-slate-600 mb-6">
+                  Didn't receive the email? Check your spam folder or try again.
+                </p>
+                <button
+                  onClick={() => {
+                    setIsSuccess(false);
+                    setEmail('');
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+
+            {/* Sign In Link */}
+            <div className="text-center mt-6">
+              <p className="text-slate-600">
+                Remember your password?{' '}
+                <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+                  Sign in
+                </Link>
+              </p>
             </div>
           </div>
         </div>

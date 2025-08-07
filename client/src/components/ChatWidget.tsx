@@ -299,6 +299,8 @@ const ChatWidget: React.FC = () => {
                   <input
                     ref={inputRef}
                     type="text"
+                    style={{ color: 'black' }}
+                    
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyPress={handleKeyPress}

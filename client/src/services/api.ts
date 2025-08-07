@@ -14,10 +14,17 @@ const api = axios.create({
   },
 });
 
-// Request interceptor for logging
+// Request interceptor for logging and authentication
 api.interceptors.request.use(
   (config) => {
     console.log('API Request:', config.method?.toUpperCase(), config.url);
+    
+    // Add Authorization header if token exists
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    
     return config;
   },
   (error) => {
@@ -26,22 +33,46 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor for error handling
+// Response interceptor for error handling and token refresh
 api.interceptors.response.use(
   (response: AxiosResponse) => {
     console.log('API Response:', response.status, response.config.url);
     return response;
   },
-  (error) => {
+  async (error) => {
     console.error('API Error:', {
       status: error.response?.status,
       message: error.response?.data?.message || error.message,
       url: error.config?.url
     });
     
+    // Handle 401 Unauthorized - try to refresh token
+    if (error.response?.status === 401 && !error.config._retry) {
+      error.config._retry = true;
+      
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (refreshToken) {
+        try {
+          const response = await authAPI.refreshToken(refreshToken);
+          localStorage.setItem('accessToken', response.access_token);
+          localStorage.setItem('refreshToken', response.refresh_token);
+          
+          // Retry the original request with new token
+          error.config.headers.Authorization = `Bearer ${response.access_token}`;
+          return api(error.config);
+        } catch (refreshError) {
+          // Refresh failed, clear tokens and redirect to login
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          window.location.href = '/login';
+          return Promise.reject(refreshError);
+        }
+      }
+    }
+    
     // Transform error for better user experience
     if (error.response?.status === 401) {
-      error.userMessage = 'Invalid email or password. Please try again.';
+      error.userMessage = 'Session expired. Please log in again.';
     } else if (error.response?.status === 403) {
       error.userMessage = 'Access denied. Please check your credentials.';
     } else if (error.response?.status === 404) {

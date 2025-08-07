@@ -3,6 +3,7 @@ from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 from typing import Optional
 import os
+import certifi
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -16,19 +17,19 @@ class Database:
         """Create database connection."""
         mongodb_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
         
-        # MongoDB connection options for better SSL handling
+        # MongoDB connection options with proper TLS configuration and certifi
         connection_options = {
             "server_api": ServerApi('1'),
-            "tlsAllowInvalidCertificates": True,  # For development/deployment issues
-            "tlsAllowInvalidHostnames": True,     # For development/deployment issues
+            "tls": True,  # Explicitly enable TLS
+            "tlsCAFile": certifi.where(),  # Use certifi for CA root certificates
             "retryWrites": True,
             "w": "majority",
             "maxPoolSize": 10,
             "minPoolSize": 1,
             "maxIdleTimeMS": 30000,
-            "connectTimeoutMS": 20000,
-            "socketTimeoutMS": 20000,
-            "serverSelectionTimeoutMS": 30000,
+            "connectTimeoutMS": 30000,  # Increased timeout
+            "socketTimeoutMS": 30000,   # Increased timeout
+            "serverSelectionTimeoutMS": 60000,  # Increased timeout
         }
         
         try:
@@ -44,11 +45,12 @@ class Database:
             
         except Exception as e:
             print(f"❌ Failed to connect to MongoDB: {e}")
-            # For deployment, we might want to continue without database
-            # but log the error for debugging
             print("⚠️  Continuing without database connection for deployment...")
+            print("📝 Note: Authentication and user features will be disabled")
+            # Set clients to None to indicate no database connection
+            cls.client = None
+            cls.sync_client = None
             # Don't raise the exception to allow the app to start
-            # raise e
 
     @classmethod
     async def close_db(cls):
@@ -62,25 +64,33 @@ class Database:
     def get_db(cls):
         """Get database instance."""
         if not cls.client:
-            raise Exception("Database not connected. Call connect_db() first.")
+            print("⚠️  Database not connected. Returning None.")
+            return None
         return cls.client.SafarBot
 
     @classmethod
     def get_sync_db(cls):
         """Get synchronous database instance."""
         if not cls.sync_client:
-            raise Exception("Database not connected. Call connect_db() first.")
+            print("⚠️  Database not connected. Returning None.")
+            return None
         return cls.sync_client.SafarBot
 
 # Database collections
 def get_collection(collection_name: str):
     """Get a specific collection from the database."""
     db = Database.get_db()
+    if db is None:
+        print(f"⚠️  Cannot get collection '{collection_name}': Database not connected")
+        return None
     return db[collection_name]
 
 def get_sync_collection(collection_name: str):
     """Get a specific collection from the synchronous database."""
     db = Database.get_sync_db()
+    if db is None:
+        print(f"⚠️  Cannot get collection '{collection_name}': Database not connected")
+        return None
     return db[collection_name]
 
 # Collection names - Updated to match user's existing collection

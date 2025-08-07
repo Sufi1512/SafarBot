@@ -109,6 +109,12 @@ async def signup(user_data: UserSignupRequest):
         
         # Check if user already exists
         collection = get_collection(USERS_COLLECTION)
+        if collection is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Authentication service is temporarily unavailable. Please try again later."
+            )
+        
         existing_user = await collection.find_one({"email": user_data.email})
         if existing_user:
             raise HTTPException(
@@ -154,6 +160,12 @@ async def login(login_data: UserLoginRequest):
     try:
         # Find user by email
         collection = get_collection(USERS_COLLECTION)
+        if collection is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Authentication service is temporarily unavailable. Please try again later."
+            )
+        
         user_doc = await collection.find_one({"email": login_data.email})
         
         if not user_doc:

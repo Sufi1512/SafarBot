@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
+from datetime import datetime
 
 # Load environment variables first
 load_dotenv('.env')
@@ -86,20 +87,23 @@ async def health_check():
 
 @app.get("/")
 async def root():
+    db_status = "connected" if Database.client else "disconnected"
     return {
         "message": "Welcome to SafarBot API!",
         "version": "1.0.0",
-        "database": "MongoDB",
+        "database": db_status,
+        "status": "running",
         "features": [
             "AI-powered travel planning",
             "Flight & hotel booking",
             "Price alerts & predictions",
             "Affiliate integration",
-            "User authentication"
+            "User authentication" if db_status == "connected" else "Basic API (no auth)"
         ],
         "endpoints": {
             "health": "/health",
-            "authentication": "/api/v1/auth",
+            "test": "/test",
+            "authentication": "/api/v1/auth" if db_status == "connected" else "disabled",
             "search_flights": "/api/v1/flights/search",
             "booking_options": "/api/v1/flights/booking-options/{booking_token}",
             "popular_flights": "/api/v1/flights/popular",
@@ -109,6 +113,15 @@ async def root():
             "generate_itinerary": "/api/v1/generate-itinerary",
             "predict_prices": "/api/v1/predict-prices"
         }
+    }
+
+@app.get("/test")
+async def test_endpoint():
+    """Simple test endpoint that doesn't require database."""
+    return {
+        "message": "SafarBot API is working!",
+        "timestamp": datetime.now().isoformat(),
+        "database": "connected" if Database.client else "disconnected"
     }
 
 if __name__ == "__main__":

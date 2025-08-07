@@ -26,9 +26,11 @@ class Database:
             "maxPoolSize": 10,
             "minPoolSize": 1,
             "maxIdleTimeMS": 30000,
-            "connectTimeoutMS": 20000,
-            "socketTimeoutMS": 20000,
-            "serverSelectionTimeoutMS": 30000,
+            "connectTimeoutMS": 30000,  # Increased timeout
+            "socketTimeoutMS": 30000,   # Increased timeout
+            "serverSelectionTimeoutMS": 60000,  # Increased timeout
+            "ssl": True,
+            "ssl_cert_reqs": "CERT_NONE",  # Disable SSL certificate verification
         }
         
         try:
@@ -44,11 +46,12 @@ class Database:
             
         except Exception as e:
             print(f"❌ Failed to connect to MongoDB: {e}")
-            # For deployment, we might want to continue without database
-            # but log the error for debugging
             print("⚠️  Continuing without database connection for deployment...")
+            print("📝 Note: Authentication and user features will be disabled")
+            # Set clients to None to indicate no database connection
+            cls.client = None
+            cls.sync_client = None
             # Don't raise the exception to allow the app to start
-            # raise e
 
     @classmethod
     async def close_db(cls):
@@ -62,25 +65,33 @@ class Database:
     def get_db(cls):
         """Get database instance."""
         if not cls.client:
-            raise Exception("Database not connected. Call connect_db() first.")
+            print("⚠️  Database not connected. Returning None.")
+            return None
         return cls.client.SafarBot
 
     @classmethod
     def get_sync_db(cls):
         """Get synchronous database instance."""
         if not cls.sync_client:
-            raise Exception("Database not connected. Call connect_db() first.")
+            print("⚠️  Database not connected. Returning None.")
+            return None
         return cls.sync_client.SafarBot
 
 # Database collections
 def get_collection(collection_name: str):
     """Get a specific collection from the database."""
     db = Database.get_db()
+    if db is None:
+        print(f"⚠️  Cannot get collection '{collection_name}': Database not connected")
+        return None
     return db[collection_name]
 
 def get_sync_collection(collection_name: str):
     """Get a specific collection from the synchronous database."""
     db = Database.get_sync_db()
+    if db is None:
+        print(f"⚠️  Cannot get collection '{collection_name}': Database not connected")
+        return None
     return db[collection_name]
 
 # Collection names - Updated to match user's existing collection

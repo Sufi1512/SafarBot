@@ -6,10 +6,9 @@ from dotenv import load_dotenv
 # Load environment variables first
 load_dotenv('.env')
 
-# Import routers
-from routers import flights, chat, itinerary, alerts, affiliate, auth
+# Import routers - simplified for deployment
+from routers import flights
 from config import settings
-from database import Database
 
 app = FastAPI(
     title="SafarBot API",
@@ -37,77 +36,45 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-# Database events
+# Database events - simplified for deployment
 @app.on_event("startup")
 async def startup_db_client():
-    """Connect to MongoDB on startup."""
-    try:
-        await Database.connect_db()
-        print("✅ Database connection established")
-    except Exception as e:
-        print(f"❌ Database connection failed: {e}")
-        print("⚠️  Application will start without database connection")
-        # Don't raise the exception to allow the app to start
-        # This is important for deployment when MongoDB might not be available
+    """Startup event."""
+    print("✅ SafarBot API started")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
-    """Close MongoDB connection on shutdown."""
-    await Database.close_db()
-    print("✅ Database connection closed")
+    """Shutdown event."""
+    print("✅ SafarBot API stopped")
 
-# Include routers
-app.include_router(auth.router, prefix="/api/v1/auth", tags=["authentication"])
+# Include routers - simplified for deployment
 app.include_router(flights.router, prefix="/api/v1", tags=["flights"])
-app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
-app.include_router(itinerary.router, prefix="/api/v1", tags=["itinerary"])
-app.include_router(alerts.router, prefix="/api/v1", tags=["alerts"])
-app.include_router(affiliate.router, prefix="/api/v1", tags=["affiliate"])
 
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    try:
-        # Test database connection if client exists
-        if Database.client:
-            await Database.client.admin.command('ping')
-            db_status = "connected"
-        else:
-            db_status = "not_initialized"
-    except Exception as e:
-        db_status = f"disconnected: {str(e)[:100]}"
-    
     return {
         "status": "healthy",
-        "message": "SafarBot API is running",
-        "database": db_status,
+        "message": "SafarBot Flight API is running",
         "version": "1.0.0"
     }
 
 @app.get("/")
 async def root():
     return {
-        "message": "Welcome to SafarBot API!",
+        "message": "Welcome to SafarBot Flight API!",
         "version": "1.0.0",
-        "database": "MongoDB",
         "features": [
-            "AI-powered travel planning",
-            "Flight & hotel booking",
-            "Price alerts & predictions",
-            "Affiliate integration",
-            "User authentication"
+            "Flight search and booking",
+            "Real-time flight data via SerpApi",
+            "Booking options and pricing"
         ],
         "endpoints": {
             "health": "/health",
-            "authentication": "/api/v1/auth",
             "search_flights": "/api/v1/flights/search",
             "booking_options": "/api/v1/flights/booking-options/{booking_token}",
             "popular_flights": "/api/v1/flights/popular",
-            "airport_suggestions": "/api/v1/flights/airports",
-            "chat": "/api/v1/chat",
-            "chat_history": "/api/v1/chat/history",
-            "generate_itinerary": "/api/v1/generate-itinerary",
-            "predict_prices": "/api/v1/predict-prices"
+            "airport_suggestions": "/api/v1/flights/airports/suggestions"
         }
     }
 

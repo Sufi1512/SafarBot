@@ -1,7 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { flightAPI, BookingOptionsResponse, BookingOption } from '../services/api';
-import { ArrowLeft, Plane, AlertCircle } from 'lucide-react';
+import { 
+  ArrowLeft, 
+  AlertCircle, 
+  Phone, 
+  Globe, 
+  Info, 
+  Plane, 
+  Clock, 
+  Star,
+  Shield,
+  CheckCircle,
+  TrendingUp,
+  Calendar
+} from 'lucide-react';
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
 
 const BookingOptionsPage: React.FC = () => {
   const { bookingToken } = useParams<{ bookingToken: string }>();
@@ -57,113 +73,313 @@ const BookingOptionsPage: React.FC = () => {
   const renderFlightDetails = (flight: any) => {
     console.log('Rendering flight details:', flight);
     return (
-      <div key={flight.id} className="bg-white/90 backdrop-blur-md rounded-2xl shadow-xl border border-blue-100 p-6 mb-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-3">
-            {flight.airline_logo && (
-              <img src={flight.airline_logo} alt="Airline" className="w-8 h-8" />
-            )}
-            <div>
-              <h3 className="text-xl font-bold text-slate-800">
-                {flight.flight_segments?.[0]?.airline || 'Multiple Airlines'}
-              </h3>
-              <p className="text-sm text-slate-600 font-medium">
-                Flight {flight.flight_segments?.[0]?.flight_number || 'N/A'}
-              </p>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-3xl font-bold text-blue-600">
-              {formatPrice(flight.price, flight.currency)}
-            </div>
-            <div className="text-sm text-slate-600 font-medium">{flight.total_duration}</div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {flight.flight_segments?.map((segment: any, index: number) => (
-            <div key={index} className="bg-blue-50/50 border border-blue-200 rounded-xl p-4">
-              <div className="flex justify-between items-center mb-3">
+      <motion.div
+        key={flight.id}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="mb-8"
+      >
+        <Card className="overflow-hidden" shadow="large" variant="elevated">
+          {/* Header with gradient background */}
+          <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                  <Plane className="w-8 h-8 text-white" />
+                </div>
                 <div>
-                  <div className="text-xl font-bold text-slate-800">{segment.departure?.time || 'N/A'}</div>
-                  <div className="text-sm text-slate-700 font-medium">{segment.departure?.airport || 'N/A'}</div>
-                  <div className="text-xs text-slate-500">{segment.departure?.airport_name || ''}</div>
+                  <h3 className="text-2xl font-bold font-heading">
+                    {flight.flight_segments?.[0]?.airline || 'Multiple Airlines'}
+                  </h3>
+                  <p className="text-primary-100 font-medium">
+                    Flight {flight.flight_segments?.[0]?.flight_number || 'N/A'}
+                  </p>
                 </div>
-                <div className="text-center">
-                  <div className="text-sm text-slate-600 font-medium">{segment.duration || 'N/A'}</div>
-                  <div className="w-16 h-px bg-blue-300 my-2"></div>
-                  <div className="text-xs text-slate-500 font-medium">Flight {segment.flight_number || 'N/A'}</div>
+              </div>
+              <div className="text-right">
+                <div className="text-4xl font-bold font-heading">
+                  {formatPrice(flight.price, flight.currency)}
                 </div>
-                <div className="text-right">
-                  <div className="text-xl font-bold text-slate-800">{segment.arrival?.time || 'N/A'}</div>
-                  <div className="text-sm text-slate-700 font-medium">{segment.arrival?.airport || 'N/A'}</div>
-                  <div className="text-xs text-slate-500">{segment.arrival?.airport_name || ''}</div>
+                <div className="text-primary-100 font-medium flex items-center justify-center">
+                  <Clock className="w-4 h-4 mr-1" />
+                  {flight.total_duration}
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
+
+          {/* Flight segments */}
+          <div className="p-6">
+            <div className="grid grid-cols-1 gap-6">
+              {flight.flight_segments?.map((segment: any, index: number) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  className="relative"
+                >
+                  <div className="bg-gradient-to-r from-secondary-50 to-primary-50 dark:from-secondary-800 dark:to-primary-900/20 border border-secondary-200 dark:border-secondary-700 rounded-2xl p-6">
+                    {/* Flight route visualization */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="text-2xl font-bold text-secondary-900 dark:text-white">
+                          {segment.departure?.time || 'N/A'}
+                        </div>
+                        <div className="text-sm font-semibold text-secondary-700 dark:text-secondary-300">
+                          {segment.departure?.airport || 'N/A'}
+                        </div>
+                        <div className="text-xs text-secondary-500 dark:text-secondary-400">
+                          {segment.departure?.airport_name || ''}
+                        </div>
+                      </div>
+                      
+                      {/* Flight path visualization */}
+                      <div className="flex-1 flex items-center justify-center px-4">
+                        <div className="relative w-full">
+                          <div className="h-0.5 bg-gradient-to-r from-primary-300 to-primary-500 rounded-full"></div>
+                          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                            <div className="w-4 h-4 bg-primary-500 rounded-full border-4 border-white dark:border-secondary-800 shadow-lg"></div>
+                          </div>
+                          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                            <Plane className="w-4 h-4 text-primary-500" />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex-1 text-right">
+                        <div className="text-2xl font-bold text-secondary-900 dark:text-white">
+                          {segment.arrival?.time || 'N/A'}
+                        </div>
+                        <div className="text-sm font-semibold text-secondary-700 dark:text-secondary-300">
+                          {segment.arrival?.airport || 'N/A'}
+                        </div>
+                        <div className="text-xs text-secondary-500 dark:text-secondary-400">
+                          {segment.arrival?.airport_name || ''}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Flight details */}
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-1 text-secondary-600 dark:text-secondary-400">
+                          <Clock className="w-4 h-4" />
+                          <span className="font-medium">{segment.duration || 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center space-x-1 text-secondary-600 dark:text-secondary-400">
+                          <Plane className="w-4 h-4" />
+                          <span className="font-medium">Flight {segment.flight_number || 'N/A'}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-1 text-success-600">
+                        <CheckCircle className="w-4 h-4" />
+                        <span className="font-medium">Confirmed</span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+            
+            {/* Flight amenities */}
+            {flight.amenities && flight.amenities.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.3 }}
+                className="mt-6"
+              >
+                <h4 className="text-lg font-semibold text-secondary-900 dark:text-white mb-3 flex items-center">
+                  <Star className="w-5 h-5 text-warning-500 mr-2" />
+                  Flight Amenities
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {flight.amenities.map((amenity: string, index: number) => (
+                    <motion.span
+                      key={index}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3, delay: 0.4 + index * 0.1 }}
+                      className="px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-semibold rounded-full border border-primary-200 dark:border-primary-700"
+                    >
+                      {amenity}
+                    </motion.span>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </div>
+        </Card>
+      </motion.div>
     );
   };
 
   const renderBookingOption = (option: BookingOption, index: number) => {
     const isRecommended = option.together?.booking_request?.url;
     return (
-      <div key={index} className={`bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border ${isRecommended ? 'border-blue-200' : 'border-slate-200'} p-6 mb-4`}>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isRecommended ? 'bg-blue-100' : 'bg-slate-100'}`}>
-              <Plane className={`w-6 h-6 ${isRecommended ? 'text-blue-600' : 'text-slate-600'}`} />
+      <motion.div
+        key={index}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: index * 0.1 }}
+        whileHover={{ y: -5 }}
+      >
+        <Card 
+          className={`relative overflow-hidden ${isRecommended ? 'ring-2 ring-primary-500 shadow-xl' : ''}`} 
+          shadow="large"
+          variant="elevated"
+        >
+          {/* Recommended badge */}
+          {isRecommended && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+              className="absolute top-4 right-4 z-10"
+            >
+              <div className="bg-gradient-to-r from-warning-500 to-warning-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center space-x-1">
+                <Star className="w-3 h-3" />
+                <span>RECOMMENDED</span>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Background pattern */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-50/50 to-secondary-50/50 dark:from-primary-900/10 dark:to-secondary-900/10"></div>
+          
+          <div className="relative z-10 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-4">
+                <motion.div 
+                  className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${
+                    isRecommended 
+                      ? 'bg-gradient-to-br from-primary-500 to-primary-600' 
+                      : 'bg-gradient-to-br from-secondary-500 to-secondary-600'
+                  }`}
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {isRecommended ? (
+                    <Globe className="w-8 h-8 text-white" />
+                  ) : (
+                    <Phone className="w-8 h-8 text-white" />
+                  )}
+                </motion.div>
+                <div>
+                  <h4 className="text-xl font-bold text-secondary-900 dark:text-white font-heading">
+                    {option.together?.booking_request?.url ? 'Online Booking' : 'Phone Booking'}
+                  </h4>
+                  <p className="text-secondary-600 dark:text-secondary-300 font-medium">
+                    {option.together?.booking_request?.url ? 'Book directly online' : 'Call to book'}
+                  </p>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <div className="flex items-center space-x-1 text-success-600">
+                      <Shield className="w-4 h-4" />
+                      <span className="text-xs font-medium">Secure</span>
+                    </div>
+                    <div className="flex items-center space-x-1 text-primary-600">
+                      <TrendingUp className="w-4 h-4" />
+                      <span className="text-xs font-medium">Best Price</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <h4 className="text-lg font-bold text-slate-800">
-                {option.together?.booking_request?.url ? 'Online Booking' : 'Phone Booking'}
-              </h4>
-              <p className="text-sm text-slate-600 font-medium">
-                {option.together?.booking_request?.url ? 'Book directly online' : 'Call to book'}
-              </p>
+
+            {/* Features */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="flex items-center space-x-2 text-sm text-secondary-600 dark:text-secondary-400">
+                <CheckCircle className="w-4 h-4 text-success-500" />
+                <span>Instant Confirmation</span>
+              </div>
+              <div className="flex items-center space-x-2 text-sm text-secondary-600 dark:text-secondary-400">
+                <CheckCircle className="w-4 h-4 text-success-500" />
+                <span>24/7 Support</span>
+              </div>
+              <div className="flex items-center space-x-2 text-sm text-secondary-600 dark:text-secondary-400">
+                <CheckCircle className="w-4 h-4 text-success-500" />
+                <span>Free Cancellation</span>
+              </div>
+              <div className="flex items-center space-x-2 text-sm text-secondary-600 dark:text-secondary-400">
+                <CheckCircle className="w-4 h-4 text-success-500" />
+                <span>Mobile Ticket</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {option.together?.booking_request?.url && (
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Button
+                    onClick={() => handleBookNow(option)}
+                    icon={Globe}
+                    className="w-full"
+                    size="lg"
+                  >
+                    Book Now Online
+                  </Button>
+                </motion.div>
+              )}
+              
+              {option.together?.booking_phone && (
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Button
+                    onClick={() => handleCallBooking(option)}
+                    variant="outline"
+                    icon={Phone}
+                    className="w-full"
+                    size="lg"
+                  >
+                    Call to Book: {option.together.booking_phone}
+                  </Button>
+                </motion.div>
+              )}
             </div>
           </div>
-          {isRecommended && (
-            <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">
-              RECOMMENDED
-            </span>
-          )}
-        </div>
-
-        <div className="space-y-3">
-          {option.together?.booking_request?.url && (
-            <button
-              onClick={() => handleBookNow(option)}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              Book Now Online
-            </button>
-          )}
-          
-          {option.together?.booking_phone && (
-            <button
-              onClick={() => handleCallBooking(option)}
-              className="w-full bg-white hover:bg-blue-50 text-slate-700 border border-blue-200 font-bold py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              Call to Book: {option.together.booking_phone}
-            </button>
-          )}
-        </div>
-      </div>
+        </Card>
+      </motion.div>
     );
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-50">
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 dark:from-dark-bg dark:via-dark-bg dark:to-secondary-800">
         <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full border-b-2 border-blue-600 w-12 h-12 mx-auto mb-4"></div>
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">Loading Booking Options</h2>
-            <p className="text-slate-600">Please wait while we fetch the best booking options for you...</p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center"
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              className="w-16 h-16 mx-auto mb-6"
+            >
+              <div className="w-full h-full border-4 border-primary-200 border-t-primary-500 rounded-full"></div>
+            </motion.div>
+            <h2 className="text-3xl font-bold text-secondary-900 dark:text-white mb-4 font-heading">Loading Booking Options</h2>
+            <p className="text-secondary-600 dark:text-secondary-300 text-lg">Please wait while we fetch the best booking options for you...</p>
+            
+            {/* Loading animation dots */}
+            <div className="flex justify-center space-x-2 mt-6">
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.2 }}
+                  className="w-3 h-3 bg-primary-500 rounded-full"
+                />
+              ))}
+            </div>
+          </motion.div>
         </div>
       </div>
     );
@@ -171,68 +387,155 @@ const BookingOptionsPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-50">
+      <div className="min-h-screen bg-gradient-to-br from-error-50 via-white to-secondary-50 dark:from-error-900/20 dark:via-dark-bg dark:to-secondary-800">
         <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="text-center">
-            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">Error Loading Booking Options</h2>
-            <p className="text-slate-600 mb-6">{error}</p>
-            <button
-              onClick={() => navigate('/flights')}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="w-20 h-20 bg-error-100 dark:bg-error-900/30 rounded-full flex items-center justify-center mx-auto mb-6"
             >
-              Back to Flight Search
-            </button>
-          </div>
+              <AlertCircle className="w-10 h-10 text-error-600 dark:text-error-400" />
+            </motion.div>
+            <h2 className="text-3xl font-bold text-secondary-900 dark:text-white mb-4 font-heading">Error Loading Booking Options</h2>
+            <p className="text-secondary-600 dark:text-secondary-300 mb-8 text-lg">{error}</p>
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button
+                onClick={() => navigate('/flights')}
+                icon={ArrowLeft}
+                size="lg"
+              >
+                Back to Flight Search
+              </Button>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-50">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 dark:from-dark-bg dark:via-dark-bg dark:to-secondary-800">
+      <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <button
-            onClick={() => navigate('/flights')}
-            className="flex items-center text-blue-600 hover:text-blue-700 font-bold transition-colors"
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="flex items-center justify-between mb-8"
+        >
+          <motion.div
+            whileHover={{ x: -5 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Flights
-          </button>
-          <h1 className="text-3xl font-bold text-slate-800">Booking Options</h1>
-        </div>
+            <Button
+              onClick={() => navigate('/flights')}
+              variant="ghost"
+              icon={ArrowLeft}
+              size="sm"
+            >
+              Back to Flights
+            </Button>
+          </motion.div>
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-secondary-900 dark:text-white font-heading">Booking Options</h1>
+            <p className="text-secondary-600 dark:text-secondary-300 mt-2">Choose your preferred booking method</p>
+          </div>
+          <div className="w-24"></div> {/* Spacer for centering */}
+        </motion.div>
 
         {/* Flight Details */}
-        {bookingData?.selected_flights?.map((flight) => renderFlightDetails(flight))}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          {bookingData?.selected_flights?.map((flight) => renderFlightDetails(flight))}
+        </motion.div>
 
         {/* Booking Options */}
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold text-slate-800 mb-6">Choose Your Booking Method</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mt-12"
+        >
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-secondary-900 dark:text-white font-heading mb-4">Choose Your Booking Method</h2>
+            <p className="text-secondary-600 dark:text-secondary-300 text-lg">Select the most convenient way to book your flight</p>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {bookingData?.booking_options?.map((option, index) => renderBookingOption(option, index))}
           </div>
-        </div>
+        </motion.div>
 
         {/* Additional Information */}
-        <div className="mt-8 bg-blue-50/50 border border-blue-200 rounded-xl p-6">
-          <h3 className="text-xl font-bold text-slate-800 mb-3">Important Information</h3>
-          <ul className="space-y-2 text-slate-700">
-            <li className="flex items-start">
-              <span className="text-blue-600 mr-2">•</span>
-              <span className="text-sm font-medium">Prices are subject to change until booking is confirmed</span>
-            </li>
-            <li className="flex items-start">
-              <span className="text-blue-600 mr-2">•</span>
-              <span className="text-sm font-medium">Please have your travel documents ready when booking</span>
-            </li>
-            <li className="flex items-start">
-              <span className="text-blue-600 mr-2">•</span>
-              <span className="text-sm font-medium">For phone bookings, please mention you found this deal on SafarBot</span>
-            </li>
-          </ul>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="mt-12"
+        >
+          <Card className="p-8" shadow="large" variant="elevated">
+            <div className="flex items-center space-x-4 mb-6">
+              <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-2xl flex items-center justify-center">
+                <Info className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+              </div>
+              <h3 className="text-2xl font-bold text-secondary-900 dark:text-white font-heading">Important Information</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <div className="w-6 h-6 bg-success-100 dark:bg-success-900/30 rounded-full flex items-center justify-center mt-0.5">
+                    <CheckCircle className="w-4 h-4 text-success-600 dark:text-success-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-secondary-900 dark:text-white">Price Changes</h4>
+                    <p className="text-sm text-secondary-600 dark:text-secondary-300">Prices are subject to change until booking is confirmed</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-6 h-6 bg-warning-100 dark:bg-warning-900/30 rounded-full flex items-center justify-center mt-0.5">
+                    <Calendar className="w-4 h-4 text-warning-600 dark:text-warning-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-secondary-900 dark:text-white">Travel Documents</h4>
+                    <p className="text-sm text-secondary-600 dark:text-secondary-300">Please have your travel documents ready when booking</p>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <div className="w-6 h-6 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mt-0.5">
+                    <Phone className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-secondary-900 dark:text-white">Phone Bookings</h4>
+                    <p className="text-sm text-secondary-600 dark:text-secondary-300">For phone bookings, please mention you found this deal on SafarBot</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-6 h-6 bg-info-100 dark:bg-info-900/30 rounded-full flex items-center justify-center mt-0.5">
+                    <Shield className="w-4 h-4 text-info-600 dark:text-info-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-secondary-900 dark:text-white">Secure Booking</h4>
+                    <p className="text-sm text-secondary-600 dark:text-secondary-300">All bookings are processed through secure, trusted partners</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </motion.div>
       </div>
     </div>
   );

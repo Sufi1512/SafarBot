@@ -1,726 +1,470 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { motion } from 'framer-motion';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 import { 
   MapPin, 
-  Calendar, 
-  Users, 
-  DollarSign, 
-  Heart, 
-  Plane, 
-  Hotel, 
-  AlertCircle,
   Search,
-  Star,
-  Globe,
   Shield,
   Zap,
-  Award,
+  Clock,
+  TrendingUp,
+  Users as UsersIcon,
+  Plane,
+  Star,
+  Globe,
+  Heart,
   ArrowRight,
-  Menu,
-  X,
   Sparkles
 } from 'lucide-react';
+import ModernButton from '../components/ui/ModernButton';
+import ModernCard from '../components/ui/ModernCard';
+import ModernInput from '../components/ui/ModernInput';
 
-interface TravelForm {
+interface SearchForm {
   destination: string;
-  startDate: string;
-  endDate: string;
+  startDate: Date | null;
+  endDate: Date | null;
   travelers: number;
-  budget: number;
-  interests: string[];
 }
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
-  const [formData, setFormData] = useState<TravelForm>({
+  const [searchForm, setSearchForm] = useState<SearchForm>({
     destination: '',
-    startDate: '',
-    endDate: '',
-    travelers: 1,
-    budget: 1000,
-    interests: []
+    startDate: null,
+    endDate: null,
+    travelers: 1
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'itinerary' | 'flights' | 'hotels'>('itinerary');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [particles, setParticles] = useState<Array<{id: number, x: number, y: number, delay: number}>>([]);
 
-  // Generate floating particles
-  useEffect(() => {
-    const newParticles = Array.from({ length: 20 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      delay: Math.random() * 20
-    }));
-    setParticles(newParticles);
-  }, []);
-
-  const interestOptions = [
-    { id: 'culture', label: 'Culture & History', icon: '🏛️', color: 'from-blue-500 to-cyan-500' },
-    { id: 'nature', label: 'Nature & Outdoors', icon: '🌲', color: 'from-green-500 to-emerald-500' },
-    { id: 'food', label: 'Food & Dining', icon: '🍽️', color: 'from-orange-500 to-red-500' },
-    { id: 'adventure', label: 'Adventure', icon: '🏔️', color: 'from-purple-500 to-pink-500' },
-    { id: 'relaxation', label: 'Relaxation', icon: '🧘', color: 'from-indigo-500 to-blue-500' },
-    { id: 'shopping', label: 'Shopping', icon: '🛍️', color: 'from-pink-500 to-rose-500' },
-    { id: 'nightlife', label: 'Nightlife', icon: '🌙', color: 'from-yellow-500 to-orange-500' },
-    { id: 'photography', label: 'Photography', icon: '📸', color: 'from-teal-500 to-cyan-500' }
-  ];
-
-  const handleInterestToggle = (interestId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      interests: prev.interests.includes(interestId)
-        ? prev.interests.filter(id => id !== interestId)
-        : [...prev.interests, interestId]
-    }));
-  };
-
-  const validateForm = (): string | null => {
-    if (!formData.destination.trim()) {
-      return 'Please enter a destination';
-    }
-    if (!formData.startDate) {
-      return 'Please select a start date';
-    }
-    if (!formData.endDate) {
-      return 'Please select an end date';
-    }
-    
-    const startDate = new Date(formData.startDate);
-    const endDate = new Date(formData.endDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (startDate < today) {
-      return 'Start date cannot be in the past';
-    }
-    if (endDate <= startDate) {
-      return 'End date must be after start date';
-    }
-    
-    const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    if (daysDiff > 30) {
-      return 'Trip duration cannot exceed 30 days';
-    }
-    
-    return null;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    
-    const validationError = validateForm();
-    if (validationError) {
-      setError(validationError);
+  const handleSearch = async () => {
+    if (!searchForm.destination || !searchForm.startDate || !searchForm.endDate) {
       return;
     }
     
     setIsLoading(true);
+    // Navigate to flights page with search params
+    navigate('/flights', { 
+      state: { 
+        searchParams: {
+          destination: searchForm.destination,
+          startDate: searchForm.startDate.toISOString(),
+          endDate: searchForm.endDate.toISOString(),
+          travelers: searchForm.travelers
+        }
+      }
+    });
+  };
 
-    try {
-      const start = new Date(formData.startDate);
-      const end = new Date(formData.endDate);
-      const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  const popularDestinations = [
+    { 
+      name: 'Paris, France', 
+      image: 'https://images.unsplash.com/photo-1502602898535-eb37b0b6d7c3?w=400&h=300&fit=crop', 
+      price: '$899',
+      rating: 4.8,
+      description: 'City of Light'
+    },
+    { 
+      name: 'Tokyo, Japan', 
+      image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=300&fit=crop', 
+      price: '$1,299',
+      rating: 4.9,
+      description: 'Modern Metropolis'
+    },
+    { 
+      name: 'New York, USA', 
+      image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400&h=300&fit=crop', 
+      price: '$699',
+      rating: 4.7,
+      description: 'The Big Apple'
+    },
+    { 
+      name: 'London, UK', 
+      image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&h=300&fit=crop', 
+      price: '$799',
+      rating: 4.6,
+      description: 'Historic Capital'
+    },
+    { 
+      name: 'Bali, Indonesia', 
+      image: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=400&h=300&fit=crop', 
+      price: '$599',
+      rating: 4.9,
+      description: 'Island Paradise'
+    },
+    { 
+      name: 'Dubai, UAE', 
+      image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400&h=300&fit=crop', 
+      price: '$999',
+      rating: 4.5,
+      description: 'Desert Oasis'
+    },
+  ];
 
-      const apiRequest = {
-        destination: formData.destination,
-        start_date: formData.startDate,
-        end_date: formData.endDate,
-        budget: formData.budget,
-        interests: formData.interests,
-        travelers: formData.travelers,
-        accommodation_type: 'hotel'
-      };
-
-      navigate('/results', { 
-        state: { 
-          ...formData, 
-          days,
-          startDate: formData.startDate,
-          endDate: formData.endDate,
-          apiRequest
-        } 
-      });
-    } catch (error) {
-      console.error('Error preparing itinerary request:', error);
-      setError('Something went wrong. Please try again.');
-    } finally {
-      setIsLoading(false);
+  const features = [
+    {
+      icon: Zap,
+      title: 'Instant Booking',
+      description: 'Book flights and hotels instantly with our streamlined process',
+      color: 'from-yellow-400 to-orange-500'
+    },
+    {
+      icon: Shield,
+      title: 'Secure Payments',
+      description: 'Your payments are protected with bank-level security',
+      color: 'from-green-400 to-emerald-500'
+    },
+    {
+      icon: Clock,
+      title: '24/7 Support',
+      description: 'Get help anytime with our round-the-clock customer service',
+      color: 'from-blue-400 to-cyan-500'
+    },
+    {
+      icon: TrendingUp,
+      title: 'Best Prices',
+      description: 'We guarantee the best prices with our price match promise',
+      color: 'from-purple-400 to-pink-500'
     }
-  };
+  ];
 
-  const handleFlightSearch = () => {
-    navigate('/flights');
-  };
-
-  const handleHotelSearch = () => {
-    navigate('/hotels');
-  };
+  const stats = [
+    { number: '50K+', label: 'Happy Travelers', icon: Heart },
+    { number: '100+', label: 'Destinations', icon: Globe },
+    { number: '24/7', label: 'Support', icon: Clock },
+    { number: '4.9', label: 'Rating', icon: Star }
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-50 relative overflow-hidden">
-      {/* Animated Background Particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {particles.map((particle) => (
-          <div
-            key={particle.id}
-            className="absolute w-2 h-2 bg-blue-300/30 rounded-full animate-pulse"
-            style={{
-              left: `${particle.x}%`,
-              top: `${particle.y}%`,
-              animationDelay: `${particle.delay}s`,
-              animationDuration: '3s'
-            }}
-          />
-        ))}
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 dark:from-dark-bg dark:via-dark-bg dark:to-secondary-800">
+      {/* Floating Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-20 left-10 w-72 h-72 bg-primary-200/20 rounded-full blur-3xl"
+          animate={{ 
+            x: [0, 100, 0],
+            y: [0, -50, 0],
+          }}
+          transition={{ 
+            duration: 20,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+        <motion.div
+          className="absolute bottom-20 right-10 w-96 h-96 bg-secondary-200/20 rounded-full blur-3xl"
+          animate={{ 
+            x: [0, -100, 0],
+            y: [0, 50, 0],
+          }}
+          transition={{ 
+            duration: 25,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
       </div>
 
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-blue-200 shadow-sm">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            {/* Left side - Logo and Name */}
-            <div className="flex items-center space-x-1">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
-                <Plane className="w-7 h-7 text-white" />
-              </div>
-              <h1 className="text-3xl font-bold text-slate-800">SafarBot</h1>
-            </div>
-            
-            {/* Right side - Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-slate-700 hover:text-blue-600 transition-colors font-medium">Features</a>
-              <a href="#destinations" className="text-slate-700 hover:text-blue-600 transition-colors font-medium">Destinations</a>
-              <button 
-                onClick={() => navigate('/flights')}
-                className="text-slate-700 hover:text-blue-600 transition-colors font-medium"
-              >
-                Flights
-              </button>
-              <button 
-                onClick={() => navigate('/hotels')}
-                className="text-slate-700 hover:text-blue-600 transition-colors font-medium"
-              >
-                Hotels
-              </button>
-              <button 
-                onClick={() => navigate('/dashboard')}
-                className="text-slate-700 hover:text-blue-600 transition-colors font-medium"
-              >
-                Dashboard
-              </button>
-              <a href="#about" className="text-slate-700 hover:text-blue-600 transition-colors font-medium">About</a>
-              {isAuthenticated ? (
-                <>
-                  <button 
-                    onClick={() => navigate('/dashboard')}
-                    className="bg-white hover:bg-blue-50 text-slate-700 font-medium py-2 px-4 rounded-lg border border-blue-200 transition-colors mr-2"
-                  >
-                    Dashboard
-                  </button>
-                  <span className="text-slate-700 px-4 py-2 font-medium">
-                    Welcome, {user?.first_name}!
-                  </span>
-                </>
-              ) : (
-                <>
-                  <button 
-                    onClick={() => navigate('/login')}
-                    className="bg-white hover:bg-blue-50 text-slate-700 font-medium py-2 px-4 rounded-lg border border-blue-200 transition-colors mr-2"
-                  >
-                    Sign In
-                  </button>
-                  <button 
-                    onClick={() => navigate('/signup')}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
-                  >
-                    Sign Up
-                  </button>
-                </>
-              )}
-            </nav>
-
-            {/* Right side - Mobile menu button */}
-            <button
-              className="md:hidden p-2 hover:bg-blue-100 rounded-lg transition-colors text-slate-700"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-
-          {/* Mobile Navigation */}
-          {mobileMenuOpen && (
-            <nav className="md:hidden py-4 border-t border-blue-200 slide-in-left">
-              <div className="flex flex-col space-y-4">
-                <a href="#features" className="nav-link">Features</a>
-                <a href="#destinations" className="nav-link">Destinations</a>
-                <button 
-                  onClick={() => {
-                    navigate('/flights');
-                    setMobileMenuOpen(false);
-                  }}
-                  className="nav-link hover:text-blue-400 transition-colors text-left"
-                >
-                  Flights
-                </button>
-                <button 
-                  onClick={() => {
-                    navigate('/hotels');
-                    setMobileMenuOpen(false);
-                  }}
-                  className="nav-link hover:text-blue-400 transition-colors text-left"
-                >
-                  Hotels
-                </button>
-                <button 
-                  onClick={() => {
-                    navigate('/dashboard');
-                    setMobileMenuOpen(false);
-                  }}
-                  className="nav-link hover:text-purple-400 transition-colors text-left"
-                >
-                  Dashboard
-                </button>
-                <a href="#about" className="nav-link">About</a>
-                {isAuthenticated ? (
-                  <>
-                    <button 
-                      onClick={() => {
-                        navigate('/dashboard');
-                        setMobileMenuOpen(false);
-                      }}
-                      className="btn-secondary px-4 py-2 w-full mb-2"
-                    >
-                      Dashboard
-                    </button>
-                    <span className="text-gray-300 px-4 py-2 text-center">
-                      Welcome, {user?.first_name}!
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <button 
-                      onClick={() => {
-                        navigate('/login');
-                        setMobileMenuOpen(false);
-                      }}
-                      className="btn-secondary px-4 py-2 w-full mb-2"
-                    >
-                      Sign In
-                    </button>
-                    <button 
-                      onClick={() => {
-                        navigate('/signup');
-                        setMobileMenuOpen(false);
-                      }}
-                      className="btn-primary px-6 py-2 w-full"
-                    >
-                      Sign Up
-                    </button>
-                  </>
-                )}
-              </div>
-            </nav>
-          )}
-        </div>
-      </header>
-
       {/* Hero Section */}
-      <section className="relative py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16 fade-in-up">
-            <div className="mb-6">
-              <Sparkles className="w-16 h-16 text-blue-400 mx-auto float-animation" />
-            </div>
-            <h1 className="text-6xl md:text-7xl font-bold mb-6 text-slate-800">
-              Your AI Travel
-              <span className="text-blue-600 block"> Companion</span>
-            </h1>
-            <p className="text-xl md:text-2xl text-slate-600 max-w-3xl mx-auto mb-8">
-              Plan, book, and experience unforgettable journeys with our intelligent travel assistant
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-lg transition-colors text-lg hover:scale-105">
-                Start Planning
-              </button>
-              <button className="bg-white hover:bg-blue-50 text-slate-700 font-semibold py-4 px-8 rounded-lg border border-blue-200 transition-colors text-lg hover:scale-105">
-                Watch Demo
-              </button>
-            </div>
+      <section className="relative section-padding">
+        <div className="container-chisfis">
+          <div className="text-center mb-16">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8 }}
+              className="inline-flex items-center gap-2 bg-white/90 dark:bg-dark-card/90 backdrop-blur-md rounded-full px-6 py-3 mb-8 border border-white/30 dark:border-secondary-700/50 shadow-lg"
+            >
+              <Sparkles className="w-5 h-5 text-primary-500" />
+              <span className="text-sm font-medium text-secondary-800 dark:text-secondary-200">
+                AI-Powered Travel Planning
+              </span>
+            </motion.div>
+            
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-6xl md:text-7xl font-heading font-bold text-secondary-900 dark:text-dark-text mb-6 leading-tight"
+            >
+              Plan Your Perfect
+              <span className="block text-gradient"> Journey</span>
+            </motion.h1>
+            
+            <motion.p
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="text-xl text-secondary-700 dark:text-secondary-200 max-w-3xl mx-auto text-body leading-relaxed"
+            >
+              Discover amazing destinations, book flights and hotels, and create unforgettable memories with our AI-powered travel platform.
+            </motion.p>
           </div>
 
-          {/* Search Tabs */}
-          <div className="max-w-5xl mx-auto">
-            <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-xl border border-blue-100 p-8">
-              {/* Tab Navigation */}
-              <div className="tab-container mb-8">
-                <div className="flex space-x-1">
-                  <button
-                    onClick={() => setActiveTab('itinerary')}
-                    className={`tab-button flex-1 ${activeTab === 'itinerary' ? 'active' : ''}`}
-                  >
-                    <div className="flex items-center justify-center space-x-2">
-                      <Globe className="w-5 h-5" />
-                      <span>AI Itinerary</span>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('flights')}
-                    className={`tab-button flex-1 ${activeTab === 'flights' ? 'active' : ''}`}
-                  >
-                    <div className="flex items-center justify-center space-x-2">
-                      <Plane className="w-5 h-5" />
-                      <span>Flights</span>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('hotels')}
-                    className={`tab-button flex-1 ${activeTab === 'hotels' ? 'active' : ''}`}
-                  >
-                    <div className="flex items-center justify-center space-x-2">
-                      <Hotel className="w-5 h-5" />
-                      <span>Hotels</span>
-                    </div>
-                  </button>
+          {/* Modern Search Form */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            className="max-w-5xl mx-auto"
+          >
+            <ModernCard variant="glass" padding="xl" shadow="glow">
+              <form className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {/* Destination */}
+                  <div className="lg:col-span-2">
+                    <ModernInput
+                      label="Where do you want to go?"
+                      placeholder="Enter destination"
+                      value={searchForm.destination}
+                      onChange={(value) => setSearchForm(prev => ({ ...prev, destination: value }))}
+                      icon={MapPin}
+                      variant="glass"
+                      size="lg"
+                      required
+                    />
+                  </div>
+
+                  {/* Start Date */}
+                  <div>
+                    <label className="block text-sm font-medium text-secondary-800 dark:text-secondary-200 mb-3">
+                      Start Date
+                    </label>
+                    <DatePicker
+                      selected={searchForm.startDate}
+                      onChange={(date: Date | null) => setSearchForm(prev => ({ ...prev, startDate: date }))}
+                      placeholderText="Select date"
+                      className="w-full px-4 py-3 border border-white/40 dark:border-secondary-600/40 backdrop-blur-md bg-white/30 dark:bg-dark-card/30 text-secondary-900 dark:text-dark-text placeholder-secondary-600 dark:placeholder-secondary-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 rounded-xl transition-all duration-200"
+                      minDate={new Date()}
+                    />
+                  </div>
+
+                  {/* End Date */}
+                  <div>
+                    <label className="block text-sm font-medium text-secondary-800 dark:text-secondary-200 mb-3">
+                      End Date
+                    </label>
+                    <DatePicker
+                      selected={searchForm.endDate}
+                      onChange={(date: Date | null) => setSearchForm(prev => ({ ...prev, endDate: date }))}
+                      placeholderText="Select date"
+                      className="w-full px-4 py-3 border border-white/40 dark:border-secondary-600/40 backdrop-blur-md bg-white/30 dark:bg-dark-card/30 text-secondary-900 dark:text-dark-text placeholder-secondary-600 dark:placeholder-secondary-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 rounded-xl transition-all duration-200"
+                      minDate={searchForm.startDate || new Date()}
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {/* Tab Content */}
-              {activeTab === 'itinerary' && (
-                <div className="slide-in-left">
-                  {error && (
-                    <div className="mb-6 p-4 glass-dark border border-red-500/30 rounded-lg">
-                      <div className="flex items-center">
-                        <AlertCircle className="w-5 h-5 text-red-400 mr-2" />
-                        <p className="text-red-300">{error}</p>
-                      </div>
+                {/* Additional Options */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-secondary-800 dark:text-secondary-200 mb-3">
+                      Travelers
+                    </label>
+                    <div className="relative">
+                      <UsersIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-600 dark:text-secondary-400 w-5 h-5" />
+                      <select
+                        value={searchForm.travelers}
+                        onChange={(e) => setSearchForm(prev => ({ ...prev, travelers: parseInt(e.target.value) }))}
+                        className="w-full pl-10 pr-4 py-3 border border-white/40 dark:border-secondary-600/40 backdrop-blur-md bg-white/30 dark:bg-dark-card/30 text-secondary-900 dark:text-dark-text rounded-xl focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
+                          <option key={num} value={num} className="bg-white dark:bg-dark-card text-secondary-900 dark:text-dark-text">
+                            {num} {num === 1 ? 'Traveler' : 'Travelers'}
+                          </option>
+                        ))}
+                      </select>
                     </div>
-                  )}
-                  
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          <MapPin className="w-4 h-4 inline mr-2" />
-                          Destination
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.destination}
-                          onChange={(e) => setFormData(prev => ({ ...prev, destination: e.target.value }))}
-                          placeholder="Where do you want to go?"
-                          className="input-field w-full"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          <Calendar className="w-4 h-4 inline mr-2" />
-                          Start Date
-                        </label>
-                        <input
-                          type="date"
-                          value={formData.startDate}
-                          onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
-                          className="input-field w-full"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          <Calendar className="w-4 h-4 inline mr-2" />
-                          End Date
-                        </label>
-                        <input
-                          type="date"
-                          value={formData.endDate}
-                          onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
-                          className="input-field w-full"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          <Users className="w-4 h-4 inline mr-2" />
-                          Travelers
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="10"
-                          value={formData.travelers}
-                          onChange={(e) => setFormData(prev => ({ ...prev, travelers: parseInt(e.target.value) }))}
-                          className="input-field w-full"
-                        />
-                      </div>
-                    </div>
+                  </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          <DollarSign className="w-4 h-4 inline mr-2" />
-                          Budget (USD)
-                        </label>
-                        <input
-                          type="number"
-                          min="500"
-                          step="100"
-                          value={formData.budget}
-                          onChange={(e) => setFormData(prev => ({ ...prev, budget: parseInt(e.target.value) }))}
-                          className="input-field w-full"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          <Heart className="w-4 h-4 inline mr-2" />
-                          Interests
-                        </label>
-                        <div className="grid grid-cols-4 gap-2">
-                          {interestOptions.slice(0, 4).map((interest) => (
-                            <button
-                              key={interest.id}
-                              type="button"
-                              onClick={() => handleInterestToggle(interest.id)}
-                              className={`p-3 rounded-xl border-2 transition-all duration-300 hover-scale ${
-                                formData.interests.includes(interest.id)
-                                  ? `border-transparent bg-gradient-to-r ${interest.color} text-white`
-                                  : 'border-white/20 bg-white/5 hover:border-white/40'
-                              }`}
-                            >
-                              <div className="text-xl mb-1">{interest.icon}</div>
-                              <div className="text-xs font-medium">{interest.label}</div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={isLoading || !formData.destination || !formData.startDate || !formData.endDate}
-                      className="w-full btn-primary py-4 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover-scale"
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-secondary-800 dark:text-secondary-200 mb-3">
+                      &nbsp;
+                    </label>
+                    <ModernButton
+                      onClick={handleSearch}
+                      loading={isLoading}
+                      icon={Search}
+                      variant="gradient"
+                      size="lg"
+                      fullWidth
+                      className="h-12"
                     >
-                      {isLoading ? (
-                        <div className="flex items-center justify-center">
-                          <div className="loading-spinner mr-3"></div>
-                          Generating Itinerary...
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center space-x-2">
-                          <Search className="w-5 h-5" />
-                          <span>Generate AI Itinerary</span>
-                        </div>
-                      )}
-                    </button>
-                  </form>
-                </div>
-              )}
-
-              {activeTab === 'flights' && (
-                <div className="text-center py-8 slide-in-right">
-                  <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-6 float-animation">
-                    <Plane className="w-10 h-10 text-white" />
+                      Search Flights
+                    </ModernButton>
                   </div>
-                  <h3 className="text-2xl font-semibold mb-3">Find Your Perfect Flight</h3>
-                  <p className="text-gray-300 mb-8">Search and compare flights from hundreds of airlines</p>
-                  <button
-                    onClick={handleFlightSearch}
-                    className="btn-primary px-8 py-3 flex items-center space-x-2 mx-auto hover-scale"
-                  >
-                    <span>Search Flights</span>
-                    <ArrowRight className="w-5 h-5" />
-                  </button>
                 </div>
-              )}
+              </form>
+            </ModernCard>
+          </motion.div>
+        </div>
+      </section>
 
-              {activeTab === 'hotels' && (
-                <div className="text-center py-8 slide-in-right">
-                  <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 float-animation">
-                    <Hotel className="w-10 h-10 text-white" />
+      {/* Popular Destinations */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <motion.div 
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-4xl md:text-5xl font-heading font-bold text-secondary-900 dark:text-dark-text mb-6">
+              Popular Destinations
+            </h2>
+            <p className="text-xl text-secondary-700 dark:text-secondary-200 max-w-2xl mx-auto">
+              Explore trending destinations around the world
+            </p>
+          </motion.div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {popularDestinations.map((destination, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                viewport={{ once: true }}
+              >
+                <ModernCard variant="interactive" padding="none" hover>
+                  <div className="relative h-64 overflow-hidden rounded-2xl">
+                    <img
+                      src={destination.image}
+                      alt={destination.name}
+                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    
+                    {/* Rating */}
+                    <div className="absolute top-4 right-4 flex items-center gap-1 bg-white/20 backdrop-blur-md rounded-full px-3 py-1">
+                      <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                      <span className="text-white text-sm font-medium">{destination.rating}</span>
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="absolute bottom-6 left-6 right-6">
+                      <h3 className="text-white font-bold text-xl mb-1">{destination.name}</h3>
+                      <p className="text-white/80 text-sm mb-3">{destination.description}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-white font-semibold text-lg">Starting from {destination.price}</span>
+                        <ModernButton variant="glass" size="sm" icon={ArrowRight}>
+                          Explore
+                        </ModernButton>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="text-2xl font-semibold mb-3">Book Your Stay</h3>
-                  <p className="text-gray-300 mb-8">Discover and book hotels that match your preferences</p>
-                  <button
-                    onClick={handleHotelSearch}
-                    className="btn-primary px-8 py-3 flex items-center space-x-2 mx-auto hover-scale"
-                  >
-                    <span>Search Hotels</span>
-                    <ArrowRight className="w-5 h-5" />
-                  </button>
-                </div>
-              )}
-            </div>
+                </ModernCard>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16 fade-in-up">
-            <h2 className="text-5xl font-bold mb-4">Why Choose SafarBot?</h2>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Experience the future of travel planning with our cutting-edge AI technology
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-secondary-50 to-white dark:from-secondary-800 dark:to-dark-bg">
+        <div className="max-w-7xl mx-auto">
+          <motion.div 
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-4xl md:text-5xl font-heading font-bold text-secondary-900 dark:text-dark-text mb-6">
+              Why Choose SafarBot?
+            </h2>
+            <p className="text-xl text-secondary-700 dark:text-secondary-200 max-w-2xl mx-auto">
+              Experience the future of travel planning
             </p>
-          </div>
-
+          </motion.div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                icon: <Zap className="w-8 h-8" />,
-                title: "AI-Powered Planning",
-                description: "Get personalized itineraries created by advanced AI that understands your preferences",
-                color: "from-blue-500 to-cyan-500"
-              },
-              {
-                icon: <Shield className="w-8 h-8" />,
-                title: "Secure Booking",
-                description: "Book flights and hotels with confidence using our secure payment system",
-                color: "from-green-500 to-emerald-500"
-              },
-              {
-                icon: <Award className="w-8 h-8" />,
-                title: "Best Prices",
-                description: "Find the best deals with our price comparison and smart recommendations",
-                color: "from-purple-500 to-pink-500"
-              },
-              {
-                icon: <Star className="w-8 h-8" />,
-                title: "24/7 Support",
-                description: "Get help anytime with our round-the-clock customer support team",
-                color: "from-orange-500 to-red-500"
-              }
-                         ].map((feature) => (
-                             <div key={feature.title} className="card-3d text-center hover-lift">
-                <div className={`w-16 h-16 bg-gradient-to-r ${feature.color} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
-                  {feature.icon}
-                </div>
-                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-                <p className="text-gray-300">{feature.description}</p>
-              </div>
+            {features.map((feature, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                viewport={{ once: true }}
+              >
+                <ModernCard variant="elevated" padding="lg" className="text-center h-full">
+                  <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg`}>
+                    <feature.icon className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-secondary-900 dark:text-dark-text mb-3">{feature.title}</h3>
+                  <p className="text-secondary-700 dark:text-secondary-200 leading-relaxed">{feature.description}</p>
+                </ModernCard>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Popular Destinations */}
-      <section id="destinations" className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16 fade-in-up">
-            <h2 className="text-5xl font-bold mb-4">Popular Destinations</h2>
-            <p className="text-xl text-gray-300">Explore trending destinations loved by travelers worldwide</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              { name: 'Paris', country: 'France', image: '🗼', rating: 4.8, price: 'From $800', color: 'from-blue-500 to-purple-500' },
-              { name: 'Tokyo', country: 'Japan', image: '🗾', rating: 4.9, price: 'From $1200', color: 'from-pink-500 to-red-500' },
-              { name: 'New York', country: 'USA', image: '🏙️', rating: 4.7, price: 'From $600', color: 'from-yellow-500 to-orange-500' },
-              { name: 'Dubai', country: 'UAE', image: '🏜️', rating: 4.6, price: 'From $900', color: 'from-orange-500 to-red-500' },
-              { name: 'London', country: 'UK', image: '🇬🇧', rating: 4.8, price: 'From $700', color: 'from-blue-500 to-indigo-500' },
-              { name: 'Singapore', country: 'Singapore', image: '🌴', rating: 4.7, price: 'From $1000', color: 'from-green-500 to-teal-500' }
-            ].map((dest) => (
-              <div key={dest.name} className="card-3d overflow-hidden hover-lift">
-                <div className={`h-48 bg-gradient-to-br ${dest.color} flex items-center justify-center relative overflow-hidden`}>
-                  <div className="text-6xl z-10">{dest.image}</div>
-                  <div className="absolute inset-0 bg-black/20"></div>
+      {/* Stats Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-primary-500 to-primary-600">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.5 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                viewport={{ once: true }}
+                className="text-center"
+              >
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <stat.icon className="w-8 h-8 text-white" />
                 </div>
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xl font-bold">{dest.name}</h3>
-                    <div className="flex items-center">
-                      <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                      <span className="text-sm font-medium">{dest.rating}</span>
-                    </div>
-                  </div>
-                  <p className="text-gray-300 mb-3">{dest.country}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-semibold text-blue-400">{dest.price}</span>
-                    <button className="btn-primary px-4 py-2 text-sm">
-                      Explore
-                    </button>
-                  </div>
-                </div>
-              </div>
+                <div className="text-3xl md:text-4xl font-bold text-white mb-2">{stat.number}</div>
+                <div className="text-primary-100 font-medium">{stat.label}</div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="card-3d p-12">
-            <h2 className="text-5xl font-bold mb-4 gradient-text">Ready to Start Your Journey?</h2>
-            <p className="text-xl text-gray-300 mb-8">
-              Join thousands of travelers who trust SafarBot for their perfect trips
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="btn-primary px-8 py-4 text-lg font-semibold hover-scale">
-                Start Planning Now
-              </button>
-              <button className="btn-secondary px-8 py-4 text-lg font-semibold hover-scale">
-                Learn More
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="glass-dark border-t border-white/10 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <Plane className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-xl font-bold">SafarBot</h3>
+      {/* Newsletter Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center"
+          >
+            <ModernCard variant="gradient" padding="xl" className="text-center">
+              <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center mx-auto mb-8">
+                <Plane className="w-10 h-10 text-white" />
               </div>
-              <p className="text-gray-400">
-                Your AI-powered travel companion for unforgettable journeys.
+              
+              <h2 className="text-4xl font-heading font-bold text-white mb-4">
+                Get Travel Inspiration
+              </h2>
+              <p className="text-white/90 text-lg mb-8 max-w-2xl mx-auto">
+                Subscribe to our newsletter for exclusive deals and travel tips
               </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Services</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">AI Itinerary</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Flight Booking</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Hotel Booking</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Travel Insurance</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Support</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact Us</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Connect</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Twitter</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Facebook</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Instagram</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">LinkedIn</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-white/10 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 SafarBot. All rights reserved.</p>
-          </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+                <ModernInput
+                  placeholder="Enter your email"
+                  value=""
+                  onChange={() => {}}
+                  variant="glass"
+                  size="lg"
+                  className="flex-1"
+                />
+                <ModernButton variant="glass" size="lg">
+                  Subscribe
+                </ModernButton>
+              </div>
+            </ModernCard>
+          </motion.div>
         </div>
-      </footer>
+      </section>
     </div>
   );
 };

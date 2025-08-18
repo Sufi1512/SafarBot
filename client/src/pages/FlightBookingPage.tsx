@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { 
   Plane, 
   Calendar, 
@@ -9,10 +10,11 @@ import {
   Filter, 
   Star, 
   Clock, 
-  ArrowRight,
-  ArrowLeft
+  ArrowRight
 } from 'lucide-react';
 import { flightAPI, Flight, FlightSearchRequest, AirportSuggestion } from '../services/api';
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
 
 const FlightBookingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -170,272 +172,287 @@ const FlightBookingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-x-hidden">
-      {/* Header */}
-      <header className="glass-dark sticky top-0 z-50 border-b border-white/10">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-6">
-            {/* Left side - Back button and Logo/Name */}
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate('/')}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-white" />
-              </button>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center pulse-glow">
-                  <Plane className="w-6 h-6 text-white" />
-                </div>
-                <h1 className="text-2xl font-bold gradient-text">Flight Booking</h1>
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg">
+      {/* Page Header */}
+      <div className="bg-white dark:bg-dark-card border-b border-gray-200 dark:border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center"
+          >
+            <div className="flex items-center justify-center space-x-3 mb-4">
+              <div className="w-12 h-12 bg-accent rounded-xl flex items-center justify-center">
+                <Plane className="w-6 h-6 text-white" />
               </div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Flight Search
+              </h1>
             </div>
-            {/* Right side - Description */}
-            <p className="text-sm text-gray-300">Find the best flights for your journey</p>
-          </div>
+            <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              Find the best flights for your journey with real-time pricing and booking options
+            </p>
+          </motion.div>
         </div>
-      </header>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search Form */}
-        <div className="card-3d mb-8">
-          <form onSubmit={handleSearch} className="space-y-6">
-            {/* Trip Type Selector */}
-            <div className="flex items-center space-x-6 mb-4">
-              <label className="text-sm font-medium text-white">Trip Type:</label>
-              <div className="flex items-center space-x-2">
-                <label className={`flex items-center px-4 py-2 rounded-lg border-2 cursor-pointer transition-all ${
-                  searchForm.tripType === 'one-way' 
-                    ? 'border-blue-400 bg-blue-500/20 text-blue-300' 
-                    : 'border-white/30 bg-white/10 text-gray-300 hover:border-white/50'
-                }`}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="mb-8"
+        >
+          <Card className="p-6" shadow="large">
+            <form onSubmit={handleSearch} className="space-y-6">
+              {/* Trip Type Selector */}
+              <div className="flex items-center space-x-6">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Trip Type:</label>
+                <div className="flex items-center space-x-2">
+                  <label className={`flex items-center px-4 py-2 rounded-xl border-2 cursor-pointer transition-all ${
+                    searchForm.tripType === 'one-way' 
+                      ? 'border-accent bg-accent/10 text-accent' 
+                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card text-gray-600 dark:text-gray-300 hover:border-accent'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="tripType"
+                      value="one-way"
+                      checked={searchForm.tripType === 'one-way'}
+                      onChange={(e) => handleTripTypeChange(e.target.value)}
+                      className="mr-2 text-accent focus:ring-accent"
+                    />
+                    <span className="text-sm font-medium">One Way</span>
+                  </label>
+                  <label className={`flex items-center px-4 py-2 rounded-xl border-2 cursor-pointer transition-all ${
+                    searchForm.tripType === 'round-trip' 
+                      ? 'border-accent bg-accent/10 text-accent' 
+                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card text-gray-600 dark:text-gray-300 hover:border-accent'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="tripType"
+                      value="round-trip"
+                      checked={searchForm.tripType === 'round-trip'}
+                      onChange={(e) => handleTripTypeChange(e.target.value)}
+                      className="mr-2 text-accent focus:ring-accent"
+                    />
+                    <span className="text-sm font-medium">Round Trip</span>
+                  </label>
+                </div>
+              </div>
+              
+              <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${
+                searchForm.tripType === 'round-trip' ? 'lg:grid-cols-5' : 'lg:grid-cols-4'
+              }`}>
+                {/* From */}
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <MapPin className="w-4 h-4 inline mr-2" />
+                    From
+                  </label>
                   <input
-                    type="radio"
-                    name="tripType"
-                    value="one-way"
-                    checked={searchForm.tripType === 'one-way'}
-                    onChange={(e) => handleTripTypeChange(e.target.value)}
-                    className="mr-2 text-blue-400 focus:ring-blue-400"
+                    type="text"
+                    value={searchForm.from}
+                    onChange={(e) => handleFromInputChange(e.target.value)}
+                    onFocus={() => searchForm.from.length >= 2 && setShowFromSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowFromSuggestions(false), 200)}
+                    placeholder="Airport code or city"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-transparent bg-white dark:bg-dark-card text-gray-900 dark:text-white"
+                    required
                   />
-                  <span className="text-sm font-medium">One Way</span>
-                </label>
-                <label className={`flex items-center px-4 py-2 rounded-lg border-2 cursor-pointer transition-all ${
-                  searchForm.tripType === 'round-trip' 
-                    ? 'border-blue-400 bg-blue-500/20 text-blue-300' 
-                    : 'border-white/30 bg-white/10 text-gray-300 hover:border-white/50'
-                }`}>
+                  {showFromSuggestions && fromSuggestions.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-dark-card border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                      {fromSuggestions.map((airport, index) => (
+                        <div
+                          key={index}
+                          className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                          onClick={() => selectFromAirport(airport)}
+                        >
+                          <div className="font-medium text-gray-900 dark:text-white">{airport.code}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-300">{airport.name}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{airport.city}, {airport.country}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* To */}
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <MapPin className="w-4 h-4 inline mr-2" />
+                    To
+                  </label>
                   <input
-                    type="radio"
-                    name="tripType"
-                    value="round-trip"
-                    checked={searchForm.tripType === 'round-trip'}
-                    onChange={(e) => handleTripTypeChange(e.target.value)}
-                    className="mr-2 text-blue-400 focus:ring-blue-400"
+                    type="text"
+                    value={searchForm.to}
+                    onChange={(e) => handleToInputChange(e.target.value)}
+                    onFocus={() => searchForm.to.length >= 2 && setShowToSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowToSuggestions(false), 200)}
+                    placeholder="Airport code or city"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-transparent bg-white dark:bg-dark-card text-gray-900 dark:text-white"
+                    required
                   />
-                  <span className="text-sm font-medium">Round Trip</span>
-                </label>
-              </div>
-            </div>
-            
-            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${
-              searchForm.tripType === 'round-trip' ? 'lg:grid-cols-5' : 'lg:grid-cols-4'
-            }`}>
-              {/* From */}
-              <div className="relative">
-                <label className="block text-sm font-medium text-white mb-2">
-                  <MapPin className="w-4 h-4 inline mr-2" />
-                  From
-                </label>
-                <input
-                  type="text"
-                  value={searchForm.from}
-                  onChange={(e) => handleFromInputChange(e.target.value)}
-                  onFocus={() => searchForm.from.length >= 2 && setShowFromSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowFromSuggestions(false), 200)}
-                  placeholder="Airport code or city"
-                  className="input-field"
-                  required
-                />
-                {showFromSuggestions && fromSuggestions.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 glass-dark border border-white/20 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                    {fromSuggestions.map((airport, index) => (
-                      <div
-                        key={index}
-                        className="px-4 py-2 hover:bg-white/10 cursor-pointer border-b border-white/10 last:border-b-0"
-                        onClick={() => selectFromAirport(airport)}
-                      >
-                        <div className="font-medium text-white">{airport.code}</div>
-                        <div className="text-sm text-gray-300">{airport.name}</div>
-                        <div className="text-xs text-gray-400">{airport.city}, {airport.country}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                  {showToSuggestions && toSuggestions.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-dark-card border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                      {toSuggestions.map((airport, index) => (
+                        <div
+                          key={index}
+                          className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                          onClick={() => selectToAirport(airport)}
+                        >
+                          <div className="font-medium text-gray-900 dark:text-white">{airport.code}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-300">{airport.name}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{airport.city}, {airport.country}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-              {/* To */}
-              <div className="relative">
-                <label className="block text-sm font-medium text-white mb-2">
-                  <MapPin className="w-4 h-4 inline mr-2" />
-                  To
-                </label>
-                <input
-                  type="text"
-                  value={searchForm.to}
-                  onChange={(e) => handleToInputChange(e.target.value)}
-                  onFocus={() => searchForm.to.length >= 2 && setShowToSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowToSuggestions(false), 200)}
-                  placeholder="Airport code or city"
-                  className="input-field"
-                  required
-                />
-                {showToSuggestions && toSuggestions.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 glass-dark border border-white/20 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                    {toSuggestions.map((airport, index) => (
-                      <div
-                        key={index}
-                        className="px-4 py-2 hover:bg-white/10 cursor-pointer border-b border-white/10 last:border-b-0"
-                        onClick={() => selectToAirport(airport)}
-                      >
-                        <div className="font-medium text-white">{airport.code}</div>
-                        <div className="text-sm text-gray-300">{airport.name}</div>
-                        <div className="text-xs text-gray-400">{airport.city}, {airport.country}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Departure Date */}
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">
-                  <Calendar className="w-4 h-4 inline mr-2" />
-                  Departure
-                </label>
-                <input
-                  type="date"
-                  value={searchForm.departureDate}
-                  onChange={(e) => setSearchForm(prev => ({ ...prev, departureDate: e.target.value }))}
-                  className="input-field"
-                  required
-                />
-              </div>
-
-              {/* Return Date - Only show for round-trip */}
-              {searchForm.tripType === 'round-trip' && (
+                {/* Departure Date */}
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     <Calendar className="w-4 h-4 inline mr-2" />
-                    Return
+                    Departure
                   </label>
                   <input
                     type="date"
-                    value={searchForm.returnDate}
-                    onChange={(e) => setSearchForm(prev => ({ ...prev, returnDate: e.target.value }))}
-                    className="input-field"
-                    min={searchForm.departureDate}
-                    required={searchForm.tripType === 'round-trip'}
+                    value={searchForm.departureDate}
+                    onChange={(e) => setSearchForm(prev => ({ ...prev, departureDate: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-transparent bg-white dark:bg-dark-card text-gray-900 dark:text-white"
+                    required
                   />
                 </div>
-              )}
 
-              {/* Passengers */}
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">
-                  <Users className="w-4 h-4 inline mr-2" />
-                  Passengers
-                </label>
-                <select
-                  value={searchForm.passengers}
-                  onChange={(e) => setSearchForm(prev => ({ ...prev, passengers: parseInt(e.target.value) }))}
-                  className="input-field"
-                >
-                  {[1, 2, 3, 4, 5, 6].map(num => (
-                    <option key={num} value={num}>{num} {num === 1 ? 'Passenger' : 'Passengers'}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+                {/* Return Date - Only show for round-trip */}
+                {searchForm.tripType === 'round-trip' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <Calendar className="w-4 h-4 inline mr-2" />
+                      Return
+                    </label>
+                    <input
+                      type="date"
+                      value={searchForm.returnDate}
+                      onChange={(e) => setSearchForm(prev => ({ ...prev, returnDate: e.target.value }))}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-transparent bg-white dark:bg-dark-card text-gray-900 dark:text-white"
+                      min={searchForm.departureDate}
+                      required={searchForm.tripType === 'round-trip'}
+                    />
+                  </div>
+                )}
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="text-sm text-gray-300">
-                  <span className="font-medium">Trip:</span> {searchForm.tripType === 'one-way' ? 'One Way' : 'Round Trip'}
-                  {searchForm.tripType === 'round-trip' && searchForm.returnDate && (
-                    <span className="ml-2 text-gray-400">
-                      ({searchForm.departureDate} → {searchForm.returnDate})
-                    </span>
-                  )}
+                {/* Passengers */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <Users className="w-4 h-4 inline mr-2" />
+                    Passengers
+                  </label>
+                  <select
+                    value={searchForm.passengers}
+                    onChange={(e) => setSearchForm(prev => ({ ...prev, passengers: parseInt(e.target.value) }))}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-transparent bg-white dark:bg-dark-card text-gray-900 dark:text-white"
+                  >
+                    {[1, 2, 3, 4, 5, 6].map(num => (
+                      <option key={num} value={num}>{num} {num === 1 ? 'Passenger' : 'Passengers'}</option>
+                    ))}
+                  </select>
                 </div>
-                <select
-                  value={searchForm.class}
-                  onChange={(e) => setSearchForm(prev => ({ ...prev, class: e.target.value }))}
-                  className="text-sm border border-white/30 rounded-md px-3 py-2 glass bg-white/10 text-white"
-                >
-                  <option value="economy">Economy</option>
-                  <option value="premium">Premium Economy</option>
-                  <option value="business">Business</option>
-                  <option value="first">First Class</option>
-                </select>
               </div>
-              <button
-                type="submit"
-                disabled={isSearching}
-                className="btn-primary px-8 py-3 flex items-center space-x-2"
-              >
-                <Search className="w-5 h-5" />
-                <span>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="text-sm text-gray-600 dark:text-gray-300">
+                    <span className="font-medium">Trip:</span> {searchForm.tripType === 'one-way' ? 'One Way' : 'Round Trip'}
+                    {searchForm.tripType === 'round-trip' && searchForm.returnDate && (
+                      <span className="ml-2 text-gray-500 dark:text-gray-400">
+                        ({searchForm.departureDate} → {searchForm.returnDate})
+                      </span>
+                    )}
+                  </div>
+                  <select
+                    value={searchForm.class}
+                    onChange={(e) => setSearchForm(prev => ({ ...prev, class: e.target.value }))}
+                    className="text-sm border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 bg-white dark:bg-dark-card text-gray-900 dark:text-white focus:ring-2 focus:ring-accent focus:border-transparent"
+                  >
+                    <option value="economy">Economy</option>
+                    <option value="premium">Premium Economy</option>
+                    <option value="business">Business</option>
+                    <option value="first">First Class</option>
+                  </select>
+                </div>
+                <Button
+                  type="submit"
+                  loading={isSearching}
+                  icon={Search}
+                  size="lg"
+                >
                   {isSearching 
                     ? 'Searching...' 
                     : `Search ${searchForm.tripType === 'one-way' ? 'One-Way' : 'Round-Trip'} Flights`
                   }
-                </span>
-              </button>
-            </div>
-          </form>
-        </div>
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </motion.div>
 
         {/* Popular Destinations */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-white mb-4">Popular Destinations</h2>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mb-8"
+        >
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Popular Destinations</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {popularDestinations.map((dest) => (
-              <button
+              <Card
                 key={dest.code}
+                className="p-4 text-center cursor-pointer hover:shadow-lg transition-all duration-200"
+                hover={true}
                 onClick={() => setSearchForm(prev => ({ ...prev, to: dest.name }))}
-                className="p-4 card-3d hover-lift text-center"
               >
-                <div className="text-2xl mb-2">✈️</div>
-                <div className="font-medium text-white">{dest.name}</div>
-                <div className="text-sm text-gray-300">{dest.country}</div>
-              </button>
+                <div className="text-3xl mb-3">✈️</div>
+                <div className="font-semibold text-gray-900 dark:text-white">{dest.name}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-300">{dest.country}</div>
+              </Card>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* Search Results */}
         {flights.length > 0 && (
-          <div className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="space-y-6"
+          >
             {/* Filters */}
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {flights.length} flights found
               </h2>
-              <button
+              <Button
+                variant="outline"
+                icon={Filter}
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center space-x-2 px-4 py-2 glass border border-white/30 rounded-lg hover:bg-white/10"
               >
-                <Filter className="w-4 h-4" />
-                <span>Filters</span>
-              </button>
+                Filters
+              </Button>
             </div>
 
             {/* Filters Panel */}
             {showFilters && (
-              <div className="card-3d bg-white/10">
+              <Card className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-white mb-2">Max Price</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Max Price</label>
                     <input
                       type="range"
                       min="100"
@@ -444,14 +461,14 @@ const FlightBookingPage: React.FC = () => {
                       onChange={(e) => setFilters(prev => ({ ...prev, maxPrice: parseInt(e.target.value) }))}
                       className="w-full"
                     />
-                                         <div className="text-sm text-gray-300">₹{filters.maxPrice}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-300">₹{filters.maxPrice}</div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-white mb-2">Max Stops</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Max Stops</label>
                     <select
                       value={filters.maxStops}
                       onChange={(e) => setFilters(prev => ({ ...prev, maxStops: parseInt(e.target.value) }))}
-                      className="input-field"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-transparent bg-white dark:bg-dark-card text-gray-900 dark:text-white"
                     >
                       <option value={0}>Direct</option>
                       <option value={1}>1 Stop</option>
@@ -459,33 +476,34 @@ const FlightBookingPage: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-white mb-2">Airlines</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Airlines</label>
                     <div className="space-y-2">
                       {['Emirates', 'British Airways', 'Air France', 'Lufthansa'].map(airline => (
                         <label key={airline} className="flex items-center">
                           <input
                             type="checkbox"
-                            className="rounded border-white/30 text-blue-400 focus:ring-blue-400"
+                            className="rounded border-gray-300 dark:border-gray-600 text-accent focus:ring-accent"
                           />
-                          <span className="ml-2 text-sm text-gray-300">{airline}</span>
+                          <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">{airline}</span>
                         </label>
                       ))}
                     </div>
                   </div>
                 </div>
-              </div>
+              </Card>
             )}
 
             {/* Flight Results */}
             <div className="space-y-4">
               {flights.map((flight) => (
-                <div
+                <Card
                   key={flight.id}
-                  className={`card-3d cursor-pointer transition-all duration-200 ${
+                  className={`cursor-pointer transition-all duration-200 ${
                     selectedFlight?.id === flight.id 
-                      ? 'ring-2 ring-blue-400 bg-blue-500/20' 
-                      : 'hover-lift'
+                      ? 'ring-2 ring-accent bg-accent/5' 
+                      : ''
                   }`}
+                  hover={true}
                   onClick={() => handleFlightSelect(flight)}
                 >
                   {/* Main Flight Info */}
@@ -496,44 +514,44 @@ const FlightBookingPage: React.FC = () => {
                         {flight.airline_logo ? (
                           <img src={flight.airline_logo} alt="Airline" className="w-12 h-12 mb-2" />
                         ) : (
-                          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mb-2 pulse-glow">
+                          <div className="w-12 h-12 bg-accent rounded-xl flex items-center justify-center mb-2">
                             <Plane className="w-6 h-6 text-white" />
                           </div>
                         )}
-                        <div className="text-sm font-medium text-white">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
                           {flight.flight_segments[0]?.airline || 'Multiple Airlines'}
                         </div>
-                        <div className="text-xs text-gray-300">{flight.flight_type}</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-300">{flight.flight_type}</div>
                       </div>
 
                       {/* Flight Route */}
                       <div className="flex items-center space-x-4">
                         <div className="text-center">
-                          <div className="text-lg font-bold text-white">
+                          <div className="text-lg font-bold text-gray-900 dark:text-white">
                             {flight.flight_segments[0]?.departure.time}
                           </div>
-                          <div className="text-sm text-gray-300">
+                          <div className="text-sm text-gray-600 dark:text-gray-300">
                             {flight.flight_segments[0]?.departure.airport}
                           </div>
-                          <div className="text-xs text-gray-400">
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
                             {flight.flight_segments[0]?.departure.airport_name}
                           </div>
                         </div>
                         <div className="flex flex-col items-center">
-                          <div className="text-sm text-gray-300">{flight.total_duration}</div>
-                          <div className="w-16 h-px bg-white/30 my-2"></div>
-                          <div className="text-xs text-gray-400">
+                          <div className="text-sm text-gray-600 dark:text-gray-300">{flight.total_duration}</div>
+                          <div className="w-16 h-px bg-gray-300 dark:bg-gray-600 my-2"></div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
                             {flight.stops === 0 ? 'Direct' : `${flight.stops} stop${flight.stops > 1 ? 's' : ''}`}
                           </div>
                         </div>
                         <div className="text-center">
-                          <div className="text-lg font-bold text-white">
+                          <div className="text-lg font-bold text-gray-900 dark:text-white">
                             {flight.flight_segments[flight.flight_segments.length - 1]?.arrival.time}
                           </div>
-                          <div className="text-sm text-gray-300">
+                          <div className="text-sm text-gray-600 dark:text-gray-300">
                             {flight.flight_segments[flight.flight_segments.length - 1]?.arrival.airport}
                           </div>
-                          <div className="text-xs text-gray-400">
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
                             {flight.flight_segments[flight.flight_segments.length - 1]?.arrival.airport_name}
                           </div>
                         </div>
@@ -541,12 +559,12 @@ const FlightBookingPage: React.FC = () => {
 
                       {/* Carbon Emissions */}
                       <div className="text-center">
-                        <div className="text-xs text-gray-400">Carbon Emissions</div>
-                        <div className="text-sm font-medium text-white">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">Carbon Emissions</div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
                           {Math.round(flight.carbon_emissions.this_flight / 1000)}kg CO₂
                         </div>
                         <div className={`text-xs ${
-                          flight.carbon_emissions.difference_percent < 0 ? 'text-green-400' : 'text-red-400'
+                          flight.carbon_emissions.difference_percent < 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                         }`}>
                           {flight.carbon_emissions.difference_percent > 0 ? '+' : ''}
                           {flight.carbon_emissions.difference_percent}% vs typical
@@ -556,33 +574,36 @@ const FlightBookingPage: React.FC = () => {
 
                     {/* Price and Rating */}
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-white">
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
                         ₹{flight.price}
-                        <span className="text-sm font-normal text-gray-300 ml-1">{flight.currency}</span>
+                        <span className="text-sm font-normal text-gray-600 dark:text-gray-300 ml-1">{flight.currency}</span>
                       </div>
-                      <div className="flex items-center justify-end text-sm text-gray-300 mb-2">
-                        <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                      <div className="flex items-center justify-end text-sm text-gray-600 dark:text-gray-300 mb-2">
+                        <Star className="w-4 h-4 text-yellow-500 mr-1" />
                         {flight.rating}
                       </div>
                       <div className="space-y-2">
-                        <button 
+                        <Button 
                           onClick={() => handleFlightSelect(flight)}
-                          className="btn-primary text-sm px-4 py-2 w-full"
+                          size="sm"
+                          className="w-full"
                         >
                           Select
-                        </button>
+                        </Button>
                         {flight.booking_token ? (
-                          <button 
+                          <Button 
                             onClick={() => {
                               console.log('Navigating to booking options with token:', flight.booking_token);
                               navigate(`/booking-options/${encodeURIComponent(flight.booking_token!)}`);
                             }}
-                            className="btn-secondary text-sm px-4 py-2 w-full"
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
                           >
                             View Booking Options
-                          </button>
+                          </Button>
                         ) : (
-                          <div className="text-xs text-gray-400 text-center py-2">
+                          <div className="text-xs text-gray-500 dark:text-gray-400 text-center py-2">
                             Booking options not available
                           </div>
                         )}
@@ -591,7 +612,7 @@ const FlightBookingPage: React.FC = () => {
                   </div>
 
                   {/* Flight Segments Details */}
-                  <div className="border-t border-white/20 pt-4">
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                     <div className="space-y-3">
                       {flight.flight_segments.map((segment, _index) => (
                         <div key={segment.id} className="flex items-center justify-between">
@@ -599,35 +620,35 @@ const FlightBookingPage: React.FC = () => {
                             {/* Segment Route */}
                             <div className="flex items-center space-x-3">
                               <div className="text-center">
-                                <div className="text-sm font-medium text-white">{segment.departure.time}</div>
-                                <div className="text-xs text-gray-300">{segment.departure.airport}</div>
+                                <div className="text-sm font-medium text-gray-900 dark:text-white">{segment.departure.time}</div>
+                                <div className="text-xs text-gray-600 dark:text-gray-300">{segment.departure.airport}</div>
                               </div>
                               <div className="flex flex-col items-center">
-                                <div className="text-xs text-gray-400">{segment.duration}</div>
-                                <div className="w-12 h-px bg-white/30 my-1"></div>
-                                <div className="text-xs text-gray-400">{segment.aircraft}</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">{segment.duration}</div>
+                                <div className="w-12 h-px bg-gray-300 dark:bg-gray-600 my-1"></div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">{segment.aircraft}</div>
                               </div>
                               <div className="text-center">
-                                <div className="text-sm font-medium text-white">{segment.arrival.time}</div>
-                                <div className="text-xs text-gray-300">{segment.arrival.airport}</div>
+                                <div className="text-sm font-medium text-gray-900 dark:text-white">{segment.arrival.time}</div>
+                                <div className="text-xs text-gray-600 dark:text-gray-300">{segment.arrival.airport}</div>
                               </div>
                             </div>
 
                             {/* Flight Details */}
                             <div className="flex items-center space-x-2">
-                              <div className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded border border-blue-400/30">
+                              <div className="text-xs bg-accent/10 text-accent px-2 py-1 rounded-lg border border-accent/20">
                                 {segment.airline} {segment.flight_number}
                               </div>
-                              <div className="text-xs bg-white/10 text-gray-300 px-2 py-1 rounded border border-white/20">
+                              <div className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700">
                                 {segment.travel_class}
                               </div>
                               {segment.overnight && (
-                                <div className="text-xs bg-orange-500/20 text-orange-300 px-2 py-1 rounded border border-orange-400/30">
+                                <div className="text-xs bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 px-2 py-1 rounded-lg border border-orange-200 dark:border-orange-800">
                                   Overnight
                                 </div>
                               )}
                               {segment.often_delayed && (
-                                <div className="text-xs bg-red-500/20 text-red-300 px-2 py-1 rounded border border-red-400/30">
+                                <div className="text-xs bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 px-2 py-1 rounded-lg border border-red-200 dark:border-red-800">
                                   Often Delayed
                                 </div>
                               )}
@@ -639,14 +660,14 @@ const FlightBookingPage: React.FC = () => {
                             {segment.amenities.slice(0, 3).map((amenity, _amenityIndex) => (
                               <span
                                 key={_amenityIndex}
-                                className="px-2 py-1 bg-green-500/20 text-green-300 text-xs rounded-full border border-green-400/30"
+                                className="px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 text-xs rounded-full border border-green-200 dark:border-green-800"
                                 title={amenity}
                               >
                                 {amenity}
                               </span>
                             ))}
                             {segment.amenities.length > 3 && (
-                              <span className="px-2 py-1 bg-white/10 text-gray-300 text-xs rounded-full border border-white/20">
+                              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs rounded-full border border-gray-200 dark:border-gray-700">
                                 +{segment.amenities.length - 3}
                               </span>
                             )}
@@ -656,11 +677,11 @@ const FlightBookingPage: React.FC = () => {
 
                       {/* Layovers */}
                       {flight.layovers.length > 0 && (
-                        <div className="border-t border-white/20 pt-3">
-                          <div className="text-sm font-medium text-white mb-2">Layovers:</div>
+                        <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white mb-2">Layovers:</div>
                           <div className="space-y-2">
                             {flight.layovers.map((layover, index) => (
-                              <div key={index} className="flex items-center space-x-2 text-xs text-gray-300">
+                              <div key={index} className="flex items-center space-x-2 text-xs text-gray-600 dark:text-gray-300">
                                 <Clock className="w-3 h-3" />
                                 <span>
                                   {layover.duration}min at {layover.airport} ({layover.airport_name})
@@ -673,43 +694,49 @@ const FlightBookingPage: React.FC = () => {
                       )}
                     </div>
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Booking Summary */}
         {selectedFlight && (
-          <div className="fixed bottom-0 left-0 right-0 glass-dark border-t border-white/20 p-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="fixed bottom-0 left-0 right-0 bg-white dark:bg-dark-card border-t border-gray-200 dark:border-gray-800 p-4 shadow-lg"
+          >
             <div className="max-w-7xl mx-auto flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-white">Selected Flight</h3>
-                <p className="text-sm text-gray-300">
+                <h3 className="font-semibold text-gray-900 dark:text-white">Selected Flight</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   {selectedFlight.flight_segments[0]?.airline} {selectedFlight.flight_segments[0]?.flight_number} • 
                   {selectedFlight.flight_segments[0]?.departure.airport} → {selectedFlight.flight_segments[selectedFlight.flight_segments.length - 1]?.arrival.airport}
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   {selectedFlight.total_duration} • {selectedFlight.stops === 0 ? 'Direct' : `${selectedFlight.stops} stop${selectedFlight.stops > 1 ? 's' : ''}`}
                 </p>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-white">₹{selectedFlight.price}</div>
-                  <div className="text-sm text-gray-300">per passenger</div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">₹{selectedFlight.price}</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-300">per passenger</div>
                 </div>
-                <button
+                <Button
                   onClick={handleBooking}
-                  className="btn-primary px-8 py-3 flex items-center space-x-2"
+                  icon={ArrowRight}
+                  iconPosition="right"
+                  size="lg"
                 >
-                  <span>Continue to Booking</span>
-                  <ArrowRight className="w-5 h-5" />
-                </button>
+                  Continue to Booking
+                </Button>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
-      </main>
+      </div>
     </div>
   );
 };

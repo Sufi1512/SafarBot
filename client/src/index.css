@@ -1,36 +1,252 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
+/* Chisfis Design System - Global Styles */
 @layer base {
   html {
     font-family: 'Inter', system-ui, sans-serif;
+    scroll-behavior: smooth;
   }
-  
+
   body {
-    @apply bg-blue-50 text-slate-800;
+    @apply bg-secondary-50 dark:bg-dark-bg text-secondary-900 dark:text-dark-text;
+    font-family: 'Inter', system-ui, sans-serif;
+    line-height: 1.6;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-secondary-100 dark:bg-secondary-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-secondary-300 dark:bg-secondary-600 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-secondary-400 dark:bg-secondary-500;
   }
 }
 
 @layer components {
+  /* Button Components - Chisfis Style */
   .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+    @apply bg-primary-500 hover:bg-primary-600 text-white font-medium px-6 py-3 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 shadow-medium hover:shadow-large transform hover:-translate-y-0.5;
   }
-  
+
   .btn-secondary {
-    @apply bg-white hover:bg-blue-50 text-slate-700 font-medium py-2 px-4 rounded-lg border border-blue-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+    @apply bg-secondary-100 hover:bg-secondary-200 text-secondary-800 dark:bg-dark-card dark:hover:bg-secondary-800 dark:text-white font-medium px-6 py-3 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-secondary-300 focus:ring-offset-2 shadow-soft hover:shadow-medium;
   }
-  
+
+  .btn-outline {
+    @apply border-2 border-primary-500 text-primary-500 hover:bg-primary-500 hover:text-white font-medium px-6 py-3 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  }
+
+  .btn-ghost {
+    @apply text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 font-medium px-6 py-3 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  }
+
+  /* Input Components - Chisfis Style */
   .input-field {
-    @apply block w-full rounded-lg border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white;
+    @apply w-full px-4 py-3 border border-secondary-300 dark:border-secondary-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-card text-secondary-900 dark:text-dark-text placeholder-secondary-500 dark:placeholder-secondary-400 transition-all duration-200;
   }
-  
-  .card {
-    @apply bg-white rounded-xl shadow-sm border border-blue-100 p-6;
+
+  .input-field:focus {
+    @apply shadow-medium;
   }
-  
+
+  /* Card Components - Chisfis Style */
   .card-hover {
-    @apply hover:shadow-lg hover:shadow-blue-100 transition-shadow duration-200;
+    @apply bg-white dark:bg-dark-card rounded-2xl border border-secondary-200 dark:border-secondary-700 shadow-soft hover:shadow-large transition-all duration-300 hover:-translate-y-1;
+  }
+
+  .card-elevated {
+    @apply bg-white dark:bg-dark-card rounded-2xl border border-secondary-200 dark:border-secondary-700 shadow-large;
+  }
+
+  /* Badge Components - Chisfis Style */
+  .badge-primary {
+    @apply bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300 px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .badge-success {
+    @apply bg-success-100 text-success-700 dark:bg-success-900/20 dark:text-success-300 px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .badge-warning {
+    @apply bg-warning-100 text-warning-700 dark:bg-warning-900/20 dark:text-warning-300 px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .badge-error {
+    @apply bg-error-100 text-error-700 dark:bg-error-900/20 dark:text-error-300 px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  /* Gradient Backgrounds - Chisfis Style */
+  .gradient-primary {
+    @apply bg-gradient-to-br from-primary-500 to-primary-600;
+  }
+
+  .gradient-secondary {
+    @apply bg-gradient-to-br from-secondary-50 to-secondary-100 dark:from-dark-bg dark:to-secondary-800;
+  }
+
+  .gradient-hero {
+    @apply bg-gradient-to-br from-primary-50 via-white to-secondary-50 dark:from-dark-bg dark:via-dark-bg dark:to-secondary-800;
+  }
+
+  /* Text Styles - Chisfis Style */
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent;
+  }
+
+  .text-heading {
+    @apply font-heading font-semibold text-secondary-900 dark:text-dark-text;
+  }
+
+  .text-body {
+    @apply font-sans text-secondary-700 dark:text-secondary-300;
+  }
+
+  .text-caption {
+    @apply font-sans text-sm text-secondary-500 dark:text-secondary-400;
+  }
+
+  /* Animation Classes - Chisfis Style */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out;
+  }
+
+  /* Glass Effect - Chisfis Style */
+  .glass {
+    @apply bg-white/80 dark:bg-dark-card/80 backdrop-blur-md border border-white/20 dark:border-secondary-700/50;
+  }
+
+  .glass-dark {
+    @apply bg-secondary-900/80 backdrop-blur-md border border-secondary-700/50;
+  }
+
+  /* Focus States - Chisfis Style */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-bg;
+  }
+
+  /* Interactive Elements - Chisfis Style */
+  .interactive {
+    @apply transition-all duration-200 hover:scale-105 active:scale-95;
+  }
+
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-2 hover:shadow-large;
+  }
+
+  /* Layout Utilities - Chisfis Style */
+  .container-chisfis {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-padding {
+    @apply py-16 sm:py-20 lg:py-24;
+  }
+
+  .section-margin {
+    @apply mb-16 sm:mb-20 lg:mb-24;
+  }
+}
+
+@layer utilities {
+  /* Custom utilities for Chisfis design system */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  /* Gradient text utilities */
+  .bg-gradient-text {
+    @apply bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent;
+  }
+
+  /* Shadow utilities */
+  .shadow-chisfis {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  .shadow-chisfis-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  .shadow-glow {
+    box-shadow: 0 0 20px rgba(30, 144, 255, 0.3), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Border utilities */
+  .border-chisfis {
+    @apply border border-secondary-200 dark:border-secondary-700;
+  }
+
+  .border-chisfis-focus {
+    @apply border-primary-500 dark:border-primary-400;
+  }
+
+  /* Modern UI Enhancements */
+  .backdrop-blur-xl {
+    backdrop-filter: blur(24px);
+  }
+
+  .backdrop-blur-2xl {
+    backdrop-filter: blur(40px);
+  }
+
+  /* Smooth transitions */
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Hover effects */
+  .hover-scale {
+    @apply transition-transform duration-300 hover:scale-105;
+  }
+
+  .hover-lift-smooth {
+    @apply transition-all duration-300 hover:-translate-y-2 hover:shadow-xl;
+  }
+
+  /* Glass morphism effects */
+  .glass-light {
+    @apply bg-white/10 backdrop-blur-md border border-white/20;
+  }
+
+  .glass-dark {
+    @apply bg-secondary-900/10 backdrop-blur-md border border-secondary-700/30;
+  }
+
+  /* Gradient overlays */
+  .gradient-overlay {
+    @apply bg-gradient-to-t from-black/60 via-transparent to-transparent;
+  }
+
+  .gradient-overlay-light {
+    @apply bg-gradient-to-t from-white/60 via-transparent to-transparent;
   }
 }

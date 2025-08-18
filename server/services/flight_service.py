@@ -29,9 +29,9 @@ class FlightService:
         Search for flights using Google SERP API
         """
         try:
-            return await self._search_with_serp_api(
-                from_location, to_location, departure_date, return_date, passengers, class_type
-            )
+                return await self._search_with_serp_api(
+                    from_location, to_location, departure_date, return_date, passengers, class_type
+                )
         except Exception as e:
             logger.error(f"Error searching flights: {str(e)}")
             return []
@@ -322,15 +322,15 @@ class FlightService:
             from datetime import timedelta
             future_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
             
-            popular_routes = [
-                ("JFK", "LHR", "New York to London"),
-                ("LAX", "NRT", "Los Angeles to Tokyo"),
-                ("CDG", "DXB", "Paris to Dubai"),
-                ("SIN", "SYD", "Singapore to Sydney"),
-                ("FRA", "JFK", "Frankfurt to New York")
-            ]
-            
-            popular_flights = []
+        popular_routes = [
+            ("JFK", "LHR", "New York to London"),
+            ("LAX", "NRT", "Los Angeles to Tokyo"),
+            ("CDG", "DXB", "Paris to Dubai"),
+            ("SIN", "SYD", "Singapore to Sydney"),
+            ("FRA", "JFK", "Frankfurt to New York")
+        ]
+        
+        popular_flights = []
             for from_airport, to_airport, route_name in popular_routes:
                 try:
                     # Search for real flights for each popular route
@@ -344,7 +344,7 @@ class FlightService:
                         # Take the first flight and add route name
                         flight = flights[0]
                         flight["route_name"] = route_name
-                        popular_flights.append(flight)
+            popular_flights.append(flight)
                         
                         # Limit to 5 popular flights
                         if len(popular_flights) >= 5:
@@ -353,8 +353,8 @@ class FlightService:
                 except Exception as e:
                     logger.warning(f"Failed to get real data for {route_name}: {str(e)}")
                     continue
-            
-            return popular_flights
+        
+        return popular_flights
             
         except Exception as e:
             logger.error(f"Error getting popular flights: {str(e)}")
@@ -369,8 +369,8 @@ class FlightService:
             if "booking_token" in flight_id:
                 # This would require a separate API call to get flight details
                 # For now, return a message indicating this feature needs implementation
-                return {
-                    "id": flight_id,
+        return {
+            "id": flight_id,
                     "message": "Flight details retrieval requires booking token. Use booking options endpoint instead.",
                     "suggestion": "Use /api/v1/flights/booking-options/{booking_token} for detailed flight information"
                 }
@@ -743,17 +743,17 @@ class FlightService:
                 
                 # Create flight segments
                 flight_segments = [{
-                    "id": "segment_1",
+                            "id": "segment_1",
                     "airline": flight.get("airline", "Unknown"),
                     "airline_logo": flight.get("airline_logo", ""),
                     "flight_number": flight.get("flight_number", "N/A"),
-                    "departure": {
+                            "departure": {
                         "airport": departure_airport.get("id", ""),
                         "airport_name": departure_airport.get("name", ""),
                         "time": departure_time,
                         "date": departure_date
-                    },
-                    "arrival": {
+                            },
+                            "arrival": {
                         "airport": arrival_airport.get("id", ""),
                         "airport_name": arrival_airport.get("name", ""),
                         "time": arrival_time,
@@ -765,10 +765,10 @@ class FlightService:
                     "aircraft": flight.get("airplane", "Unknown"),
                     "travel_class": flight.get("travel_class", "Economy"),
                     "legroom": flight.get("legroom", ""),
-                    "overnight": False,
-                    "often_delayed": False,
-                    "ticket_also_sold_by": [],
-                    "plane_and_crew_by": ""
+                            "overnight": False,
+                            "often_delayed": False,
+                            "ticket_also_sold_by": [],
+                            "plane_and_crew_by": ""
                 }]
                 
                 # Create parsed flight object

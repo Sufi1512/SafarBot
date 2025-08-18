@@ -10,8 +10,7 @@ import {
   ArrowLeft,
   Download,
   CreditCard,
-  Shield,
-  X
+  Shield
 } from 'lucide-react';
 
 const BookingConfirmationPage: React.FC = () => {

@@ -1,867 +1,331 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import {
+  CalendarIcon,
+  CreditCardIcon,
+  UserIcon,
+  HeartIcon,
+  PaperAirplaneIcon,
+  BuildingOfficeIcon,
+  DocumentTextIcon,
+  ChartBarIcon,
+  ArrowRightIcon,
+  PlusIcon
+} from '@heroicons/react/24/outline';
+import PageHeader from '../components/PageHeader';
+import ModernCard from '../components/ui/ModernCard';
+import ModernButton from '../components/ui/ModernButton';
 import { useAuth } from '../contexts/AuthContext';
-import ConfirmModal from '../components/ConfirmModal';
-import { 
-  User, 
-  Calendar, 
-  MapPin, 
-  DollarSign, 
-  Bell, 
-  
-  Settings, 
-  LogOut, 
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  Clock,
-  Star,
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
-  Plane,
-  Menu,
-  X
-} from 'lucide-react';
-import { alertsAPI } from '../services/api';
+
+interface Booking {
+  id: string;
+  type: 'flight' | 'hotel' | 'package';
+  title: string;
+  destination: string;
+  date: string;
+  status: 'upcoming' | 'completed' | 'cancelled';
+  price: number;
+  image: string;
+}
 
 interface SavedTrip {
   id: string;
+  title: string;
   destination: string;
-  startDate: string;
-  endDate: string;
-  budget: number;
-  status: 'planned' | 'booked' | 'completed' | 'cancelled';
-  totalCost?: number;
-  imageUrl?: string;
-  createdAt: string;
-}
-
-interface PriceAlert {
-  id: string;
-  destination: string;
-  current_price: number;
-  target_price: number;
-  alert_type: 'flight' | 'hotel';
-  status: 'active' | 'inactive' | 'triggered';
-  is_active: boolean;
-  created_at: string;
-  last_checked: string;
-  next_check: string;
-  check_in_date?: string;
-  check_out_date?: string;
-  departure_date?: string;
-  return_date?: string;
-  passengers?: number;
-  guests?: number;
-}
-
-interface UserProfile {
-  name: string;
-  email: string;
-  phone?: string;
-  preferences: {
-    budgetRange: string;
-    travelStyle: string[];
-    preferredAirlines: string[];
-    preferredHotels: string[];
-  };
-  stats: {
-    totalTrips: number;
-    totalSpent: number;
-    averageRating: number;
-    favoriteDestinations: string[];
-  };
+  savedDate: string;
+  image: string;
 }
 
 const UserDashboard: React.FC = () => {
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'trips' | 'alerts' | 'profile'>('overview');
-  const [savedTrips, setSavedTrips] = useState<SavedTrip[]>([]);
-  const [priceAlerts, setPriceAlerts] = useState<PriceAlert[]>([]);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [editableProfile, setEditableProfile] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('overview');
 
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-  const loadDashboardData = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      // Load price alerts from API
-      const alertsResponse = await alertsAPI.getAlerts();
-      if (alertsResponse.success && alertsResponse.data) {
-        setPriceAlerts(alertsResponse.data);
-      }
-
-      // Load real user profile data from auth context
-      if (user) {
-        const realProfile: UserProfile = {
-          name: `${user.first_name} ${user.last_name}`,
-          email: user.email,
-          phone: user.phone || '+1-555-0123',
-          preferences: {
-            budgetRange: '$1000-$3000',
-            travelStyle: ['Adventure', 'Cultural', 'Luxury'],
-            preferredAirlines: ['Emirates', 'Qatar Airways', 'Turkish Airlines'],
-            preferredHotels: ['Marriott', 'Hilton', 'Hyatt']
-          },
-          stats: {
-            totalTrips: 8,
-            totalSpent: 18500,
-            averageRating: 4.6,
-            favoriteDestinations: ['Dubai', 'Tokyo', 'Paris', 'Istanbul']
-          }
-        };
-        setUserProfile(realProfile);
-        setEditableProfile(realProfile);
-      }
-      
-      // Load mock trips data (will be replaced with real API calls)
-      loadMockData();
-      
-    } catch (err: any) {
-      console.error('Error loading dashboard data:', err);
-      setError(err.message || 'Failed to load dashboard data');
-      // Fallback to mock data
-      loadMockData();
-    } finally {
-      setIsLoading(false);
+  // Mock data - replace with actual API calls
+  const upcomingBookings: Booking[] = [
+    {
+      id: '1',
+      type: 'flight',
+      title: 'Flight to Paris',
+      destination: 'Paris, France',
+      date: '2024-02-15',
+      status: 'upcoming',
+      price: 899,
+      image: 'https://images.unsplash.com/photo-1502602898535-eb37b0b6d7c3?w=400&h=300&fit=crop'
+    },
+    {
+      id: '2',
+      type: 'hotel',
+      title: 'Hotel Booking',
+      destination: 'Paris, France',
+      date: '2024-02-15',
+      status: 'upcoming',
+      price: 450,
+      image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop'
     }
-  };
+  ];
 
-  const loadMockData = () => {
-    // Mock saved trips
-    const mockTrips: SavedTrip[] = [
-      {
-        id: '1',
-        destination: 'Dubai, UAE',
-        startDate: '2024-03-15',
-        endDate: '2024-03-20',
-        budget: 2000,
-        status: 'booked',
-        totalCost: 1850,
-        imageUrl: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400',
-        createdAt: '2024-01-15'
-      },
-      {
-        id: '2',
-        destination: 'Tokyo, Japan',
-        startDate: '2024-05-10',
-        endDate: '2024-05-17',
-        budget: 3000,
-        status: 'planned',
-        imageUrl: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400',
-        createdAt: '2024-02-01'
-      },
-      {
-        id: '3',
-        destination: 'Paris, France',
-        startDate: '2024-07-20',
-        endDate: '2024-07-25',
-        budget: 2500,
-        status: 'completed',
-        totalCost: 2300,
-        imageUrl: 'https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=400',
-        createdAt: '2024-01-10'
-      }
-    ];
+  const savedTrips: SavedTrip[] = [
+    {
+      id: '1',
+      title: 'Tokyo Adventure',
+      destination: 'Tokyo, Japan',
+      savedDate: '2024-01-20',
+      image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=300&fit=crop'
+    },
+    {
+      id: '2',
+      title: 'Bali Paradise',
+      destination: 'Bali, Indonesia',
+      savedDate: '2024-01-15',
+      image: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=400&h=300&fit=crop'
+    }
+  ];
 
-    // Create user profile from auth context
-    const mockProfile: UserProfile = {
-      name: user ? `${user.first_name} ${user.last_name}` : 'User',
-      email: user?.email || 'user@example.com',
-      phone: user?.phone || '+1-555-0123',
-      preferences: {
-        budgetRange: '$1000-$3000',
-        travelStyle: ['Adventure', 'Cultural', 'Luxury'],
-        preferredAirlines: ['Emirates', 'Qatar Airways', 'Turkish Airlines'],
-        preferredHotels: ['Marriott', 'Hilton', 'Hyatt']
-      },
-      stats: {
-        totalTrips: 8,
-        totalSpent: 18500,
-        averageRating: 4.6,
-        favoriteDestinations: ['Dubai', 'Tokyo', 'Paris', 'Istanbul']
-      }
-    };
+  const stats = [
+    { label: 'Total Bookings', value: '12', icon: DocumentTextIcon, color: 'blue' },
+    { label: 'Upcoming Trips', value: '3', icon: CalendarIcon, color: 'green' },
+    { label: 'Saved Destinations', value: '8', icon: HeartIcon, color: 'pink' },
+    { label: 'Total Spent', value: '$2,450', icon: CreditCardIcon, color: 'purple' }
+  ];
 
-    setSavedTrips(mockTrips);
-    setUserProfile(mockProfile);
-    setEditableProfile(mockProfile);
-  };
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: ChartBarIcon },
+    { id: 'bookings', label: 'My Bookings', icon: DocumentTextIcon },
+    { id: 'saved', label: 'Saved Trips', icon: HeartIcon },
+    { id: 'profile', label: 'Profile', icon: UserIcon }
+  ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'booked': return 'text-green-500 bg-green-100';
-      case 'planned': return 'text-blue-500 bg-blue-100';
-      case 'completed': return 'text-gray-500 bg-gray-100';
-      case 'cancelled': return 'text-red-500 bg-red-100';
-      default: return 'text-gray-500 bg-gray-100';
+      case 'upcoming': return 'text-green-600 bg-green-100 dark:bg-green-900/20';
+      case 'completed': return 'text-blue-600 bg-blue-100 dark:bg-blue-900/20';
+      case 'cancelled': return 'text-red-600 bg-red-100 dark:bg-red-900/20';
+      default: return 'text-gray-600 bg-gray-100 dark:bg-gray-900/20';
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'booked': return <CheckCircle className="w-4 h-4" />;
-      case 'planned': return <Clock className="w-4 h-4" />;
-      case 'completed': return <Star className="w-4 h-4" />;
-      case 'cancelled': return <XCircle className="w-4 h-4" />;
-      default: return <Clock className="w-4 h-4" />;
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'flight': return PaperAirplaneIcon;
+      case 'hotel': return BuildingOfficeIcon;
+      default: return DocumentTextIcon;
     }
   };
-
-  const handleCreateNewTrip = () => {
-    navigate('/');
-  };
-
-  const handleEditTrip = (tripId: string) => {
-    // Navigate to trip editing page
-    console.log('Edit trip:', tripId);
-  };
-
-  const handleDeleteTrip = (tripId: string) => {
-    setSavedTrips(prev => prev.filter(trip => trip.id !== tripId));
-  };
-
-  const handleToggleAlert = async (alertId: string) => {
-    try {
-      const response = await alertsAPI.toggleAlert(alertId);
-      if (response.success) {
-        setPriceAlerts(prev => 
-          prev.map(alert => 
-            alert.id === alertId 
-              ? { ...alert, is_active: !alert.is_active }
-              : alert
-          )
-        );
-      }
-    } catch (err: any) {
-      console.error('Error toggling alert:', err);
-      setError(err.message || 'Failed to toggle alert');
-    }
-  };
-
-  const handleDeleteAlert = async (alertId: string) => {
-    try {
-      const response = await alertsAPI.deleteAlert(alertId);
-      if (response.success) {
-        setPriceAlerts(prev => prev.filter(alert => alert.id !== alertId));
-      }
-    } catch (err: any) {
-      console.error('Error deleting alert:', err);
-      setError(err.message || 'Failed to delete alert');
-    }
-  };
-
-  const handleCreateAlert = () => {
-    // Navigate to alert creation page or open modal
-    console.log('Create new alert');
-  };
-
-  const handleLogout = async () => {
-    setShowLogoutConfirm(true);
-  };
-
-  const confirmLogout = async () => {
-    try {
-      await logout();
-      navigate('/');
-    } catch (err: any) {
-      console.error('Error during logout:', err);
-      setError('Failed to logout. Please try again.');
-    }
-  };
-
-  const handleUpdateProfile = async (updatedData: Partial<UserProfile>) => {
-    try {
-      // This would call the backend API to update user profile
-      console.log('Updating profile:', updatedData);
-      setUserProfile(prev => prev ? { ...prev, ...updatedData } : null);
-      setError(null);
-    } catch (err: any) {
-      console.error('Error updating profile:', err);
-      setError('Failed to update profile. Please try again.');
-    }
-  };
-
-  const handleSavePreferences = async () => {
-    try {
-      if (editableProfile) {
-        await handleUpdateProfile(editableProfile);
-        setUserProfile(editableProfile);
-        setError(null);
-      }
-    } catch (err: any) {
-      console.error('Error saving preferences:', err);
-      setError('Failed to save preferences. Please try again.');
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-50 relative overflow-hidden">
-      {/* Animated Background Particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {Array.from({ length: 20 }, (_, i) => (
-          <div
-            key={i}
-            className="absolute w-2 h-2 bg-blue-300/30 rounded-full animate-pulse"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 20}s`,
-              animationDuration: '3s'
-            }}
-          />
-        ))}
-      </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg">
+      <PageHeader
+        title={`Welcome back, ${user?.first_name || 'Traveler'}!`}
+        description="Manage your bookings, explore saved destinations, and plan your next adventure."
+      >
+        <ModernButton
+          variant="primary"
+          size="lg"
+          className="flex items-center gap-2"
+        >
+          <PlusIcon className="h-5 w-5" />
+          New Booking
+        </ModernButton>
+      </PageHeader>
 
-      {/* Header - Matching HomePage styling */}
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-blue-200 shadow-sm">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            {/* Left side - Logo and Name */}
-            <div className="flex items-center space-x-1">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
-                <Plane className="w-7 h-7 text-white" />
-              </div>
-              <h1 className="text-3xl font-bold text-slate-800">SafarBot</h1>
-            </div>
-            
-            {/* Right side - Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
-              <button 
-                onClick={() => navigate('/')}
-                className="text-slate-700 hover:text-blue-600 transition-colors font-medium"
-              >
-                Home
-              </button>
-              <button 
-                onClick={() => navigate('/flights')}
-                className="text-slate-700 hover:text-blue-600 transition-colors font-medium"
-              >
-                Flights
-              </button>
-              <button 
-                onClick={() => navigate('/hotels')}
-                className="text-slate-700 hover:text-blue-600 transition-colors font-medium"
-              >
-                Hotels
-              </button>
-              <button className="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 transition-colors text-slate-700">
-                <Bell className="w-5 h-5" />
-              </button>
-              <button className="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 transition-colors text-slate-700">
-                <Settings className="w-5 h-5" />
-              </button>
-              <button 
-                onClick={handleLogout}
-                className="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 transition-colors text-slate-700"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-            </nav>
-
-            {/* Right side - Mobile menu button */}
-            <button
-              className="md:hidden p-2 hover:bg-white/10 rounded-lg transition-colors"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+      <div className="container-chisfis py-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {stats.map((stat, index) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-
-          {/* Mobile Navigation */}
-          {mobileMenuOpen && (
-            <nav className="md:hidden py-4 border-t border-white/10 slide-in-left">
-              <div className="flex flex-col space-y-4">
-                <button 
-                  onClick={() => {
-                    navigate('/');
-                    setMobileMenuOpen(false);
-                  }}
-                  className="nav-link hover:text-blue-400 transition-colors text-left"
-                >
-                  Home
-                </button>
-                <button 
-                  onClick={() => {
-                    navigate('/flights');
-                    setMobileMenuOpen(false);
-                  }}
-                  className="nav-link hover:text-blue-400 transition-colors text-left"
-                >
-                  Flights
-                </button>
-                <button 
-                  onClick={() => {
-                    navigate('/hotels');
-                    setMobileMenuOpen(false);
-                  }}
-                  className="nav-link hover:text-blue-400 transition-colors text-left"
-                >
-                  Hotels
-                </button>
-                <div className="flex space-x-2 pt-2">
-                  <button className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
-                    <Bell className="w-5 h-5" />
-                  </button>
-                  <button className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
-                    <Settings className="w-5 h-5" />
-                  </button>
-                  <button 
-                    onClick={handleLogout}
-                    className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-                  >
-                    <LogOut className="w-5 h-5" />
-                  </button>
+              <ModernCard className="p-6 hover-lift">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+                      {stat.label}
+                    </p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {stat.value}
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-xl bg-${stat.color}-100 dark:bg-${stat.color}-900/20`}>
+                    <stat.icon className={`h-6 w-6 text-${stat.color}-600 dark:text-${stat.color}-400`} />
+                  </div>
                 </div>
-              </div>
-            </nav>
-          )}
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Error Display */}
-        {error && (
-          <div className="mb-6 bg-red-500/20 border border-red-500/30 rounded-lg p-4">
-            <div className="flex items-center space-x-2">
-              <AlertTriangle className="w-5 h-5 text-red-400" />
-              <span className="text-red-400">{error}</span>
-            </div>
-          </div>
-        )}
-
-        {/* User Welcome Section */}
-        <div className="mb-8">
-          <div className="flex items-center space-x-4 mb-4">
-            <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-              <User className="w-8 h-8" />
-            </div>
-                         <div>
-               <h1 className="text-3xl font-bold">Welcome back, {userProfile?.name || user?.first_name || 'User'}!</h1>
-               <p className="text-gray-300">Manage your trips, alerts, and preferences</p>
-             </div>
-          </div>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="flex space-x-1 bg-white/10 rounded-lg p-1 mb-8">
-          {[
-            { id: 'overview', label: 'Overview', icon: <TrendingUp className="w-4 h-4" /> },
-            { id: 'trips', label: 'My Trips', icon: <MapPin className="w-4 h-4" /> },
-            { id: 'alerts', label: 'Price Alerts', icon: <Bell className="w-4 h-4" /> },
-            { id: 'profile', label: 'Profile', icon: <User className="w-4 h-4" /> }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
-                activeTab === tab.id
-                  ? 'bg-purple-600 text-white'
-                  : 'text-gray-300 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              {tab.icon}
-              <span>{tab.label}</span>
-            </button>
+              </ModernCard>
+            </motion.div>
           ))}
         </div>
 
-        {/* Tab Content */}
-        {activeTab === 'overview' && (
-          <div className="space-y-6">
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="card-3d">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-300 text-sm">Total Trips</p>
-                    <p className="text-2xl font-bold">{userProfile?.stats.totalTrips}</p>
-                  </div>
-                  <MapPin className="w-8 h-8 text-purple-400" />
-                </div>
-              </div>
-              <div className="card-3d">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-300 text-sm">Total Spent</p>
-                    <p className="text-2xl font-bold">${userProfile?.stats.totalSpent.toLocaleString()}</p>
-                  </div>
-                  <DollarSign className="w-8 h-8 text-green-400" />
-                </div>
-              </div>
-              <div className="card-3d">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-300 text-sm">Avg Rating</p>
-                    <p className="text-2xl font-bold">{userProfile?.stats.averageRating}</p>
-                  </div>
-                  <Star className="w-8 h-8 text-yellow-400" />
-                </div>
-              </div>
-              <div className="card-3d">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-300 text-sm">Active Alerts</p>
-                    <p className="text-2xl font-bold">{priceAlerts.filter(a => a.is_active).length}</p>
-                  </div>
-                  <Bell className="w-8 h-8 text-red-400" />
-                </div>
-              </div>
-            </div>
-
-            {/* Recent Trips */}
-            <div className="card-3d">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Recent Trips</h2>
+        {/* Tabs */}
+        <div className="bg-white dark:bg-dark-card rounded-2xl shadow-soft mb-8">
+          <div className="border-b border-gray-200 dark:border-gray-700">
+            <nav className="flex space-x-8 px-6" aria-label="Tabs">
+              {tabs.map((tab) => (
                 <button
-                  onClick={handleCreateNewTrip}
-                  className="btn-primary px-4 py-2 flex items-center space-x-2"
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                    activeTab === tab.id
+                      ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                  }`}
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>New Trip</span>
+                  <tab.icon className="h-5 w-5" />
+                  {tab.label}
                 </button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {savedTrips.slice(0, 3).map((trip) => (
-                  <div key={trip.id} className="bg-white/5 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold">{trip.destination}</h3>
-                      <span className={`px-2 py-1 rounded-full text-xs flex items-center space-x-1 ${getStatusColor(trip.status)}`}>
-                        {getStatusIcon(trip.status)}
-                        <span>{trip.status}</span>
-                      </span>
-                    </div>
-                    <p className="text-gray-300 text-sm mb-2">
-                      {new Date(trip.startDate).toLocaleDateString()} - {new Date(trip.endDate).toLocaleDateString()}
-                    </p>
-                    <p className="text-sm">Budget: ${trip.budget.toLocaleString()}</p>
-                    {trip.totalCost && (
-                      <p className="text-sm text-green-400">Spent: ${trip.totalCost.toLocaleString()}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Favorite Destinations */}
-            <div className="card-3d">
-              <h2 className="text-xl font-semibold mb-4">Favorite Destinations</h2>
-              <div className="flex flex-wrap gap-2">
-                {userProfile?.stats.favoriteDestinations.map((dest, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 bg-purple-600/20 border border-purple-500/30 rounded-full text-sm"
-                  >
-                    {dest}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'trips' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">My Trips</h2>
-              <button
-                onClick={handleCreateNewTrip}
-                className="btn-primary px-4 py-2 flex items-center space-x-2"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Plan New Trip</span>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {savedTrips.map((trip) => (
-                <div key={trip.id} className="card-3d overflow-hidden">
-                  {trip.imageUrl && (
-                    <div className="h-48 bg-cover bg-center" style={{ backgroundImage: `url(${trip.imageUrl})` }} />
-                  )}
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-lg font-semibold">{trip.destination}</h3>
-                      <span className={`px-2 py-1 rounded-full text-xs flex items-center space-x-1 ${getStatusColor(trip.status)}`}>
-                        {getStatusIcon(trip.status)}
-                        <span>{trip.status}</span>
-                      </span>
-                    </div>
-                    <div className="space-y-2 mb-4">
-                      <p className="text-gray-300 text-sm">
-                        <Calendar className="w-4 h-4 inline mr-2" />
-                        {new Date(trip.startDate).toLocaleDateString()} - {new Date(trip.endDate).toLocaleDateString()}
-                      </p>
-                      <p className="text-sm">
-                        <DollarSign className="w-4 h-4 inline mr-2" />
-                        Budget: ${trip.budget.toLocaleString()}
-                      </p>
-                      {trip.totalCost && (
-                        <p className="text-sm text-green-400">
-                          <DollarSign className="w-4 h-4 inline mr-2" />
-                          Spent: ${trip.totalCost.toLocaleString()}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEditTrip(trip.id)}
-                        className="flex-1 flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg transition-colors"
-                      >
-                        <Eye className="w-4 h-4" />
-                        <span>View</span>
-                      </button>
-                      <button
-                        onClick={() => handleEditTrip(trip.id)}
-                        className="flex-1 flex items-center justify-center space-x-2 bg-gray-600 hover:bg-gray-700 px-3 py-2 rounded-lg transition-colors"
-                      >
-                        <Edit className="w-4 h-4" />
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteTrip(trip.id)}
-                        className="flex-1 flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        <span>Delete</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
               ))}
-            </div>
+            </nav>
           </div>
-        )}
 
-        {activeTab === 'alerts' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Price Alerts</h2>
-              <button 
-                onClick={handleCreateAlert}
-                className="btn-primary px-4 py-2 flex items-center space-x-2"
-              >
-                <Plus className="w-4 h-4" />
-                <span>New Alert</span>
-              </button>
-            </div>
-
-            <div className="card-3d overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-white/5">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Destination
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Type
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Current Price
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Target Price
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/10">
-                    {priceAlerts.map((alert) => (
-                      <tr key={alert.id} className="hover:bg-white/5">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium">{alert.destination}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            alert.alert_type === 'flight' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                          }`}>
-                            {alert.alert_type}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          ${alert.current_price}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          ${alert.target_price}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <button
-                            onClick={() => handleToggleAlert(alert.id)}
-                            className={`px-2 py-1 rounded-full text-xs ${
-                              alert.is_active 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-gray-100 text-gray-800'
-                            }`}
-                          >
-                            {alert.is_active ? 'Active' : 'Inactive'}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <button
-                            onClick={() => handleDeleteAlert(alert.id)}
-                            className="text-red-400 hover:text-red-300"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'profile' && editableProfile && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Profile Settings</h2>
-              <button
-                onClick={handleSavePreferences}
-                className="btn-primary px-4 py-2 flex items-center space-x-2"
-              >
-                <Edit className="w-4 h-4" />
-                <span>Save Changes</span>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Personal Information */}
-              <div className="card-3d">
-                <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Name</label>
-                    <input
-                      type="text"
-                      value={editableProfile.name}
-                      onChange={(e) => setEditableProfile(prev => prev ? { ...prev, name: e.target.value } : null)}
-                      className="input-field w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
-                    <input
-                      type="email"
-                      value={editableProfile.email}
-                      onChange={(e) => setEditableProfile(prev => prev ? { ...prev, email: e.target.value } : null)}
-                      className="input-field w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Phone</label>
-                    <input
-                      type="tel"
-                      value={editableProfile.phone || ''}
-                      onChange={(e) => setEditableProfile(prev => prev ? { ...prev, phone: e.target.value } : null)}
-                      className="input-field w-full"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Travel Preferences */}
-              <div className="card-3d">
-                <h3 className="text-lg font-semibold mb-4">Travel Preferences</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Budget Range</label>
-                    <select 
-                      className="input-field w-full"
-                      value={editableProfile.preferences.budgetRange}
-                      onChange={(e) => setEditableProfile(prev => prev ? { 
-                        ...prev, 
-                        preferences: { ...prev.preferences, budgetRange: e.target.value }
-                      } : null)}
+          <div className="p-6">
+            {activeTab === 'overview' && (
+              <div className="space-y-8">
+                {/* Upcoming Bookings */}
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                      Upcoming Bookings
+                    </h3>
+                    <Link
+                      to="/bookings"
+                      className="text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium flex items-center gap-1"
                     >
-                      <option value="$500-$1000">$500-$1000</option>
-                      <option value="$1000-$3000">$1000-$3000</option>
-                      <option value="$3000-$5000">$3000-$5000</option>
-                      <option value="$5000+">$5000+</option>
-                    </select>
+                      View all
+                      <ArrowRightIcon className="h-4 w-4" />
+                    </Link>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Travel Style</label>
-                    <div className="flex flex-wrap gap-2">
-                      {editableProfile.preferences.travelStyle.map((style, index) => (
-                        <span
-                          key={index}
-                          className="px-3 py-1 bg-purple-600/20 border border-purple-500/30 rounded-full text-sm"
-                        >
-                          {style}
-                        </span>
-                      ))}
-                    </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {upcomingBookings.map((booking) => {
+                      const TypeIcon = getTypeIcon(booking.type);
+                      return (
+                        <ModernCard key={booking.id} className="p-6 hover-lift">
+                          <div className="flex items-start gap-4">
+                            <img
+                              src={booking.image}
+                              alt={booking.title}
+                              className="w-16 h-16 rounded-xl object-cover"
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <TypeIcon className="h-4 w-4 text-gray-500" />
+                                <h4 className="font-semibold text-gray-900 dark:text-white">
+                                  {booking.title}
+                                </h4>
+                              </div>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                {booking.destination}
+                              </p>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4 text-sm">
+                                  <span className="flex items-center gap-1 text-gray-500">
+                                    <CalendarIcon className="h-4 w-4" />
+                                    {new Date(booking.date).toLocaleDateString()}
+                                  </span>
+                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
+                                    {booking.status}
+                                  </span>
+                                </div>
+                                <span className="font-semibold text-gray-900 dark:text-white">
+                                  ${booking.price}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </ModernCard>
+                      );
+                    })}
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Statistics */}
-            <div className="card-3d">
-              <h3 className="text-lg font-semibold mb-4">Travel Statistics</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-purple-400">{editableProfile.stats.totalTrips}</p>
-                  <p className="text-sm text-gray-300">Total Trips</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-green-400">${editableProfile.stats.totalSpent.toLocaleString()}</p>
-                  <p className="text-sm text-gray-300">Total Spent</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-yellow-400">{editableProfile.stats.averageRating}</p>
-                  <p className="text-sm text-gray-300">Avg Rating</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-400">{editableProfile.stats.favoriteDestinations.length}</p>
-                  <p className="text-sm text-gray-300">Favorites</p>
+                {/* Saved Trips */}
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                      Saved Trips
+                    </h3>
+                    <Link
+                      to="/saved-trips"
+                      className="text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium flex items-center gap-1"
+                    >
+                      View all
+                      <ArrowRightIcon className="h-4 w-4" />
+                    </Link>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {savedTrips.map((trip) => (
+                      <ModernCard key={trip.id} className="p-6 hover-lift">
+                        <div className="flex items-start gap-4">
+                          <img
+                            src={trip.image}
+                            alt={trip.title}
+                            className="w-16 h-16 rounded-xl object-cover"
+                          />
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
+                              {trip.title}
+                            </h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                              {trip.destination}
+                            </p>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-gray-500">
+                                Saved {new Date(trip.savedDate).toLocaleDateString()}
+                              </span>
+                              <ModernButton variant="outline" size="sm">
+                                Plan Trip
+                              </ModernButton>
+                            </div>
+                          </div>
+                        </div>
+                      </ModernCard>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {activeTab === 'bookings' && (
+              <div className="text-center py-12">
+                <DocumentTextIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  All Bookings
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400">
+                  View and manage all your travel bookings in one place.
+                </p>
+              </div>
+            )}
+
+            {activeTab === 'saved' && (
+              <div className="text-center py-12">
+                <HeartIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  Saved Destinations
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400">
+                  Your saved destinations and travel inspiration.
+                </p>
+              </div>
+            )}
+
+            {activeTab === 'profile' && (
+              <div className="text-center py-12">
+                <UserIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  Profile Settings
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400">
+                  Manage your account settings and preferences.
+                </p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
-
-      {/* Logout Confirmation Modal */}
-      <ConfirmModal
-        isOpen={showLogoutConfirm}
-        onClose={() => setShowLogoutConfirm(false)}
-        onConfirm={confirmLogout}
-        title="Confirm Logout"
-        message="Are you sure you want to logout? You will need to sign in again to access your dashboard."
-        confirmText="Logout"
-        cancelText="Cancel"
-        type="warning"
-      />
     </div>
   );
 };

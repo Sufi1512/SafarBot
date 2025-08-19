@@ -10,6 +10,8 @@ export default {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         heading: ['Poppins', 'Inter', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+        display: ['Poppins', 'Inter', 'system-ui', 'sans-serif'],
       },
       colors: {
         // Chisfis Color Palette

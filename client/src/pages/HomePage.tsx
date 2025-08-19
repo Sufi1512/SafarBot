@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import DatePicker from 'react-datepicker';
-import "react-datepicker/dist/react-datepicker.css";
 import { 
   MapPin, 
   Search,
@@ -21,6 +19,7 @@ import {
 import ModernButton from '../components/ui/ModernButton';
 import ModernCard from '../components/ui/ModernCard';
 import ModernInput from '../components/ui/ModernInput';
+import DatePicker from '../components/ui/DatePicker';
 
 interface SearchForm {
   destination: string;
@@ -138,7 +137,7 @@ const HomePage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 dark:from-dark-bg dark:via-dark-bg dark:to-secondary-800">
+    <div className="min-h-screen bg-white dark:bg-dark-bg">
       {/* Floating Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -168,8 +167,8 @@ const HomePage: React.FC = () => {
       </div>
 
       {/* Hero Section */}
-      <section className="relative section-padding">
-        <div className="container-chisfis">
+      <section className="relative pt-24 lg:pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
@@ -187,7 +186,7 @@ const HomePage: React.FC = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-6xl md:text-7xl font-heading font-bold text-secondary-900 dark:text-dark-text mb-6 leading-tight"
+              className="text-5xl md:text-6xl lg:text-7xl font-heading font-bold text-secondary-900 dark:text-dark-text mb-6 leading-tight"
             >
               Plan Your Perfect
               <span className="block text-gradient"> Journey</span>
@@ -197,7 +196,7 @@ const HomePage: React.FC = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-xl text-secondary-700 dark:text-secondary-200 max-w-3xl mx-auto text-body leading-relaxed"
+              className="text-lg md:text-xl text-secondary-700 dark:text-secondary-200 max-w-3xl mx-auto text-body leading-relaxed"
             >
               Discover amazing destinations, book flights and hotels, and create unforgettable memories with our AI-powered travel platform.
             </motion.p>
@@ -233,11 +232,11 @@ const HomePage: React.FC = () => {
                       Start Date
                     </label>
                     <DatePicker
-                      selected={searchForm.startDate}
-                      onChange={(date: Date | null) => setSearchForm(prev => ({ ...prev, startDate: date }))}
-                      placeholderText="Select date"
-                      className="w-full px-4 py-3 border border-white/40 dark:border-secondary-600/40 backdrop-blur-md bg-white/30 dark:bg-dark-card/30 text-secondary-900 dark:text-dark-text placeholder-secondary-600 dark:placeholder-secondary-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 rounded-xl transition-all duration-200"
+                      value={searchForm.startDate || undefined}
+                      onChange={(date) => setSearchForm(prev => ({ ...prev, startDate: date || null }))}
+                      placeholder="Select start date"
                       minDate={new Date()}
+                      className="w-full"
                     />
                   </div>
 
@@ -247,11 +246,11 @@ const HomePage: React.FC = () => {
                       End Date
                     </label>
                     <DatePicker
-                      selected={searchForm.endDate}
-                      onChange={(date: Date | null) => setSearchForm(prev => ({ ...prev, endDate: date }))}
-                      placeholderText="Select date"
-                      className="w-full px-4 py-3 border border-white/40 dark:border-secondary-600/40 backdrop-blur-md bg-white/30 dark:bg-dark-card/30 text-secondary-900 dark:text-dark-text placeholder-secondary-600 dark:placeholder-secondary-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 rounded-xl transition-all duration-200"
+                      value={searchForm.endDate || undefined}
+                      onChange={(date) => setSearchForm(prev => ({ ...prev, endDate: date || null }))}
+                      placeholder="Select end date"
                       minDate={searchForm.startDate || new Date()}
+                      className="w-full"
                     />
                   </div>
                 </div>

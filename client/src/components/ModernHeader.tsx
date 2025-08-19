@@ -1,295 +1,391 @@
-import React, { useState, useEffect } from 'react';
+import React from "react";
 import { Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Menu, 
-  X, 
-  Sun, 
-  Moon, 
-  User, 
-  LogOut,
-  Settings,
-  Bell,
-  Search as SearchIcon,
-  Sparkles
-} from 'lucide-react';
+import {
+  Navbar,
+  MobileNav,
+  Typography,
+  Button,
+  Menu,
+  MenuHandler,
+  MenuList,
+  MenuItem,
+  Avatar,
+  IconButton,
+} from "@material-tailwind/react";
+import {
+  UserCircleIcon,
+  CodeBracketSquareIcon,
+  Square3Stack3DIcon,
+  ChevronDownIcon,
+  Cog6ToothIcon,
+  InboxArrowDownIcon,
+  LifebuoyIcon,
+  PowerIcon,
+  RocketLaunchIcon,
+  Bars2Icon,
+  SparklesIcon,
+  SunIcon,
+  MoonIcon,
+  BellIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/solid";
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import ModernButton from './ui/ModernButton';
 
-const ModernHeader: React.FC = () => {
-  const { user, isAuthenticated, logout } = useAuth();
-  const { isDarkMode, toggleDarkMode } = useTheme();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const location = useLocation();
+// profile menu component
+const profileMenuItems = [
+  {
+    label: "My Profile",
+    icon: UserCircleIcon,
+  },
+  {
+    label: "Settings",
+    icon: Cog6ToothIcon,
+  },
+  {
+    label: "Inbox",
+    icon: InboxArrowDownIcon,
+  },
+  {
+    label: "Help",
+    icon: LifebuoyIcon,
+  },
+  {
+    label: "Sign Out",
+    icon: PowerIcon,
+  },
+];
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
+function ProfileMenu() {
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const { user, logout } = useAuth();
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const closeMenu = () => setIsMenuOpen(false);
 
-  const navigation = [
-    { name: 'Home', href: '/', icon: Sparkles },
-    { name: 'Flights', href: '/flights' },
-    { name: 'Hotels', href: '/hotels' },
-    { name: 'About', href: '/about' },
-    { name: 'Contact', href: '/contact' },
-  ];
-
-  const isActive = (path: string) => location.pathname === path;
+  const handleSignOut = () => {
+    logout();
+    closeMenu();
+  };
 
   return (
-    <motion.header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isScrolled 
-          ? 'bg-white/80 dark:bg-dark-card/80 backdrop-blur-2xl border-b border-white/20 dark:border-secondary-700/30 shadow-2xl' 
-          : 'bg-transparent'
-      }`}
-      initial={{ y: -100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
-    >
-      {/* Gradient overlay for extra modern effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-primary-500/5 via-transparent to-secondary-500/5 pointer-events-none" />
-      
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 lg:h-24">
-          {/* Logo */}
-          <motion.div
-            whileHover={{ scale: 1.05, rotate: 2 }}
-            whileTap={{ scale: 0.95 }}
-            className="relative group"
+    <Menu open={isMenuOpen} handler={setIsMenuOpen} placement="bottom-end">
+      <MenuHandler>
+        <Button
+          variant="text"
+          className="flex items-center gap-1 rounded-full py-0.5 pr-2 pl-0.5 lg:ml-auto text-gray-700 hover:text-blue-600"
+          placeholder=""
+        >
+          <Avatar
+            variant="circular"
+            size="sm"
+            alt={user?.first_name || "User"}
+            className="border border-gray-300 p-0.5 bg-gradient-to-br from-blue-500 to-purple-600"
+            placeholder=""
           >
-            <Link to="/" className="flex items-center space-x-4">
-              <div className="relative">
-                <div className="w-14 h-14 bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-500 rounded-3xl flex items-center justify-center shadow-2xl group-hover:shadow-primary-500/25 transition-all duration-300">
-                  <span className="text-white font-bold text-2xl">S</span>
-                </div>
-                {/* Animated glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-400 to-secondary-400 rounded-3xl blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-3xl font-black text-secondary-900 dark:text-dark-text bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
-                  SafarBot
-                </span>
-                <span className="text-xs text-secondary-500 dark:text-secondary-400 font-medium tracking-wider">
-                  TRAVEL INTELLIGENCE
-                </span>
-              </div>
-            </Link>
-          </motion.div>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-2">
-            {navigation.map((item, index) => (
-              <motion.div
-                key={item.name}
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Link
-                  to={item.href}
-                  className={`relative px-8 py-4 text-sm font-bold rounded-2xl transition-all duration-300 group ${
-                    isActive(item.href)
-                      ? 'text-white bg-gradient-to-r from-primary-500 to-secondary-500 shadow-lg shadow-primary-500/25'
-                      : 'text-secondary-600 dark:text-secondary-300 hover:text-primary-500 hover:bg-white/50 dark:hover:bg-secondary-800/50 backdrop-blur-sm'
-                  }`}
-                >
-                  {isActive(item.href) && (
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-2xl"
-                      layoutId="activeTab"
-                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    />
-                  )}
-                  <span className="relative z-10 flex items-center gap-2">
-                    {item.icon && <item.icon className="w-4 h-4" />}
-                    {item.name}
-                  </span>
-                  
-                  {/* Hover effect */}
-                  {!isActive(item.href) && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary-500/0 via-primary-500/10 to-secondary-500/0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  )}
-                </Link>
-              </motion.div>
-            ))}
-          </nav>
-
-          {/* Right side actions */}
-          <div className="flex items-center space-x-4">
-            {/* Search Button */}
-            <motion.button
-              whileHover={{ scale: 1.1, rotate: 5 }}
-              whileTap={{ scale: 0.95 }}
-              className="p-4 text-secondary-600 dark:text-secondary-400 hover:text-primary-500 hover:bg-white/50 dark:hover:bg-secondary-800/50 rounded-2xl transition-all duration-300 backdrop-blur-sm group"
+            <span className="text-white text-sm font-bold">
+              {user?.first_name?.[0] || user?.email?.[0] || 'U'}
+            </span>
+          </Avatar>
+          <ChevronDownIcon
+            strokeWidth={2.5}
+            className={`h-3 w-3 transition-transform ${
+              isMenuOpen ? "rotate-180" : ""
+            }`}
+          />
+        </Button>
+      </MenuHandler>
+      <MenuList className="p-1 bg-white shadow-xl border border-gray-200">
+        {profileMenuItems.map(({ label, icon }, key) => {
+          const isLastItem = key === profileMenuItems.length - 1;
+          return (
+            <MenuItem
+              key={label}
+              onClick={isLastItem ? handleSignOut : closeMenu}
+              className={`flex items-center gap-2 rounded text-gray-700 hover:text-blue-600 ${
+                isLastItem
+                  ? "hover:bg-red-50 focus:bg-red-50 active:bg-red-50"
+                  : "hover:bg-blue-50 focus:bg-blue-50 active:bg-blue-50"
+              }`}
             >
-              <SearchIcon className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
-            </motion.button>
+              {React.createElement(icon, {
+                className: `h-4 w-4 ${isLastItem ? "text-red-500" : "text-gray-600"}`,
+                strokeWidth: 2,
+              })}
+              <Typography
+                as="span"
+                variant="small"
+                className="font-medium"
+                color={isLastItem ? "red" : "inherit"}
+              >
+                {label}
+              </Typography>
+            </MenuItem>
+          );
+        })}
+      </MenuList>
+    </Menu>
+  );
+}
+
+// nav list menu
+const navListMenuItems = [
+  {
+    title: "Flight Booking",
+    description: "Search and book flights to your destination.",
+    href: "/flights",
+  },
+  {
+    title: "Hotel Booking",
+    description: "Find and reserve hotels for your stay.",
+    href: "/hotels",
+  },
+  {
+    title: "Travel Packages",
+    description: "Complete travel packages with flights and hotels.",
+    href: "/packages",
+  },
+];
+
+function NavListMenu() {
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+
+  const renderItems = navListMenuItems.map(({ title, description, href }) => (
+    <Link to={href} key={title}>
+      <MenuItem className="text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg p-3">
+        <Typography variant="h6" className="mb-1 text-gray-900 font-semibold">
+          {title}
+        </Typography>
+        <Typography variant="small" className="font-normal text-gray-600">
+          {description}
+        </Typography>
+      </MenuItem>
+    </Link>
+  ));
+
+  return (
+    <React.Fragment>
+      <Menu allowHover open={isMenuOpen} handler={setIsMenuOpen}>
+        <MenuHandler>
+          <Typography as="div" variant="small" className="font-normal">
+            <MenuItem className="hidden items-center gap-2 font-medium text-gray-700 hover:text-blue-600 lg:flex lg:rounded-full hover:bg-blue-50 px-4 py-2">
+              <Square3Stack3DIcon className="h-[18px] w-[18px] text-gray-600" />{" "}
+              Services{" "}
+              <ChevronDownIcon
+                strokeWidth={2}
+                className={`h-3 w-3 transition-transform ${
+                  isMenuOpen ? "rotate-180" : ""
+                }`}
+              />
+            </MenuItem>
+          </Typography>
+        </MenuHandler>
+                 <MenuList className="hidden w-[24rem] overflow-visible lg:block bg-white shadow-2xl border border-gray-200 rounded-xl p-4 z-50">
+           <ul className="flex w-full flex-col gap-2">
+             {renderItems}
+           </ul>
+         </MenuList>
+      </Menu>
+      <MenuItem className="flex items-center gap-2 font-medium text-gray-700 lg:hidden hover:bg-blue-50 rounded-lg px-4 py-2">
+        <Square3Stack3DIcon className="h-[18px] w-[18px] text-gray-600" />{" "}
+        Services{" "}
+      </MenuItem>
+      <ul className="ml-6 flex w-full flex-col gap-2 lg:hidden bg-gray-50 rounded-lg p-2">
+        {renderItems}
+      </ul>
+    </React.Fragment>
+  );
+}
+
+// nav list component
+const navListItems = [
+  {
+    label: "Home",
+    icon: SparklesIcon,
+    href: "/",
+  },
+  {
+    label: "Flights",
+    icon: RocketLaunchIcon,
+    href: "/flights",
+  },
+  {
+    label: "Hotels",
+    icon: CodeBracketSquareIcon,
+    href: "/hotels",
+  },
+];
+
+function NavList() {
+  const location = useLocation();
+
+  return (
+    <ul className="mt-2 mb-4 flex flex-col gap-2 lg:mb-0 lg:mt-0 lg:flex-row lg:items-center">
+      <NavListMenu />
+      {navListItems.map(({ label, icon, href }, key) => {
+        const isActive = location.pathname === href;
+        return (
+          <Typography
+            key={label}
+            as={Link}
+            to={href}
+            variant="small"
+            className={`font-medium ${
+              isActive 
+                ? 'text-blue-600 bg-blue-50' 
+                : 'text-gray-700 hover:text-blue-600'
+            }`}
+          >
+            <MenuItem className={`flex items-center gap-2 lg:rounded-full ${
+              isActive ? 'bg-blue-50 text-blue-600' : 'hover:bg-blue-50'
+            }`}>
+              {React.createElement(icon, { 
+                className: `h-[18px] w-[18px] ${
+                  isActive ? 'text-blue-600' : 'text-gray-600'
+                }` 
+              })}{" "}
+              <span className={`font-semibold ${
+                isActive ? 'text-blue-600' : 'text-gray-700'
+              }`}> {label}</span>
+            </MenuItem>
+          </Typography>
+        );
+      })}
+    </ul>
+  );
+}
+
+const ModernHeader: React.FC = () => {
+  const [isNavOpen, setIsNavOpen] = React.useState(false);
+  const { isAuthenticated } = useAuth();
+  const { isDarkMode, toggleDarkMode } = useTheme();
+
+  const toggleIsNavOpen = () => setIsNavOpen((cur) => !cur);
+
+  React.useEffect(() => {
+    window.addEventListener(
+      "resize",
+      () => window.innerWidth >= 960 && setIsNavOpen(false),
+    );
+  }, []);
+
+  return (
+    <div className="w-full bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <Navbar className="p-3 lg:rounded-full lg:pl-6 relative bg-white/95 backdrop-blur-sm">
+        <div className="relative mx-auto flex items-center justify-between text-gray-900">
+          <Typography
+            as={Link}
+            to="/"
+            className="mr-4 ml-2 cursor-pointer py-1.5 font-medium flex items-center gap-3"
+          >
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-xl">S</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-2xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                SafarBot
+              </span>
+              <span className="text-xs text-gray-500 font-medium tracking-wider">
+                TRAVEL INTELLIGENCE
+              </span>
+            </div>
+          </Typography>
+          
+          <div className="hidden lg:block">
+            <NavList />
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* Search Button */}
+            <IconButton
+              size="sm"
+              variant="text"
+              className="rounded-full text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+            >
+              <MagnifyingGlassIcon className="h-5 w-5" />
+            </IconButton>
 
             {/* Theme Toggle */}
-            <motion.button
-              whileHover={{ scale: 1.1, rotate: 180 }}
-              whileTap={{ scale: 0.95 }}
+            <IconButton
+              size="sm"
+              variant="text"
               onClick={toggleDarkMode}
-              className="p-4 text-secondary-600 dark:text-secondary-400 hover:text-primary-500 hover:bg-white/50 dark:hover:bg-secondary-800/50 rounded-2xl transition-all duration-300 backdrop-blur-sm group"
+              className="rounded-full text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
             >
               {isDarkMode ? (
-                <Sun className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
+                <SunIcon className="h-5 w-5" />
               ) : (
-                <Moon className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
+                <MoonIcon className="h-5 w-5" />
               )}
-            </motion.button>
+            </IconButton>
 
             {/* Notifications */}
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              className="p-4 text-secondary-600 dark:text-secondary-400 hover:text-primary-500 hover:bg-white/50 dark:hover:bg-secondary-800/50 rounded-2xl transition-all duration-300 backdrop-blur-sm relative group"
+            <IconButton
+              size="sm"
+              variant="text"
+              className="rounded-full relative text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
             >
-              <Bell className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-error-500 to-error-600 rounded-full border-2 border-white dark:border-dark-card shadow-lg animate-pulse" />
-            </motion.button>
+              <BellIcon className="h-5 w-5" />
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-pulse" />
+            </IconButton>
 
-            {/* User Menu */}
-            {isAuthenticated ? (
-              <motion.div
-                className="relative"
-                initial={false}
-                animate={isMenuOpen ? "open" : "closed"}
-              >
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center space-x-3 p-3 text-secondary-600 dark:text-secondary-400 hover:text-primary-500 hover:bg-white/50 dark:hover:bg-secondary-800/50 rounded-2xl transition-all duration-300 backdrop-blur-sm group"
-                >
-                  <div className="relative">
-                    <div className="w-12 h-12 bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-primary-500/25 transition-all duration-300">
-                      <span className="text-white text-sm font-bold">
-                        {user?.first_name?.[0] || user?.email?.[0] || 'U'}
-                      </span>
-                    </div>
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary-400 to-secondary-400 rounded-2xl blur-lg opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
-                  </div>
-                </motion.button>
+            <IconButton
+              size="sm"
+              variant="text"
+              onClick={toggleIsNavOpen}
+              className="ml-auto mr-2 lg:hidden text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+            >
+              <Bars2Icon className="h-6 w-6" />
+            </IconButton>
 
-                <AnimatePresence>
-                  {isMenuOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-4 w-72 bg-white/90 dark:bg-dark-card/90 rounded-3xl shadow-2xl border border-white/20 dark:border-secondary-700/30 backdrop-blur-2xl"
-                    >
-                      <div className="p-6 border-b border-white/20 dark:border-secondary-700/30">
-                        <p className="text-lg font-bold text-secondary-900 dark:text-dark-text">
-                          {user?.first_name} {user?.last_name}
-                        </p>
-                        <p className="text-sm text-secondary-500 dark:text-secondary-400 mt-1">
-                          {user?.email}
-                        </p>
-                      </div>
-                      <div className="p-4 space-y-2">
-                        <button className="w-full flex items-center space-x-4 px-4 py-4 text-sm text-secondary-700 dark:text-secondary-300 hover:text-primary-500 hover:bg-white/50 dark:hover:bg-secondary-800/50 rounded-2xl transition-all duration-200 group">
-                          <User className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
-                          <span className="font-semibold">Profile</span>
-                        </button>
-                        <button className="w-full flex items-center space-x-4 px-4 py-4 text-sm text-secondary-700 dark:text-secondary-300 hover:text-primary-500 hover:bg-white/50 dark:hover:bg-secondary-800/50 rounded-2xl transition-all duration-200 group">
-                          <Settings className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
-                          <span className="font-semibold">Settings</span>
-                        </button>
-                        <button 
-                          onClick={logout}
-                          className="w-full flex items-center space-x-4 px-4 py-4 text-sm text-error-600 hover:text-error-700 hover:bg-error-50 dark:hover:bg-error-900/20 rounded-2xl transition-all duration-200 group"
-                        >
-                          <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
-                          <span className="font-semibold">Sign Out</span>
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
+            {!isAuthenticated ? (
+              <div className="flex items-center gap-3">
+                <Link to="/login">
+                  <Button 
+                    size="sm" 
+                    variant="text"
+                    className="text-gray-700 hover:text-blue-600 font-semibold transition-colors"
+                    crossOrigin=""
+                  >
+                    <span>Sign In</span>
+                  </Button>
+                </Link>
+                <Link to="/signup">
+                  <Button 
+                    size="sm" 
+                    variant="gradient" 
+                    color="blue"
+                    className="bg-gradient-to-r from-blue-500 to-purple-600 shadow-lg hover:shadow-xl transition-all duration-200"
+                    placeholder=""
+                  >
+                    <span className="font-semibold">Sign Up</span>
+                  </Button>
+                </Link>
+              </div>
             ) : (
-              <div className="flex items-center space-x-4">
-                <ModernButton 
-                  variant="ghost" 
-                  size="sm" 
-                  className="px-8 py-3 rounded-2xl font-bold hover:bg-white/50 dark:hover:bg-secondary-800/50 backdrop-blur-sm"
-                >
-                  Sign In
-                </ModernButton>
-                <ModernButton 
-                  variant="gradient" 
-                  size="sm" 
-                  className="px-8 py-3 rounded-2xl font-bold shadow-lg shadow-primary-500/25"
-                >
-                  Sign Up
-                </ModernButton>
+              <div className="flex items-center gap-3">
+                <Link to="/dashboard">
+                  <Button 
+                    size="sm" 
+                    variant="text"
+                    className="text-gray-700 hover:text-blue-600 font-semibold transition-colors"
+                    placeholder=""
+                  >
+                    <span>Dashboard</span>
+                  </Button>
+                </Link>
+                <ProfileMenu />
               </div>
             )}
-
-            {/* Mobile Menu Button */}
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="lg:hidden p-4 text-secondary-600 dark:text-secondary-400 hover:text-primary-500 hover:bg-white/50 dark:hover:bg-secondary-800/50 rounded-2xl transition-all duration-300 backdrop-blur-sm"
-            >
-              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </motion.button>
           </div>
         </div>
-
-        {/* Mobile Navigation */}
-        <AnimatePresence>
-          {isMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
-              className="lg:hidden border-t border-white/20 dark:border-secondary-700/30 bg-white/90 dark:bg-dark-card/90 backdrop-blur-2xl rounded-b-3xl overflow-hidden"
-            >
-              <div className="py-6 space-y-3 px-4">
-                {navigation.map((item, index) => (
-                  <motion.div
-                    key={item.name}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1, duration: 0.3 }}
-                  >
-                    <Link
-                      to={item.href}
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`flex items-center space-x-4 px-6 py-4 text-sm font-bold rounded-2xl transition-all duration-300 ${
-                        isActive(item.href)
-                          ? 'text-white bg-gradient-to-r from-primary-500 to-secondary-500 shadow-lg shadow-primary-500/25'
-                          : 'text-secondary-700 dark:text-secondary-300 hover:text-primary-500 hover:bg-white/50 dark:hover:bg-secondary-800/50'
-                      }`}
-                    >
-                      {item.icon && <item.icon className="w-5 h-5" />}
-                      <span>{item.name}</span>
-                    </Link>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </motion.header>
-  );
-};
+                 <MobileNav open={isNavOpen} className="overflow-scroll bg-white border-t border-gray-100">
+           <NavList />
+         </MobileNav>
+       </Navbar>
+     </div>
+   </div>
+   );
+ };
 
 export default ModernHeader;

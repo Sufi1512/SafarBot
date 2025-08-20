@@ -63,42 +63,48 @@ const HomePage: React.FC = () => {
       image: 'https://images.unsplash.com/photo-1502602898535-eb37b0b6d7c3?w=400&h=300&fit=crop', 
       price: '$899',
       rating: 4.8,
-      description: 'City of Light'
+      description: 'City of Light',
+      bgImage: 'https://images.unsplash.com/photo-1502602898535-eb37b0b6d7c3?w=1200&h=800&fit=crop'
     },
     { 
       name: 'Tokyo, Japan', 
       image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=300&fit=crop', 
       price: '$1,299',
       rating: 4.9,
-      description: 'Modern Metropolis'
+      description: 'Modern Metropolis',
+      bgImage: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=1200&h=800&fit=crop'
     },
     { 
       name: 'New York, USA', 
       image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400&h=300&fit=crop', 
       price: '$699',
       rating: 4.7,
-      description: 'The Big Apple'
+      description: 'The Big Apple',
+      bgImage: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=1200&h=800&fit=crop'
     },
     { 
       name: 'London, UK', 
       image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&h=300&fit=crop', 
       price: '$799',
       rating: 4.6,
-      description: 'Historic Capital'
+      description: 'Historic Capital',
+      bgImage: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1200&h=800&fit=crop'
     },
     { 
       name: 'Bali, Indonesia', 
       image: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=400&h=300&fit=crop', 
       price: '$599',
       rating: 4.9,
-      description: 'Island Paradise'
+      description: 'Island Paradise',
+      bgImage: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=1200&h=800&fit=crop'
     },
     { 
       name: 'Dubai, UAE', 
       image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400&h=300&fit=crop', 
       price: '$999',
       rating: 4.5,
-      description: 'Desert Oasis'
+      description: 'Desert Oasis',
+      bgImage: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1200&h=800&fit=crop'
     },
   ];
 
@@ -107,25 +113,29 @@ const HomePage: React.FC = () => {
       icon: Zap,
       title: 'Instant Booking',
       description: 'Book flights and hotels instantly with our streamlined process',
-      color: 'from-yellow-400 to-orange-500'
+      color: 'from-yellow-400 to-orange-500',
+      bgImage: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop'
     },
     {
       icon: Shield,
       title: 'Secure Payments',
       description: 'Your payments are protected with bank-level security',
-      color: 'from-green-400 to-emerald-500'
+      color: 'from-green-400 to-emerald-500',
+      bgImage: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400&h=300&fit=crop'
     },
     {
       icon: Clock,
       title: '24/7 Support',
       description: 'Get help anytime with our round-the-clock customer service',
-      color: 'from-blue-400 to-cyan-500'
+      color: 'from-blue-400 to-cyan-500',
+      bgImage: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=400&h=300&fit=crop'
     },
     {
       icon: TrendingUp,
       title: 'Best Prices',
       description: 'We guarantee the best prices with our price match promise',
-      color: 'from-purple-400 to-pink-500'
+      color: 'from-purple-400 to-pink-500',
+      bgImage: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=300&fit=crop'
     }
   ];
 
@@ -137,38 +147,55 @@ const HomePage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-dark-bg">
-      {/* Floating Background Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          className="absolute top-20 left-10 w-72 h-72 bg-primary-200/20 rounded-full blur-3xl"
-          animate={{ 
-            x: [0, 100, 0],
-            y: [0, -50, 0],
-          }}
-          transition={{ 
-            duration: 20,
-            repeat: Infinity,
-            ease: "linear"
-          }}
-        />
-        <motion.div
-          className="absolute bottom-20 right-10 w-96 h-96 bg-secondary-200/20 rounded-full blur-3xl"
-          animate={{ 
-            x: [0, -100, 0],
-            y: [0, 50, 0],
-          }}
-          transition={{ 
-            duration: 25,
-            repeat: Infinity,
-            ease: "linear"
+    <div className="bg-white dark:bg-dark-bg">
+      {/* Hero Section with Background Image */}
+      <section 
+        className="relative pb-20 px-4 sm:px-6 lg:px-8 min-h-screen flex items-center -mt-16 pt-0"
+        style={{
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&h=1080&fit=crop')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'scroll'
+        }}
+      >
+        {/* Additional Subtle Background Pattern */}
+        <div 
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>')`,
+            backgroundSize: '50px 50px'
           }}
         />
-      </div>
+        
+        {/* Floating Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div
+            className="absolute top-32 left-10 w-72 h-72 bg-primary-200/10 rounded-full blur-3xl"
+            animate={{ 
+              x: [0, 100, 0],
+              y: [0, -50, 0],
+            }}
+            transition={{ 
+              duration: 20,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+          />
+          <motion.div
+            className="absolute bottom-20 right-10 w-96 h-96 bg-secondary-200/10 rounded-full blur-3xl"
+            animate={{ 
+              x: [0, -100, 0],
+              y: [0, 50, 0],
+            }}
+            transition={{ 
+              duration: 25,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+          />
+        </div>
 
-      {/* Hero Section */}
-      <section className="relative pt-24 lg:pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto w-full relative z-10">
           <div className="text-center mb-16">
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
@@ -186,7 +213,7 @@ const HomePage: React.FC = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-5xl md:text-6xl lg:text-7xl font-heading font-bold text-secondary-900 dark:text-dark-text mb-6 leading-tight"
+              className="text-5xl md:text-6xl lg:text-7xl font-heading font-bold text-white mb-6 leading-tight"
             >
               Plan Your Perfect
               <span className="block text-gradient"> Journey</span>
@@ -196,7 +223,7 @@ const HomePage: React.FC = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-lg md:text-xl text-secondary-700 dark:text-secondary-200 max-w-3xl mx-auto text-body leading-relaxed"
+              className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto text-body leading-relaxed"
             >
               Discover amazing destinations, book flights and hotels, and create unforgettable memories with our AI-powered travel platform.
             </motion.p>
@@ -209,7 +236,7 @@ const HomePage: React.FC = () => {
             transition={{ duration: 0.8, delay: 0.6 }}
             className="max-w-5xl mx-auto"
           >
-            <ModernCard variant="glass" padding="xl" shadow="glow">
+            <div className="bg-white/95 dark:bg-dark-card/95 backdrop-blur-xl rounded-3xl border border-white/30 dark:border-secondary-700/50 shadow-2xl p-8 lg:p-12">
               <form className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {/* Destination */}
@@ -228,9 +255,6 @@ const HomePage: React.FC = () => {
 
                   {/* Start Date */}
                   <div>
-                    <label className="block text-sm font-medium text-secondary-800 dark:text-secondary-200 mb-3">
-                      Start Date
-                    </label>
                     <DatePicker
                       value={searchForm.startDate || undefined}
                       onChange={(date) => setSearchForm(prev => ({ ...prev, startDate: date || null }))}
@@ -242,9 +266,6 @@ const HomePage: React.FC = () => {
 
                   {/* End Date */}
                   <div>
-                    <label className="block text-sm font-medium text-secondary-800 dark:text-secondary-200 mb-3">
-                      End Date
-                    </label>
                     <DatePicker
                       value={searchForm.endDate || undefined}
                       onChange={(date) => setSearchForm(prev => ({ ...prev, endDate: date || null }))}
@@ -295,14 +316,31 @@ const HomePage: React.FC = () => {
                   </div>
                 </div>
               </form>
-            </ModernCard>
+            </div>
           </motion.div>
         </div>
       </section>
 
       {/* Popular Destinations */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+      <section 
+        className="py-20 px-4 sm:px-6 lg:px-8 relative"
+        style={{
+          backgroundImage: `linear-gradient(rgba(248, 250, 252, 0.7), rgba(248, 250, 252, 0.8)), url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'scroll'
+        }}
+      >
+        {/* Subtle Geometric Pattern */}
+        <div 
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60"><defs><pattern id="circles" width="60" height="60" patternUnits="userSpaceOnUse"><circle cx="30" cy="30" r="1.5" fill="%23000"/></pattern></defs><rect width="100%" height="100%" fill="url(%23circles)"/></svg>')`,
+            backgroundSize: '60px 60px'
+          }}
+        />
+        
+        <div className="max-w-7xl mx-auto relative z-10">
           <motion.div 
             className="text-center mb-16"
             initial={{ opacity: 0, y: 30 }}
@@ -327,7 +365,7 @@ const HomePage: React.FC = () => {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
               >
-                <ModernCard variant="interactive" padding="none" hover>
+                <ModernCard variant="interactive" padding="none" hover className="overflow-hidden">
                   <div className="relative h-64 overflow-hidden rounded-2xl">
                     <img
                       src={destination.image}
@@ -362,8 +400,25 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-secondary-50 to-white dark:from-secondary-800 dark:to-dark-bg">
-        <div className="max-w-7xl mx-auto">
+      <section 
+        className="py-20 px-4 sm:px-6 lg:px-8 relative"
+        style={{
+          backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.9)), url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&h=1080&fit=crop')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'scroll'
+        }}
+      >
+        {/* Subtle Hexagon Pattern */}
+        <div 
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="hexagons" width="50" height="43.4" patternUnits="userSpaceOnUse"><polygon points="25,2 47,13.4 47,36.6 25,48 3,36.6 3,13.4" fill="none" stroke="white" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23hexagons)"/></svg>')`,
+            backgroundSize: '50px 43.4px'
+          }}
+        />
+        
+        <div className="max-w-7xl mx-auto relative z-10">
           <motion.div 
             className="text-center mb-16"
             initial={{ opacity: 0, y: 30 }}
@@ -371,10 +426,10 @@ const HomePage: React.FC = () => {
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl md:text-5xl font-heading font-bold text-secondary-900 dark:text-dark-text mb-6">
+            <h2 className="text-4xl md:text-5xl font-heading font-bold text-white mb-6">
               Why Choose SafarBot?
             </h2>
-            <p className="text-xl text-secondary-700 dark:text-secondary-200 max-w-2xl mx-auto">
+            <p className="text-xl text-white/80 max-w-2xl mx-auto">
               Experience the future of travel planning
             </p>
           </motion.div>
@@ -388,12 +443,24 @@ const HomePage: React.FC = () => {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
               >
-                <ModernCard variant="elevated" padding="lg" className="text-center h-full">
-                  <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg`}>
-                    <feature.icon className="w-8 h-8 text-white" />
+                <ModernCard variant="glass" padding="lg" className="text-center h-full relative overflow-hidden">
+                  {/* Background Image */}
+                  <div 
+                    className="absolute inset-0 opacity-10 transition-opacity duration-300 group-hover:opacity-20"
+                    style={{
+                      backgroundImage: `url(${feature.bgImage})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center'
+                    }}
+                  />
+                  
+                  <div className="relative z-10">
+                    <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg`}>
+                      <feature.icon className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
+                    <p className="text-white/80 leading-relaxed">{feature.description}</p>
                   </div>
-                  <h3 className="text-xl font-bold text-secondary-900 dark:text-dark-text mb-3">{feature.title}</h3>
-                  <p className="text-secondary-700 dark:text-secondary-200 leading-relaxed">{feature.description}</p>
                 </ModernCard>
               </motion.div>
             ))}
@@ -402,8 +469,40 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-primary-500 to-primary-600">
-        <div className="max-w-7xl mx-auto">
+      <section 
+        className="py-20 px-4 sm:px-6 lg:px-8 relative"
+        style={{
+          backgroundImage: `linear-gradient(rgba(30, 144, 255, 0.8), rgba(0, 102, 204, 0.85)), url('https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&h=1080&fit=crop')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'scroll'
+        }}
+      >
+        {/* Subtle Wave Pattern */}
+        <div 
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><defs><pattern id="waves" width="120" height="120" patternUnits="userSpaceOnUse"><path d="M0,60 Q30,40 60,60 T120,60" fill="none" stroke="white" stroke-width="1" opacity="0.3"/><path d="M0,80 Q30,60 60,80 T120,80" fill="none" stroke="white" stroke-width="1" opacity="0.2"/></pattern></defs><rect width="100%" height="100%" fill="url(%23waves)"/></svg>')`,
+            backgroundSize: '120px 120px'
+          }}
+        />
+        
+        <div className="max-w-7xl mx-auto relative z-10">
+          <motion.div 
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-4xl md:text-5xl font-heading font-bold text-white mb-6">
+              Why Choose SafarBot?
+            </h2>
+            <p className="text-xl text-white/80 max-w-2xl mx-auto">
+              Experience the future of travel planning
+            </p>
+          </motion.div>
+          
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
               <motion.div
@@ -426,8 +525,25 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Newsletter Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
+      <section 
+        className="py-20 px-4 sm:px-6 lg:px-8 relative"
+        style={{
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'scroll'
+        }}
+      >
+        {/* Subtle Dot Pattern */}
+        <div 
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><defs><pattern id="dots" width="40" height="40" patternUnits="userSpaceOnUse"><circle cx="20" cy="20" r="1" fill="white"/></pattern></defs><rect width="100%" height="100%" fill="url(%23dots)"/></svg>')`,
+            backgroundSize: '40px 40px'
+          }}
+        />
+        
+        <div className="max-w-4xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -435,7 +551,7 @@ const HomePage: React.FC = () => {
             viewport={{ once: true }}
             className="text-center"
           >
-            <ModernCard variant="gradient" padding="xl" className="text-center">
+            <ModernCard variant="glass" padding="xl" className="text-center">
               <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center mx-auto mb-8">
                 <Plane className="w-10 h-10 text-white" />
               </div>

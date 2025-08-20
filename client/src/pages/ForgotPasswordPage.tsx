@@ -1,175 +1,195 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  Mail, 
-  AlertTriangle,
-  CheckCircle,
-  ArrowLeft
-} from 'lucide-react';
-import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
+import { Mail, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
+import ModernButton from '../components/ui/ModernButton';
+import ModernCard from '../components/ui/ModernCard';
 
 const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isSuccess, setIsSuccess] = useState(false);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-    if (error) setError(null);
-  };
-
-  const validateEmail = (): string | null => {
-    if (!email.trim()) {
-      return 'Please enter your email address';
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return 'Please enter a valid email address';
-    }
-    return null;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const validationError = validateEmail();
-    if (validationError) {
-      setError(validationError);
+    if (!email.trim()) {
+      setError('Please enter your email address');
+      return;
+    }
+    
+    if (!email.includes('@')) {
+      setError('Please enter a valid email address');
       return;
     }
 
     try {
       setIsLoading(true);
       setError(null);
-
-      // TODO: Replace with actual API call
-      // await authAPI.forgotPassword(email);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // TODO: Implement actual password reset logic
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
       
-      setIsSuccess(true);
-      
+      setIsSubmitted(true);
     } catch (err: any) {
-      console.error('Password reset error:', err);
-      setError(err.message || 'Failed to send password reset email. Please try again.');
+      setError('Failed to send reset email. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-dark-bg dark:via-dark-bg dark:to-dark-card">
-      <div className="max-w-md w-full space-y-8">
+    <div 
+      className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative"
+      style={{
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&h=1080&fit=crop')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed'
+      }}
+    >
+      {/* Floating Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-20 left-10 w-72 h-72 bg-primary-200/20 rounded-full blur-3xl"
+          animate={{ 
+            x: [0, 100, 0],
+            y: [0, -50, 0],
+          }}
+          transition={{ 
+            duration: 20,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+        <motion.div
+          className="absolute bottom-20 right-10 w-96 h-96 bg-secondary-200/20 rounded-full blur-3xl"
+          animate={{ 
+            x: [0, -100, 0],
+            y: [0, 50, 0],
+          }}
+          transition={{ 
+            duration: 25,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+      </div>
+
+      <div className="max-w-md w-full space-y-8 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <Card className="p-8" shadow="large">
+          <ModernCard variant="glass" padding="xl" shadow="glow" className="backdrop-blur-xl">
             <div className="text-center mb-8">
-              <div className="mx-auto w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mb-4">
-                <Mail className="w-8 h-8 text-accent" />
+              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
+                <Mail className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Reset Password</h2>
-              <p className="text-gray-600 dark:text-gray-300 mt-2">
-                Enter your email address and we'll send you a link to reset your password
+              <h2 className="text-3xl font-bold text-white">Reset Password</h2>
+              <p className="text-white/80 mt-2">
+                {isSubmitted 
+                  ? 'Check your email for reset instructions'
+                  : 'Enter your email to receive a password reset link'
+                }
               </p>
             </div>
 
-            {/* Error Display */}
-            {error && (
-              <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                <div className="flex items-center space-x-2">
-                  <AlertTriangle className="w-5 h-5 text-red-500" />
-                  <span className="text-red-700 dark:text-red-300">{error}</span>
-                </div>
-              </div>
-            )}
+            {!isSubmitted ? (
+              <>
+                {/* Error Display */}
+                {error && (
+                  <motion.div 
+                    className="mb-6 bg-red-500/20 backdrop-blur-md border border-red-400/30 rounded-xl p-4"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <AlertCircle className="w-5 h-5 text-red-400" />
+                      <span className="text-red-200">{error}</span>
+                    </div>
+                  </motion.div>
+                )}
 
-            {/* Success Display */}
-            {isSuccess && (
-              <div className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  <span className="text-green-700 dark:text-green-300">
-                    Password reset email sent! Please check your inbox.
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {!isSuccess ? (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Email Field */}
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={email}
-                      onChange={handleInputChange}
-                      placeholder="Enter your email"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-transparent bg-white dark:bg-dark-card text-gray-900 dark:text-white"
-                      required
-                    />
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Email Field */}
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-white/90 mb-2">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
+                      <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Enter your email"
+                        className="w-full pl-10 pr-4 py-3 border border-white/20 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white/10 backdrop-blur-md text-white placeholder-white/50 transition-all duration-200"
+                        required
+                      />
+                    </div>
                   </div>
-                </div>
 
-                {/* Submit Button */}
-                <Button
-                  type="submit"
-                  loading={isLoading}
-                  icon={Mail}
-                  className="w-full"
-                  size="lg"
-                >
-                  Send Reset Link
-                </Button>
-              </form>
+                  {/* Submit Button */}
+                  <ModernButton
+                    type="submit"
+                    loading={isLoading}
+                    icon={Mail}
+                    className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700"
+                    size="lg"
+                  >
+                    Send Reset Link
+                  </ModernButton>
+                </form>
+              </>
             ) : (
-              <div className="space-y-6">
-                <div className="text-center">
-                  <p className="text-gray-600 dark:text-gray-300 mb-4">
-                    We've sent a password reset link to <strong>{email}</strong>
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Didn't receive the email? Check your spam folder or try again.
+              <motion.div
+                className="text-center space-y-6"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
+                  <CheckCircle className="w-10 h-10 text-green-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-2">Email Sent!</h3>
+                  <p className="text-white/80">
+                    We've sent a password reset link to <strong>{email}</strong>. 
+                    Please check your inbox and follow the instructions.
                   </p>
                 </div>
-                
-                <Button
-                  onClick={() => {
-                    setIsSuccess(false);
-                    setEmail('');
-                  }}
-                  variant="outline"
-                  className="w-full"
-                >
-                  Try Again
-                </Button>
-              </div>
+              </motion.div>
             )}
 
             {/* Back to Login */}
-            <div className="mt-6 text-center">
+            <div className="mt-8 text-center">
               <Link
                 to="/login"
-                className="inline-flex items-center text-sm text-accent hover:text-primary-600 font-medium"
+                className="inline-flex items-center justify-center w-full px-4 py-3 border border-white/30 text-white rounded-2xl hover:bg-white/10 backdrop-blur-md transition-all duration-200"
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
+                <ArrowLeft className="w-5 h-5 mr-2" />
                 Back to Sign In
               </Link>
             </div>
-          </Card>
+
+            {/* Additional Help */}
+            <div className="mt-6 text-center">
+              <p className="text-sm text-white/60">
+                Don't have an account?{' '}
+                <Link
+                  to="/signup"
+                  className="text-primary-300 hover:text-primary-200 underline transition-colors"
+                >
+                  Sign up here
+                </Link>
+              </p>
+            </div>
+          </ModernCard>
         </motion.div>
       </div>
     </div>

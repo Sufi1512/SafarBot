@@ -16,7 +16,7 @@ import UserDashboard from './pages/UserDashboard';
 import SearchPage from './pages/SearchPage';
 import DatePickerDemo from './pages/DatePickerDemo';
 import ResultsPage from './pages/ResultsPage';
-import './App.css';
+
 
 function App() {
   return (
@@ -26,7 +26,7 @@ function App() {
           <Router>
             <div className="min-h-screen bg-secondary-50 dark:bg-dark-bg text-secondary-900 dark:text-dark-text">
               <ModernHeader />
-              <main>
+              <main className="mt-0 pt-0 -mt-4">
                 <Routes>
                   <Route path="/" element={<HomePage />} />
                   <Route path="/flights" element={<FlightBookingPage />} />

@@ -68,7 +68,7 @@ const ModernCard: React.FC<ModernCardProps> = ({
     interactive: 'rounded-2xl hover:shadow-xl hover:-translate-y-2 transition-all duration-300',
   };
 
-  const shadowGlow = shadow === 'glow' ? 'shadow-[0_0_20px_rgba(30,144,255,0.3)]' : '';
+  const shadowGlow = shadow === 'glow' ? 'shadow-glow' : '';
 
   return (
     <motion.div

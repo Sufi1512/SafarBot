@@ -1,406 +1,503 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import {
-  FunnelIcon,
-  MapPinIcon,
-  CalendarIcon,
-  PaperAirplaneIcon,
-  BuildingOfficeIcon,
-  StarIcon,
-  XMarkIcon,
-  HeartIcon,
-  EyeIcon
-} from '@heroicons/react/24/outline';
-import PageHeader from '../components/PageHeader';
-import ModernCard from '../components/ui/ModernCard';
+import { 
+  Search, 
+  Filter, 
+  MapPin, 
+  Calendar, 
+  Users, 
+  Plane, 
+  Hotel, 
+  Star, 
+  Heart,
+  ArrowRight,
+  Globe,
+  TrendingUp,
+  Clock,
+  DollarSign
+} from 'lucide-react';
 import ModernButton from '../components/ui/ModernButton';
-
+import ModernCard from '../components/ui/ModernCard';
+import ModernInput from '../components/ui/ModernInput';
+import DatePicker from '../components/ui/DatePicker';
 
 interface SearchResult {
   id: string;
   type: 'flight' | 'hotel' | 'package';
   title: string;
-  description: string;
+  destination: string;
   price: number;
-  originalPrice?: number;
   rating: number;
-  reviewCount: number;
   image: string;
-  location: string;
+  description: string;
+  highlights: string[];
   duration?: string;
   amenities?: string[];
-  departureTime?: string;
-  arrivalTime?: string;
-  airline?: string;
-  hotelClass?: number;
 }
 
 const SearchPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
-    priceRange: [0, 5000],
-    rating: 0,
-    type: 'all',
-    sortBy: 'price'
-  });
-  const [showFilters, setShowFilters] = useState(false);
-  const [savedItems, setSavedItems] = useState<string[]>([]);
+  const location = useLocation();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchType, setSearchType] = useState<'all' | 'flights' | 'hotels' | 'packages'>('all');
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [travelers, setTravelers] = useState(1);
+  const [priceRange, setPriceRange] = useState([0, 5000]);
+  const [sortBy, setSortBy] = useState<'price' | 'rating' | 'popularity'>('popularity');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const destination = searchParams.get('destination') || '';
-  const startDate = searchParams.get('startDate') || '';
-  const endDate = searchParams.get('endDate') || '';
-  const travelers = searchParams.get('travelers') || '1';
+  // Mock search results
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([
+    {
+      id: '1',
+      type: 'flight',
+      title: 'Direct Flight to Paris',
+      destination: 'Paris, France',
+      price: 899,
+      rating: 4.8,
+      image: 'https://images.unsplash.com/photo-1502602898535-eb37b0b6d7c3?w=400&h=300&fit=crop',
+      description: 'Experience the magic of Paris with our premium direct flight service.',
+      highlights: ['Direct Flight', 'Premium Service', 'Flexible Booking'],
+      duration: '7h 30m'
+    },
+    {
+      id: '2',
+      type: 'hotel',
+      title: 'Luxury Hotel in Tokyo',
+      destination: 'Tokyo, Japan',
+      price: 1299,
+      rating: 4.9,
+      image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=300&fit=crop',
+      description: 'Stay in the heart of Tokyo with stunning city views and world-class amenities.',
+      highlights: ['City Center', '5-Star Rating', 'Free WiFi'],
+      amenities: ['Spa', 'Restaurant', 'Gym', 'Pool']
+    },
+    {
+      id: '3',
+      type: 'package',
+      title: 'Bali Adventure Package',
+      destination: 'Bali, Indonesia',
+      price: 1599,
+      rating: 4.7,
+      image: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=400&h=300&fit=crop',
+      description: 'Complete Bali experience including flights, hotel, and guided tours.',
+      highlights: ['All-Inclusive', 'Guided Tours', 'Airport Transfer'],
+      duration: '7 Days'
+    },
+    {
+      id: '4',
+      type: 'flight',
+      title: 'Business Class to New York',
+      destination: 'New York, USA',
+      price: 2499,
+      rating: 4.9,
+      image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400&h=300&fit=crop',
+      description: 'Travel in style with our premium business class service to the Big Apple.',
+      highlights: ['Business Class', 'Priority Boarding', 'Lounge Access'],
+      duration: '6h 45m'
+    },
+    {
+      id: '5',
+      type: 'hotel',
+      title: 'Beach Resort in Dubai',
+      destination: 'Dubai, UAE',
+      price: 899,
+      rating: 4.6,
+      image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400&h=300&fit=crop',
+      description: 'Relax in luxury at our beachfront resort with private beach access.',
+      highlights: ['Beachfront', 'Private Beach', 'All-Inclusive'],
+      amenities: ['Beach Access', 'Spa', 'Water Sports', 'Kids Club']
+    },
+    {
+      id: '6',
+      type: 'package',
+      title: 'European Discovery Tour',
+      destination: 'Multiple Cities, Europe',
+      price: 2999,
+      rating: 4.8,
+      image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&h=300&fit=crop',
+      description: 'Explore multiple European cities with our comprehensive tour package.',
+      highlights: ['Multi-City', 'Guided Tours', 'Transport Included'],
+      duration: '14 Days'
+    }
+  ]);
 
   useEffect(() => {
+    // Extract search params from location state if available
+    if (location.state?.searchParams) {
+      const { destination, startDate: start, endDate: end, travelers: travelersCount } = location.state.searchParams;
+      setSearchQuery(destination || '');
+      setStartDate(start ? new Date(start) : null);
+      setEndDate(end ? new Date(end) : null);
+      setTravelers(travelersCount || 1);
+    }
+  }, [location]);
+
+  const handleSearch = async () => {
+    setIsLoading(true);
     // Simulate API call
-    setTimeout(() => {
-      const mockResults: SearchResult[] = [
-        {
-          id: '1',
-          type: 'flight',
-          title: 'Direct Flight to Paris',
-          description: 'Non-stop flight with premium amenities',
-          price: 899,
-          originalPrice: 1200,
-          rating: 4.8,
-          reviewCount: 1247,
-          image: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400&h=300&fit=crop',
-          location: 'Paris, France',
-          duration: '8h 15m',
-          departureTime: '09:30',
-          arrivalTime: '17:45',
-          airline: 'Air France'
-        },
-        {
-          id: '2',
-          type: 'hotel',
-          title: 'Luxury Hotel in Paris',
-          description: '5-star hotel in the heart of the city',
-          price: 450,
-          originalPrice: 600,
-          rating: 4.9,
-          reviewCount: 892,
-          image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop',
-          location: 'Paris, France',
-          amenities: ['WiFi', 'Pool', 'Spa', 'Restaurant'],
-          hotelClass: 5
-        },
-        {
-          id: '3',
-          type: 'package',
-          title: 'Paris Complete Package',
-          description: 'Flight + Hotel + Activities',
-          price: 1299,
-          originalPrice: 1800,
-          rating: 4.7,
-          reviewCount: 567,
-          image: 'https://images.unsplash.com/photo-1502602898535-eb37b0b6d7c3?w=400&h=300&fit=crop',
-          location: 'Paris, France',
-          duration: '5 days',
-          amenities: ['Guided Tours', 'Airport Transfer', 'Breakfast']
-        }
-      ];
-      setResults(mockResults);
-      setLoading(false);
-    }, 1500);
-  }, [destination, startDate, endDate, travelers]);
-
-  const handleSaveItem = (itemId: string) => {
-    setSavedItems(prev => 
-      prev.includes(itemId) 
-        ? prev.filter(id => id !== itemId)
-        : [...prev, itemId]
-    );
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setIsLoading(false);
   };
 
-  const handleViewDetails = (item: SearchResult) => {
-    navigate(`/booking-options/${item.id}`, {
-      state: { 
-        item,
-        searchParams: {
-          destination,
-          startDate,
-          endDate,
-          travelers
-        }
-      }
-    });
-  };
+  const filteredResults = searchResults.filter(result => {
+    if (searchType !== 'all' && result.type !== searchType) return false;
+    if (searchQuery && !result.destination.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (result.price < priceRange[0] || result.price > priceRange[1]) return false;
+    return true;
+  });
+
+  const sortedResults = [...filteredResults].sort((a, b) => {
+    switch (sortBy) {
+      case 'price':
+        return a.price - b.price;
+      case 'rating':
+        return b.rating - a.rating;
+      case 'popularity':
+        return b.rating - a.rating; // Using rating as popularity proxy
+      default:
+        return 0;
+    }
+  });
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'flight': return PaperAirplaneIcon;
-      case 'hotel': return BuildingOfficeIcon;
-      default: return StarIcon;
+      case 'flight': return Plane;
+      case 'hotel': return Hotel;
+      case 'package': return Globe;
+      default: return Globe;
     }
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(price);
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'flight': return 'from-blue-500 to-blue-600';
+      case 'hotel': return 'from-green-500 to-green-600';
+      case 'package': return 'from-purple-500 to-purple-600';
+      default: return 'from-gray-500 to-gray-600';
+    }
   };
 
-  const getDiscountPercentage = (original: number, current: number) => {
-    return Math.round(((original - current) / original) * 100);
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-dark-bg">
-        <PageHeader
-          title="Searching..."
-          description="Finding the best options for your trip"
-          breadcrumbs={false}
-        />
-        <div className="container-chisfis py-12">
-          <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+  return (
+    <div 
+      className="min-h-screen bg-white dark:bg-dark-bg"
+      style={{
+        backgroundImage: `linear-gradient(rgba(248, 250, 252, 0.9), rgba(248, 250, 252, 0.9)), url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed'
+      }}
+    >
+      {/* Header */}
+      <div className="bg-white/95 backdrop-blur-xl border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center">
+                <span className="text-white font-bold text-lg">S</span>
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Search Results</h1>
+            </div>
+            
+            <ModernButton
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/')}
+              className="border-gray-300 dark:border-gray-600"
+            >
+              <ArrowRight className="w-4 h-4 mr-2" />
+              Back to Home
+            </ModernButton>
           </div>
         </div>
       </div>
-    );
-  }
 
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg">
-      <PageHeader
-        title={`Search Results for ${destination}`}
-        description={`${results.length} options found for ${travelers} traveler${travelers !== '1' ? 's' : ''}`}
-      >
-        <ModernButton
-          variant="outline"
-          size="lg"
-          onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-2"
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Search Filters */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-8"
         >
-          <FunnelIcon className="h-5 w-5" />
-          Filters
-        </ModernButton>
-      </PageHeader>
+          <ModernCard variant="glass" padding="lg" className="backdrop-blur-xl">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Column */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Search Type
+                  </label>
+                  <div className="flex space-x-2">
+                    {(['all', 'flights', 'hotels', 'packages'] as const).map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => setSearchType(type)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          searchType === type
+                            ? 'bg-primary-500 text-white shadow-lg'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                        }`}
+                      >
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-      <div className="container-chisfis py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Filters Sidebar */}
-          <div className="lg:col-span-1">
-            <div className={`bg-white dark:bg-dark-card rounded-2xl shadow-soft p-6 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filters</h3>
-                <button
-                  onClick={() => setShowFilters(false)}
-                  className="lg:hidden p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                >
-                  <XMarkIcon className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* Price Range */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-900 dark:text-white mb-3">Price Range</h4>
-                <div className="space-y-2">
-                  <input
-                    type="range"
-                    min="0"
-                    max="5000"
-                    value={filters.priceRange[1]}
-                    onChange={(e) => setFilters(prev => ({
-                      ...prev,
-                      priceRange: [prev.priceRange[0], parseInt(e.target.value)]
-                    }))}
-                    className="w-full"
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Destination
+                  </label>
+                  <ModernInput
+                    placeholder="Where do you want to go?"
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                    icon={MapPin}
+                    variant="glass"
                   />
-                  <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                    <span>${filters.priceRange[0]}</span>
-                    <span>${filters.priceRange[1]}</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Start Date
+                    </label>
+                    <DatePicker
+                      value={startDate || undefined}
+                      onChange={(date) => setStartDate(date || null)}
+                      placeholder="Select start date"
+                      minDate={new Date()}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      End Date
+                    </label>
+                    <DatePicker
+                      value={endDate || undefined}
+                      onChange={(date) => setEndDate(date || null)}
+                      placeholder="Select end date"
+                      minDate={startDate || new Date()}
+                    />
                   </div>
                 </div>
               </div>
 
-              {/* Rating Filter */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-900 dark:text-white mb-3">Minimum Rating</h4>
-                <div className="flex items-center gap-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={() => setFilters(prev => ({ ...prev, rating: star }))}
-                      className={`p-1 rounded ${
-                        filters.rating >= star
-                          ? 'text-yellow-400'
-                          : 'text-gray-300 dark:text-gray-600'
-                      }`}
+              {/* Right Column */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Travelers
+                  </label>
+                  <div className="relative">
+                    <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <select
+                      value={travelers}
+                      onChange={(e) => setTravelers(parseInt(e.target.value))}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200 bg-white dark:bg-gray-800"
                     >
-                      <StarIcon className="h-5 w-5 fill-current" />
-                    </button>
-                  ))}
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
+                        <option key={num} value={num}>
+                          {num} {num === 1 ? 'Traveler' : 'Travelers'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-              </div>
 
-              {/* Type Filter */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-900 dark:text-white mb-3">Type</h4>
-                <div className="space-y-2">
-                  {[
-                    { value: 'all', label: 'All' },
-                    { value: 'flight', label: 'Flights' },
-                    { value: 'hotel', label: 'Hotels' },
-                    { value: 'package', label: 'Packages' }
-                  ].map((type) => (
-                    <label key={type.value} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="type"
-                        value={type.value}
-                        checked={filters.type === type.value}
-                        onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
-                        className="text-primary-500"
-                      />
-                      <span className="text-gray-700 dark:text-gray-300">{type.label}</span>
-                    </label>
-                  ))}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Price Range: ${priceRange[0]} - ${priceRange[1]}
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="5000"
+                    step="100"
+                    value={priceRange[1]}
+                    onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                  />
                 </div>
-              </div>
 
-              {/* Sort By */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-900 dark:text-white mb-3">Sort By</h4>
-                <select
-                  value={filters.sortBy}
-                  onChange={(e) => setFilters(prev => ({ ...prev, sortBy: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-dark-card text-gray-900 dark:text-white"
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Sort By
+                  </label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as 'price' | 'rating' | 'popularity')}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200 bg-white dark:bg-gray-800"
+                  >
+                    <option value="popularity">Most Popular</option>
+                    <option value="rating">Highest Rated</option>
+                    <option value="price">Lowest Price</option>
+                  </select>
+                </div>
+
+                <ModernButton
+                  onClick={handleSearch}
+                  loading={isLoading}
+                  icon={Search}
+                  variant="gradient"
+                  size="lg"
+                  className="w-full"
                 >
-                  <option value="price">Price (Low to High)</option>
-                  <option value="price-desc">Price (High to Low)</option>
-                  <option value="rating">Rating</option>
-                  <option value="reviews">Most Reviews</option>
-                </select>
+                  Search
+                </ModernButton>
               </div>
             </div>
+          </ModernCard>
+        </motion.div>
+
+        {/* Results Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {filteredResults.length} Results Found
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              Showing {sortedResults.length} of {searchResults.length} results
+            </p>
           </div>
-
-          {/* Results */}
-          <div className="lg:col-span-3">
-            <div className="space-y-6">
-              {results.map((item, index) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <ModernCard className="p-6 hover-lift">
-                    <div className="flex gap-6">
-                      {/* Image */}
-                      <div className="flex-shrink-0">
-                        <img
-                          src={item.image}
-                          alt={item.title}
-                          className="w-32 h-24 rounded-xl object-cover"
-                        />
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              {React.createElement(getTypeIcon(item.type), {
-                                className: "h-5 w-5 text-primary-500"
-                              })}
-                              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                                {item.title}
-                              </h3>
-                            </div>
-                            <p className="text-gray-600 dark:text-gray-400 mb-2">
-                              {item.description}
-                            </p>
-                            <div className="flex items-center gap-4 text-sm text-gray-500">
-                              <span className="flex items-center gap-1">
-                                <MapPinIcon className="h-4 w-4" />
-                                {item.location}
-                              </span>
-                              {item.duration && (
-                                <span className="flex items-center gap-1">
-                                  <CalendarIcon className="h-4 w-4" />
-                                  {item.duration}
-                                </span>
-                              )}
-                              <div className="flex items-center gap-1">
-                                <StarIcon className="h-4 w-4 text-yellow-400 fill-current" />
-                                <span>{item.rating}</span>
-                                <span>({item.reviewCount})</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Price and Actions */}
-                          <div className="flex flex-col items-end gap-3">
-                            <div className="text-right">
-                              {item.originalPrice && (
-                                <p className="text-sm text-gray-500 line-through">
-                                  {formatPrice(item.originalPrice)}
-                                </p>
-                              )}
-                              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                                {formatPrice(item.price)}
-                              </p>
-                              {item.originalPrice && (
-                                <span className="text-sm text-green-600 font-medium">
-                                  Save {getDiscountPercentage(item.originalPrice, item.price)}%
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => handleSaveItem(item.id)}
-                                className={`p-2 rounded-lg transition-colors ${
-                                  savedItems.includes(item.id)
-                                    ? 'text-red-500 bg-red-50 dark:bg-red-900/20'
-                                    : 'text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
-                                }`}
-                              >
-                                <HeartIcon className="h-5 w-5" />
-                              </button>
-                              <ModernButton
-                                variant="primary"
-                                size="sm"
-                                onClick={() => handleViewDetails(item)}
-                                className="flex items-center gap-2"
-                              >
-                                <EyeIcon className="h-4 w-4" />
-                                View Details
-                              </ModernButton>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Additional Info */}
-                        {item.amenities && (
-                          <div className="flex flex-wrap gap-2 mt-3">
-                            {item.amenities.map((amenity, idx) => (
-                              <span
-                                key={idx}
-                                className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-full"
-                              >
-                                {amenity}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </ModernCard>
-                </motion.div>
-              ))}
-            </div>
+          
+          <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+            <Clock className="w-4 h-4" />
+            <span>Last updated: {new Date().toLocaleTimeString()}</span>
           </div>
         </div>
+
+        {/* Search Results */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {sortedResults.map((result, index) => {
+            const TypeIcon = getTypeIcon(result.type);
+            return (
+              <motion.div
+                key={result.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+              >
+                <ModernCard variant="interactive" padding="none" hover className="overflow-hidden h-full">
+                  <div className="relative h-48 overflow-hidden">
+                    <img
+                      src={result.image}
+                      alt={result.title}
+                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    
+                    {/* Type Badge */}
+                    <div className={`absolute top-4 left-4 px-3 py-1 bg-gradient-to-r ${getTypeColor(result.type)} rounded-full text-xs font-medium text-white shadow-lg`}>
+                      <TypeIcon className="w-3 h-3 inline mr-1" />
+                      {result.type.charAt(0).toUpperCase() + result.type.slice(1)}
+                    </div>
+                    
+                    {/* Rating */}
+                    <div className="absolute top-4 right-4 flex items-center gap-1 bg-white/20 backdrop-blur-md rounded-full px-3 py-1">
+                      <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                      <span className="text-white text-sm font-medium">{result.rating}</span>
+                    </div>
+                    
+                    {/* Price */}
+                    <div className="absolute bottom-4 right-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-lg px-3 py-2">
+                      <div className="text-lg font-bold text-gray-900 dark:text-white">
+                        ${result.price}
+                      </div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400">
+                        per {result.type === 'flight' ? 'person' : result.type === 'hotel' ? 'night' : 'package'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-6 flex flex-col h-full">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      {result.title}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 flex-grow">
+                      {result.description}
+                    </p>
+                    
+                    {/* Highlights */}
+                    <div className="mb-4">
+                      <div className="flex flex-wrap gap-2">
+                        {result.highlights.map((highlight, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-1 bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 text-xs rounded-full"
+                          >
+                            {highlight}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Additional Info */}
+                    <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-4">
+                      <div className="flex items-center">
+                        <MapPin className="w-4 h-4 mr-1" />
+                        {result.destination}
+                      </div>
+                      {result.duration && (
+                        <div className="flex items-center">
+                          <Clock className="w-4 h-4 mr-1" />
+                          {result.duration}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex space-x-2 mt-auto">
+                      <ModernButton
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => navigate(`/booking/${result.type}/${result.id}`)}
+                      >
+                        Book Now
+                      </ModernButton>
+                      <ModernButton
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Heart className="w-4 h-4" />
+                      </ModernButton>
+                    </div>
+                  </div>
+                </ModernCard>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* No Results */}
+        {sortedResults.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center py-12"
+          >
+            <div className="w-24 h-24 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Search className="w-12 h-12 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">No Results Found</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Try adjusting your search criteria or browse our popular destinations.
+            </p>
+            <ModernButton
+              variant="gradient"
+              size="lg"
+              onClick={() => navigate('/')}
+            >
+              Explore Destinations
+            </ModernButton>
+          </motion.div>
+        )}
       </div>
     </div>
   );

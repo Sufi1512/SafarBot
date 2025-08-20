@@ -1,162 +1,239 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, User, Phone, AlertTriangle, Check } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
+import { motion } from 'framer-motion';
+import { 
+  User, 
+  Lock, 
+  Eye, 
+  EyeOff, 
+  Mail, 
+  AlertTriangle,
+  Check,
+  UserPlus
+} from 'lucide-react';
+import ModernButton from '../components/ui/ModernButton';
+import ModernCard from '../components/ui/ModernCard';
+
+interface SignupForm {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
 
 const SignupPage: React.FC = () => {
-  const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
+  const navigate = useNavigate();
+  const { signup } = useAuth();
+  const [formData, setFormData] = useState<SignupForm>({
+    firstName: '',
+    lastName: '',
     email: '',
-    phone: '',
     password: '',
-    confirm_password: ''
+    confirmPassword: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
-  const { signup } = useAuth();
-  const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-    setError('');
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Clear error when user starts typing
+    if (error) setError(null);
   };
 
-  const validateForm = () => {
-    if (!formData.first_name.trim()) {
-      setError('First name is required');
-      return false;
+  const validateForm = (): string | null => {
+    if (!formData.firstName.trim()) {
+      return 'Please enter your first name';
     }
-    if (!formData.last_name.trim()) {
-      setError('Last name is required');
-      return false;
+    if (!formData.lastName.trim()) {
+      return 'Please enter your last name';
     }
     if (!formData.email.trim()) {
-      setError('Email is required');
-      return false;
+      return 'Please enter your email address';
     }
-    if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      setError('Please enter a valid email address');
-      return false;
+    if (!formData.email.includes('@')) {
+      return 'Please enter a valid email address';
     }
-    if (!formData.phone.trim()) {
-      setError('Phone number is required');
-      return false;
+    if (!formData.password.trim()) {
+      return 'Please enter your password';
     }
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      return false;
+      return 'Password must be at least 6 characters long';
     }
-    if (formData.password !== formData.confirm_password) {
-      setError('Passwords do not match');
-      return false;
+    if (formData.password !== formData.confirmPassword) {
+      return 'Passwords do not match';
     }
-    return true;
+    return null;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
-
-    setIsLoading(true);
-    setError('');
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
 
     try {
-      await signup(formData);
+      setIsLoading(true);
+      setError(null);
+      setSuccess(null);
+
+      await signup(formData.firstName, formData.lastName, formData.email, formData.password);
       setSuccess('Account created successfully! Redirecting to login...');
       setTimeout(() => {
         navigate('/login');
-      }, 2000);
+      }, 1500);
+      
     } catch (err: any) {
-      setError(err.userMessage || 'Failed to create account. Please try again.');
+      console.error('Signup error:', err);
+      let errorMessage = 'Signup failed. Please try again.';
+      
+      if (err.message) {
+        if (err.message.includes('409') || err.message.includes('Conflict')) {
+          errorMessage = 'An account with this email already exists.';
+        } else if (err.message.includes('400') || err.message.includes('Bad Request')) {
+          errorMessage = 'Please check your input and try again.';
+        } else if (err.message.includes('500') || err.message.includes('Internal Server Error')) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (err.message.includes('Network') || err.message.includes('fetch')) {
+          errorMessage = 'Network error. Please check your internet connection.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-dark-bg dark:via-dark-bg dark:to-dark-card">
-      <div className="max-w-md w-full space-y-8">
+    <div 
+      className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative"
+      style={{
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed'
+      }}
+    >
+      {/* Floating Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-20 left-10 w-72 h-72 bg-primary-200/20 rounded-full blur-3xl"
+          animate={{ 
+            x: [0, 100, 0],
+            y: [0, -50, 0],
+          }}
+          transition={{ 
+            duration: 20,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+        <motion.div
+          className="absolute bottom-20 right-10 w-96 h-96 bg-secondary-200/20 rounded-full blur-3xl"
+          animate={{ 
+            x: [0, -100, 0],
+            y: [0, 50, 0],
+          }}
+          transition={{ 
+            duration: 25,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+      </div>
+
+      <div className="max-w-md w-full space-y-8 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <Card className="p-8" shadow="large">
+          <ModernCard variant="glass" padding="xl" shadow="glow" className="backdrop-blur-xl">
             <div className="text-center mb-8">
-              <div className="mx-auto w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mb-4">
-                <User className="w-8 h-8 text-accent" />
+              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
+                <UserPlus className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Create Account</h2>
-              <p className="text-gray-600 dark:text-gray-300 mt-2">Join SafarBot and start your journey</p>
+              <h2 className="text-3xl font-bold text-white">Create Account</h2>
+              <p className="text-white/80 mt-2">Join SafarBot and start your journey</p>
             </div>
 
             {/* Error Display */}
             {error && (
-              <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+              <motion.div 
+                className="mb-6 bg-red-500/20 backdrop-blur-md border border-red-400/30 rounded-xl p-4"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
                 <div className="flex items-center space-x-2">
-                  <AlertTriangle className="w-5 h-5 text-red-500" />
-                  <span className="text-red-700 dark:text-red-300">{error}</span>
+                  <AlertTriangle className="w-5 h-5 text-red-400" />
+                  <span className="text-red-200">{error}</span>
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {/* Success Display */}
             {success && (
-              <div className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+              <motion.div 
+                className="mb-6 bg-green-500/20 backdrop-blur-md border border-green-400/30 rounded-xl p-4"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
                 <div className="flex items-center space-x-2">
-                  <Check className="w-5 h-5 text-green-500" />
-                  <span className="text-green-700 dark:text-green-300">{success}</span>
+                  <Check className="w-5 h-5 text-green-400" />
+                  <span className="text-green-200">{success}</span>
                 </div>
-              </div>
+              </motion.div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Name Fields */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label htmlFor="firstName" className="block text-sm font-medium text-white/90 mb-2">
                     First Name
                   </label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-4 h-4" />
                     <input
-                      id="first_name"
-                      name="first_name"
+                      id="firstName"
+                      name="firstName"
                       type="text"
-                      value={formData.first_name}
-                      onChange={handleChange}
+                      value={formData.firstName}
+                      onChange={handleInputChange}
                       placeholder="First name"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-transparent bg-white dark:bg-dark-card text-gray-900 dark:text-white"
+                      className="w-full pl-10 pr-4 py-3 border border-white/20 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white/10 backdrop-blur-md text-white placeholder-white/50 transition-all duration-200"
                       required
                     />
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label htmlFor="lastName" className="block text-sm font-medium text-white/90 mb-2">
                     Last Name
                   </label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-4 h-4" />
                     <input
-                      id="last_name"
-                      name="last_name"
+                      id="lastName"
+                      name="lastName"
                       type="text"
-                      value={formData.last_name}
-                      onChange={handleChange}
+                      value={formData.lastName}
+                      onChange={handleInputChange}
                       placeholder="Last name"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-transparent bg-white dark:bg-dark-card text-gray-900 dark:text-white"
+                      className="w-full pl-10 pr-4 py-3 border border-white/20 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white/10 backdrop-blur-md text-white placeholder-white/50 transition-all duration-200"
                       required
                     />
                   </div>
@@ -165,39 +242,19 @@ const SignupPage: React.FC = () => {
 
               {/* Email Field */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="email" className="block text-sm font-medium text-white/90 mb-2">
                   Email Address
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
                   <input
                     id="email"
                     name="email"
                     type="email"
                     value={formData.email}
-                    onChange={handleChange}
+                    onChange={handleInputChange}
                     placeholder="Enter your email"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-transparent bg-white dark:bg-dark-card text-gray-900 dark:text-white"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Phone Field */}
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Phone Number
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    placeholder="Enter your phone number"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-transparent bg-white dark:bg-dark-card text-gray-900 dark:text-white"
+                    className="w-full pl-10 pr-4 py-3 border border-white/20 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white/10 backdrop-blur-md text-white placeholder-white/50 transition-all duration-200"
                     required
                   />
                 </div>
@@ -205,25 +262,25 @@ const SignupPage: React.FC = () => {
 
               {/* Password Field */}
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-white/90 mb-2">
                   Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
                   <input
                     id="password"
                     name="password"
                     type={showPassword ? 'text' : 'password'}
                     value={formData.password}
-                    onChange={handleChange}
+                    onChange={handleInputChange}
                     placeholder="Create a password"
-                    className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-transparent bg-white dark:bg-dark-card text-gray-900 dark:text-white"
+                    className="w-full pl-10 pr-12 py-3 border border-white/20 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white/10 backdrop-blur-md text-white placeholder-white/50 transition-all duration-200"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white/80 transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -232,25 +289,25 @@ const SignupPage: React.FC = () => {
 
               {/* Confirm Password Field */}
               <div>
-                <label htmlFor="confirm_password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/90 mb-2">
                   Confirm Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
                   <input
-                    id="confirm_password"
-                    name="confirm_password"
+                    id="confirmPassword"
+                    name="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
-                    value={formData.confirm_password}
-                    onChange={handleChange}
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
                     placeholder="Confirm your password"
-                    className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-transparent bg-white dark:bg-dark-card text-gray-900 dark:text-white"
+                    className="w-full pl-10 pr-12 py-3 border border-white/20 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white/10 backdrop-blur-md text-white placeholder-white/50 transition-all duration-200"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white/80 transition-colors"
                   >
                     {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -258,51 +315,61 @@ const SignupPage: React.FC = () => {
               </div>
 
               {/* Terms and Conditions */}
-              <div className="flex items-center">
+              <div className="flex items-start">
                 <input
                   id="terms"
                   name="terms"
                   type="checkbox"
-                  className="h-4 w-4 text-accent focus:ring-accent border-gray-300 dark:border-gray-600 rounded"
+                  className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-white/30 rounded bg-white/10 mt-1"
                   required
                 />
-                <label htmlFor="terms" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                <label htmlFor="terms" className="ml-2 block text-sm text-white/80">
                   I agree to the{' '}
-                  <Link to="/terms" className="text-accent hover:text-primary-600">
-                    Terms of Service
+                  <Link to="/terms" className="text-primary-300 hover:text-primary-200 underline">
+                    Terms and Conditions
                   </Link>{' '}
                   and{' '}
-                  <Link to="/privacy" className="text-accent hover:text-primary-600">
+                  <Link to="/privacy" className="text-primary-300 hover:text-primary-200 underline">
                     Privacy Policy
                   </Link>
                 </label>
               </div>
 
               {/* Submit Button */}
-              <Button
+              <ModernButton
                 type="submit"
                 loading={isLoading}
-                icon={User}
-                className="w-full"
+                icon={UserPlus}
+                className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700"
                 size="lg"
               >
                 Create Account
-              </Button>
+              </ModernButton>
             </form>
+
+            {/* Divider */}
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/20" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-transparent text-white/60">Already have an account?</span>
+                </div>
+              </div>
+            </div>
 
             {/* Sign In Link */}
             <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Already have an account?{' '}
-                <Link
-                  to="/login"
-                  className="font-medium text-accent hover:text-primary-600"
-                >
-                  Sign in here
-                </Link>
-              </p>
+              <Link
+                to="/login"
+                className="inline-flex items-center justify-center w-full px-4 py-3 border border-white/30 text-white rounded-2xl hover:bg-white/10 backdrop-blur-md transition-all duration-200"
+              >
+                <User className="w-5 h-5 mr-2" />
+                Sign In to Existing Account
+              </Link>
             </div>
-          </Card>
+          </ModernCard>
         </motion.div>
       </div>
     </div>

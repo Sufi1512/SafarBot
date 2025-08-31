@@ -1,25 +1,25 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  MapPin, 
-  Search,
-  Shield,
-  Zap,
-  Clock,
-  TrendingUp,
-  Users as UsersIcon,
-  Plane,
-  Star,
-  Globe,
-  Heart,
-  ArrowRight,
-  Sparkles
-} from 'lucide-react';
+// import { useNavigate } from 'react-router-dom';
+import CustomDatePicker from '../components/ui/CustomDatePicker';
 import ModernButton from '../components/ui/ModernButton';
-import ModernCard from '../components/ui/ModernCard';
-import ModernInput from '../components/ui/ModernInput';
-import DatePicker from '../components/ui/DatePicker';
+import {
+  MapPinIcon,
+  StarIcon,
+  ArrowRightIcon,
+  SparklesIcon,
+  PaperAirplaneIcon,
+  BuildingOfficeIcon,
+  CubeIcon,
+  HeartIcon,
+  GlobeAltIcon,
+  ClockIcon,
+  PlayCircleIcon,
+  FireIcon,
+  TrophyIcon,
+  ShieldCheckIcon,
+  UserGroupIcon,
+} from '@heroicons/react/24/outline';
 
 interface SearchForm {
   destination: string;
@@ -29,554 +29,703 @@ interface SearchForm {
 }
 
 const HomePage: React.FC = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [searchForm, setSearchForm] = useState<SearchForm>({
     destination: '',
     startDate: null,
     endDate: null,
-    travelers: 1
+    travelers: 1,
   });
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSearch = async () => {
-    if (!searchForm.destination || !searchForm.startDate || !searchForm.endDate) {
-      return;
-    }
-    
-    setIsLoading(true);
-    // Navigate to flights page with search params
-    navigate('/flights', { 
-      state: { 
-        searchParams: {
-          destination: searchForm.destination,
-          startDate: searchForm.startDate.toISOString(),
-          endDate: searchForm.endDate.toISOString(),
-          travelers: searchForm.travelers
-        }
-      }
-    });
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (searchForm.destination) params.set('destination', searchForm.destination);
+    if (searchForm.startDate) params.set('startDate', searchForm.startDate.toISOString());
+    if (searchForm.endDate) params.set('endDate', searchForm.endDate.toISOString());
+    if (searchForm.travelers) params.set('travelers', String(searchForm.travelers));
+
+    const url = window.location.origin + '/trip-planner' + (params.toString() ? `?${params.toString()}` : '');
+    window.open(url, '_blank');
   };
-
-  const popularDestinations = [
-    { 
-      name: 'Paris, France', 
-      image: 'https://images.unsplash.com/photo-1502602898535-eb37b0b6d7c3?w=400&h=300&fit=crop', 
-      price: '$899',
-      rating: 4.8,
-      description: 'City of Light',
-      bgImage: 'https://images.unsplash.com/photo-1502602898535-eb37b0b6d7c3?w=1200&h=800&fit=crop'
-    },
-    { 
-      name: 'Tokyo, Japan', 
-      image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=300&fit=crop', 
-      price: '$1,299',
-      rating: 4.9,
-      description: 'Modern Metropolis',
-      bgImage: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=1200&h=800&fit=crop'
-    },
-    { 
-      name: 'New York, USA', 
-      image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400&h=300&fit=crop', 
-      price: '$699',
-      rating: 4.7,
-      description: 'The Big Apple',
-      bgImage: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=1200&h=800&fit=crop'
-    },
-    { 
-      name: 'London, UK', 
-      image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&h=300&fit=crop', 
-      price: '$799',
-      rating: 4.6,
-      description: 'Historic Capital',
-      bgImage: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1200&h=800&fit=crop'
-    },
-    { 
-      name: 'Bali, Indonesia', 
-      image: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=400&h=300&fit=crop', 
-      price: '$599',
-      rating: 4.9,
-      description: 'Island Paradise',
-      bgImage: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=1200&h=800&fit=crop'
-    },
-    { 
-      name: 'Dubai, UAE', 
-      image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400&h=300&fit=crop', 
-      price: '$999',
-      rating: 4.5,
-      description: 'Desert Oasis',
-      bgImage: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1200&h=800&fit=crop'
-    },
-  ];
 
   const features = [
     {
-      icon: Zap,
-      title: 'Instant Booking',
-      description: 'Book flights and hotels instantly with our streamlined process',
-      color: 'from-yellow-400 to-orange-500',
-      bgImage: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop'
+      icon: PaperAirplaneIcon,
+      title: 'Smart Flight Search',
+      description: 'AI-powered search finds you the best deals across hundreds of airlines worldwide.',
+      color: 'from-cyan-400 to-blue-500',
+      bgColor: 'from-cyan-50 to-blue-50',
+      delay: 0.1,
     },
     {
-      icon: Shield,
-      title: 'Secure Payments',
-      description: 'Your payments are protected with bank-level security',
-      color: 'from-green-400 to-emerald-500',
-      bgImage: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400&h=300&fit=crop'
+      icon: BuildingOfficeIcon,
+      title: 'Luxury Hotels',
+      description: 'Handpicked accommodations from boutique hotels to luxury resorts.',
+      color: 'from-violet-400 to-purple-500',
+      bgColor: 'from-violet-50 to-purple-50',
+      delay: 0.2,
     },
     {
-      icon: Clock,
-      title: '24/7 Support',
-      description: 'Get help anytime with our round-the-clock customer service',
-      color: 'from-blue-400 to-cyan-500',
-      bgImage: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=400&h=300&fit=crop'
+      icon: CubeIcon,
+      title: 'Complete Packages',
+      description: 'All-inclusive travel packages with flights, hotels, and experiences.',
+      color: 'from-emerald-400 to-teal-500',
+      bgColor: 'from-emerald-50 to-teal-50',
+      delay: 0.3,
     },
     {
-      icon: TrendingUp,
-      title: 'Best Prices',
-      description: 'We guarantee the best prices with our price match promise',
-      color: 'from-purple-400 to-pink-500',
-      bgImage: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=300&fit=crop'
-    }
+      icon: ShieldCheckIcon,
+      title: 'Secure Booking',
+      description: 'Bank-level security with 24/7 support for peace of mind during travels.',
+      color: 'from-orange-400 to-red-500',
+      bgColor: 'from-orange-50 to-red-50',
+      delay: 0.4,
+    },
+  ];
+
+  const destinations = [
+    {
+      name: 'Bali, Indonesia',
+      image: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=600&h=400&fit=crop',
+      price: 'From $899',
+      rating: 4.8,
+      description: 'Tropical paradise with stunning beaches',
+      badge: 'Popular',
+      badgeColor: 'bg-red-500'
+    },
+    {
+      name: 'Santorini, Greece',
+      image: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=600&h=400&fit=crop',
+      price: 'From $1,299',
+      rating: 4.9,
+      description: 'Iconic white buildings & sunsets',
+      badge: 'Trending',
+      badgeColor: 'bg-green-500'
+    },
+    {
+      name: 'Tokyo, Japan',
+      image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&h=400&fit=crop',
+      price: 'From $1,199',
+      rating: 4.7,
+      description: 'Modern metropolis meets tradition',
+      badge: 'Hot Deal',
+      badgeColor: 'bg-orange-500'
+    },
+    {
+      name: 'Maldives',
+      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop',
+      price: 'From $2,199',
+      rating: 4.9,
+      description: 'Crystal waters & luxury resorts',
+      badge: 'Luxury',
+      badgeColor: 'bg-purple-500'
+    },
   ];
 
   const stats = [
-    { number: '50K+', label: 'Happy Travelers', icon: Heart },
-    { number: '100+', label: 'Destinations', icon: Globe },
-    { number: '24/7', label: 'Support', icon: Clock },
-    { number: '4.9', label: 'Rating', icon: Star }
+    { number: '50K+', label: 'Happy Travelers', icon: HeartIcon, color: 'from-pink-500 to-rose-500' },
+    { number: '200+', label: 'Destinations', icon: GlobeAltIcon, color: 'from-blue-500 to-indigo-500' },
+    { number: '24/7', label: 'Customer Support', icon: ClockIcon, color: 'from-green-500 to-emerald-500' },
+    { number: '4.9★', label: 'Average Rating', icon: StarIcon, color: 'from-yellow-500 to-orange-500' },
+  ];
+
+  const testimonials = [
+    {
+      name: 'Sarah Johnson',
+      role: 'Travel Enthusiast',
+      content: 'SafarBot made planning my dream vacation effortless. The AI recommendations were spot-on and saved me hours!',
+      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b5bc?w=100&h=100&fit=crop&crop=face',
+      rating: 5,
+      location: 'New York, USA'
+    },
+    {
+      name: 'Michael Chen',
+      role: 'Business Traveler',
+      content: 'Best travel platform I\'ve used. Amazing deals and the booking process is incredibly smooth and intuitive.',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
+      rating: 5,
+      location: 'Singapore'
+    },
+    {
+      name: 'Emma Davis',
+      role: 'Family Traveler',
+      content: 'Perfect for family trips! The support team helped us every step of the way. Highly recommended for families.',
+      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
+      rating: 5,
+      location: 'London, UK'
+    },
   ];
 
   return (
-    <div className="bg-white dark:bg-dark-bg">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
+      
       {/* Hero Section with Background Image */}
-      <section 
-        className="relative pb-20 px-4 sm:px-6 lg:px-8 min-h-screen flex items-center -mt-16 pt-0"
-        style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&h=1080&fit=crop')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'scroll'
-        }}
-      >
-        {/* Additional Subtle Background Pattern */}
+      <section className="relative pt-24 pb-32 overflow-hidden">
+        {/* Hero Background Image */}
         <div 
-          className="absolute inset-0 opacity-10"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>')`,
-            backgroundSize: '50px 50px'
+            backgroundImage: `linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(59, 130, 246, 0.1) 50%, rgba(147, 51, 234, 0.1) 100%), url('https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&h=1080&fit=crop')`
           }}
         />
         
-        {/* Floating Background Elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            className="absolute top-32 left-10 w-72 h-72 bg-primary-200/10 rounded-full blur-3xl"
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0">
+          <motion.div 
             animate={{ 
               x: [0, 100, 0],
               y: [0, -50, 0],
+              rotate: [0, 180, 360]
             }}
             transition={{ 
               duration: 20,
               repeat: Infinity,
               ease: "linear"
             }}
+            className="absolute top-20 left-10 w-96 h-96 bg-gradient-to-br from-cyan-400/20 to-blue-500/20 rounded-full blur-3xl" 
           />
-          <motion.div
-            className="absolute bottom-20 right-10 w-96 h-96 bg-secondary-200/10 rounded-full blur-3xl"
+          <motion.div 
             animate={{ 
               x: [0, -100, 0],
               y: [0, 50, 0],
+              rotate: [360, 180, 0]
             }}
             transition={{ 
               duration: 25,
               repeat: Infinity,
               ease: "linear"
             }}
+            className="absolute top-40 right-10 w-80 h-80 bg-gradient-to-br from-purple-400/20 to-pink-500/20 rounded-full blur-3xl" 
+          />
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.2, 1],
+              opacity: [0.3, 0.6, 0.3]
+            }}
+            transition={{ 
+              duration: 8,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+            className="absolute bottom-20 left-1/3 w-72 h-72 bg-gradient-to-br from-emerald-400/20 to-teal-500/20 rounded-full blur-3xl" 
           />
         </div>
 
-        <div className="max-w-7xl mx-auto w-full relative z-10">
-          <div className="text-center mb-16">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8 }}
-              className="inline-flex items-center gap-2 bg-white/90 dark:bg-dark-card/90 backdrop-blur-md rounded-full px-6 py-3 mb-8 border border-white/30 dark:border-secondary-700/50 shadow-lg"
-            >
-              <Sparkles className="w-5 h-5 text-primary-500" />
-              <span className="text-sm font-medium text-secondary-800 dark:text-secondary-200">
-                AI-Powered Travel Planning
-              </span>
-            </motion.div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-5xl mx-auto mb-20">
             
+            {/* Badge */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="inline-flex items-center space-x-2 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700 text-primary-700 dark:text-primary-300 px-6 py-3 rounded-full text-sm font-medium mb-8 shadow-lg backdrop-blur-sm"
+            >
+              <SparklesIcon className="w-5 h-5" />
+              <span>AI-Powered Travel Intelligence</span>
+            </motion.div>
+
+            {/* Main Heading */}
             <motion.h1
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-5xl md:text-6xl lg:text-7xl font-heading font-bold text-white mb-6 leading-tight"
+              className="text-6xl sm:text-7xl lg:text-8xl font-bold mb-8 leading-tight"
             >
-              Plan Your Perfect
-              <span className="block text-gradient"> Journey</span>
+              <span className="text-gray-900 dark:text-white">
+                Discover Your
+              </span>
+              <br />
+              <span className="text-gray-900 dark:text-white">
+                Next Adventure
+              </span>
             </motion.h1>
-            
+
+            {/* Subtitle */}
             <motion.p
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto text-body leading-relaxed"
+              className="text-2xl text-gray-700 dark:text-gray-300 max-w-4xl mx-auto leading-relaxed mb-12 font-light"
             >
-              Discover amazing destinations, book flights and hotels, and create unforgettable memories with our AI-powered travel platform.
+              Experience the world like never before. Our AI finds perfect destinations,
+              <br className="hidden sm:block" />
+              <span className="font-medium text-primary-600">
+                unbeatable prices, and creates memories that last forever.
+              </span>
             </motion.p>
+
+            {/* CTA Buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+              className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-8"
+            >
+              <ModernButton
+                size="lg"
+                variant="primary"
+                className="px-8 py-4 text-lg font-semibold shadow-2xl hover:shadow-3xl transform hover:scale-105 inline-flex items-center justify-center whitespace-nowrap"
+              >
+                <svg className="w-5 h-5 mr-2 flex-shrink-0 align-middle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 12L3 7l18-4-4 18-5-7-5 3 3-5z" />
+                </svg>
+                <span>🚀 Launch My Adventure</span>
+              </ModernButton>
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center space-x-3 text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors text-lg font-medium group"
+              >
+                <div className="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full shadow-lg group-hover:shadow-xl transition-all">
+                  <PlayCircleIcon className="w-6 h-6" />
+                </div>
+                <span>🎬 Watch Magic Happen</span>
+              </motion.button>
+            </motion.div>
           </div>
 
-          {/* Modern Search Form */}
+          {/* Enhanced Search Card */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="max-w-5xl mx-auto"
+            transition={{ duration: 0.8, delay: 0.8 }}
+            className="max-w-6xl mx-auto"
           >
-            <div className="bg-white/95 dark:bg-dark-card/95 backdrop-blur-xl rounded-3xl border border-white/30 dark:border-secondary-700/50 shadow-2xl p-8 lg:p-12">
-              <form className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {/* Destination */}
-                  <div className="lg:col-span-2">
-                    <ModernInput
-                      label="Where do you want to go?"
-                      placeholder="Enter destination"
-                      value={searchForm.destination}
-                      onChange={(value) => setSearchForm(prev => ({ ...prev, destination: value }))}
-                      icon={MapPin}
-                      variant="glass"
-                      size="lg"
-                      required
-                    />
-                  </div>
-
-                  {/* Start Date */}
-                  <div>
-                    <DatePicker
-                      value={searchForm.startDate || undefined}
-                      onChange={(date) => setSearchForm(prev => ({ ...prev, startDate: date || null }))}
-                      placeholder="Select start date"
-                      minDate={new Date()}
-                      className="w-full"
-                    />
-                  </div>
-
-                  {/* End Date */}
-                  <div>
-                    <DatePicker
-                      value={searchForm.endDate || undefined}
-                      onChange={(date) => setSearchForm(prev => ({ ...prev, endDate: date || null }))}
-                      placeholder="Select end date"
-                      minDate={searchForm.startDate || new Date()}
-                      className="w-full"
-                    />
-                  </div>
+            <div className="relative bg-white/90 dark:bg-gray-800/90 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/50 dark:border-gray-700/50 p-8 lg:p-12">
+              {/* Card Background Pattern */}
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-50/50 via-blue-50/50 to-purple-50/50 dark:from-cyan-900/20 dark:via-blue-900/20 dark:to-purple-900/20" />
+              <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-cyan-400/10 to-blue-500/10 rounded-full blur-2xl" />
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-purple-400/10 to-pink-500/10 rounded-full blur-2xl" />
+              
+              <div className="relative z-10">
+                <div className="text-center mb-10">
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.5, delay: 1 }}
+                    className="inline-flex items-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-full text-sm font-medium mb-6"
+                  >
+                    <FireIcon className="w-4 h-4" />
+                    <span>🔍 Hunt for Deals</span>
+                  </motion.div>
+                                      <h2 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-4">
+                      Where will your story begin?
+                    </h2>
+                  <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+                    Tell us your dream destination and we'll craft the perfect journey
+                  </p>
                 </div>
 
-                {/* Additional Options */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-6 mb-8">
+                  {/* Destination Input - Full Width */}
                   <div>
-                    <label className="block text-sm font-medium text-secondary-800 dark:text-secondary-200 mb-3">
-                      Travelers
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                      🌍 <span>Where would you like to go?</span>
                     </label>
-                    <div className="relative">
-                      <UsersIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-600 dark:text-secondary-400 w-5 h-5" />
-                      <select
-                        value={searchForm.travelers}
-                        onChange={(e) => setSearchForm(prev => ({ ...prev, travelers: parseInt(e.target.value) }))}
-                        className="w-full pl-10 pr-4 py-3 border border-white/40 dark:border-secondary-600/40 backdrop-blur-md bg-white/30 dark:bg-dark-card/30 text-secondary-900 dark:text-dark-text rounded-xl focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
-                      >
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
-                          <option key={num} value={num} className="bg-white dark:bg-dark-card text-secondary-900 dark:text-dark-text">
-                            {num} {num === 1 ? 'Traveler' : 'Travelers'}
-                          </option>
-                        ))}
-                      </select>
+                    <div className="relative group">
+                      <MapPinIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-cyan-500 group-hover:text-blue-500 transition-colors z-10" />
+                      <input
+                        type="text"
+                        placeholder="Enter your dream destination..."
+                        value={searchForm.destination}
+                        onChange={(e) => setSearchForm(prev => ({ ...prev, destination: e.target.value }))}
+                        className="w-full pl-14 pr-6 py-5 border-2 border-gray-200 dark:border-gray-600 rounded-2xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-4 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-lg font-medium hover:border-cyan-400 shadow-sm hover:shadow-md"
+                      />
+                      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                     </div>
                   </div>
 
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-secondary-800 dark:text-secondary-200 mb-3">
-                      &nbsp;
-                    </label>
-                    <ModernButton
-                      onClick={handleSearch}
-                      loading={isLoading}
-                      icon={Search}
-                      variant="gradient"
-                      size="lg"
-                      fullWidth
-                      className="h-12"
-                    >
-                      Search Flights
-                    </ModernButton>
+                  {/* Date and Guests Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Check-in Date */}
+                    <div className="relative">
+                      <CustomDatePicker
+                        label="📅 Check-in Date"
+                        value={searchForm.startDate || undefined}
+                        onChange={(date) => setSearchForm(prev => ({ ...prev, startDate: date }))}
+                        placeholder="Select check-in"
+                        minDate={new Date()}
+                        className="w-full"
+                      />
+                    </div>
+
+                    {/* Check-out Date */}
+                    <div className="relative">
+                      <CustomDatePicker
+                        label="📅 Check-out Date"
+                        value={searchForm.endDate || undefined}
+                        onChange={(date) => setSearchForm(prev => ({ ...prev, endDate: date }))}
+                        placeholder="Select check-out"
+                        minDate={searchForm.startDate || new Date()}
+                        className="w-full"
+                      />
+                    </div>
+
+                    {/* Travelers */}
+                    <div className="relative">
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                        👥 <span>Travelers</span>
+                      </label>
+                      <div className="relative group">
+                        <select
+                          value={searchForm.travelers}
+                          onChange={(e) => setSearchForm(prev => ({ ...prev, travelers: parseInt(e.target.value) }))}
+                          className="w-full px-4 py-5 pr-12 border-2 border-gray-200 dark:border-gray-600 rounded-2xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-4 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-lg font-medium appearance-none hover:border-cyan-400 shadow-sm hover:shadow-md cursor-pointer"
+                          aria-label="Select number of travelers"
+                        >
+                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                            <option key={num} value={num} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                              {num} {num === 1 ? 'Traveler' : 'Travelers'}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                          <svg 
+                            className="w-5 h-5 text-gray-400 group-hover:text-cyan-500 transition-colors" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </form>
+
+                {/* Search Button */}
+                <div className="text-center">
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <ModernButton
+                      onClick={handleSearch}
+                      size="lg"
+                      variant="primary"
+                      className="px-10 py-4 text-lg font-semibold shadow-xl hover:shadow-2xl transform transition-all duration-300 inline-flex items-center justify-center whitespace-nowrap"
+                    >
+                      <svg className="w-5 h-5 mr-2 flex-shrink-0 align-middle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z" />
+                      </svg>
+                      <span>✨ Craft My Dream Trip</span>
+                    </ModernButton>
+                  </motion.div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
+                    ✨ Over 10,000 destinations • Best price guarantee • Instant booking
+                  </p>
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Popular Destinations */}
-      <section 
-        className="py-20 px-4 sm:px-6 lg:px-8 relative"
-        style={{
-          backgroundImage: `linear-gradient(rgba(248, 250, 252, 0.7), rgba(248, 250, 252, 0.8)), url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'scroll'
-        }}
-      >
-        {/* Subtle Geometric Pattern */}
-        <div 
-          className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60"><defs><pattern id="circles" width="60" height="60" patternUnits="userSpaceOnUse"><circle cx="30" cy="30" r="1.5" fill="%23000"/></pattern></defs><rect width="100%" height="100%" fill="url(%23circles)"/></svg>')`,
-            backgroundSize: '60px 60px'
-          }}
-        />
-        
-        <div className="max-w-7xl mx-auto relative z-10">
-          <motion.div 
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-4xl md:text-5xl font-heading font-bold text-secondary-900 dark:text-dark-text mb-6">
-              Popular Destinations
-            </h2>
-            <p className="text-xl text-secondary-700 dark:text-secondary-200 max-w-2xl mx-auto">
-              Explore trending destinations around the world
-            </p>
-          </motion.div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {popularDestinations.map((destination, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <ModernCard variant="interactive" padding="none" hover className="overflow-hidden">
-                  <div className="relative h-64 overflow-hidden rounded-2xl">
-                    <img
-                      src={destination.image}
-                      alt={destination.name}
-                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                    
-                    {/* Rating */}
-                    <div className="absolute top-4 right-4 flex items-center gap-1 bg-white/20 backdrop-blur-md rounded-full px-3 py-1">
-                      <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                      <span className="text-white text-sm font-medium">{destination.rating}</span>
-                    </div>
-                    
-                    {/* Content */}
-                    <div className="absolute bottom-6 left-6 right-6">
-                      <h3 className="text-white font-bold text-xl mb-1">{destination.name}</h3>
-                      <p className="text-white/80 text-sm mb-3">{destination.description}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-white font-semibold text-lg">Starting from {destination.price}</span>
-                        <ModernButton variant="glass" size="sm" icon={ArrowRight}>
-                          Explore
-                        </ModernButton>
-                      </div>
-                    </div>
-                  </div>
-                </ModernCard>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section 
-        className="py-20 px-4 sm:px-6 lg:px-8 relative"
-        style={{
-          backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.9)), url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&h=1080&fit=crop')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'scroll'
-        }}
-      >
-        {/* Subtle Hexagon Pattern */}
-        <div 
-          className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="hexagons" width="50" height="43.4" patternUnits="userSpaceOnUse"><polygon points="25,2 47,13.4 47,36.6 25,48 3,36.6 3,13.4" fill="none" stroke="white" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23hexagons)"/></svg>')`,
-            backgroundSize: '50px 43.4px'
-          }}
-        />
-        
-        <div className="max-w-7xl mx-auto relative z-10">
-          <motion.div 
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-4xl md:text-5xl font-heading font-bold text-white mb-6">
-              Why Choose SafarBot?
-            </h2>
-            <p className="text-xl text-white/80 max-w-2xl mx-auto">
-              Experience the future of travel planning
-            </p>
-          </motion.div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <ModernCard variant="glass" padding="lg" className="text-center h-full relative overflow-hidden">
-                  {/* Background Image */}
-                  <div 
-                    className="absolute inset-0 opacity-10 transition-opacity duration-300 group-hover:opacity-20"
-                    style={{
-                      backgroundImage: `url(${feature.bgImage})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center'
-                    }}
-                  />
-                  
-                  <div className="relative z-10">
-                    <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg`}>
-                      <feature.icon className="w-8 h-8 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
-                    <p className="text-white/80 leading-relaxed">{feature.description}</p>
-                  </div>
-                </ModernCard>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section 
-        className="py-20 px-4 sm:px-6 lg:px-8 relative"
-        style={{
-          backgroundImage: `linear-gradient(rgba(30, 144, 255, 0.8), rgba(0, 102, 204, 0.85)), url('https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&h=1080&fit=crop')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'scroll'
-        }}
-      >
-        {/* Subtle Wave Pattern */}
-        <div 
-          className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><defs><pattern id="waves" width="120" height="120" patternUnits="userSpaceOnUse"><path d="M0,60 Q30,40 60,60 T120,60" fill="none" stroke="white" stroke-width="1" opacity="0.3"/><path d="M0,80 Q30,60 60,80 T120,80" fill="none" stroke="white" stroke-width="1" opacity="0.2"/></pattern></defs><rect width="100%" height="100%" fill="url(%23waves)"/></svg>')`,
-            backgroundSize: '120px 120px'
-          }}
-        />
-        
-        <div className="max-w-7xl mx-auto relative z-10">
-          <motion.div 
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-4xl md:text-5xl font-heading font-bold text-white mb-6">
-              Why Choose SafarBot?
-            </h2>
-            <p className="text-xl text-white/80 max-w-2xl mx-auto">
-              Experience the future of travel planning
-            </p>
-          </motion.div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.5 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="text-center"
-              >
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <stat.icon className="w-8 h-8 text-white" />
-                </div>
-                <div className="text-3xl md:text-4xl font-bold text-white mb-2">{stat.number}</div>
-                <div className="text-primary-100 font-medium">{stat.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Newsletter Section */}
-      <section 
-        className="py-20 px-4 sm:px-6 lg:px-8 relative"
-        style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'scroll'
-        }}
-      >
-        {/* Subtle Dot Pattern */}
-        <div 
-          className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><defs><pattern id="dots" width="40" height="40" patternUnits="userSpaceOnUse"><circle cx="20" cy="20" r="1" fill="white"/></pattern></defs><rect width="100%" height="100%" fill="url(%23dots)"/></svg>')`,
-            backgroundSize: '40px 40px'
-          }}
-        />
-        
-        <div className="max-w-4xl mx-auto relative z-10">
+      {/* Features Section with Better Colors */}
+      <section className="py-24 bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="text-center"
+            className="text-center mb-20"
           >
-            <ModernCard variant="glass" padding="xl" className="text-center">
-              <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center mx-auto mb-8">
-                <Plane className="w-10 h-10 text-white" />
-              </div>
-              
-              <h2 className="text-4xl font-heading font-bold text-white mb-4">
-                Get Travel Inspiration
-              </h2>
-              <p className="text-white/90 text-lg mb-8 max-w-2xl mx-auto">
-                Subscribe to our newsletter for exclusive deals and travel tips
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-                <ModernInput
-                  placeholder="Enter your email"
-                  value=""
-                  onChange={() => {}}
-                  variant="glass"
+            <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-cyan-100 to-blue-100 dark:from-cyan-900/30 dark:to-blue-900/30 text-cyan-700 dark:text-cyan-300 px-4 py-2 rounded-full text-sm font-medium mb-6">
+              <TrophyIcon className="w-4 h-4" />
+              <span>Why Choose SafarBot</span>
+            </div>
+            <h2 className="text-5xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-8">
+              Travel Smarter, Not Harder
+            </h2>
+            <p className="text-2xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto leading-relaxed">
+              Experience the future of travel planning with our cutting-edge AI technology
+              and personalized recommendations that save you time and money.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature) => (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: feature.delay }}
+                viewport={{ once: true }}
+                className="group"
+              >
+                <motion.div
+                  whileHover={{ y: -10, scale: 1.02 }}
+                  className={`relative p-8 rounded-3xl h-full transition-all duration-300 bg-gradient-to-br ${feature.bgColor} dark:from-gray-800 dark:to-gray-700 border border-white/50 dark:border-gray-600/50 shadow-lg hover:shadow-2xl`}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent dark:from-gray-700/50 dark:to-transparent rounded-3xl" />
+                  <div className="relative z-10">
+                    <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                      <feature.icon className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                      {feature.title}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                      {feature.description}
+                    </p>
+                  </div>
+                </motion.div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Popular Destinations with Better Images */}
+      <section className="py-24 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center mb-20"
+          >
+            <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 text-purple-700 dark:text-purple-300 px-4 py-2 rounded-full text-sm font-medium mb-6">
+              <FireIcon className="w-4 h-4" />
+              <span>🌟 Discover Paradise</span>
+            </div>
+            <h2 className="text-5xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-8">
+              Where Dreams Come True
+            </h2>
+            <p className="text-2xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto leading-relaxed">
+              Explore the world's most breathtaking destinations, handpicked by our travel experts
+              and loved by thousands of adventurous travelers like you.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {destinations.map((destination, destIndex) => (
+              <motion.div
+                key={destination.name}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: destIndex * 0.1 }}
+                viewport={{ once: true }}
+                className="group cursor-pointer"
+              >
+                <motion.div
+                  whileHover={{ y: -10, scale: 1.02 }}
+                  className="relative bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50"
+                >
+                  <div className="relative h-64 overflow-hidden">
+                    <img
+                      src={destination.image}
+                      alt={destination.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                    
+                    {/* Badge */}
+                    <div className={`absolute top-4 left-4 ${destination.badgeColor} text-white rounded-full px-3 py-1 text-sm font-bold shadow-lg`}>
+                      {destination.badge}
+                    </div>
+
+                    {/* Rating */}
+                    <div className="absolute top-4 right-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-full px-3 py-1 flex items-center space-x-1 shadow-lg">
+                      <StarIcon className="w-4 h-4 text-yellow-500 fill-current" />
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">
+                        {destination.rating}
+                      </span>
+                    </div>
+
+                    {/* Price */}
+                    <div className="absolute bottom-4 right-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full px-4 py-2 font-bold text-lg shadow-lg">
+                      {destination.price}
+                    </div>
+                  </div>
+
+                  <div className="p-6">
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-cyan-600 transition-colors">
+                      {destination.name}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300 mb-6 text-lg">
+                      {destination.description}
+                    </p>
+                    <motion.button 
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="flex items-center space-x-2 text-cyan-600 dark:text-cyan-400 hover:text-blue-600 dark:hover:text-blue-400 font-bold text-lg transition-colors group"
+                    >
+                      <span>🌍 Take Me There</span>
+                      <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    </motion.button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Enhanced Stats Section */}
+      <section className="py-24 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl lg:text-5xl font-bold text-white mb-4">
+              Trusted by Travelers Worldwide
+            </h2>
+            <p className="text-xl text-cyan-100 max-w-3xl mx-auto">
+              Join millions of happy travelers who have discovered their perfect journey with SafarBot
+            </p>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {stats.map((stat, statIndex) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: statIndex * 0.1 }}
+                viewport={{ once: true }}
+                className="text-center group"
+              >
+                <motion.div 
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  className={`w-20 h-20 bg-gradient-to-br ${stat.color} rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl group-hover:shadow-3xl transition-all duration-300`}
+                >
+                  <stat.icon className="w-10 h-10 text-white" />
+                </motion.div>
+                <div className="text-5xl lg:text-6xl font-bold text-white mb-2">
+                  {stat.number}
+                </div>
+                <div className="text-xl text-cyan-100 font-medium">
+                  {stat.label}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Enhanced Testimonials */}
+      <section className="py-24 bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center mb-20"
+          >
+            <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-700 dark:text-green-300 px-4 py-2 rounded-full text-sm font-medium mb-6">
+              <UserGroupIcon className="w-4 h-4" />
+              <span>Happy Travelers</span>
+            </div>
+            <h2 className="text-5xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-8">
+              Stories from Our Community
+            </h2>
+            <p className="text-2xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto leading-relaxed">
+              Discover why thousands of travelers trust SafarBot to create their perfect adventures
+              and make memories that last a lifetime.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, testIndex) => (
+              <motion.div
+                key={testimonial.name}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: testIndex * 0.2 }}
+                viewport={{ once: true }}
+              >
+                <motion.div
+                  whileHover={{ y: -5, scale: 1.02 }}
+                  className="bg-white dark:bg-gray-800 rounded-3xl p-8 h-full shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50"
+                >
+                  <div className="flex items-center space-x-4 mb-6">
+                    <img
+                      src={testimonial.avatar}
+                      alt={testimonial.name}
+                      className="w-16 h-16 rounded-full object-cover ring-4 ring-cyan-100 dark:ring-cyan-900"
+                    />
+                    <div>
+                      <h4 className="text-xl font-bold text-gray-900 dark:text-white">
+                        {testimonial.name}
+                      </h4>
+                      <p className="text-cyan-600 dark:text-cyan-400 font-medium">
+                        {testimonial.role}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {testimonial.location}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg mb-6">
+                    "{testimonial.content}"
+                  </p>
+                  <div className="flex items-center">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <StarIcon key={i} className="w-6 h-6 text-yellow-400 fill-current" />
+                    ))}
+                  </div>
+                </motion.div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Enhanced CTA Section */}
+      <section className="py-24 bg-gradient-to-br from-cyan-600 via-blue-600 to-purple-700 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 right-0 w-80 h-80 bg-purple-400/20 rounded-full blur-3xl animate-pulse delay-1000" />
+        </div>
+        
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-5xl lg:text-6xl font-bold text-white mb-8">
+              Your Adventure Starts Now
+            </h2>
+            <p className="text-2xl text-cyan-100 mb-12 max-w-3xl mx-auto leading-relaxed">
+              Join over 50,000 travelers who trust SafarBot for their dream vacations.
+              Your perfect journey is just one click away.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center space-y-6 sm:space-y-0 sm:space-x-8">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <ModernButton
                   size="lg"
-                  className="flex-1"
-                />
-                <ModernButton variant="glass" size="lg">
-                  Subscribe
+                  className="px-8 py-4 text-lg font-semibold bg-white text-cyan-600 hover:bg-gray-50 shadow-2xl hover:shadow-3xl rounded-2xl inline-flex items-center justify-center whitespace-nowrap"
+                >
+                  <svg className="w-5 h-5 mr-2 flex-shrink-0 align-middle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 12L3 7l18-4-4 18-5-7-5 3 3-5z" />
+                  </svg>
+                  <span>🎯 Plan My Escape</span>
                 </ModernButton>
-              </div>
-            </ModernCard>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <ModernButton
+                  size="lg"
+                  variant="ghost"
+                  className="px-8 py-4 text-lg font-semibold border-2 border-white text-white hover:bg-white/10 backdrop-blur-sm rounded-2xl inline-flex items-center justify-center whitespace-nowrap"
+                >
+                  <svg className="w-5 h-5 mr-2 flex-shrink-0 align-middle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 0c2.5 2.5 2.5 15.5 0 18m0-18c-2.5 2.5-2.5 15.5 0 18M2 12h20M4 7h16M4 17h16" />
+                  </svg>
+                  <span>🗺️ Wander the World</span>
+                </ModernButton>
+              </motion.div>
+            </div>
+            <p className="text-cyan-200 mt-8 text-lg">
+              ✈️ Free cancellation • 🛡️ Best price guarantee • ⭐ 24/7 support
+            </p>
           </motion.div>
         </div>
       </section>
@@ -584,4 +733,4 @@ const HomePage: React.FC = () => {
   );
 };
 
-export default HomePage; 
+export default HomePage;  

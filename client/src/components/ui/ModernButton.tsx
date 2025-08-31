@@ -73,11 +73,11 @@ const ModernButton: React.FC<ModernButtonProps> = ({
         </motion.div>
       )}
       
-      <div className={cn('flex items-center gap-2', { 'opacity-0': loading })}>
+      <div className={cn('flex items-center gap-2 whitespace-nowrap leading-none', { 'opacity-0': loading })}>
         {Icon && iconPosition === 'left' && (
           <Icon size={iconSize[size]} className="shrink-0" />
         )}
-        <span>{children}</span>
+        {children}
         {Icon && iconPosition === 'right' && (
           <Icon size={iconSize[size]} className="shrink-0" />
         )}

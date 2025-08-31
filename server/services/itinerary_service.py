@@ -1,5 +1,5 @@
 import asyncio
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from typing import List, Dict, Any, Optional
 import logging
 from models import ItineraryResponse, DailyPlan
@@ -27,8 +27,8 @@ class ItineraryService:
     async def generate_itinerary(
         self,
         destination: str,
-        start_date: date,
-        end_date: date,
+        start_date: str,
+        end_date: str,
         budget: Optional[float] = None,
         interests: List[str] = [],
         travelers: int = 1,
@@ -46,7 +46,9 @@ class ItineraryService:
                 )
             
             # Calculate trip duration
-            total_days = (end_date - start_date).days + 1
+            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+            total_days = (end_date_obj - start_date_obj).days + 1
             
             # Create prompt for itinerary generation
             prompt = f"""
@@ -120,7 +122,14 @@ class ItineraryService:
             "**Transportation:** Use local trains for cost-effective travel. Auto-rickshaws are great for short distances."
             """
             
-            response = self.model.generate_content(prompt)
+            # Call AI model – if it times out or fails, gracefully fall back
+            try:
+                response = self.model.generate_content(prompt)
+            except Exception as e:
+                logger.error(f"AI generate_content failed ({type(e).__name__}): {str(e)}. Falling back.")
+                return await self._generate_fallback_itinerary(
+                    destination, start_date, end_date, budget, interests, travelers, accommodation_type
+                )
             
             # Check if response is valid
             if not response.text or response.text.strip() == "":
@@ -140,12 +149,14 @@ class ItineraryService:
             try:
                 itinerary_data = json.loads(cleaned_text)
             except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse JSON response: {cleaned_text[:200]}...")
-                raise Exception(f"Invalid JSON response from AI service: {str(e)}")
+                logger.error(f"Failed to parse JSON response: {cleaned_text[:200]}... Falling back.")
+                return await self._generate_fallback_itinerary(
+                    destination, start_date, end_date, budget, interests, travelers, accommodation_type
+                )
             
             # Create daily plans
             daily_plans = []
-            current_date = start_date
+            current_date = start_date_obj
             
             for day_num, day_data in enumerate(itinerary_data.get('daily_plans', []), 1):
                 daily_plan = DailyPlan(
@@ -168,6 +179,13 @@ class ItineraryService:
                 recommendations=itinerary_data.get('recommendations', {})
             )
             
+            # If AI produced no daily plans, fall back
+            if not response_obj.daily_plans:
+                logger.warning("AI returned empty itinerary. Falling back.")
+                return await self._generate_fallback_itinerary(
+                    destination, start_date, end_date, budget, interests, travelers, accommodation_type
+                )
+
             return response_obj
             
         except Exception as e:
@@ -186,8 +204,8 @@ class ItineraryService:
     async def predict_prices(
         self,
         destination: str,
-        start_date: date,
-        end_date: date,
+        start_date: str,
+        end_date: str,
         travelers: int = 1,
         accommodation_type: Optional[str] = None
     ) -> Dict[str, Any]:
@@ -198,7 +216,9 @@ class ItineraryService:
             if not self.model:
                 raise Exception("AI service is not properly configured")
             
-            total_days = (end_date - start_date).days + 1
+            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+            total_days = (end_date_obj - start_date_obj).days + 1
             
             prompt = f"""
             Estimate travel costs for {destination} for {total_days} days with {travelers} travelers.
@@ -245,8 +265,8 @@ class ItineraryService:
     async def _generate_fallback_itinerary(
         self,
         destination: str,
-        start_date: date,
-        end_date: date,
+        start_date: str,
+        end_date: str,
         budget: Optional[float] = None,
         interests: List[str] = [],
         travelers: int = 1,
@@ -255,8 +275,10 @@ class ItineraryService:
         """
         Generate a basic fallback itinerary when AI service is unavailable
         """
-        total_days = (end_date - start_date).days + 1
-        current_date = start_date
+        start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+        total_days = (end_date_obj - start_date_obj).days + 1
+        current_date = start_date_obj
         
         daily_plans = []
         for day_num in range(1, total_days + 1):

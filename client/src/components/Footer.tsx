@@ -44,15 +44,15 @@ const Footer: React.FC = () => {
 
   return (
     <footer className="bg-white dark:bg-dark-card border-t border-secondary-200 dark:border-secondary-700">
-      <div className="container-chisfis py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="container-chisfis py-6 md:py-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
           {/* Brand */}
           <div className="lg:col-span-1">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="flex items-center space-x-3 mb-6"
+              className="flex items-center space-x-3 mb-4"
             >
               <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-medium">
                 <Plane className="w-6 h-6 text-white" />
@@ -61,33 +61,33 @@ const Footer: React.FC = () => {
                 SafarBot
               </span>
             </motion.div>
-            <p className="text-secondary-600 dark:text-secondary-300 mb-6 max-w-xs text-body">
+            <p className="text-secondary-600 dark:text-secondary-300 mb-4 max-w-xs text-body">
               AI-powered travel planning platform that makes booking flights and hotels effortless.
             </p>
             
             {/* Contact Info */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="flex items-center space-x-3 text-secondary-600 dark:text-secondary-300">
                 <Mail className="w-4 h-4" />
-                <span className="text-sm text-body">support@safarbot.com</span>
+                <span className="text-sm text-body">info@safarbot.com</span>
               </div>
               <div className="flex items-center space-x-3 text-secondary-600 dark:text-secondary-300">
                 <Phone className="w-4 h-4" />
-                <span className="text-sm text-body">+1 (555) 123-4567</span>
+                <span className="text-sm text-body">+918127889889</span>
               </div>
               <div className="flex items-center space-x-3 text-secondary-600 dark:text-secondary-300">
                 <MapPin className="w-4 h-4" />
-                <span className="text-sm text-body">San Francisco, CA</span>
+                <span className="text-sm text-body">India</span>
               </div>
             </div>
           </div>
 
           {/* Company Links */}
           <div>
-            <h3 className="text-lg font-heading font-semibold text-secondary-900 dark:text-dark-text mb-4">
+            <h3 className="text-lg font-heading font-semibold text-secondary-900 dark:text-dark-text mb-3">
               Company
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {footerLinks.company.map((link) => (
                 <li key={link.name}>
                   <Link
@@ -103,10 +103,10 @@ const Footer: React.FC = () => {
 
           {/* Support Links */}
           <div>
-            <h3 className="text-lg font-heading font-semibold text-secondary-900 dark:text-dark-text mb-4">
+            <h3 className="text-lg font-heading font-semibold text-secondary-900 dark:text-dark-text mb-3">
               Support
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {footerLinks.support.map((link) => (
                 <li key={link.name}>
                   <Link
@@ -122,10 +122,10 @@ const Footer: React.FC = () => {
 
           {/* Services Links */}
           <div>
-            <h3 className="text-lg font-heading font-semibold text-secondary-900 dark:text-dark-text mb-4">
+            <h3 className="text-lg font-heading font-semibold text-secondary-900 dark:text-dark-text mb-3">
               Services
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {footerLinks.services.map((link) => (
                 <li key={link.name}>
                   <Link
@@ -141,14 +141,14 @@ const Footer: React.FC = () => {
         </div>
 
         {/* Bottom section */}
-        <div className="border-t border-secondary-200 dark:border-secondary-700 mt-12 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+        <div className="border-t border-secondary-200 dark:border-secondary-700 mt-6 md:mt-10 pt-4 md:pt-6">
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-3 md:space-y-0">
             <p className="text-secondary-600 dark:text-secondary-300 text-sm text-body">
               © {currentYear} SafarBot. All rights reserved.
             </p>
             
             {/* Social Links */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               {socialLinks.map((social) => (
                 <motion.a
                   key={social.name}

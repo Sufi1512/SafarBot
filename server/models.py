@@ -1,15 +1,33 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional, Dict, Any
-from datetime import date
+from datetime import date, datetime
 
 class ItineraryRequest(BaseModel):
     destination: str = Field(..., description="Travel destination")
-    start_date: date = Field(..., description="Start date of the trip")
-    end_date: date = Field(..., description="End date of the trip")
+    start_date: str = Field(..., description="Start date of the trip (YYYY-MM-DD)")
+    end_date: str = Field(..., description="End date of the trip (YYYY-MM-DD)")
     budget: Optional[float] = Field(None, description="Budget in USD")
     interests: List[str] = Field(default=[], description="List of interests (nature, food, history, etc.)")
     travelers: int = Field(default=1, description="Number of travelers")
     accommodation_type: Optional[str] = Field(None, description="Type of accommodation (budget, luxury, etc.)")
+
+    @field_validator('start_date', 'end_date')
+    @classmethod
+    def validate_date_format(cls, v: str) -> str:
+        """Validate date format is YYYY-MM-DD"""
+        try:
+            datetime.strptime(v, '%Y-%m-%d')
+            return v
+        except ValueError:
+            raise ValueError('Date must be in YYYY-MM-DD format')
+    
+    def get_start_date(self) -> date:
+        """Convert string to date object"""
+        return datetime.strptime(self.start_date, '%Y-%m-%d').date()
+    
+    def get_end_date(self) -> date:
+        """Convert string to date object"""
+        return datetime.strptime(self.end_date, '%Y-%m-%d').date()
 
 class ChatRequest(BaseModel):
     message: str = Field(..., description="User message")

@@ -1,9 +1,11 @@
 import axios, { AxiosResponse } from 'axios';
 
 // Base URL for API - Render backend for production, localhost for development
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://safarbot-backend.onrender.com/api/v1' 
-  : 'http://localhost:8000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (
+  import.meta.env.PROD 
+    ? 'https://safarbot-backend.onrender.com/api/v1' 
+    : 'http://localhost:8000/api/v1'
+);
 
 // Create axios instance
 const api = axios.create({
@@ -341,6 +343,20 @@ export const itineraryAPI = {
     }
   },
 
+  searchPlaces: async (q: string, gl?: string): Promise<any> => {
+    const params: Record<string, string> = { q };
+    if (gl) params.gl = gl;
+    const response = await api.get('/places/search', { params });
+    return response.data;
+  },
+
+  placeById: async (place_id: string, gl?: string): Promise<any> => {
+    const params: Record<string, string> = { place_id };
+    if (gl) params.gl = gl;
+    const response = await api.get('/places/by-id', { params });
+    return response.data;
+  },
+
   predictPrices: async (data: ItineraryRequest): Promise<APIResponse> => {
     try {
       const response = await api.post('/predict-prices', data);
@@ -461,10 +477,10 @@ export const flightAPI = {
   getBookingOptions: async (bookingToken: string): Promise<BookingOptionsResponse> => {
     try {
       console.log('Fetching booking options for token:', bookingToken);
-      const response = await api.get(`/api/v1/flights/booking-options/${encodeURIComponent(bookingToken)}`);
+      const response = await api.get(`/flights/booking-options/${encodeURIComponent(bookingToken)}`);
       console.log('Booking options response:', response.data);
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching booking options:', error);
       throw new Error(error.userMessage || 'Failed to get booking options');
     }

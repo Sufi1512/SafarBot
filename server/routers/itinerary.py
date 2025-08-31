@@ -1,13 +1,15 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
 from models import ItineraryRequest, ItineraryResponse, APIResponse
 from services.itinerary_service import ItineraryService
+from services.place_service import PlaceService
 import logging
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 itinerary_service = ItineraryService()
+place_service = PlaceService()
 
 @router.options("/generate-itinerary")
 async def generate_itinerary_options():
@@ -88,3 +90,25 @@ async def predict_prices(request: ItineraryRequest):
     except Exception as e:
         logger.error(f"Error predicting prices: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to predict prices: {str(e)}") 
+
+
+@router.get("/places/search")
+async def places_search(q: str = Query(..., description="Free-text place query"), gl: str | None = Query(None), hl: str = Query("en")):
+    """Proxy to SerpApi Google Maps search using the server-side SERP_API_KEY."""
+    try:
+        data = place_service.search_place(q, hl=hl, gl=gl)
+        return APIResponse(success=True, message="Places fetched", data=data)
+    except Exception as e:
+        logger.error(f"SerpApi search error: {e}")
+        raise HTTPException(status_code=500, detail=f"SerpApi search failed: {str(e)}")
+
+
+@router.get("/places/by-id")
+async def place_by_id(place_id: str = Query(...), gl: str | None = Query(None), hl: str = Query("en")):
+    """Fetch a place by Google place_id using SerpApi."""
+    try:
+        data = place_service.place_by_id(place_id, hl=hl, gl=gl)
+        return APIResponse(success=True, message="Place fetched", data=data)
+    except Exception as e:
+        logger.error(f"SerpApi place error: {e}")
+        raise HTTPException(status_code=500, detail=f"SerpApi place fetch failed: {str(e)}")

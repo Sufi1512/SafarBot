@@ -343,12 +343,7 @@ export const itineraryAPI = {
     }
   },
 
-  searchPlaces: async (q: string, gl?: string): Promise<any> => {
-    const params: Record<string, string> = { q };
-    if (gl) params.gl = gl;
-    const response = await api.get('/places/search', { params });
-    return response.data;
-  },
+
 
   placeById: async (place_id: string, gl?: string): Promise<any> => {
     const params: Record<string, string> = { place_id };
@@ -480,7 +475,7 @@ export const flightAPI = {
       const response = await api.get(`/flights/booking-options/${encodeURIComponent(bookingToken)}`);
       console.log('Booking options response:', response.data);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching booking options:', error);
       throw new Error(error.userMessage || 'Failed to get booking options');
     }

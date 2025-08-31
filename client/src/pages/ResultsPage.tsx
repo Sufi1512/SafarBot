@@ -103,10 +103,9 @@ const ResultsPage: React.FC = () => {
   const [restaurantsLoading, setRestaurantsLoading] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const hasGeneratedRef = useRef(false);
-  const [serpRestaurants, setSerpRestaurants] = useState<Location[]>([]);
+  // SERP restaurants state removed since SERP API functionality was removed
 
-  // Cache for SERP API coordinate lookups
-  const [serpCache, setSerpCache] = useState<Record<string, { lat: number; lng: number }>>({});
+  // SERP cache state removed since SERP API functionality was removed
   
   // Hover popup state for all cards
   const [hoveredItem, setHoveredItem] = useState<Activity | Hotel | Restaurant | null>(null);
@@ -133,85 +132,18 @@ const ResultsPage: React.FC = () => {
     }, 300);
   };
 
-  // Cache for SERP API image lookups
-  const [imageCache, setImageCache] = useState<Record<string, string>>({});
+  // SERP image cache state removed since SERP API functionality was removed
 
   const resolveCoordsWithSerp = async (query: string) => {
-    const key = (query || '').toLowerCase().trim();
-    if (!key || serpCache[key]) return;
-    try {
-      const res = await itineraryAPI.searchPlaces(query, 'in');
-      const raw = res?.data;
-      let coords: { lat: number; lng: number } | null = null;
-      let image: string | null = null;
-      
-      if (raw?.place_results?.gps_coordinates) {
-        coords = {
-          lat: raw.place_results.gps_coordinates.latitude,
-          lng: raw.place_results.gps_coordinates.longitude
-        };
-        image = raw.place_results.thumbnail || raw.place_results.photos?.[0]?.thumbnail || null;
-      } else if (Array.isArray(raw?.local_results) && raw.local_results.length > 0) {
-        const first = raw.local_results[0];
-        if (first?.gps_coordinates) {
-          coords = {
-            lat: first.gps_coordinates.latitude,
-            lng: first.gps_coordinates.longitude
-          };
-          image = first.thumbnail || first.photos?.[0]?.thumbnail || null;
-        }
-      }
-      
-      if (coords) {
-        setSerpCache(prev => ({ ...prev, [key]: coords! }));
-        console.log('SERP coords resolved:', query, coords);
-      } else {
-        console.warn('SERP no coords for:', query);
-      }
-      
-      if (image) {
-        setImageCache(prev => ({ ...prev, [key]: image! }));
-        console.log('SERP image resolved:', query, image);
-      }
-    } catch (e) {
-      console.warn('SERP lookup failed for', query, e);
-    }
+    // SERP API functionality has been removed
+    console.log('SERP API functionality has been removed:', query);
+    return;
   };
 
-  // Fetch additional suggested places via SerpApi once destination is known
+  // SERP API functionality for fetching restaurants has been removed
   useEffect(() => {
-    (async () => {
-      try {
-        if (!itineraryData?.destination) return;
-        const q = `Best places to eat in ${itineraryData.destination}`;
-        const res = await itineraryAPI.searchPlaces(q, 'in');
-        const items = (res?.data?.local_results || []).slice(0, 15);
-        const mapped: Location[] = items
-          .filter((p: any) => p?.gps_coordinates)
-          .map((p: any, idx: number) => ({
-            id: `serp-rest-${idx}`,
-            name: p.title,
-            type: 'restaurant',
-            position: {
-              lat: p.gps_coordinates.latitude,
-              lng: p.gps_coordinates.longitude
-            },
-            description: p.address,
-            rating: p.rating,
-            price: p.price,
-            image: p.thumbnail || p.photos?.[0]?.thumbnail || null
-          }));
-        setSerpRestaurants(mapped);
-        // Prime cache too, so further matches reuse exact coords
-        setSerpCache(prev => {
-          const next = { ...prev } as Record<string, { lat: number; lng: number }>;
-          mapped.forEach(m => { next[(m.name.toLowerCase())] = m.position; });
-          return next;
-        });
-      } catch (e) {
-        console.warn('SERP best places fetch failed', e);
-      }
-    })();
+    console.log('SERP API functionality for restaurants has been removed');
+    // No longer fetching restaurants via SERP API
   }, [itineraryData?.destination]);
 
   // Function to extract locations for Google Maps
@@ -282,15 +214,14 @@ const ResultsPage: React.FC = () => {
           return match;
         });
         
-        const serpKey = (hotel.location || hotel.name || '').toLowerCase();
-        const serpPos = serpCache[serpKey];
-        const position = serpPos ? serpPos : (
+        // SERP positioning removed - using default coordinates
+        const position = (
           areaKey ? mumbaiAreas[areaKey as keyof typeof mumbaiAreas] : 
           { lat: 19.0760 + (index * 0.01), lng: 72.8777 + (index * 0.01) }
         );
         
         console.log(`Hotel "${hotel.name}" location "${hotel.location}" mapped to area "${areaKey}" at position:`, position);
-        if (!serpPos) resolveCoordsWithSerp(`${hotel.name}, ${hotel.location || itineraryData?.destination}`);
+        // SERP coordinate resolution removed
         
         locations.push({
           id: `hotel-${index}`,
@@ -318,15 +249,14 @@ const ResultsPage: React.FC = () => {
           return match;
         });
         
-        const serpKey = (restaurant.location || restaurant.name || '').toLowerCase();
-        const serpPos = serpCache[serpKey];
-        const position = serpPos ? serpPos : (
+        // SERP positioning removed - using default coordinates
+        const position = (
           areaKey ? mumbaiAreas[areaKey as keyof typeof mumbaiAreas] : 
           { lat: 19.0760 + (index * 0.015), lng: 72.8777 + (index * 0.015) }
         );
         
         console.log(`Restaurant "${restaurant.name}" location "${restaurant.location}" mapped to area "${areaKey}" at position:`, position);
-        if (!serpPos) resolveCoordsWithSerp(`${restaurant.name}, ${restaurant.location || itineraryData?.destination}`);
+        // SERP coordinate resolution removed
         
         locations.push({
           id: `restaurant-${index}`,
@@ -355,15 +285,14 @@ const ResultsPage: React.FC = () => {
             return match;
           });
           
-          const serpKey = (activity.location || activity.title).toLowerCase();
-          const serpPos = serpCache[serpKey];
-          const position = serpPos ? serpPos : (
+          // SERP positioning removed - using default coordinates
+          const position = (
             areaKey ? mumbaiAreas[areaKey as keyof typeof mumbaiAreas] : 
             { lat: 19.0760 + (planIndex * 0.02) + (activityIndex * 0.005), lng: 72.8777 + (planIndex * 0.02) + (activityIndex * 0.005) }
           );
           
           console.log(`Activity "${activity.title}" location "${activity.location}" mapped to area "${areaKey}" at position:`, position);
-          if (!serpPos) resolveCoordsWithSerp(`${activity.title}, ${activity.location}`);
+          // SERP coordinate resolution removed
           
           locations.push({
             id: `activity-${planIndex}-${activityIndex}`,
@@ -377,11 +306,7 @@ const ResultsPage: React.FC = () => {
       });
     });
 
-    // Include SERP suggested restaurants explicitly
-    if (serpRestaurants.length > 0) {
-      console.log('Adding SERP restaurants to map:', serpRestaurants.length);
-      locations.push(...serpRestaurants);
-    }
+    // SERP restaurants functionality removed
     console.log('Total locations extracted:', locations.length);
     console.log('Locations:', locations);
     return locations;
@@ -1450,10 +1375,10 @@ const ResultsPage: React.FC = () => {
             {hoveredItemType === 'activity' && (
               <>
                 {/* Image section */}
-                {((hoveredItem as Activity).image || imageCache[(hoveredItem as Activity).location?.toLowerCase() || ''] || imageCache[(hoveredItem as Activity).title?.toLowerCase() || '']) && (
+                {(hoveredItem as Activity).image && (
                   <div className="mb-3 -m-4 -mt-4">
                     <img 
-                      src={(hoveredItem as Activity).image || imageCache[(hoveredItem as Activity).location?.toLowerCase() || ''] || imageCache[(hoveredItem as Activity).title?.toLowerCase() || '']} 
+                      src={(hoveredItem as Activity).image} 
                       alt={(hoveredItem as Activity).title}
                       className="w-full h-32 object-cover rounded-t-lg"
                       onError={(e) => {

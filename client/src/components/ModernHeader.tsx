@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import ModernButton from './ui/ModernButton';
+import logoImage from '../asset/images/logo.png';
 import {
   Bars3Icon,
   XMarkIcon,
@@ -72,20 +73,13 @@ const ModernHeader: React.FC = () => {
           <div className="flex items-center justify-between h-16">
             
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-3 group">
+            <Link to="/" className="flex items-center">
               <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-                  <span className="text-white font-bold text-lg">S</span>
-                </div>
-                <div className="absolute -inset-1 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-                  SafarBot
-                </h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium tracking-wide">
-                  Travel Intelligence
-                </p>
+                <img 
+                  src={logoImage} 
+                  alt="SafarBot Logo" 
+                  className="w-50 h-36 object-contain"
+                />
               </div>
             </Link>
 

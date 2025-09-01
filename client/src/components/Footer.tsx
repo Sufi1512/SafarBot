@@ -2,7 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
-  Plane, 
   Facebook, 
   Twitter, 
   Instagram, 
@@ -11,6 +10,7 @@ import {
   Phone,
   MapPin
 } from 'lucide-react';
+import logoImage from '../asset/images/logo.png';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -48,19 +48,18 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
           {/* Brand */}
           <div className="lg:col-span-1">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="flex items-center space-x-3 mb-4"
-            >
-              <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-medium">
-                <Plane className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-xl font-heading font-bold text-secondary-900 dark:text-dark-text">
-                SafarBot
-              </span>
-            </motion.div>
+                         <motion.div
+               initial={{ opacity: 0, y: 20 }}
+               whileInView={{ opacity: 1, y: 0 }}
+               transition={{ duration: 0.5 }}
+               className="flex items-center mb-4"
+             >
+                               <img 
+                  src={logoImage} 
+                  alt="SafarBot Logo" 
+                  className="w-36 h-36 object-contain"
+                />
+             </motion.div>
             <p className="text-secondary-600 dark:text-secondary-300 mb-4 max-w-xs text-body">
               AI-powered travel planning platform that makes booking flights and hotels effortless.
             </p>

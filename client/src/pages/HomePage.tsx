@@ -232,11 +232,11 @@ const HomePage: React.FC = () => {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-6xl sm:text-7xl lg:text-8xl font-bold mb-8 leading-tight"
             >
-              <span className="text-gray-900 dark:text-white">
+              <span className="gradient-text-with-shimmer">
                 Discover Your
               </span>
               <br />
-              <span className="text-gray-900 dark:text-white">
+              <span className="gradient-text-with-shimmer" style={{ animationDelay: '0.5s' }}>
                 Next Adventure
               </span>
             </motion.h1>

@@ -316,6 +316,145 @@ export interface Restaurant {
   image_url?: string;
 }
 
+// Enhanced API Response interfaces matching your backend
+export interface PlaceDetails {
+  position?: number;
+  title: string;
+  place_id: string;
+  data_id?: string;
+  data_cid?: string;
+  reviews_link?: string;
+  photos_link?: string;
+  gps_coordinates?: {
+    latitude: number;
+    longitude: number;
+  };
+  place_id_search?: string;
+  provider_id?: string;
+  rating?: number;
+  reviews?: number;
+  price?: string;
+  type?: string;
+  types?: string[];
+  type_id?: string;
+  type_ids?: string[];
+  address: string;
+  open_state?: string;
+  hours?: string;
+  operating_hours?: {
+    monday?: string;
+    tuesday?: string;
+    wednesday?: string;
+    thursday?: string;
+    friday?: string;
+    saturday?: string;
+    sunday?: string;
+  };
+  phone?: string;
+  website?: string;
+  extensions?: Array<{
+    service_options?: string[];
+  }>;
+  unsupported_extensions?: Array<{
+    accessibility?: string[];
+  }>;
+  service_options?: {
+    dine_in?: boolean;
+    takeout?: boolean;
+    no_contact_delivery?: boolean;
+    delivery?: boolean;
+  };
+  reserve_a_table?: string;
+  order_online?: string;
+  user_review?: string;
+  thumbnail?: string;
+  serpapi_thumbnail?: string;
+  category: string;
+  prefetched?: boolean;
+  description?: string;
+}
+
+export interface AdditionalPlace {
+  name: string;
+  rating?: number;
+  price_range?: string;
+  amenities?: string[];
+  location?: string;
+  description?: string;
+  phone?: string;
+  website?: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+  place_id: string;
+  category: string;
+  prefetched?: boolean;
+  cuisine?: string;
+  hours?: string;
+}
+
+export interface EnhancedItineraryResponse {
+  itinerary: {
+    destination: string;
+    total_days: number;
+    budget_estimate: number;
+    accommodation_suggestions: Array<{
+      place_id: string;
+      name: string;
+      type: string;
+      location: string;
+      price_range: string;
+    }>;
+    daily_plans: Array<{
+      day: number;
+      date: string;
+      theme: string;
+      activities: Array<{
+        time: string;
+        place_id: string;
+        title: string;
+        duration: string;
+        estimated_cost: string;
+        type: string;
+      }>;
+      meals: Array<{
+        time: string;
+        meal_type: string;
+        place_id: string;
+        name: string;
+        cuisine: string;
+        price_range: string;
+      }>;
+      transportation: Array<{
+        from: string;
+        to: string;
+        method: string;
+        duration: string;
+        cost: string;
+      }>;
+    }>;
+    place_ids_used: string[];
+    travel_tips: string[];
+  };
+  place_details: Record<string, PlaceDetails>;
+  additional_places: {
+    hotels: AdditionalPlace[];
+    restaurants: AdditionalPlace[];
+    cafes: AdditionalPlace[];
+    attractions: AdditionalPlace[];
+    interest_based: PlaceDetails[];
+  };
+  metadata: {
+    total_places_prefetched: number;
+    places_used_in_itinerary: number;
+    additional_places_available: number;
+    generation_timestamp: string;
+    workflow_type: string;
+  };
+}
+
+// Keep the old interface for backward compatibility
 export interface ItineraryResponse {
   destination: string;
   total_days: number;
@@ -331,6 +470,20 @@ export interface ItineraryResponse {
 
 // API Functions
 export const itineraryAPI = {
+  // Enhanced itinerary generation with complete place metadata
+  generateEnhancedItinerary: async (data: ItineraryRequest): Promise<EnhancedItineraryResponse> => {
+    try {
+      // Use a longer timeout for enhanced itinerary generation (3 minutes)
+      const response = await api.post('/generate-itinerary', data, {
+        timeout: 180000 // 3 minutes timeout for comprehensive data generation
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to generate enhanced itinerary');
+    }
+  },
+
+  // Legacy function for backward compatibility
   generateItinerary: async (data: ItineraryRequest): Promise<ItineraryResponse> => {
     try {
       // Use a longer timeout for itinerary generation (2 minutes)

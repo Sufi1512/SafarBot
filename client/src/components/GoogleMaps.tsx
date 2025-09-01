@@ -28,14 +28,14 @@ const containerStyle = {
 };
 
 const defaultCenter = {
-  lat: 19.0760, // Mumbai default
-  lng: 72.8777
+  lat: 40.7128, // New York as global default
+  lng: -74.0060
 };
 
 const defaultZoom = 12;
 
-// Mumbai coordinates for fallback
-const MUMBAI_COORDS = { lat: 19.0760, lng: 72.8777 };
+// Global default coordinates for fallback (not used directly but kept for consistency)
+// const GLOBAL_DEFAULT_COORDS = { lat: 40.7128, lng: -74.0060 };
 
 const GoogleMaps: React.FC<GoogleMapsProps> = ({ 
   locations, 
@@ -45,11 +45,16 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({
   console.log('GoogleMaps component received locations:', locations);
   console.log('Locations length:', locations.length);
   
-  // Calculate center based on available locations
-  const mapCenter = locations.length > 0 ? 
+  // Calculate center based on available locations with valid coordinates
+  const validLocations = locations.filter(loc => 
+    !isNaN(loc.position.lat) && !isNaN(loc.position.lng) &&
+    loc.position.lat !== 0 && loc.position.lng !== 0
+  );
+  
+  const mapCenter = validLocations.length > 0 ? 
     {
-      lat: locations.reduce((sum, loc) => sum + loc.position.lat, 0) / locations.length,
-      lng: locations.reduce((sum, loc) => sum + loc.position.lng, 0) / locations.length
+      lat: validLocations.reduce((sum, loc) => sum + loc.position.lat, 0) / validLocations.length,
+      lng: validLocations.reduce((sum, loc) => sum + loc.position.lng, 0) / validLocations.length
     } : center;
   
   console.log('Map center calculated:', mapCenter);
@@ -72,14 +77,19 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({
     console.log('Google Map loaded successfully');
     setMap(map);
     
-    // Fit bounds to show all markers if there are locations
-    if (locations.length > 0) {
-      console.log('Fitting bounds for', locations.length, 'locations');
-      const bounds = new google.maps.LatLngBounds();
-      locations.forEach(location => {
-        console.log('Adding location to bounds:', location.name, location.position);
-        bounds.extend(location.position);
-      });
+          // Fit bounds to show all markers if there are locations
+      const validLocations = locations.filter(loc => 
+        !isNaN(loc.position.lat) && !isNaN(loc.position.lng) &&
+        loc.position.lat !== 0 && loc.position.lng !== 0
+      );
+      
+      if (validLocations.length > 0) {
+        console.log('Fitting bounds for', validLocations.length, 'valid locations');
+        const bounds = new google.maps.LatLngBounds();
+        validLocations.forEach(location => {
+          console.log('Adding location to bounds:', location.name, location.position);
+          bounds.extend(location.position);
+        });
       
       // Add some padding to the bounds
       map.fitBounds(bounds);
@@ -102,26 +112,35 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({
   // Refit bounds whenever locations change after map is ready
   React.useEffect(() => {
     if (!map || locations.length === 0) return;
+    
+    const validLocations = locations.filter(loc => 
+      !isNaN(loc.position.lat) && !isNaN(loc.position.lng) &&
+      loc.position.lat !== 0 && loc.position.lng !== 0
+    );
+    
+    if (validLocations.length === 0) return;
+    
     const bounds = new google.maps.LatLngBounds();
-    locations.forEach(l => bounds.extend(l.position));
+    validLocations.forEach(l => bounds.extend(l.position));
     map.fitBounds(bounds);
-    if (locations.length === 1) map.setZoom(14);
+    if (validLocations.length === 1) map.setZoom(14);
   }, [map, locations]);
 
-  const getMarkerIcon = (type: string) => {
-    switch (type) {
-      case 'destination':
-        return '🏛️';
-      case 'hotel':
-        return '🏨';
-      case 'restaurant':
-        return '🍽️';
-      case 'activity':
-        return '🎯';
-      default:
-        return '📍';
-    }
-  };
+  // Marker icon function (currently using vector symbols instead)
+  // const getMarkerIcon = (type: string) => {
+  //   switch (type) {
+  //     case 'destination':
+  //       return '🏛️';
+  //     case 'hotel':
+  //       return '🏨';
+  //     case 'restaurant':
+  //       return '🍽️';
+  //     case 'activity':
+  //       return '🎯';
+  //     default:
+  //       return '📍';
+  //   }
+  // };
 
   const getMarkerColorHex = (type: string) => {
     switch (type) {
@@ -232,7 +251,10 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({
           ]
         }}
       >
-        {locations.map((location) => {
+        {locations.filter(location => 
+          !isNaN(location.position.lat) && !isNaN(location.position.lng) &&
+          location.position.lat !== 0 && location.position.lng !== 0
+        ).map((location) => {
           console.log('Rendering marker for:', location.name, 'at position:', location.position);
           
           // Use vector circle symbol to avoid external icon issues

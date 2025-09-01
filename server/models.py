@@ -186,6 +186,98 @@ class FlightSearchResponse(BaseModel):
     total_count: int
     message: str = ""
 
+# Place Details Models
+class PlaceImage(BaseModel):
+    url: str
+    width: Optional[int] = None
+    height: Optional[int] = None
+    caption: Optional[str] = None
+
+class PlaceReview(BaseModel):
+    rating: float
+    review_text: str
+    author: str
+    date: Optional[str] = None
+    source: Optional[str] = None
+
+class PlaceLocation(BaseModel):
+    latitude: float
+    longitude: float
+    address: str
+    neighborhood: Optional[str] = None
+
+class PlaceDetails(BaseModel):
+    place_id: str
+    name: str
+    description: str
+    location: PlaceLocation
+    images: List[PlaceImage] = []
+    reviews: List[PlaceReview] = []
+    rating: Optional[float] = None
+    price_level: Optional[str] = None
+    opening_hours: Optional[List[str]] = []
+    contact: Optional[Dict[str, str]] = {}  # phone, website, etc.
+    amenities: List[str] = []
+    type: str  # hotel, restaurant, attraction, etc.
+    
+class PlaceDetailsRequest(BaseModel):
+    place_ids: List[str] = Field(..., description="List of place IDs to get details for")
+
+class PlaceDetailsResponse(BaseModel):
+    places: List[PlaceDetails]
+    total_count: int
+    message: str = ""
+
+# Raw SERP API Models
+class SerpPlaceRequest(BaseModel):
+    place_id: str = Field(..., description="Google place_id to get details for")
+
+class SerpPlaceResponse(BaseModel):
+    place_data: Optional[Dict[str, Any]] = None
+    message: str = ""
+
+class SerpSearchRequest(BaseModel):
+    query: str = Field(..., description="Search query for places")
+    location: Optional[str] = Field(None, description="Location to search around")
+    place_type: Optional[str] = Field(None, description="Type of place to search for")
+
+class SerpSearchResponse(BaseModel):
+    places: List[Dict[str, Any]] = []
+    total_count: int
+    message: str = ""
+
+# Additional Places Models
+class AdditionalPlacesRequest(BaseModel):
+    destination: str = Field(..., description="Destination to get additional places for")
+    interests: List[str] = Field(default=[], description="User interests to tailor suggestions")
+
+class AdditionalPlacesResponse(BaseModel):
+    destination: str
+    summary: Dict[str, Any]
+    suggestions: Dict[str, Any]
+    message: str = ""
+
+# Unified Itinerary Models
+class UnifiedItineraryRequest(BaseModel):
+    destination: str = Field(..., description="Travel destination")
+    start_date: str = Field(..., description="Start date of the trip (YYYY-MM-DD)")
+    end_date: str = Field(..., description="End date of the trip (YYYY-MM-DD)")
+    budget: Optional[float] = Field(None, description="Budget in USD")
+    interests: List[str] = Field(default=[], description="List of interests")
+    travelers: int = Field(default=1, description="Number of travelers")
+    accommodation_type: Optional[str] = Field(None, description="Type of accommodation")
+
+class UnifiedItineraryResponse(BaseModel):
+    success: bool
+    destination: str
+    dates: Dict[str, Any]
+    request_info: Dict[str, Any]
+    itinerary: Dict[str, Any]
+    additional_places: Dict[str, Any]
+    summary: Dict[str, Any]
+    usage_guide: Dict[str, Any]
+    message: str = ""
+
 class APIResponse(BaseModel):
     success: bool
     message: str

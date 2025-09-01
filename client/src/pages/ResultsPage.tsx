@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Calendar, DollarSign, Clock, Star, AlertCircle, Hotel, Utensils } from 'lucide-react';
-import { itineraryAPI, hotelAPI, restaurantAPI } from '../services/api';
+import { itineraryAPI, EnhancedItineraryResponse, PlaceDetails, AdditionalPlace } from '../services/api';
 import api from '../services/api';
 import GoogleMaps from '../components/GoogleMaps';
+import PlaceDetailsModal from '../components/PlaceDetailsModal';
+import AdditionalPlaces from '../components/AdditionalPlaces';
+import EnhancedHoverPopup from '../components/EnhancedHoverPopup';
 
 // Import Location interface from GoogleMaps component
 interface Location {
@@ -86,34 +89,67 @@ const ResultsPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [itineraryData, setItineraryData] = useState<ItineraryData | null>(null);
+  
+  // Enhanced API Response State
+  const [enhancedResponse, setEnhancedResponse] = useState<EnhancedItineraryResponse | null>(null);
+  const [allPlaceDetails, setAllPlaceDetails] = useState<Record<string, PlaceDetails>>({});
+  
+  // Legacy state for backward compatibility
   const [dailyPlans, setDailyPlans] = useState<DailyPlan[]>([]);
   const [hotels, setHotels] = useState<Hotel[]>([]);
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'itinerary' | 'hotels' | 'restaurants'>('itinerary');
+  const [activeTab, setActiveTab] = useState<'itinerary' | 'additional' | 'map'>('itinerary');
   const [itinerarySummary, setItinerarySummary] = useState<{
     total_days: number;
     budget_estimate: number;
     destination: string;
   } | null>(null);
   const [tips, setTips] = useState<string[]>([]);
-  const [weatherInfo, setWeatherInfo] = useState<any>(null);
-  const [hotelsLoading, setHotelsLoading] = useState(false);
-  const [restaurantsLoading, setRestaurantsLoading] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
   const hasGeneratedRef = useRef(false);
-  // SERP restaurants state removed since SERP API functionality was removed
 
-  // SERP cache state removed since SERP API functionality was removed
+  // Place Details Modal State
+  const [selectedPlace, setSelectedPlace] = useState<PlaceDetails | AdditionalPlace | null>(null);
+  const [isPlaceModalOpen, setIsPlaceModalOpen] = useState(false);
   
-  // Hover popup state for all cards
-  const [hoveredItem, setHoveredItem] = useState<Activity | Hotel | Restaurant | null>(null);
-  const [hoveredItemType, setHoveredItemType] = useState<'activity' | 'hotel' | 'restaurant' | null>(null);
+  // Enhanced hover popup state for all cards
+  const [hoveredPlace, setHoveredPlace] = useState<PlaceDetails | AdditionalPlace | null>(null);
+  const [hoveredPlaceType, setHoveredPlaceType] = useState<'activity' | 'hotel' | 'restaurant' | 'attraction' | null>(null);
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isHoverPopupVisible, setIsHoverPopupVisible] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Helper function for hover events
+  // Legacy hover state for backward compatibility
+  const [hoveredItem, setHoveredItem] = useState<Activity | Hotel | Restaurant | null>(null);
+  const [hoveredItemType, setHoveredItemType] = useState<'activity' | 'hotel' | 'restaurant' | null>(null);
+
+  // Enhanced helper function for hover events with place details
+  const handlePlaceHover = (
+    e: React.MouseEvent,
+    place: PlaceDetails | AdditionalPlace,
+    type: 'activity' | 'hotel' | 'restaurant' | 'attraction'
+  ) => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setHoverPosition({ x: rect.right + 10, y: rect.top });
+    setHoveredPlace(place);
+    setHoveredPlaceType(type);
+    setIsHoverPopupVisible(true);
+  };
+
+  const handlePlaceHoverLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredPlace(null);
+      setHoveredPlaceType(null);
+      setHoverPosition(null);
+      setIsHoverPopupVisible(false);
+    }, 300);
+  };
+
+  // Legacy helper function for hover events (for backward compatibility)
   const handleMouseEnter = (e: React.MouseEvent, item: Activity | Hotel | Restaurant, type: 'activity' | 'hotel' | 'restaurant') => {
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
@@ -134,11 +170,7 @@ const ResultsPage: React.FC = () => {
 
   // SERP image cache state removed since SERP API functionality was removed
 
-  const resolveCoordsWithSerp = async (query: string) => {
-    // SERP API functionality has been removed
-    console.log('SERP API functionality has been removed:', query);
-    return;
-  };
+
 
   // SERP API functionality for fetching restaurants has been removed
   useEffect(() => {
@@ -146,59 +178,151 @@ const ResultsPage: React.FC = () => {
     // No longer fetching restaurants via SERP API
   }, [itineraryData?.destination]);
 
-  // Function to extract locations for Google Maps
+  // Helper functions for enhanced API
+  const handlePlaceClick = (place: PlaceDetails | AdditionalPlace) => {
+    setSelectedPlace(place);
+    setIsPlaceModalOpen(true);
+  };
+
+  const handleAddToItinerary = (place: PlaceDetails | AdditionalPlace) => {
+    // For now, just close the modal. In the future, this could add to itinerary
+    console.log('Adding place to itinerary:', place);
+    setIsPlaceModalOpen(false);
+    // TODO: Implement actual itinerary addition logic
+  };
+
+  // Enhanced location extraction with place details
   const extractLocations = () => {
     const locations: Location[] = [];
     
-    console.log('extractLocations called with:', {
+    console.log('Enhanced extractLocations called with:', {
+      enhancedResponse: !!enhancedResponse,
+      placeDetailsCount: Object.keys(allPlaceDetails).length,
       itineraryData,
       hotels: hotels.length,
-      restaurants: restaurants.length,
       dailyPlans: dailyPlans.length
     });
-    console.log('Hotels data:', hotels);
-    console.log('Restaurants data:', restaurants);
-    console.log('Daily plans data:', dailyPlans);
     
-    // Mumbai area coordinates for different neighborhoods
-    const mumbaiAreas = {
-      'City Center': { lat: 19.0760, lng: 72.8777 },
-      'Bandra': { lat: 19.0596, lng: 72.8295 },
-      'Dadar': { lat: 19.0170, lng: 72.8478 },
-      'Mahim': { lat: 19.0400, lng: 72.8400 },
-      'Worli': { lat: 19.0170, lng: 72.8146 },
-      'Colaba': { lat: 18.9217, lng: 72.8347 },
-      'Fort': { lat: 18.9323, lng: 72.8336 },
-      'Marine Drive': { lat: 18.9433, lng: 72.8237 },
-      'Lower Parel': { lat: 18.9939, lng: 72.8300 },
-      'Mahalaxmi': { lat: 18.9822, lng: 72.8180 },
-      'Elephanta Island': { lat: 18.9633, lng: 72.9316 },
-      'Mumbai Airport (BOM)': { lat: 19.0896, lng: 72.8656 },
-      'Juhu': { lat: 19.0996, lng: 72.8347 },
-      'Andheri': { lat: 19.1197, lng: 72.8464 },
-      'Bandra Kurla Complex': { lat: 19.0596, lng: 72.8683 },
-      'Kurla': { lat: 19.0759, lng: 72.8777 },
-      'Chembur': { lat: 19.0596, lng: 72.8983 },
-      'Sewri': { lat: 19.0050, lng: 72.8600 },
-      'Trombay': { lat: 19.0200, lng: 72.9100 },
-      'Downtown': { lat: 19.0760, lng: 72.8777 },
-      'Old Town': { lat: 19.0170, lng: 72.8478 },
-      'Waterfront': { lat: 19.0170, lng: 72.8146 },
-      'Outskirts': { lat: 19.1197, lng: 72.8464 }
+    // Default coordinates for fallback (will be updated based on destination)
+    let defaultCoordinates = { lat: 40.7128, lng: -74.0060 }; // New York as global default
+    
+    // Try to get destination coordinates from the destination name
+    const getDestinationCoordinates = (destination: string) => {
+      // Common city coordinates - this should ideally come from backend API
+      const cityCoordinates: Record<string, { lat: number; lng: number }> = {
+        // Major global cities
+        'new york': { lat: 40.7128, lng: -74.0060 },
+        'london': { lat: 51.5074, lng: -0.1278 },
+        'paris': { lat: 48.8566, lng: 2.3522 },
+        'tokyo': { lat: 35.6762, lng: 139.6503 },
+        'rome': { lat: 41.9028, lng: 12.4964 },
+        'barcelona': { lat: 41.3851, lng: 2.1734 },
+        'sydney': { lat: -33.8688, lng: 151.2093 },
+        'dubai': { lat: 25.2048, lng: 55.2708 },
+        'riyadh': { lat: 24.7136, lng: 46.6753 },
+        'singapore': { lat: 1.3521, lng: 103.8198 },
+        'mumbai': { lat: 19.0760, lng: 72.8777 },
+        'delhi': { lat: 28.7041, lng: 77.1025 },
+        'bangalore': { lat: 12.9716, lng: 77.5946 },
+        'istanbul': { lat: 41.0082, lng: 28.9784 },
+        'amsterdam': { lat: 52.3676, lng: 4.9041 },
+        'berlin': { lat: 52.5200, lng: 13.4050 },
+        'madrid': { lat: 40.4168, lng: -3.7038 },
+        'los angeles': { lat: 34.0522, lng: -118.2437 },
+        'san francisco': { lat: 37.7749, lng: -122.4194 },
+        'chicago': { lat: 41.8781, lng: -87.6298 },
+        'toronto': { lat: 43.6510, lng: -79.3470 },
+        'vancouver': { lat: 49.2827, lng: -123.1207 },
+        'beijing': { lat: 39.9042, lng: 116.4074 },
+        'shanghai': { lat: 31.2304, lng: 121.4737 },
+        'hong kong': { lat: 22.3193, lng: 114.1694 },
+        'seoul': { lat: 37.5665, lng: 126.9780 },
+        'bangkok': { lat: 13.7563, lng: 100.5018 },
+        'kuala lumpur': { lat: 3.1390, lng: 101.6869 },
+        'jakarta': { lat: -6.2088, lng: 106.8456 },
+        'manila': { lat: 14.5995, lng: 120.9842 },
+        'moscow': { lat: 55.7558, lng: 37.6176 },
+        'st petersburg': { lat: 59.9311, lng: 30.3609 },
+        'cairo': { lat: 30.0444, lng: 31.2357 },
+        'cape town': { lat: -33.9249, lng: 18.4241 },
+        'johannesburg': { lat: -26.2041, lng: 28.0473 },
+        'lagos': { lat: 6.5244, lng: 3.3792 },
+        'nairobi': { lat: -1.2921, lng: 36.8219 },
+        'rio de janeiro': { lat: -22.9068, lng: -43.1729 },
+        'sao paulo': { lat: -23.5558, lng: -46.6396 },
+        'buenos aires': { lat: -34.6118, lng: -58.3960 },
+        'mexico city': { lat: 19.4326, lng: -99.1332 },
+        'lima': { lat: -12.0464, lng: -77.0428 }
+      };
+      
+      const destLower = destination.toLowerCase().trim();
+      return cityCoordinates[destLower] || defaultCoordinates;
     };
     
-    if (itineraryData?.destination) {
-      // Add destination
+    // Set default coordinates based on destination
+    const destination = itineraryData?.destination || enhancedResponse?.itinerary?.destination;
+    if (destination) {
+      defaultCoordinates = getDestinationCoordinates(destination);
+    }
+
+    // Helper function to get coordinates from place details
+    const getCoordinatesFromPlace = (placeDetails: PlaceDetails | null, fallbackIndex: number = 0) => {
+      if (placeDetails?.gps_coordinates) {
+        return {
+          lat: placeDetails.gps_coordinates.latitude,
+          lng: placeDetails.gps_coordinates.longitude
+        };
+      }
+      // Fallback to destination-based coordinates with slight offset
+      return {
+        lat: defaultCoordinates.lat + (fallbackIndex * 0.01),
+        lng: defaultCoordinates.lng + (fallbackIndex * 0.01)
+      };
+    };
+
+    // Add destination
+    if (destination) {
       locations.push({
         id: 'destination',
-        name: itineraryData.destination,
+        name: destination,
         type: 'destination' as const,
-        position: mumbaiAreas['City Center'],
+        position: defaultCoordinates,
         description: 'Your travel destination'
       });
-      console.log('Added destination:', itineraryData.destination);
-      // Fire off a SERP lookup to refine destination center
-      resolveCoordsWithSerp(itineraryData.destination);
+      console.log('Added destination:', destination, 'at coordinates:', defaultCoordinates);
+    }
+
+    // Add places from enhanced response place details
+    if (enhancedResponse?.place_details) {
+      console.log('Processing enhanced place details...');
+      Object.entries(enhancedResponse.place_details).forEach(([placeId, placeDetails], index) => {
+        // Skip places with invalid data
+        if (!placeDetails.title || !placeDetails.title.trim()) {
+          console.log(`Skipping place with invalid title: ${placeId}`);
+          return;
+        }
+        
+        const position = getCoordinatesFromPlace(placeDetails, index);
+        
+        // Validate coordinates before adding
+        if (isNaN(position.lat) || isNaN(position.lng)) {
+          console.log(`Skipping place with invalid coordinates: ${placeDetails.title} at ${position}`);
+          return;
+        }
+        
+        locations.push({
+          id: placeId,
+          name: placeDetails.title,
+          type: (placeDetails.category === 'hotels' ? 'hotel' : 
+                 placeDetails.category === 'restaurants' ? 'restaurant' : 'activity') as 'hotel' | 'restaurant' | 'activity',
+          position,
+          description: placeDetails.description || placeDetails.address,
+          rating: placeDetails.rating,
+          price: placeDetails.price
+        });
+        
+        console.log(`Added enhanced place: ${placeDetails.title} at`, position);
+      });
     }
 
     // Add hotels with real coordinates based on their location
@@ -206,22 +330,13 @@ const ResultsPage: React.FC = () => {
       if (hotel.location) {
         console.log('Processing hotel location:', hotel.location);
         
-        // Find coordinates by searching both location and hotel name
-        const searchText = `${hotel.location || ''} ${hotel.name || ''}`.toLowerCase();
-        const areaKey = Object.keys(mumbaiAreas).find(key => {
-          const match = searchText.includes(key.toLowerCase());
-          console.log(`Checking if "${searchText}" contains "${key}": ${match}`);
-          return match;
-        });
+        // Use default coordinates with offset for hotels
+        const position = {
+          lat: defaultCoordinates.lat + (index * 0.01),
+          lng: defaultCoordinates.lng + (index * 0.01)
+        };
         
-        // SERP positioning removed - using default coordinates
-        const position = (
-          areaKey ? mumbaiAreas[areaKey as keyof typeof mumbaiAreas] : 
-          { lat: 19.0760 + (index * 0.01), lng: 72.8777 + (index * 0.01) }
-        );
-        
-        console.log(`Hotel "${hotel.name}" location "${hotel.location}" mapped to area "${areaKey}" at position:`, position);
-        // SERP coordinate resolution removed
+        console.log(`Hotel "${hotel.name}" location "${hotel.location}" positioned at:`, position);
         
         locations.push({
           id: `hotel-${index}`,
@@ -236,63 +351,21 @@ const ResultsPage: React.FC = () => {
       }
     });
 
-    // Add restaurants with real coordinates based on their location
-    restaurants.forEach((restaurant, index) => {
-      if (restaurant.location) {
-        console.log('Processing restaurant location:', restaurant.location);
-        
-        // Find coordinates by searching both location and restaurant name
-        const searchText = `${restaurant.location || ''} ${restaurant.name || ''}`.toLowerCase();
-        const areaKey = Object.keys(mumbaiAreas).find(key => {
-          const match = searchText.includes(key.toLowerCase());
-          console.log(`Checking if "${searchText}" contains "${key}": ${match}`);
-          return match;
-        });
-        
-        // SERP positioning removed - using default coordinates
-        const position = (
-          areaKey ? mumbaiAreas[areaKey as keyof typeof mumbaiAreas] : 
-          { lat: 19.0760 + (index * 0.015), lng: 72.8777 + (index * 0.015) }
-        );
-        
-        console.log(`Restaurant "${restaurant.name}" location "${restaurant.location}" mapped to area "${areaKey}" at position:`, position);
-        // SERP coordinate resolution removed
-        
-        locations.push({
-          id: `restaurant-${index}`,
-          name: restaurant.name,
-          type: 'restaurant' as const,
-          position,
-          description: restaurant.description,
-          rating: restaurant.rating,
-          price: restaurant.priceRange
-        });
-        console.log('Added restaurant:', restaurant.name, 'at position:', position);
-      }
-    });
+
 
     // Add activities from daily plans with real coordinates
     dailyPlans.forEach((plan, planIndex) => {
       plan.activities.forEach((activity, activityIndex) => {
-        if (activity.location && activity.location !== itineraryData?.destination) {
+        if (activity.location && activity.location !== destination) {
           console.log('Processing activity location:', activity.location);
           
-          // Find coordinates by searching location text
-          const searchText = activity.location.toLowerCase();
-          const areaKey = Object.keys(mumbaiAreas).find(key => {
-            const match = searchText.includes(key.toLowerCase());
-            console.log(`Checking if "${searchText}" contains "${key}": ${match}`);
-            return match;
-          });
+          // Use default coordinates with offset for activities
+          const position = {
+            lat: defaultCoordinates.lat + (planIndex * 0.02) + (activityIndex * 0.005),
+            lng: defaultCoordinates.lng + (planIndex * 0.02) + (activityIndex * 0.005)
+          };
           
-          // SERP positioning removed - using default coordinates
-          const position = (
-            areaKey ? mumbaiAreas[areaKey as keyof typeof mumbaiAreas] : 
-            { lat: 19.0760 + (planIndex * 0.02) + (activityIndex * 0.005), lng: 72.8777 + (planIndex * 0.02) + (activityIndex * 0.005) }
-          );
-          
-          console.log(`Activity "${activity.title}" location "${activity.location}" mapped to area "${areaKey}" at position:`, position);
-          // SERP coordinate resolution removed
+          console.log(`Activity "${activity.title}" location "${activity.location}" positioned at:`, position);
           
           locations.push({
             id: `activity-${planIndex}-${activityIndex}`,
@@ -350,7 +423,6 @@ const ResultsPage: React.FC = () => {
     return () => {
       // Reset flags when component unmounts or location changes
       hasGeneratedRef.current = false;
-      setRetryCount(0);
     };
   }, [location.state]);
 
@@ -369,13 +441,7 @@ const ResultsPage: React.FC = () => {
       return;
     }
     
-    if (retryCount >= 3) {
-      console.log('Max retry count reached. Not using mock data.');
-      setError('API calls failed after multiple attempts. Please try again later.');
-      return;
-    }
-    
-    console.log(`Attempt ${retryCount + 1} of 3`);
+    console.log(`Attempt 1 of 1`);
     
     console.log('Setting loading state and starting API call...');
     setIsLoading(true);
@@ -396,12 +462,9 @@ const ResultsPage: React.FC = () => {
       console.log('Sending API request:', apiRequest);
       console.log('API base URL:', import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1');
 
-      // Generate itinerary with timeout
-      const timeoutPromise = new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Request timeout')), 30000) // 30 second timeout
-      );
+      // Generate enhanced itinerary
       
-      console.log('About to call itineraryAPI.generateItinerary...');
+      console.log('About to call enhanced itineraryAPI...');
       
       // Fast health check (non-blocking)
       api.get('/health', { timeout: 5000 }).then((resp) => {
@@ -410,143 +473,115 @@ const ResultsPage: React.FC = () => {
         console.warn('Health check failed (non-blocking):', healthError?.message || healthError);
       });
       
-      let itineraryResponse;
+      let enhancedItineraryResponse;
       try {
-        // Rely on axios timeout in itineraryAPI (120s) instead of local 30s race
-        itineraryResponse = await itineraryAPI.generateItinerary(apiRequest) as any;
-      console.log('Raw itinerary response:', itineraryResponse);
-      console.log('Response keys:', Object.keys(itineraryResponse || {}));
-      console.log('Response structure check:');
-      console.log('- Has data property:', 'data' in (itineraryResponse || {}));
-      console.log('- Has daily_plans property:', 'daily_plans' in (itineraryResponse || {}));
-      console.log('- Data property:', itineraryResponse?.data);
-      console.log('- Daily plans property:', itineraryResponse?.daily_plans);
+        // Use the enhanced API with complete place metadata
+        enhancedItineraryResponse = await itineraryAPI.generateEnhancedItinerary(apiRequest);
+        console.log('Enhanced itinerary response received:', enhancedItineraryResponse);
+        console.log('Response keys:', Object.keys(enhancedItineraryResponse || {}));
+        console.log('Itinerary structure:', enhancedItineraryResponse?.itinerary);
+        console.log('Place details count:', Object.keys(enhancedItineraryResponse?.place_details || {}).length);
+        console.log('Additional places:', enhancedItineraryResponse?.additional_places);
+        console.log('Metadata:', enhancedItineraryResponse?.metadata);
       } catch (apiError: any) {
-        console.error('API call failed:', apiError);
+        console.error('Enhanced API call failed:', apiError);
         
-        // If it's a network/connection error, use mock data
+        // If it's a network/connection error, show error
         if (apiError.message?.includes('Network Error') || 
             apiError.message?.includes('timeout') ||
             apiError.code === 'ECONNABORTED') {
-          console.log('Network error detected. Not using mock data.');
-          setError('Network error while generating itinerary. Please check your connection and try again.');
+          console.log('Network error detected.');
+          setError('Network error while generating enhanced itinerary. Please check your connection and try again.');
           return;
         }
         
         throw apiError;
       }
       
-      // Handle the response structure from your backend
-      // Check if response is wrapped in a 'data' property or direct
-      const actualData = itineraryResponse?.data || itineraryResponse;
-      console.log('Using actual data:', actualData);
+      // Store the complete enhanced response
+      setEnhancedResponse(enhancedItineraryResponse);
+      setAllPlaceDetails(enhancedItineraryResponse?.place_details || {});
       
-      if (actualData && actualData.daily_plans !== undefined) {
+      // Handle the itinerary part of the response
+      const itineraryData = enhancedItineraryResponse?.itinerary;
+      console.log('Processing itinerary data:', itineraryData);
+      
+      if (itineraryData && itineraryData.daily_plans !== undefined) {
         // Check if we got actual itinerary data
-        if (actualData.daily_plans.length === 0) {
-          console.warn('Received empty daily_plans from AI');
+        if (itineraryData.daily_plans.length === 0) {
+          console.warn('Received empty daily_plans from enhanced API');
           throw new Error('AI could not generate a detailed itinerary. This might be due to complex requirements or server issues.');
         }
         
-        // Process daily plans and normalize the data
-        const normalizedDailyPlans = actualData.daily_plans.map((plan: any) => ({
+        // Process daily plans from enhanced API
+        const normalizedDailyPlans = itineraryData.daily_plans.map((plan: any) => ({
           ...plan,
-          activities: plan.activities.map((activity: any) => ({
-            ...activity,
-            cost: activity.cost || 0,
-            type: activity.type || 'sightseeing'
-          })),
-          meals: plan.meals.map((meal: any) => ({
-            ...meal,
-            priceRange: meal.priceRange || meal.price_range || '$$',
-            description: meal.description || `Great ${meal.cuisine} cuisine`,
-            location: meal.location || actualData.destination
-          }))
+          activities: plan.activities.map((activity: any) => {
+            // Get place details for this activity
+            const placeDetails = enhancedItineraryResponse?.place_details?.[activity.place_id];
+            return {
+              ...activity,
+              cost: activity.estimated_cost || 0,
+              type: activity.type || 'sightseeing',
+              location: placeDetails?.address || activity.location || itineraryData.destination,
+              description: placeDetails?.description || activity.title
+            };
+          }),
+          meals: plan.meals?.map((meal: any) => {
+            // Get place details for this meal
+            const placeDetails = enhancedItineraryResponse?.place_details?.[meal.place_id];
+            return {
+              ...meal,
+              priceRange: meal.price_range || '$$',
+              description: placeDetails?.description || `Great ${meal.cuisine} cuisine`,
+              location: placeDetails?.address || meal.location || itineraryData.destination,
+              rating: placeDetails?.rating || 4.0
+            };
+          }) || []
         }));
         
         setDailyPlans(normalizedDailyPlans);
         
-        // Set itinerary summary
+        // Set itinerary summary from enhanced response
         setItinerarySummary({
-          total_days: actualData.total_days || data.days,
-          budget_estimate: actualData.budget_estimate || 0,
-          destination: actualData.destination || data.destination
+          total_days: itineraryData.total_days || data.days,
+          budget_estimate: itineraryData.budget_estimate || 0,
+          destination: itineraryData.destination || data.destination
         });
         
-        // Update recommendations if available
-        if (actualData.recommendations) {
-          if (actualData.recommendations.hotels) {
-            // Normalize hotel data from backend
-            const normalizedHotels = actualData.recommendations.hotels.map((hotel: any) => ({
-              ...hotel,
-              price: hotel.price || 100, // Default price if not provided
-              priceRange: hotel.price_range || '$$',
-              amenities: hotel.amenities || ['WiFi'],
-              location: hotel.location || actualData.destination,
-              description: hotel.description || `Great hotel in ${actualData.destination}`
-            }));
-            setHotels(normalizedHotels);
-          }
-          if (actualData.recommendations.restaurants) {
-            // Normalize restaurant data from backend
-            const normalizedRestaurants = actualData.recommendations.restaurants.map((restaurant: any) => ({
-              ...restaurant,
-              priceRange: restaurant.price_range || restaurant.priceRange || '$$',
-              description: restaurant.description || `Excellent ${restaurant.cuisine} cuisine`,
-              location: restaurant.location || actualData.destination
-            }));
-            setRestaurants(normalizedRestaurants);
-          }
-          if (actualData.recommendations.tips) {
-            setTips(actualData.recommendations.tips);
-          }
+        // Convert accommodation suggestions to legacy hotel format for compatibility
+        if (itineraryData.accommodation_suggestions) {
+          const hotelsFromAccommodation = itineraryData.accommodation_suggestions.map((acc: any) => {
+            const placeDetails = enhancedItineraryResponse?.place_details?.[acc.place_id];
+            return {
+              name: acc.name,
+              rating: placeDetails?.rating || 4.0,
+              price_range: acc.price_range,
+              amenities: ['WiFi'], // Default amenities
+              location: placeDetails?.address || acc.location,
+              description: placeDetails?.description || `Great ${acc.type} in ${itineraryData.destination}`,
+              place_id: acc.place_id
+            };
+          });
+          setHotels(hotelsFromAccommodation);
         }
         
-        // Set weather info if available
-        if (actualData.weather_info) {
-          setWeatherInfo(actualData.weather_info);
+        // Set travel tips
+        if (itineraryData.travel_tips) {
+          setTips(itineraryData.travel_tips);
         }
         
         // Mark as successfully generated
         hasGeneratedRef.current = true;
-        console.log('✅ Successfully processed itinerary response');
+        console.log('✅ Successfully processed enhanced itinerary response');
       } else {
-        console.error('❌ Invalid response format. Expected daily_plans but got:', {
-          hasData: !!itineraryResponse?.data,
-          hasDirectDailyPlans: !!itineraryResponse?.daily_plans,
-          actualDataKeys: Object.keys(actualData || {}),
-          actualData: actualData
+        console.error('❌ Invalid enhanced response format. Expected daily_plans but got:', {
+          hasItinerary: !!enhancedItineraryResponse?.itinerary,
+          hasPlaceDetails: !!enhancedItineraryResponse?.place_details,
+          itineraryKeys: Object.keys(itineraryData || {}),
+          itineraryData: itineraryData
         });
-        throw new Error('Invalid response format from server - missing daily_plans');
-      }
-
-      // Only fetch additional hotels/restaurants if we don't have them from the itinerary
-      if (!actualData.recommendations?.hotels || actualData.recommendations.hotels.length === 0) {
-        setHotelsLoading(true);
-        try {
-          const hotelResponse = await hotelAPI.getPopularHotels(data.destination);
-          if (hotelResponse.success) {
-            setHotels(hotelResponse.data || []);
-          }
-        } catch (hotelError) {
-          console.warn('Could not fetch hotels:', hotelError);
-        } finally {
-          setHotelsLoading(false);
-        }
-      }
-
-      if (!actualData.recommendations?.restaurants || actualData.recommendations.restaurants.length === 0) {
-        setRestaurantsLoading(true);
-        try {
-          const restaurantResponse = await restaurantAPI.getPopularRestaurants(data.destination);
-          if (restaurantResponse.success) {
-            setRestaurants(restaurantResponse.data || []);
-          }
-        } catch (restaurantError) {
-          console.warn('Could not fetch restaurants:', restaurantError);
-        } finally {
-          setRestaurantsLoading(false);
-        }
+        throw new Error('Invalid enhanced response format from server - missing itinerary data');
       }
 
     } catch (error) {
@@ -554,118 +589,12 @@ const ResultsPage: React.FC = () => {
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate itinerary. Please try again.';
       setError(errorMessage);
       
-      // Increment retry count for next attempt
-      setRetryCount(prev => prev + 1);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const generateDayActivities = (day: number): Activity[] => {
-    const activities: Activity[] = [];
-    
-    if (day === 1) {
-      activities.push(
-        {
-          time: '09:00',
-          title: 'Arrival & Hotel Check-in',
-          description: 'Check into your hotel and freshen up',
-          location: 'Grand Hotel Central',
-          duration: '1 hour',
-          type: 'hotel'
-        },
-        {
-          time: '10:30',
-          title: 'City Orientation Walk',
-          description: 'Explore the historic city center and main landmarks',
-          location: 'City Center',
-          duration: '2 hours',
-          cost: 25,
-          type: 'sightseeing'
-        },
-        {
-          time: '14:00',
-          title: 'Local Market Visit',
-          description: 'Experience local culture and cuisine at the central market',
-          location: 'Downtown',
-          duration: '1.5 hours',
-          cost: 15,
-          type: 'sightseeing'
-        }
-      );
-    } else if (day === 2) {
-      activities.push(
-        {
-          time: '08:00',
-          title: 'Museum Visit',
-          description: 'Explore the famous art museum and cultural exhibits',
-          location: 'Colaba',
-          duration: '3 hours',
-          cost: 30,
-          type: 'sightseeing'
-        },
-        {
-          time: '14:00',
-          title: 'Beach Walk',
-          description: 'Relax and enjoy the beautiful beach views',
-          location: 'Juhu',
-          duration: '2 hours',
-          cost: 10,
-          type: 'sightseeing'
-        }
-      );
-    } else if (day === 3) {
-      activities.push(
-        {
-          time: '09:00',
-          title: 'Bandra Exploration',
-          description: 'Visit Bandra Fort and explore the trendy neighborhood',
-          location: 'Bandra',
-          duration: '4 hours',
-          cost: 20,
-          type: 'sightseeing'
-        },
-        {
-          time: '14:00',
-          title: 'Shopping at Linking Road',
-          description: 'Shop for souvenirs and local products',
-          location: 'Bandra',
-          duration: '2 hours',
-          cost: 0,
-          type: 'sightseeing'
-        }
-      );
-    } else {
-      activities.push(
-        {
-          time: '09:00',
-          title: 'Day Trip to Elephanta Caves',
-          description: 'Visit the historic cave temples and enjoy boat ride',
-          location: 'Outskirts',
-          duration: '6 hours',
-          cost: 50,
-          type: 'sightseeing'
-        }
-      );
-    }
-    
-    return activities;
-  };
 
-  const generateDayMeals = (day: number): Restaurant[] => {
-    const restaurantPool = [
-      { name: 'Local Bistro', cuisine: 'Local', rating: 4.5, priceRange: '$$', description: 'Authentic local dishes', location: 'Downtown' },
-      { name: 'Seafood Grill', cuisine: 'Seafood', rating: 4.7, priceRange: '$$$', description: 'Fresh seafood', location: 'Waterfront' },
-      { name: 'Traditional Cafe', cuisine: 'Traditional', rating: 4.3, priceRange: '$', description: 'Cozy traditional cafe', location: 'Old Town' },
-      { name: 'Fine Dining', cuisine: 'International', rating: 4.8, priceRange: '$$$$', description: 'Upscale dining experience', location: 'City Center' }
-    ];
-    
-    return [
-      restaurantPool[day % restaurantPool.length],
-      restaurantPool[(day + 1) % restaurantPool.length],
-      restaurantPool[(day + 2) % restaurantPool.length]
-    ];
-  };
 
   if (!itineraryData) {
     return null;
@@ -758,11 +687,6 @@ const ResultsPage: React.FC = () => {
               {error.includes('timeout') ? 'Request Timed Out' : 'Something went wrong'}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-lg mx-auto text-lg">{error}</p>
-            {retryCount > 0 && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                Attempt {retryCount} of 3
-              </p>
-            )}
             
             {error.includes('timeout') && (
               <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-6 mb-8 max-w-lg mx-auto">
@@ -772,20 +696,11 @@ const ResultsPage: React.FC = () => {
               </div>
             )}
             
-            {retryCount >= 3 && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-8 max-w-lg mx-auto">
-                <p className="text-red-800 dark:text-red-200">
-                  ⚠️ <strong>Maximum retries reached:</strong> Please try again later or adjust your request.
-                </p>
-              </div>
-            )}
-            
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => {
                   if (itineraryData) {
                     hasGeneratedRef.current = false;
-                    setRetryCount(0); // Reset retry count
                     generateRealItinerary(itineraryData);
                   }
                 }}
@@ -803,8 +718,8 @@ const ResultsPage: React.FC = () => {
               <div className="flex space-x-1 bg-white dark:bg-gray-800 p-1 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                 {[
                   { id: 'itinerary', label: 'Itinerary', icon: '🗓️' },
-                  { id: 'hotels', label: 'Accommodations', icon: '🏨' },
-                  { id: 'restaurants', label: 'Dining', icon: '🍽️' }
+                  { id: 'additional', label: 'Explore More', icon: '✨' },
+                  { id: 'map', label: 'Map View', icon: '🗺️' }
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -863,21 +778,7 @@ const ResultsPage: React.FC = () => {
 
               {activeTab === 'itinerary' && (
                 <>
-                  {/* Weather Information */}
-                  {weatherInfo && (
-                    <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg border border-gray-200 dark:border-gray-700 w-full">
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                        🌤️ Weather Information
-                      </h3>
-                      <div className="text-gray-600 dark:text-gray-400">
-                        {typeof weatherInfo === 'string' ? (
-                          <p className="text-lg">{weatherInfo}</p>
-                        ) : (
-                          <pre className="text-sm whitespace-pre-wrap bg-gray-50 dark:bg-gray-700 p-4 rounded-xl">{JSON.stringify(weatherInfo, null, 2)}</pre>
-                        )}
-                      </div>
-                    </div>
-                  )}
+
 
                   {/* Travel Tips */}
                   {tips.length > 0 && (
@@ -951,43 +852,55 @@ const ResultsPage: React.FC = () => {
 
                                            {/* Activities Timeline */}
                      <div className="space-y-6">
-                       {plan.activities.map((activity, index) => (
-                        <div 
-                          key={index} 
-                          className="flex items-start space-x-6 p-6 bg-gray-50 dark:bg-gray-700/50 rounded-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600/50 transition-all duration-200 transform hover:scale-[1.02]"
-                          onMouseEnter={(e) => handleMouseEnter(e, activity, 'activity')}
-                          onMouseLeave={handleMouseLeave}
-                        >
-                           <div className="flex-shrink-0 w-16 h-16 bg-blue-100 dark:bg-blue-900/50 rounded-2xl flex items-center justify-center">
-                             <Clock className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-                           </div>
-                           <div className="flex-1">
-                             <div className="flex items-center justify-between mb-3">
-                               <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{activity.title}</h4>
-                               <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium">
-                                 {activity.time}
-                               </span>
+                       {plan.activities.map((activity, index) => {
+                         // Try to get enhanced place details for this activity
+                         // For enhanced API response, activities have place_id
+                         const enhancedPlaceDetails = enhancedResponse?.place_details?.[(activity as any).place_id];
+                         
+                         return (
+                           <div 
+                             key={index} 
+                             className="flex items-start space-x-6 p-6 bg-gray-50 dark:bg-gray-700/50 rounded-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600/50 transition-all duration-200 transform hover:scale-[1.02]"
+                             onMouseEnter={(e) => {
+                               if (enhancedPlaceDetails) {
+                                 handlePlaceHover(e, enhancedPlaceDetails, 'activity');
+                               } else {
+                                 handleMouseEnter(e, activity, 'activity');
+                               }
+                             }}
+                             onMouseLeave={enhancedPlaceDetails ? handlePlaceHoverLeave : handleMouseLeave}
+                           >
+                                                        <div className="flex-shrink-0 w-16 h-16 bg-blue-100 dark:bg-blue-900/50 rounded-2xl flex items-center justify-center">
+                               <Clock className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                              </div>
-                             <p className="text-gray-600 dark:text-gray-400 mb-4">{activity.description}</p>
-                             <div className="flex items-center space-x-6 text-sm text-gray-500 dark:text-gray-400">
-                               <span className="flex items-center space-x-2">
-                                 <MapPin className="w-4 h-4" />
-                                 <span>{activity.location}</span>
-                               </span>
-                               <span className="flex items-center space-x-2">
-                                 <Clock className="w-4 h-4" />
-                                 <span>{activity.duration}</span>
-                               </span>
-                               {activity.cost && (
-                                 <span className="flex items-center space-x-2 text-green-600 dark:text-green-400 font-medium">
-                                   <DollarSign className="w-4 h-4" />
-                                   <span>${activity.cost}</span>
+                             <div className="flex-1">
+                               <div className="flex items-center justify-between mb-3">
+                                 <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{activity.title}</h4>
+                                 <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium">
+                                   {activity.time}
                                  </span>
-                               )}
+                               </div>
+                               <p className="text-gray-600 dark:text-gray-400 mb-4">{activity.description}</p>
+                               <div className="flex items-center space-x-6 text-sm text-gray-500 dark:text-gray-400">
+                                 <span className="flex items-center space-x-2">
+                                   <MapPin className="w-4 h-4" />
+                                   <span>{activity.location}</span>
+                                 </span>
+                                 <span className="flex items-center space-x-2">
+                                   <Clock className="w-4 h-4" />
+                                   <span>{activity.duration}</span>
+                                 </span>
+                                 {activity.cost && (
+                                   <span className="flex items-center space-x-2 text-green-600 dark:text-green-400 font-medium">
+                                     <DollarSign className="w-4 h-4" />
+                                     <span>${activity.cost}</span>
+                                   </span>
+                                 )}
+                               </div>
                              </div>
                            </div>
-                         </div>
-                       ))}
+                         );
+                       })}
                      </div>
 
                                            {/* Transport Information */}
@@ -1032,12 +945,21 @@ const ResultsPage: React.FC = () => {
                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                          {plan.meals.map((restaurant, index) => {
                            const mealTimes = ['Breakfast', 'Lunch', 'Dinner'];
+                           // Try to get enhanced place details for this restaurant
+                           const enhancedPlaceDetails = enhancedResponse?.place_details?.[(restaurant as any).place_id];
+                           
                            return (
                              <div 
                                key={index} 
                                className="p-5 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-2xl cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-all duration-200 transform hover:scale-[1.02]"
-                               onMouseEnter={(e) => handleMouseEnter(e, restaurant, 'restaurant')}
-                               onMouseLeave={handleMouseLeave}
+                               onMouseEnter={(e) => {
+                                 if (enhancedPlaceDetails) {
+                                   handlePlaceHover(e, enhancedPlaceDetails, 'restaurant');
+                                 } else {
+                                   handleMouseEnter(e, restaurant, 'restaurant');
+                                 }
+                               }}
+                               onMouseLeave={enhancedPlaceDetails ? handlePlaceHoverLeave : handleMouseLeave}
                              >
                                <div className="flex items-center justify-between mb-3">
                                  <h5 className="font-semibold text-gray-900 dark:text-white">{mealTimes[index]}</h5>
@@ -1100,181 +1022,28 @@ const ResultsPage: React.FC = () => {
                 </>
               )}
 
-              {activeTab === 'hotels' && (
-                <>
-                  {hotelsLoading ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="text-center">
-                        <div className="loading-spinner mx-auto mb-4"></div>
-                        <p className="text-gray-300">Loading hotels...</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                                           {/* Hotels Summary */}
-                     <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg border border-gray-200 dark:border-gray-700 mb-6">
-                       <div className="flex items-center justify-between">
-                         <div>
-                           <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">🏨 Hotel Recommendations</h3>
-                           <p className="text-sm text-gray-600 dark:text-gray-300">
-                             {hotels.length} hotel{hotels.length !== 1 ? 's' : ''} found for {itineraryData?.destination}
-                           </p>
-                         </div>
-                         <div className="text-right">
-                           <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                             {hotels.length > 0 ? 
-                               Math.round(hotels.reduce((sum, hotel) => sum + (hotel.rating || 0), 0) / hotels.length * 10) / 10 
-                               : 0
-                             }
-                           </div>
-                           <div className="text-sm text-gray-600 dark:text-gray-300">Average Rating</div>
-                         </div>
-                       </div>
-                     </div>
-
-                                     {/* Hotels Grid */}
-                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                     {hotels.length > 0 ? (
-                       hotels.map((hotel, index) => (
-                         <div 
-                           key={index} 
-                           className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-[1.02]"
-                           onMouseEnter={(e) => handleMouseEnter(e, hotel, 'hotel')}
-                           onMouseLeave={handleMouseLeave}
-                         >
-                           <div className="flex items-start justify-between mb-4">
-                             <h4 className="font-bold text-gray-900 dark:text-white text-lg">{hotel.name}</h4>
-                             <div className="flex items-center text-amber-500">
-                               <Star className="w-4 h-4 fill-current mr-1" />
-                               <span className="text-sm font-medium">{hotel.rating}</span>
-                             </div>
-                           </div>
-                           <p className="text-gray-600 dark:text-gray-400 mb-4">{hotel.description}</p>
-                           <div className="space-y-3 text-sm">
-                             <div className="flex items-center text-gray-500 dark:text-gray-400">
-                               <MapPin className="w-4 h-4 mr-2" />
-                               {hotel.location}
-                             </div>
-                             {hotel.price && (
-                               <div className="flex items-center text-green-600 dark:text-green-400 font-medium">
-                                 <DollarSign className="w-4 h-4 mr-2" />
-                                 ${hotel.price}/night
-                               </div>
-                             )}
-                           </div>
-                           {hotel.amenities && hotel.amenities.length > 0 && (
-                             <div className="flex flex-wrap gap-2 mt-4">
-                               {hotel.amenities.slice(0, 3).map((amenity, idx) => (
-                                 <span key={idx} className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-300 rounded-full font-medium">
-                                   {amenity}
-                                 </span>
-                               ))}
-                             </div>
-                           )}
-                         </div>
-                       ))
-                     ) : (
-                       <div className="col-span-full text-center py-16 text-gray-500 dark:text-gray-400">
-                         <Hotel className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                         <p className="text-lg">No accommodations found for this destination.</p>
-                       </div>
-                     )}
-                   </div>
-                  </>
-                  )}
-                </>
+              {/* Additional Places Tab */}
+              {activeTab === 'additional' && enhancedResponse && (
+                <AdditionalPlaces 
+                  additionalPlaces={enhancedResponse.additional_places}
+                  onAddToItinerary={handleAddToItinerary}
+                />
               )}
 
-              {activeTab === 'restaurants' && (
-                <>
-                  {restaurantsLoading ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="text-center">
-                        <div className="loading-spinner mx-auto mb-4"></div>
-                        <p className="text-gray-300">Loading restaurants...</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                                           {/* Restaurants Summary */}
-                     <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg border border-gray-200 dark:border-gray-700 mb-6">
-                       <div className="flex items-center justify-between">
-                         <div>
-                           <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">🍽️ Restaurant Recommendations</h3>
-                           <p className="text-sm text-gray-600 dark:text-gray-300">
-                             {restaurants.length} restaurant{restaurants.length !== 1 ? 's' : ''} found for {itineraryData?.destination}
-                           </p>
-                         </div>
-                         <div className="text-right">
-                           <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                             {restaurants.length > 0 ? 
-                               Math.round(restaurants.reduce((sum, restaurant) => sum + (restaurant.rating || 0), 0) / restaurants.length * 10) / 10 
-                               : 0
-                             }
-                           </div>
-                           <div className="text-sm text-gray-600 dark:text-gray-300">Average Rating</div>
-                         </div>
-                       </div>
-                     </div>
-
-                                     {/* Cuisine Filter */}
-                   {restaurants.length > 0 && (
-                     <div className="mb-6">
-                       <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Filter by Cuisine</h4>
-                       <div className="flex flex-wrap gap-2">
-                         {Array.from(new Set(restaurants.map(r => r.cuisine))).map((cuisine) => (
-                           <button
-                             key={cuisine}
-                             className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                           >
-                             {cuisine}
-                           </button>
-                         ))}
-                       </div>
-                     </div>
-                   )}
-
-                                     {/* Restaurants Grid */}
-                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                     {restaurants.length > 0 ? (
-                       restaurants.map((restaurant, index) => (
-                         <div 
-                           key={index} 
-                           className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-[1.02]"
-                           onMouseEnter={(e) => handleMouseEnter(e, restaurant, 'restaurant')}
-                           onMouseLeave={handleMouseLeave}
-                         >
-                           <div className="flex items-start justify-between mb-4">
-                             <h4 className="font-bold text-gray-900 dark:text-white text-lg">{restaurant.name}</h4>
-                             <div className="flex items-center text-amber-500">
-                               <Star className="w-4 h-4 fill-current mr-1" />
-                               <span className="text-sm font-medium">{restaurant.rating}</span>
-                             </div>
-                           </div>
-                           <p className="text-gray-600 dark:text-gray-400 mb-4">{restaurant.description}</p>
-                           <div className="space-y-3 text-sm">
-                             <div className="flex items-center text-gray-500 dark:text-gray-400">
-                               <MapPin className="w-4 h-4 mr-2" />
-                               {restaurant.location}
-                             </div>
-                             <div className="flex items-center justify-between">
-                               <span className="mr-2">🍽️</span>
-                               {restaurant.cuisine} • {restaurant.priceRange || restaurant.price_range || '$$'}
-                             </div>
-                           </div>
-                         </div>
-                       ))
-                     ) : (
-                       <div className="col-span-full text-center py-16 text-gray-500 dark:text-gray-400">
-                         <Utensils className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                         <p className="text-lg">No restaurants found for this destination.</p>
-                       </div>
-                     )}
-                   </div>
-                  </>
-                  )}
-                </>
+              {/* Map Tab - Full width map */}
+              {activeTab === 'map' && (
+                <div className="bg-white rounded-3xl shadow-lg border border-gray-200 overflow-hidden">
+                  <div className="h-96 lg:h-[600px]">
+                    {(() => {
+                      const locations = extractLocations();
+                      console.log('Map tab - locations:', locations);
+                      return <GoogleMaps locations={locations} />;
+                    })()}
+                  </div>
+                </div>
               )}
+
+
               </div>
 
               {/* Right Side - Google Maps (1/3) */}
@@ -1300,7 +1069,6 @@ const ResultsPage: React.FC = () => {
                       console.log('Passing locations to GoogleMaps:', locations);
                       console.log('itineraryData:', itineraryData);
                       console.log('hotels:', hotels);
-                      console.log('restaurants:', restaurants);
                       console.log('dailyPlans:', dailyPlans);
                       console.log('Map container dimensions:', { height: 'h-full', minHeight: '600px' });
                       
@@ -1311,7 +1079,7 @@ const ResultsPage: React.FC = () => {
                           id: 'fallback-destination',
                           name: itineraryData.destination,
                           type: 'destination' as const,
-                          position: { lat: 19.0760, lng: 72.8777 },
+                          position: { lat: 40.7128, lng: -74.0060 },
                           description: 'Your travel destination'
                         };
                         return <GoogleMaps locations={[fallbackLocation]} />;
@@ -1324,7 +1092,7 @@ const ResultsPage: React.FC = () => {
                           id: 'test-location',
                           name: 'Test Location',
                           type: 'destination' as const,
-                          position: { lat: 19.0760, lng: 72.8777 },
+                          position: { lat: 40.7128, lng: -74.0060 },
                           description: 'Test location to verify map functionality'
                         };
                         return <GoogleMaps locations={[testLocation]} />;
@@ -1336,9 +1104,9 @@ const ResultsPage: React.FC = () => {
                         console.log('No locations at all, creating default marker');
                         const defaultLocation = {
                           id: 'default-marker',
-                          name: 'Mumbai Center',
+                          name: 'Default Center',
                           type: 'destination' as const,
-                          position: { lat: 19.0760, lng: 72.8777 },
+                          position: { lat: 40.7128, lng: -74.0060 },
                           description: 'Default location marker'
                         };
                         locationsWithTest.push(defaultLocation);
@@ -1511,6 +1279,29 @@ const ResultsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Enhanced Hover Popup */}
+      <EnhancedHoverPopup
+        place={hoveredPlace}
+        position={hoverPosition}
+        type={hoveredPlaceType}
+        isVisible={isHoverPopupVisible}
+        onMouseEnter={() => {
+          if (hoverTimeoutRef.current) {
+            clearTimeout(hoverTimeoutRef.current);
+          }
+        }}
+        onMouseLeave={handlePlaceHoverLeave}
+      />
+
+      {/* Place Details Modal */}
+      <PlaceDetailsModal
+        place={selectedPlace}
+        isOpen={isPlaceModalOpen}
+        onClose={() => setIsPlaceModalOpen(false)}
+        onAddToItinerary={handleAddToItinerary}
+        showAddButton={true}
+      />
     </div>
   );
 };

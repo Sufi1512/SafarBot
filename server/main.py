@@ -105,8 +105,13 @@ async def root():
             "airport_suggestions": "/api/v1/flights/airports",
             "chat": "/api/v1/chat",
             "chat_history": "/api/v1/chat/history",
+            "generate_complete_itinerary": "/api/v1/generate-complete-itinerary",
             "generate_itinerary": "/api/v1/generate-itinerary",
-            "predict_prices": "/api/v1/predict-prices"
+            "predict_prices": "/api/v1/predict-prices",
+            "place_details": "/api/v1/places/details",
+            "serp_place_details": "/api/v1/places/serp/details",
+            "serp_place_search": "/api/v1/places/serp/search",
+            "additional_places": "/api/v1/places/additional"
         }
     }
 

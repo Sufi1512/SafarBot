@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Mail, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import ModernButton from '../components/ui/ModernButton';
 import ModernCard from '../components/ui/ModernCard';
+import logoImage from '../asset/images/logo.png';
 
 const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -85,8 +86,12 @@ const ForgotPasswordPage: React.FC = () => {
         >
           <ModernCard variant="glass" padding="xl" shadow="glow" className="backdrop-blur-xl">
             <div className="text-center mb-8">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
-                <Mail className="w-8 h-8 text-white" />
+              <div className="mx-auto mb-4">
+                <img 
+                  src={logoImage} 
+                  alt="SafarBot Logo" 
+                  className="w-48 h-48 object-contain"
+                />
               </div>
               <h2 className="text-3xl font-bold text-white">Reset Password</h2>
               <p className="text-white/80 mt-2">

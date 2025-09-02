@@ -34,7 +34,7 @@ class PlacesSearchTool:
             max_results: Maximum number of results to return
             
         Returns:
-            List of hotel information dictionaries
+            List of ALL raw SERP API data for hotels (unfiltered, unprocessed)
         """
         if not self.api_key:
             print(f"         🔄 Using fallback hotel data for {location}")
@@ -52,23 +52,29 @@ class PlacesSearchTool:
                 "engine": "google_maps",
                 "type": "search",
                 "ll": "@40.7589,-73.9851,15.1z",  # Default to NYC, will be updated by location
-                "num": max_results
+                "num": max_results,
+                "hl": "en"  # Language parameter
             })
             
             results = search.get_dict()
             
-            hotels = []
-            for place in results.get("local_results", []):
-                if self._is_hotel(place) and place.get("rating", 0) >= rating_min:
-                    hotel_info = self._extract_hotel_info(place, location)
-                    if hotel_info:
-                        hotels.append(hotel_info)
-                        
-                if len(hotels) >= max_results:
-                    break
+            # Debug: Check what SERP API returned
+            print(f"         🔍 SERP API response keys: {list(results.keys())}")
+            local_results = results.get("local_results", [])
+            print(f"         📊 Found {len(local_results)} local results")
             
-            logger.info(f"Found {len(hotels)} hotels in {location}")
-            return hotels
+            # Debug: Check first result structure
+            if local_results and len(local_results) > 0:
+                first_place = local_results[0]
+                print(f"         🔍 First place keys: {list(first_place.keys())}")
+                if 'thumbnail' in first_place or 'serpapi_thumbnail' in first_place:
+                    print(f"         🖼️  First place has thumbnail: {first_place.get('thumbnail', 'N/A')}")
+                else:
+                    print(f"         📷 First place has NO thumbnail field")
+            
+            # Return ALL raw SERP data without filtering
+            print(f"         📤 Returning ALL {len(local_results)} raw SERP results for hotels")
+            return local_results
             
         except Exception as e:
             logger.error(f"Error searching hotels: {str(e)}")
@@ -86,7 +92,7 @@ class PlacesSearchTool:
             max_results: Maximum number of results to return
             
         Returns:
-            List of restaurant information dictionaries
+            List of ALL raw SERP API data for restaurants (unfiltered, unprocessed)
         """
         if not self.api_key:
             return self._get_fallback_restaurants(location, cuisine_type, max_results)
@@ -101,23 +107,31 @@ class PlacesSearchTool:
                 "api_key": self.api_key,
                 "engine": "google_maps",
                 "type": "search",
-                "num": max_results * 2  # Get more to filter
+                "num": max_results * 2,  # Get more to filter
+                "hl": "en"  # Language parameter
             })
             
             results = search.get_dict()
             
-            restaurants = []
-            for place in results.get("local_results", []):
-                if self._is_restaurant(place) and place.get("rating", 0) >= rating_min:
-                    restaurant_info = self._extract_restaurant_info(place, location)
-                    if restaurant_info:
-                        restaurants.append(restaurant_info)
-                        
-                if len(restaurants) >= max_results:
-                    break
+            # Debug: Check what SERP API returned
+            print(f"         🔍 SERP API response keys: {list(results.keys())}")
+            local_results = results.get("local_results", [])
+            print(f"         📊 Found {len(local_results)} local results")
             
-            logger.info(f"Found {len(restaurants)} restaurants in {location}")
-            return restaurants
+            # Debug: Check first result structure
+            if local_results and len(local_results) > 0:
+                first_place = local_results[0]
+                print(f"         🔍 First place keys: {list(first_place.keys())}")
+                if 'thumbnail' in first_place or 'serpapi_thumbnail' in first_place:
+                    print(f"         🖼️  First place has thumbnail: {first_place.get('thumbnail', 'N/A')}")
+                else:
+                    print(f"         📷 First place has NO thumbnail field")
+            
+            # Return ALL raw SERP data without filtering
+            print(f"         📤 Returning ALL {len(local_results)} raw SERP results for restaurants")
+            return local_results
+            
+            return local_results
             
         except Exception as e:
             logger.error(f"Error searching restaurants: {str(e)}")
@@ -134,7 +148,7 @@ class PlacesSearchTool:
             max_results: Maximum number of results to return
             
         Returns:
-            List of cafe information dictionaries
+            List of ALL raw SERP API data for cafes (unfiltered, unprocessed)
         """
         if not self.api_key:
             return self._get_fallback_cafes(location, max_results)
@@ -145,23 +159,31 @@ class PlacesSearchTool:
                 "api_key": self.api_key,
                 "engine": "google_maps",
                 "type": "search",
-                "num": max_results * 2
+                "num": max_results * 2,
+                "hl": "en"  # Language parameter
             })
             
             results = search.get_dict()
             
-            cafes = []
-            for place in results.get("local_results", []):
-                if self._is_cafe(place) and place.get("rating", 0) >= rating_min:
-                    cafe_info = self._extract_cafe_info(place, location)
-                    if cafe_info:
-                        cafes.append(cafe_info)
-                        
-                if len(cafes) >= max_results:
-                    break
+            # Debug: Check what SERP API returned
+            print(f"         🔍 SERP API response keys: {list(results.keys())}")
+            local_results = results.get("local_results", [])
+            print(f"         📊 Found {len(local_results)} local results")
             
-            logger.info(f"Found {len(cafes)} cafes in {location}")
-            return cafes
+            # Debug: Check first result structure
+            if local_results and len(local_results) > 0:
+                first_place = local_results[0]
+                print(f"         🔍 First place keys: {list(first_place.keys())}")
+                if 'thumbnail' in first_place or 'serpapi_thumbnail' in first_place:
+                    print(f"         🖼️  First place has thumbnail: {first_place.get('thumbnail', 'N/A')}")
+                else:
+                    print(f"         📷 First place has NO thumbnail field")
+            
+            # Return ALL raw SERP data without filtering
+            print(f"         📤 Returning ALL {len(local_results)} raw SERP results for cafes")
+            return local_results
+            
+            return local_results
             
         except Exception as e:
             logger.error(f"Error searching cafes: {str(e)}")
@@ -178,7 +200,7 @@ class PlacesSearchTool:
             max_results: Maximum number of results to return
             
         Returns:
-            List of attraction information dictionaries
+            List of ALL raw SERP API data for attractions (unfiltered, unprocessed)
         """
         if not self.api_key:
             return self._get_fallback_attractions(location, interests, max_results)
@@ -196,23 +218,31 @@ class PlacesSearchTool:
                 "api_key": self.api_key,
                 "engine": "google_maps",
                 "type": "search",
-                "num": max_results * 2
+                "num": max_results * 2,
+                "hl": "en"  # Language parameter
             })
             
             results = search.get_dict()
             
-            attractions = []
-            for place in results.get("local_results", []):
-                if self._is_attraction(place):
-                    attraction_info = self._extract_attraction_info(place, location)
-                    if attraction_info:
-                        attractions.append(attraction_info)
-                        
-                if len(attractions) >= max_results:
-                    break
+            # Debug: Check what SERP API returned
+            print(f"         🔍 SERP API response keys: {list(results.keys())}")
+            local_results = results.get("local_results", [])
+            print(f"         📊 Found {len(local_results)} local results")
             
-            logger.info(f"Found {len(attractions)} attractions in {location}")
-            return attractions
+            # Debug: Check first result structure
+            if local_results and len(local_results) > 0:
+                first_place = local_results[0]
+                print(f"         🔍 First place keys: {list(first_place.keys())}")
+                if 'thumbnail' in first_place or 'serpapi_thumbnail' in first_place:
+                    print(f"         🖼️  First place has thumbnail: {first_place.get('thumbnail', 'N/A')}")
+                else:
+                    print(f"         📷 First place has NO thumbnail field")
+            
+            # Return ALL raw SERP data without filtering
+            print(f"         📤 Returning ALL {len(local_results)} raw SERP results for attractions")
+            return local_results
+            
+            return local_results
             
         except Exception as e:
             logger.error(f"Error searching attractions: {str(e)}")
@@ -265,6 +295,18 @@ class PlacesSearchTool:
     
     def _extract_hotel_info(self, place: Dict[str, Any], location: str) -> Dict[str, Any]:
         """Extract hotel information from SERP API response"""
+        # Extract photos if available
+        photos = place.get("photos", [])
+        thumbnail = ""
+        serpapi_thumbnail = ""
+        if photos and len(photos) > 0:
+            first_photo = photos[0]
+            thumbnail = first_photo.get("thumbnail", "")
+            serpapi_thumbnail = first_photo.get("thumbnail", "")
+            print(f"            ✅ Extracted hotel photo: {thumbnail}")
+        else:
+            print(f"            ❌ No photos found for hotel {place.get('title', 'Unknown')}")
+        
         return {
             "name": place.get("title", "Unknown Hotel"),
             "rating": place.get("rating", 3.5),
@@ -274,6 +316,10 @@ class PlacesSearchTool:
             "description": f"Well-rated hotel in {location}",
             "phone": place.get("phone"),
             "website": place.get("website"),
+            "thumbnail": thumbnail,
+            "serpapi_thumbnail": serpapi_thumbnail,
+            "place_id": place.get("place_id", ""),
+            "category": "hotel",
             "coordinates": {
                 "lat": place.get("gps_coordinates", {}).get("latitude"),
                 "lng": place.get("gps_coordinates", {}).get("longitude")
@@ -282,12 +328,25 @@ class PlacesSearchTool:
     
     def _extract_restaurant_info(self, place: Dict[str, Any], location: str) -> Dict[str, Any]:
         """Extract restaurant information from SERP API response"""
+        # Extract photos if available
+        photos = place.get("photos", [])
+        thumbnail = ""
+        serpapi_thumbnail = ""
+        if photos and len(photos) > 0:
+            first_photo = photos[0]
+            thumbnail = first_photo.get("thumbnail", "")
+            serpapi_thumbnail = first_photo.get("thumbnail", "")
+        
         return {
             "name": place.get("title", "Local Restaurant"),
             "cuisine": self._determine_cuisine(place),
             "rating": place.get("rating", 4.0),
             "price_range": self._estimate_price_range(place, "restaurant"),
             "description": f"Popular restaurant in {location}",
+            "place_id": place.get("place_id", ""),
+            "category": "restaurant",
+            "thumbnail": thumbnail,
+            "serpapi_thumbnail": serpapi_thumbnail,
             "location": place.get("address", location),
             "phone": place.get("phone"),
             "hours": place.get("hours"),
@@ -299,12 +358,25 @@ class PlacesSearchTool:
     
     def _extract_cafe_info(self, place: Dict[str, Any], location: str) -> Dict[str, Any]:
         """Extract cafe information from SERP API response"""
+        # Extract photos if available
+        photos = place.get("photos", [])
+        thumbnail = ""
+        serpapi_thumbnail = ""
+        if photos and len(photos) > 0:
+            first_photo = photos[0]
+            thumbnail = first_photo.get("thumbnail", "")
+            serpapi_thumbnail = first_photo.get("thumbnail", "")
+        
         return {
             "name": place.get("title", "Local Cafe"),
             "type": "cafe",
             "rating": place.get("rating", 4.0),
             "price_range": "$",
             "description": f"Cozy cafe in {location}",
+            "place_id": place.get("place_id", ""),
+            "category": "cafe",
+            "thumbnail": thumbnail,
+            "serpapi_thumbnail": serpapi_thumbnail,
             "location": place.get("address", location),
             "speciality": "Coffee and light meals",
             "coordinates": {
@@ -315,11 +387,24 @@ class PlacesSearchTool:
     
     def _extract_attraction_info(self, place: Dict[str, Any], location: str) -> Dict[str, Any]:
         """Extract attraction information from SERP API response"""
+        # Extract photos if available
+        photos = place.get("photos", [])
+        thumbnail = ""
+        serpapi_thumbnail = ""
+        if photos and len(photos) > 0:
+            first_photo = photos[0]
+            thumbnail = first_photo.get("thumbnail", "")
+            serpapi_thumbnail = first_photo.get("thumbnail", "")
+        
         return {
             "name": place.get("title", "Local Attraction"),
             "type": self._determine_attraction_type(place),
             "rating": place.get("rating", 4.0),
             "description": f"Popular attraction in {location}",
+            "place_id": place.get("place_id", ""),
+            "category": "attraction",
+            "thumbnail": thumbnail,
+            "serpapi_thumbnail": serpapi_thumbnail,
             "location": place.get("address", location),
             "hours": place.get("hours"),
             "estimated_cost": self._estimate_attraction_cost(place),

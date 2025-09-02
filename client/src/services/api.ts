@@ -375,15 +375,24 @@ export interface PlaceDetails {
 }
 
 export interface AdditionalPlace {
-  name: string;
+  // Raw SERP API fields
+  title?: string;  // SERP API uses 'title'
+  name?: string;   // Keep for backward compatibility
   rating?: number;
   price_range?: string;
   amenities?: string[];
   location?: string;
+  address?: string;  // SERP API uses 'address'
   description?: string;
   phone?: string;
   website?: string;
-  coordinates?: {
+  thumbnail?: string;
+  serpapi_thumbnail?: string;
+  gps_coordinates?: {  // SERP API uses 'gps_coordinates'
+    latitude: number;
+    longitude: number;
+  };
+  coordinates?: {  // Keep for backward compatibility
     lat: number;
     lng: number;
   };
@@ -392,6 +401,12 @@ export interface AdditionalPlace {
   prefetched?: boolean;
   cuisine?: string;
   hours?: string;
+  // Additional SERP API fields
+  reviews?: number;
+  type?: string;
+  types?: string[];
+  open_state?: string;
+  operating_hours?: any;
 }
 
 export interface EnhancedItineraryResponse {
@@ -443,7 +458,7 @@ export interface EnhancedItineraryResponse {
     restaurants: AdditionalPlace[];
     cafes: AdditionalPlace[];
     attractions: AdditionalPlace[];
-    interest_based: PlaceDetails[];
+    interest_based: AdditionalPlace[];
   };
   metadata: {
     total_places_prefetched: number;

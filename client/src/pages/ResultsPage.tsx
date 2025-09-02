@@ -133,8 +133,29 @@ const ResultsPage: React.FC = () => {
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
     }
+    
     const rect = e.currentTarget.getBoundingClientRect();
-    setHoverPosition({ x: rect.right + 10, y: rect.top });
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    // Calculate optimal position
+    let x = rect.right + 15; // Add more space for better UX
+    let y = rect.top + (rect.height / 2); // Center vertically on the element
+    
+    // Check if popup would go off-screen to the right
+    if (x + 400 > viewportWidth - 20) { // 400px is max popup width
+      x = rect.left - 415; // Position to the left with 15px gap
+    }
+    
+    // Check if popup would go off-screen vertically
+    if (y + 300 > viewportHeight - 20) { // 300px is approximate popup height
+      y = viewportHeight - 320;
+    }
+    if (y < 20) {
+      y = 20;
+    }
+    
+    setHoverPosition({ x, y });
     setHoveredPlace(place);
     setHoveredPlaceType(type);
     setIsHoverPopupVisible(true);
@@ -146,7 +167,7 @@ const ResultsPage: React.FC = () => {
       setHoveredPlaceType(null);
       setHoverPosition(null);
       setIsHoverPopupVisible(false);
-    }, 300);
+    }, 150); // Reduced delay for more responsive feel
   };
 
   // Legacy helper function for hover events (for backward compatibility)
@@ -416,7 +437,7 @@ const ResultsPage: React.FC = () => {
     console.log('Starting itinerary generation...');
     setItineraryData(location.state);
     generateRealItinerary(location.state);
-  }, [location.state, navigate, isLoading]);
+  }, [location.state, navigate]);
   
   // Separate useEffect for cleanup when location state changes
   useEffect(() => {
@@ -1024,10 +1045,12 @@ const ResultsPage: React.FC = () => {
 
               {/* Additional Places Tab */}
               {activeTab === 'additional' && enhancedResponse && (
-                <AdditionalPlaces 
-                  additionalPlaces={enhancedResponse.additional_places}
-                  onAddToItinerary={handleAddToItinerary}
-                />
+                                  <AdditionalPlaces
+                    additionalPlaces={enhancedResponse.additional_places}
+                    onAddToItinerary={handleAddToItinerary}
+                    onPlaceHover={handlePlaceHover}
+                    onPlaceHoverLeave={handlePlaceHoverLeave}
+                  />
               )}
 
               {/* Map Tab - Full width map */}
@@ -1293,6 +1316,8 @@ const ResultsPage: React.FC = () => {
         }}
         onMouseLeave={handlePlaceHoverLeave}
       />
+
+
 
       {/* Place Details Modal */}
       <PlaceDetailsModal

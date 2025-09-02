@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Star, MapPin, Clock, DollarSign, Phone, Globe, Utensils, Hotel, MapPinIcon } from 'lucide-react';
 import { PlaceDetails, AdditionalPlace } from '../services/api';
 
@@ -19,103 +19,190 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
   onMouseEnter,
   onMouseLeave
 }) => {
-  if (!isVisible || !place || !position) return null;
+  const popupRef = useRef<HTMLDivElement>(null);
+  const [adjustedPosition, setAdjustedPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   // Helper function to check if place is PlaceDetails type
   const isPlaceDetails = (p: PlaceDetails | AdditionalPlace): p is PlaceDetails => {
     return 'title' in p;
   };
 
-  const placeTitle = isPlaceDetails(place) ? place.title : place.name;
-  const placeRating = place.rating;
-  const placeAddress = isPlaceDetails(place) ? place.address : place.location;
-  const placePhone = place.phone;
-  const placeWebsite = place.website;
-  const placeHours = isPlaceDetails(place) ? place.hours : place.hours;
-  const placeDescription = place.description;
-  const placeCategory = place.category;
-  const placeThumbnail = isPlaceDetails(place) ? (place.thumbnail || place.serpapi_thumbnail) : undefined;
-  const placeReviews = isPlaceDetails(place) ? place.reviews : undefined;
-  const placePrice = isPlaceDetails(place) ? place.price : place.price_range;
-  const placeCuisine = isPlaceDetails(place) ? place.cuisine : undefined;
-  const placeAmenities = !isPlaceDetails(place) ? place.amenities : undefined;
+  // Enhanced metadata mapping with fallbacks
+  const getPlaceMetadata = () => {
+    if (!place) return null;
 
-  // Get coordinates for map link
+    const metadata = {
+      title: isPlaceDetails(place) ? place.title : place.name,
+      rating: place.rating,
+      address: isPlaceDetails(place) ? place.address : place.location,
+      phone: place.phone,
+      website: place.website,
+      hours: isPlaceDetails(place) ? place.hours : place.hours,
+      description: place.description,
+      category: place.category,
+      thumbnail: isPlaceDetails(place) ? (place.thumbnail || place.serpapi_thumbnail) : undefined,
+      reviews: isPlaceDetails(place) ? place.reviews : undefined,
+      price: isPlaceDetails(place) ? place.price : place.price_range,
+      cuisine: !isPlaceDetails(place) ? place.cuisine : undefined,
+      amenities: !isPlaceDetails(place) ? place.amenities : undefined,
+      operatingHours: isPlaceDetails(place) ? place.operating_hours : undefined,
+      coordinates: isPlaceDetails(place) ? place.gps_coordinates : place.coordinates
+    };
+
+    return metadata;
+  };
+
+  const metadata = getPlaceMetadata();
+
+  // Smart positioning logic to keep popup within viewport
+  useEffect(() => {
+    if (!position) return;
+
+    // For initial positioning, we can't use popupRef.current yet
+    // So we'll use estimated dimensions and adjust later
+    const estimatedWidth = 400; // Estimated popup width
+    const estimatedHeight = 300; // Estimated popup height
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    let x = position.x;
+    let y = position.y;
+
+    // Adjust horizontal position if popup would go off-screen
+    if (x + estimatedWidth > viewportWidth - 20) {
+      x = position.x - estimatedWidth - 20;
+    }
+
+    // Adjust vertical position if popup would go off-screen
+    if (y + estimatedHeight > viewportHeight - 20) {
+      y = viewportHeight - estimatedHeight - 20;
+    }
+    if (y < 20) {
+      y = 20;
+    }
+
+    console.log('Setting adjusted position:', { x, y, originalPosition: position });
+    setAdjustedPosition({ x, y });
+  }, [position]);
+
+  // Smooth animation handling
+  useEffect(() => {
+    if (isVisible) {
+      setIsAnimating(true);
+    } else {
+      const timer = setTimeout(() => setIsAnimating(false), 200);
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible]);
+
+  if (!isVisible || !place || !adjustedPosition || !metadata) return null;
+
+  // Get coordinates for map link with better fallback handling
   const getMapUrl = () => {
-    if (isPlaceDetails(place) && place.gps_coordinates) {
-      const { latitude, longitude } = place.gps_coordinates;
-      return `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+    if (metadata.coordinates) {
+      if ('latitude' in metadata.coordinates) {
+        const { latitude, longitude } = metadata.coordinates;
+        return `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+      } else if ('lat' in metadata.coordinates) {
+        const { lat, lng } = metadata.coordinates;
+        return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+      }
     }
-    if (!isPlaceDetails(place) && place.coordinates) {
-      const { lat, lng } = place.coordinates;
-      return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-    }
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(placeTitle + ' ' + (placeAddress || ''))}`;
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(metadata.title + ' ' + (metadata.address || ''))}`;
   };
 
-  // Get type icon
+  // Get type icon with better mapping
   const getTypeIcon = () => {
-    switch (type) {
-      case 'hotel':
-        return <Hotel className="w-4 h-4" />;
-      case 'restaurant':
-        return <Utensils className="w-4 h-4" />;
-      case 'activity':
-      case 'attraction':
-        return <MapPinIcon className="w-4 h-4" />;
-      default:
-        return <MapPinIcon className="w-4 h-4" />;
+    const category = metadata.category?.toLowerCase() || '';
+    
+    if (type === 'hotel' || category.includes('hotel') || category.includes('accommodation')) {
+      return <Hotel className="w-4 h-4" />;
     }
+    if (type === 'restaurant' || category.includes('restaurant') || category.includes('food')) {
+      return <Utensils className="w-4 h-4" />;
+    }
+    if (type === 'activity' || type === 'attraction' || category.includes('attraction') || category.includes('museum')) {
+      return <MapPinIcon className="w-4 h-4" />;
+    }
+    return <MapPinIcon className="w-4 h-4" />;
   };
 
-  // Get type label
+  // Get type label with better mapping
   const getTypeLabel = () => {
-    switch (type) {
-      case 'hotel':
-        return '🏨 Accommodation';
-      case 'restaurant':
-        return '🍽️ Restaurant';
-      case 'activity':
-        return '🎯 Activity';
-      case 'attraction':
-        return '🏛️ Attraction';
-      default:
-        return placeCategory || '📍 Place';
+    const category = metadata.category?.toLowerCase() || '';
+    
+    if (type === 'hotel' || category.includes('hotel') || category.includes('accommodation')) {
+      return '🏨 Accommodation';
     }
+    if (type === 'restaurant' || category.includes('restaurant') || category.includes('food')) {
+      return '🍽️ Restaurant';
+    }
+    if (type === 'activity' || category.includes('activity')) {
+      return '🎯 Activity';
+    }
+    if (type === 'attraction' || category.includes('attraction') || category.includes('museum')) {
+      return '🏛️ Attraction';
+    }
+    return metadata.category || '📍 Place';
   };
 
   return (
     <div
-      className="fixed z-50 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 min-w-[320px] max-w-[400px] pointer-events-none overflow-hidden"
+      ref={popupRef}
+      className={`fixed z-50 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 min-w-[320px] max-w-[400px] overflow-hidden transition-all duration-200 ease-out ${
+        isAnimating 
+          ? 'opacity-100 scale-100 translate-y-0' 
+          : 'opacity-0 scale-95 translate-y-2'
+      }`}
       style={{
-        left: position.x,
-        top: position.y,
+        left: adjustedPosition.x,
+        top: adjustedPosition.y,
         transform: 'translateY(-50%)'
       }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      {/* Image Section */}
-      {placeThumbnail && (
-        <div className="w-full h-40 bg-gray-200 overflow-hidden">
+      {/* Image Section with loading state */}
+      {metadata.thumbnail ? (
+        <div className="w-full h-40 bg-gray-200 dark:bg-gray-700 overflow-hidden relative">
           <img
-            src={placeThumbnail}
-            alt={placeTitle}
-            className="w-full h-full object-cover"
+            src={metadata.thumbnail}
+            alt={metadata.title}
+            className="w-full h-full object-cover transition-opacity duration-300"
             onError={(e) => {
+              console.log('Image failed to load:', metadata.thumbnail);
               (e.target as HTMLImageElement).style.display = 'none';
             }}
+            onLoad={(e) => {
+              console.log('Image loaded successfully:', metadata.thumbnail);
+              (e.target as HTMLImageElement).style.opacity = '1';
+            }}
+            style={{ opacity: 0 }}
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
         </div>
+      ) : (
+        // Debug info when no thumbnail
+        process.env.NODE_ENV === 'development' && (
+          <div className="w-full h-40 bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-gray-500 text-sm">
+            <div className="text-center">
+              <div>📷 No Photo Available</div>
+              <div className="text-xs mt-1">
+                Place type: {isPlaceDetails(place) ? 'PlaceDetails' : 'AdditionalPlace'}
+              </div>
+            </div>
+          </div>
+        )
       )}
 
       {/* Content */}
       <div className="p-4 space-y-3">
         {/* Header */}
         <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <h4 className="font-bold text-gray-900 dark:text-white text-lg leading-tight mb-1">
-              {placeTitle}
+          <div className="flex-1 min-w-0">
+            <h4 className="font-bold text-gray-900 dark:text-white text-lg leading-tight mb-1 truncate">
+              {metadata.title}
             </h4>
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
@@ -124,15 +211,15 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
               </span>
             </div>
           </div>
-          {placeRating && (
-            <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg">
+          {metadata.rating && (
+            <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg flex-shrink-0">
               <Star className="w-4 h-4 text-amber-500 fill-current" />
               <span className="font-semibold text-gray-900 dark:text-white text-sm">
-                {placeRating}
+                {metadata.rating}
               </span>
-              {placeReviews && (
+              {metadata.reviews && (
                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                  ({placeReviews})
+                  ({metadata.reviews})
                 </span>
               )}
             </div>
@@ -140,27 +227,27 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
         </div>
 
         {/* Description */}
-        {placeDescription && (
+        {metadata.description && (
           <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed line-clamp-3">
-            {placeDescription}
+            {metadata.description}
           </p>
         )}
 
         {/* Key Information */}
         <div className="space-y-2">
           {/* Location */}
-          {placeAddress && (
+          {metadata.address && (
             <div className="flex items-start gap-2">
               <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
-                  {placeAddress}
+                  {metadata.address}
                 </p>
                 <a
                   href={getMapUrl()}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 text-xs font-medium"
+                  className="text-blue-600 hover:text-blue-800 text-xs font-medium transition-colors"
                 >
                   View on Maps →
                 </a>
@@ -169,57 +256,57 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
           )}
 
           {/* Hours */}
-          {placeHours && (
+          {metadata.hours && (
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-gray-400" />
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                {placeHours}
+                {metadata.hours}
               </span>
             </div>
           )}
 
           {/* Price */}
-          {placePrice && (
+          {metadata.price && (
             <div className="flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-green-500" />
               <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                {placePrice}
+                {metadata.price}
               </span>
             </div>
           )}
 
           {/* Cuisine (for restaurants) */}
-          {placeCuisine && (
+          {metadata.cuisine && (
             <div className="flex items-center gap-2">
               <Utensils className="w-4 h-4 text-gray-400" />
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                {placeCuisine}
+                {metadata.cuisine}
               </span>
             </div>
           )}
 
           {/* Phone */}
-          {placePhone && (
+          {metadata.phone && (
             <div className="flex items-center gap-2">
               <Phone className="w-4 h-4 text-gray-400" />
               <a 
-                href={`tel:${placePhone}`} 
-                className="text-sm text-blue-600 hover:text-blue-800"
+                href={`tel:${metadata.phone}`} 
+                className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
               >
-                {placePhone}
+                {metadata.phone}
               </a>
             </div>
           )}
 
           {/* Website */}
-          {placeWebsite && (
+          {metadata.website && (
             <div className="flex items-center gap-2">
               <Globe className="w-4 h-4 text-gray-400" />
               <a
-                href={placeWebsite}
+                href={metadata.website}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:text-blue-800 truncate"
+                className="text-sm text-blue-600 hover:text-blue-800 truncate transition-colors"
               >
                 Visit Website →
               </a>
@@ -228,13 +315,13 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
         </div>
 
         {/* Amenities (for hotels) */}
-        {placeAmenities && placeAmenities.length > 0 && (
+        {metadata.amenities && metadata.amenities.length > 0 && (
           <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
             <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">
               Amenities:
             </div>
             <div className="flex flex-wrap gap-1">
-              {placeAmenities.slice(0, 4).map((amenity, idx) => (
+              {metadata.amenities.slice(0, 4).map((amenity, idx) => (
                 <span 
                   key={idx} 
                   className="px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 text-xs rounded-full"
@@ -242,9 +329,9 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
                   {amenity}
                 </span>
               ))}
-              {placeAmenities.length > 4 && (
+              {metadata.amenities.length > 4 && (
                 <span className="text-xs text-gray-400">
-                  +{placeAmenities.length - 4} more
+                  +{metadata.amenities.length - 4} more
                 </span>
               )}
             </div>
@@ -252,13 +339,13 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
         )}
 
         {/* Operating Hours (detailed) */}
-        {isPlaceDetails(place) && place.operating_hours && (
+        {metadata.operatingHours && (
           <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
             <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">
               Operating Hours:
             </div>
             <div className="space-y-1">
-              {Object.entries(place.operating_hours).slice(0, 3).map(([day, hours]) => (
+              {Object.entries(metadata.operatingHours).slice(0, 3).map(([day, hours]) => (
                 hours && (
                   <div key={day} className="flex justify-between text-xs">
                     <span className="text-gray-600 dark:text-gray-400 capitalize">{day}</span>
@@ -266,9 +353,9 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
                   </div>
                 )
               ))}
-              {Object.keys(place.operating_hours).length > 3 && (
+              {Object.keys(metadata.operatingHours).length > 3 && (
                 <div className="text-xs text-gray-400 text-center">
-                  +{Object.keys(place.operating_hours).length - 3} more days
+                  +{Object.keys(metadata.operatingHours).length - 3} more days
                 </div>
               )}
             </div>

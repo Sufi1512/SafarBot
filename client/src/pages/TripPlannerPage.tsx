@@ -1,5 +1,29 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { 
+  MapPin, 
+  Calendar, 
+  Users, 
+  DollarSign, 
+  Heart, 
+  Plane, 
+  Hotel, 
+  Clock, 
+  Mail, 
+  Utensils,
+  ArrowRight,
+  CheckCircle,
+  Sparkles,
+  Globe,
+  Mountain,
+  Camera,
+  Coffee,
+  ShoppingBag,
+  Moon,
+  Building,
+  Waves,
+  MountainSnow
+} from 'lucide-react';
 import CustomDatePicker from '../components/ui/CustomDatePicker';
 import ModernButton from '../components/ui/ModernButton';
 
@@ -23,6 +47,7 @@ const TripPlannerPage: React.FC = () => {
   const [tripPace, setTripPace] = useState<'relaxed' | 'balanced' | 'packed'>('balanced');
   const [email, setEmail] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Prefill from query params if provided
   const query = useMemo(() => new URLSearchParams(window.location.search), []);
@@ -59,6 +84,8 @@ const TripPlannerPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
     
     try {
       console.log('Form submission started');
@@ -125,245 +152,396 @@ const TripPlannerPage: React.FC = () => {
     } catch (err: any) {
       console.error('Error preparing navigation:', err);
       setError(err.message || 'Failed to prepare navigation. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  // Activity options with icons
+  const activityOptions = [
+    { key: 'culture', label: 'Culture & History', icon: Building, color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' },
+    { key: 'nature', label: 'Nature & Outdoors', icon: Mountain, color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' },
+    { key: 'food', label: 'Food & Dining', icon: Utensils, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' },
+    { key: 'adventure', label: 'Adventure', icon: Mountain, color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' },
+    { key: 'relaxation', label: 'Relaxation', icon: Coffee, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
+    { key: 'shopping', label: 'Shopping', icon: ShoppingBag, color: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300' },
+    { key: 'nightlife', label: 'Nightlife', icon: Moon, color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' },
+    { key: 'beaches', label: 'Beaches', icon: Waves, color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300' },
+    { key: 'city', label: 'City Life', icon: Building, color: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300' },
+    { key: 'hiking', label: 'Hiking', icon: MountainSnow, color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' }
+  ];
+
+  // Calculate form completion percentage
+  const formProgress = Math.round(
+    ((destination ? 1 : 0) + (startDate ? 1 : 0) + (activities.length > 0 ? 1 : 0) + (departureCity ? 1 : 0)) / 4 * 100
+  );
+
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
-        <div className="mb-8 relative">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-            <svg className="w-7 h-7 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 12L3 7l18-4-4 18-5-7-5 3 3-5z" />
-            </svg>
-            Tell us your travel preferences
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-400/20 to-pink-400/20 rounded-full blur-3xl"></div>
+      </div>
+
+      <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
+        {/* Header Section */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full text-sm font-medium mb-6">
+            <Sparkles className="w-4 h-4" />
+            AI-Powered Trip Planning
+          </div>
+          
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 dark:from-white dark:via-blue-200 dark:to-purple-200 bg-clip-text text-transparent mb-6">
+            Plan Your Dream Trip
           </h1>
-          <p className="mt-3 text-gray-600 dark:text-gray-300">
-            Just provide some basic information, and our trip planner will generate a customized itinerary based on your preferences.
+          
+          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            Tell us your preferences and let our AI create a personalized itinerary that matches your style, budget, and interests.
           </p>
-          <svg className="hidden sm:block absolute -top-8 right-0 w-28 h-28 text-primary-200/60" fill="none" stroke="currentColor" viewBox="0 0 200 200" aria-hidden="true">
-            <path d="M10 150 C 60 120, 140 120, 190 90" strokeWidth="2" />
-            <path d="M150 70 l20 -10 l-10 20" strokeWidth="2" />
-          </svg>
+
+          {/* Progress indicator */}
+          <div className="mt-8 max-w-md mx-auto">
+            <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+              <span>Form Progress</span>
+              <span>{formProgress}%</span>
+            </div>
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div 
+                className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${formProgress}%` }}
+              ></div>
+            </div>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {(destination || startDate) && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 -mt-2">
+        {/* Pre-filled info display */}
+        {(destination || startDate) && (
+          <div className="mb-8 p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 dark:border-gray-700/50">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              Pre-filled Information
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {destination && (
-                <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-50 text-primary-800 border border-primary-200">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.5 10c0 7.5-7.5 11.25-7.5 11.25S4.5 17.5 4.5 10a7.5 7.5 0 1115 0z" /></svg>
-                  <span className="text-sm font-medium">{destination}</span>
+                <div className="inline-flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border border-blue-200 dark:border-blue-700">
+                  <MapPin className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  <span className="font-medium text-blue-900 dark:text-blue-100">{destination}</span>
                 </div>
               )}
               {startDate && (
-                <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-50 text-primary-800 border border-primary-200">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3M5 11h14M5 19h14M7 15h.01M11 15h.01M15 15h.01" /></svg>
-                  <span className="text-sm font-medium">{startDate.toLocaleDateString()}</span>
+                <div className="inline-flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 border border-purple-200 dark:border-purple-700">
+                  <Calendar className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  <span className="font-medium text-purple-900 dark:text-purple-100">{startDate.toLocaleDateString()}</span>
                 </div>
               )}
             </div>
-          )}
-          {/* Destination field hidden if prefilled */}
-          {!destination && (
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                What is your destination of choice?
-              </label>
-              <input
-                type="text"
-                value={destination}
-                onChange={e => setDestination(e.target.value)}
-                placeholder="e.g., Paris, Tokyo, New York"
-                className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-4 focus:ring-primary-500/20 focus:border-primary-600"
-              />
-            </div>
-          )}
-
-          {/* Start Date field hidden if prefilled */}
-          {!startDate && (
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                When do you want to start your journey?
-              </label>
-              <CustomDatePicker
-                value={startDate}
-                onChange={(date: Date) => setStartDate(date)}
-                minDate={new Date()}
-                placeholder="Select start date"
-                className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-500/20 focus:border-primary-600"
-              />
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                How many days will you be traveling?
-              </label>
-              <select
-                value={days}
-                onChange={e => setDays(Number(e.target.value))}
-                className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-500/20 focus:border-primary-600"
-              >
-                <option value={3}>3 days</option>
-                <option value={5}>5 days</option>
-                <option value={7}>7 days</option>
-                <option value={10}>10 days</option>
-                <option value={14}>14 days</option>
-                <option value={21}>21 days</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                What's your budget range?
-              </label>
-              <select
-                value={budget}
-                onChange={e => setBudget(e.target.value as BudgetTier)}
-                className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-500/20 focus:border-primary-600"
-              >
-                <option value="low">Low ($500 - $1,500)</option>
-                <option value="medium">Medium ($1,500 - $5,000)</option>
-                <option value="high">High ($5,000+)</option>
-              </select>
-            </div>
           </div>
+        )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Who are you traveling with?
-              </label>
-              <select
-                value={travelWith}
-                onChange={e => setTravelWith(e.target.value as TravelWith)}
-                className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-500/20 focus:border-primary-600"
-              >
-                <option value="solo">Solo Traveler</option>
-                <option value="couple">Couple</option>
-                <option value="family">Family</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                What are your interests?
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { key: 'culture', label: 'Culture & History', icon: '🏛️' },
-                  { key: 'nature', label: 'Nature & Outdoors', icon: '🌲' },
-                  { key: 'food', label: 'Food & Dining', icon: '🍽️' },
-                  { key: 'adventure', label: 'Adventure', icon: '🏔️' },
-                  { key: 'relaxation', label: 'Relaxation', icon: '🧘' },
-                  { key: 'shopping', label: 'Shopping', icon: '🛍️' },
-                  { key: 'nightlife', label: 'Nightlife', icon: '🌃' },
-                  { key: 'beaches', label: 'Beaches', icon: '🏖️' },
-                  { key: 'city', label: 'City Life', icon: '🏙️' },
-                  { key: 'hiking', label: 'Hiking', icon: '🥾' }
-                ].map(({ key, label, icon }) => (
-                  <label key={key} className="flex items-center gap-2 px-3 py-2 border-2 rounded-xl cursor-pointer border-gray-200 dark:border-gray-700 hover:border-primary-500">
-                    <input type="checkbox" className="form-checkbox text-primary-600" checked={activities.includes(key)} onChange={() => toggleActivity(key)} />
-                    <span className="text-gray-900 dark:text-white text-sm">{icon} {label}</span>
+        <form onSubmit={handleSubmit} className="space-y-10">
+          {/* Basic Information Section */}
+          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl p-8 border border-gray-200/60 dark:border-gray-700/60 shadow-xl shadow-gray-200/30 dark:shadow-gray-900/30 hover:shadow-2xl hover:shadow-gray-200/40 dark:hover:shadow-gray-900/40 transition-all duration-300">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+              <Globe className="w-6 h-6 text-blue-600" />
+              Basic Information
+            </h2>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Destination field hidden if prefilled */}
+              {!destination && (
+                <div className="space-y-3">
+                  <label className="block text-lg font-semibold text-gray-900 dark:text-white">
+                    Where do you want to go?
                   </label>
-                ))}
+                  <div className="relative">
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      value={destination}
+                      onChange={e => setDestination(e.target.value)}
+                      placeholder="e.g., Paris, Tokyo, New York"
+                      className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-600 transition-all duration-200"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Start Date field hidden if prefilled */}
+              {!startDate && (
+                <div className="space-y-3">
+                  <label className="block text-lg font-semibold text-gray-900 dark:text-white">
+                    When do you want to start?
+                  </label>
+                  <div className="relative">
+                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <CustomDatePicker
+                      value={startDate}
+                      onChange={(date: Date) => setStartDate(date)}
+                      minDate={new Date()}
+                      placeholder="Select start date"
+                      className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-4 focus:ring-blue-500/20 focus:border-blue-600 transition-all duration-200"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <label className="block text-lg font-semibold text-gray-900 dark:text-white">
+                  How many days?
+                </label>
+                <div className="relative">
+                  <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <select
+                    value={days}
+                    onChange={e => setDays(Number(e.target.value))}
+                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-4 focus:ring-blue-500/20 focus:border-blue-600 transition-all duration-200 appearance-none"
+                  >
+                    <option value={3}>3 days</option>
+                    <option value={5}>5 days</option>
+                    <option value={7}>7 days</option>
+                    <option value={10}>10 days</option>
+                    <option value={14}>14 days</option>
+                    <option value={21}>21 days</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="block text-lg font-semibold text-gray-900 dark:text-white">
+                  What's your budget?
+                </label>
+                <div className="relative">
+                  <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <select
+                    value={budget}
+                    onChange={e => setBudget(e.target.value as BudgetTier)}
+                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-4 focus:ring-blue-500/20 focus:border-blue-600 transition-all duration-200 appearance-none"
+                  >
+                    <option value="low">Budget ($500 - $1,500)</option>
+                    <option value="medium">Mid-range ($1,500 - $5,000)</option>
+                    <option value="high">Luxury ($5,000+)</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Departure city
-              </label>
-              <input
-                type="text"
-                value={departureCity}
-                onChange={e => setDepartureCity(e.target.value)}
-                placeholder="e.g., London, New York"
-                className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-4 focus:ring-primary-500/20 focus:border-primary-600"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Preferred flight class
-              </label>
-              <select
-                value={flightClass}
-                onChange={e => setFlightClass(e.target.value as FlightClass)}
-                className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-500/20 focus:border-primary-600"
-              >
-                <option value="economy">Economy</option>
-                <option value="premium">Premium Economy</option>
-                <option value="business">Business</option>
-                <option value="first">First Class</option>
-              </select>
+          {/* Travel Preferences Section */}
+          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl p-8 border border-gray-200/60 dark:border-gray-700/60 shadow-xl shadow-gray-200/30 dark:shadow-gray-900/30 hover:shadow-2xl hover:shadow-gray-200/40 dark:hover:shadow-gray-900/40 transition-all duration-300">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+              <Users className="w-6 h-6 text-purple-600" />
+              Travel Preferences
+            </h2>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-3">
+                <label className="block text-lg font-semibold text-gray-900 dark:text-white">
+                  Who are you traveling with?
+                </label>
+                <div className="relative">
+                  <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <select
+                    value={travelWith}
+                    onChange={e => setTravelWith(e.target.value as TravelWith)}
+                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-4 focus:ring-purple-500/20 focus:border-purple-600 transition-all duration-200 appearance-none"
+                  >
+                    <option value="solo">Solo Traveler</option>
+                    <option value="couple">Couple</option>
+                    <option value="family">Family</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="block text-lg font-semibold text-gray-900 dark:text-white">
+                  What's your trip pace?
+                </label>
+                <div className="relative">
+                  <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <select
+                    value={tripPace}
+                    onChange={e => setTripPace(e.target.value as any)}
+                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-4 focus:ring-purple-500/20 focus:border-purple-600 transition-all duration-200 appearance-none"
+                  >
+                    <option value="relaxed">Relaxed & Leisurely</option>
+                    <option value="balanced">Balanced</option>
+                    <option value="packed">Packed & Active</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Hotel rating preference
-              </label>
-              <select
-                value={hotelRating}
-                onChange={e => setHotelRating(Number(e.target.value) as 3 | 4 | 5)}
-                className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-500/20 focus:border-primary-600"
-              >
-                <option value={3}>3-star</option>
-                <option value={4}>4-star</option>
-                <option value={5}>5-star</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Trip pace</label>
-              <select
-                value={tripPace}
-                onChange={e => setTripPace(e.target.value as any)}
-                className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-500/20 focus:border-primary-600"
-              >
-                <option value="relaxed">Relaxed</option>
-                <option value="balanced">Balanced</option>
-                <option value="packed">Packed</option>
-              </select>
+          {/* Interests Section */}
+          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl p-8 border border-gray-200/60 dark:border-gray-700/60 shadow-xl shadow-gray-200/30 dark:shadow-gray-900/30 hover:shadow-2xl hover:shadow-gray-200/40 dark:hover:shadow-gray-900/40 transition-all duration-300">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+              <Heart className="w-6 h-6 text-red-600" />
+              What interests you?
+            </h2>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+              {activityOptions.map(({ key, label, icon: Icon, color }) => (
+                <label 
+                  key={key} 
+                  className={`group relative flex flex-col items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:scale-105 ${
+                    activities.includes(key)
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-lg'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
+                  }`}
+                >
+                  <input 
+                    type="checkbox" 
+                    className="sr-only" 
+                    checked={activities.includes(key)} 
+                    onChange={() => toggleActivity(key)} 
+                  />
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${color} transition-all duration-200 group-hover:scale-110`}>
+                    <Icon className="w-6 h-6" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white text-center">{label}</span>
+                  {activities.includes(key) && (
+                    <CheckCircle className="absolute top-2 right-2 w-5 h-5 text-blue-600" />
+                  )}
+                </label>
+              ))}
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Email to receive itinerary (optional)</label>
-            <div className="relative">
-              <svg className="w-5 h-5 text-primary-600 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="you@domain.com"
-                className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-4 focus:ring-primary-500/20 focus:border-primary-600"
-              />
+          {/* Travel Details Section */}
+          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl p-8 border border-gray-200/60 dark:border-gray-700/60 shadow-xl shadow-gray-200/30 dark:shadow-gray-900/30 hover:shadow-2xl hover:shadow-gray-200/40 dark:hover:shadow-gray-900/40 transition-all duration-300">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+              <Plane className="w-6 h-6 text-green-600" />
+              Travel Details
+            </h2>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-3">
+                <label className="block text-lg font-semibold text-gray-900 dark:text-white">
+                  Departure city
+                </label>
+                <div className="relative">
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    value={departureCity}
+                    onChange={e => setDepartureCity(e.target.value)}
+                    placeholder="e.g., London, New York"
+                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-4 focus:ring-green-500/20 focus:border-green-600 transition-all duration-200"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="block text-lg font-semibold text-gray-900 dark:text-white">
+                  Flight class preference
+                </label>
+                <div className="relative">
+                  <Plane className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <select
+                    value={flightClass}
+                    onChange={e => setFlightClass(e.target.value as FlightClass)}
+                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-4 focus:ring-green-500/20 focus:border-green-600 transition-all duration-200 appearance-none"
+                  >
+                    <option value="economy">Economy</option>
+                    <option value="premium">Premium Economy</option>
+                    <option value="business">Business</option>
+                    <option value="first">First Class</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="block text-lg font-semibold text-gray-900 dark:text-white">
+                  Hotel rating preference
+                </label>
+                <div className="relative">
+                  <Hotel className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <select
+                    value={hotelRating}
+                    onChange={e => setHotelRating(Number(e.target.value) as 3 | 4 | 5)}
+                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-4 focus:ring-green-500/20 focus:border-green-600 transition-all duration-200 appearance-none"
+                  >
+                    <option value={3}>3-star (Budget)</option>
+                    <option value={4}>4-star (Mid-range)</option>
+                    <option value={5}>5-star (Luxury)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="block text-lg font-semibold text-gray-900 dark:text-white">
+                  Email (optional)
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="you@domain.com"
+                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-4 focus:ring-green-500/20 focus:border-green-600 transition-all duration-200"
+                  />
+                </div>
+              </div>
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Dietary preferences
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label className="flex items-center gap-3 px-4 py-3 border-2 rounded-xl cursor-pointer border-gray-200 dark:border-gray-700 hover:border-primary-500">
-                <input type="checkbox" className="form-checkbox text-primary-600" checked={halal} onChange={e => setHalal(e.target.checked)} />
-                <span className="text-gray-900 dark:text-white">Halal</span>
+
+          {/* Dietary Preferences Section */}
+          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl p-8 border border-gray-200/60 dark:border-gray-700/60 shadow-xl shadow-gray-200/30 dark:shadow-gray-900/30 hover:shadow-2xl hover:shadow-gray-200/40 dark:hover:shadow-gray-900/40 transition-all duration-300">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+              <Utensils className="w-6 h-6 text-orange-600" />
+              Dietary Preferences
+            </h2>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <label className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:scale-105 ${
+                halal ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/30' : 'border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-600'
+              }`}>
+                <input 
+                  type="checkbox" 
+                  className="w-5 h-5 text-orange-600 rounded focus:ring-orange-500" 
+                  checked={halal} 
+                  onChange={e => setHalal(e.target.checked)} 
+                />
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center">
+                    <span className="text-lg">🕌</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-gray-900 dark:text-white">Halal</span>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Halal food preferences</p>
+                  </div>
+                </div>
               </label>
-              <label className="flex items-center gap-3 px-4 py-3 border-2 rounded-xl cursor-pointer border-gray-200 dark:border-gray-700 hover:border-primary-500">
-                <input type="checkbox" className="form-checkbox text-primary-600" checked={vegetarian} onChange={e => setVegetarian(e.target.checked)} />
-                <span className="text-gray-900 dark:text-white">Vegetarian</span>
+              
+              <label className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:scale-105 ${
+                vegetarian ? 'border-green-500 bg-green-50 dark:bg-green-900/30' : 'border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-600'
+              }`}>
+                <input 
+                  type="checkbox" 
+                  className="w-5 h-5 text-green-600 rounded focus:ring-green-500" 
+                  checked={vegetarian} 
+                  onChange={e => setVegetarian(e.target.checked)} 
+                />
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
+                    <span className="text-lg">🥬</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-gray-900 dark:text-white">Vegetarian</span>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Vegetarian food preferences</p>
+                  </div>
+                </div>
               </label>
             </div>
           </div>
 
           {/* Error Display */}
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
-              <div className="flex items-center gap-2 text-red-800">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl">
+              <div className="flex items-center gap-3 text-red-800 dark:text-red-200">
+                <svg className="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span className="font-medium">{error}</span>
@@ -371,19 +549,31 @@ const TripPlannerPage: React.FC = () => {
             </div>
           )}
 
-          <div className="pt-4">
+          {/* Submit Section */}
+          <div className="text-center pt-8">
             <ModernButton 
               size="lg" 
               variant="primary" 
               type="submit" 
-              className="px-8"
-              disabled={!destination || !startDate}
+              className="px-12 py-4 text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+              disabled={!destination || !startDate || isSubmitting}
             >
-              🎯 Craft My Perfect Journey
+              {isSubmitting ? (
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Crafting Your Journey...
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <Sparkles className="w-5 h-5" />
+                  Craft My Perfect Journey
+                  <ArrowRight className="w-5 h-5" />
+                </div>
+              )}
             </ModernButton>
             
             {(!destination || !startDate) && (
-              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
                 Please provide destination and start date to continue
               </p>
             )}

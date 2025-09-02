@@ -183,7 +183,8 @@ class AdditionalPlacesService:
                 "api_key": self.places_tool.api_key,
                 "engine": "google_maps",
                 "type": "search",
-                "num": 15
+                "num": 15,
+                "hl": "en"  # Language parameter
             })
             
             results = search.get_dict()
@@ -192,6 +193,15 @@ class AdditionalPlacesService:
             # Convert to our format
             formatted_results = []
             for place in local_results:
+                # Extract photos if available
+                photos = place.get("photos", [])
+                thumbnail = ""
+                serpapi_thumbnail = ""
+                if photos and len(photos) > 0:
+                    first_photo = photos[0]
+                    thumbnail = first_photo.get("thumbnail", "")
+                    serpapi_thumbnail = first_photo.get("thumbnail", "")
+                
                 formatted_place = {
                     "place_id": place.get("place_id", ""),
                     "name": place.get("title", ""),
@@ -200,12 +210,21 @@ class AdditionalPlacesService:
                     "reviews": place.get("reviews", 0),
                     "type": place.get("type", ""),
                     "price": place.get("price", ""),
-                    "thumbnail": place.get("thumbnail", ""),
+                    "thumbnail": thumbnail,
+                    "serpapi_thumbnail": serpapi_thumbnail,
                     "gps_coordinates": place.get("gps_coordinates", {}),
                     "hours": place.get("hours", ""),
                     "phone": place.get("phone", ""),
                     "website": place.get("website", ""),
-                    "description": place.get("description", "")
+                    "description": place.get("description", ""),
+                    "category": place.get("type", "attraction"),  # Use type as category
+                    # Add raw SERP fields for consistency
+                    "title": place.get("title", ""),
+                    "operating_hours": place.get("operating_hours", {}),
+                    "photos": place.get("photos", []),
+                    "types": place.get("types", []),
+                    "open_state": place.get("open_state", ""),
+                    "extensions": place.get("extensions", [])
                 }
                 formatted_results.append(formatted_place)
             

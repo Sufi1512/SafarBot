@@ -1,11 +1,32 @@
 """
-Service for fetching raw Google SERP API place data
-Returns complete Google Maps/Places API JSON responses
+SERP Places Service - Enhanced with Direct Photo Access
+
+This service now efficiently extracts photos directly from Google Maps search results
+instead of making separate API calls to google_maps_photos.
+
+NEW APPROACH:
+- Photos are included directly in local_results and place_results
+- Each place object contains a 'photos' array with thumbnail and high-res images
+- No need for separate photo API calls - much more efficient!
+
+PHOTO STRUCTURE:
+{
+  "photos": [
+    {
+      "thumbnail": "https://...",     # Small preview (203x160, etc.)
+      "image": "https://...",         # High-res (2720x2144, etc.)
+      "video": "https://...",         # Video content (when available)
+      "photo_meta_serpapi_link": "..." # Metadata link
+    }
+  ]
+}
 """
 
+import asyncio
 import logging
+from typing import List, Dict, Any, Optional
 import serpapi
-from typing import Dict, Any, Optional, List
+from datetime import datetime
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -24,10 +45,10 @@ class SerpPlacesService:
     
     async def get_place_by_id(self, place_id: str) -> Optional[Dict[str, Any]]:
         """
-        Get complete place details by Google place_id
-        Returns raw Google Maps API response
+        Fetch a place by Google place_id using SerpApi.
+        Returns enhanced place data with photos included.
         """
-        print(f"\n🔍 SERP PLACES SERVICE - Fetching raw data for place_id: {place_id}")
+        print(f"\n📍 SERP PLACES SERVICE - Fetching place by ID: {place_id}")
         
         if not self.api_key:
             print("      ❌ No SERP API key available")
@@ -49,8 +70,30 @@ class SerpPlacesService:
                 print(f"      ✅ Raw Google data retrieved ({len(str(place_data))} characters)")
                 print(f"      📍 Place: {place_data.get('title', 'Unknown')}")
                 print(f"      ⭐ Rating: {place_data.get('rating', 'N/A')}")
-                print(f"      🖼️  Photos: {len(place_data.get('photos', []))}")
-                print(f"      📝 Reviews: {len(place_data.get('reviews', []))}")
+                
+                # Extract photos if available
+                photos = place_data.get('photos', [])
+                if photos:
+                    print(f"      🖼️  Photos: {len(photos)} photos found")
+                    
+                    # Add the first photo as thumbnail for easy access
+                    if photos and len(photos) > 0:
+                        first_photo = photos[0]
+                        place_data['thumbnail'] = first_photo.get('thumbnail')
+                        place_data['serpapi_thumbnail'] = first_photo.get('thumbnail')  # For compatibility
+                        place_data['high_res_image'] = first_photo.get('image')
+                        place_data['photo_count'] = len(photos)
+                else:
+                    print(f"      🖼️  Photos: No photos found")
+                
+                # Extract reviews if available
+                reviews = place_data.get('reviews', [])
+                if reviews:
+                    print(f"      📝 Reviews: {len(reviews)} reviews found")
+                    place_data['review_count'] = len(reviews)
+                else:
+                    print(f"      📝 Reviews: No reviews found")
+                
                 return place_data
             else:
                 print(f"      ⚠️  No place data found for {place_id}")
@@ -64,7 +107,7 @@ class SerpPlacesService:
     async def search_places(self, query: str, location: str = "", place_type: str = "") -> List[Dict[str, Any]]:
         """
         Search for places using Google Maps search
-        Returns raw Google Maps search results
+        Returns enhanced Google Maps search results with photos included
         """
         print(f"\n🔍 SERP PLACES SERVICE - Searching for: {query}")
         
@@ -94,10 +137,27 @@ class SerpPlacesService:
             
             if local_results:
                 print(f"      ✅ Found {len(local_results)} places")
-                for i, place in enumerate(local_results[:3]):  # Show first 3
-                    print(f"         {i+1}. {place.get('title', 'Unknown')} - {place.get('rating', 'N/A')}⭐")
                 
-                return local_results
+                # Process each place to include photos and enhance data
+                enhanced_results = []
+                for i, place in enumerate(local_results):
+                    # Extract photos if available
+                    photos = place.get('photos', [])
+                    if photos:
+                        print(f"         {i+1}. {place.get('title', 'Unknown')} - {place.get('rating', 'N/A')}⭐ - 📸 {len(photos)} photos")
+                        
+                        # Add the first photo as thumbnail for easy access
+                        if photos and len(photos) > 0:
+                            first_photo = photos[0]
+                            place['thumbnail'] = first_photo.get('thumbnail')
+                            place['serpapi_thumbnail'] = first_photo.get('thumbnail')  # For compatibility
+                            place['high_res_image'] = first_photo.get('image')
+                    else:
+                        print(f"         {i+1}. {place.get('title', 'Unknown')} - {place.get('rating', 'N/A')}⭐ - No photos")
+                    
+                    enhanced_results.append(place)
+                
+                return enhanced_results
             else:
                 print(f"      ⚠️  No places found for query: {query}")
                 return []

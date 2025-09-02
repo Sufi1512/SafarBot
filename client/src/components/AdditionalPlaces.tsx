@@ -9,17 +9,21 @@ interface AdditionalPlacesProps {
     restaurants: AdditionalPlace[];
     cafes: AdditionalPlace[];
     attractions: AdditionalPlace[];
-    interest_based: PlaceDetails[];
+    interest_based: AdditionalPlace[];
   };
-  onAddToItinerary?: (place: PlaceDetails | AdditionalPlace) => void;
+  onAddToItinerary?: (place: AdditionalPlace) => void;
+  onPlaceHover?: (e: React.MouseEvent, place: AdditionalPlace, type: 'hotel' | 'restaurant' | 'attraction') => void;
+  onPlaceHoverLeave?: () => void;
 }
 
 const AdditionalPlaces: React.FC<AdditionalPlacesProps> = ({
   additionalPlaces,
-  onAddToItinerary
+  onAddToItinerary,
+  onPlaceHover,
+  onPlaceHoverLeave
 }) => {
   const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [selectedPlace, setSelectedPlace] = useState<PlaceDetails | AdditionalPlace | null>(null);
+  const [selectedPlace, setSelectedPlace] = useState<AdditionalPlace | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Categories with counts
@@ -33,7 +37,7 @@ const AdditionalPlaces: React.FC<AdditionalPlacesProps> = ({
   ];
 
   // Get places for current category
-  const getCurrentPlaces = (): (PlaceDetails | AdditionalPlace)[] => {
+  const getCurrentPlaces = (): AdditionalPlace[] => {
     if (activeCategory === 'all') {
       return [
         ...additionalPlaces.hotels,
@@ -48,44 +52,82 @@ const AdditionalPlaces: React.FC<AdditionalPlacesProps> = ({
 
   const currentPlaces = getCurrentPlaces();
 
-  const handlePlaceClick = (place: PlaceDetails | AdditionalPlace) => {
+  const handlePlaceClick = (place: AdditionalPlace) => {
     setSelectedPlace(place);
     setIsModalOpen(true);
   };
 
-  const handleAddToItinerary = (place: PlaceDetails | AdditionalPlace) => {
+  const handleAddToItinerary = (place: AdditionalPlace) => {
     if (onAddToItinerary) {
       onAddToItinerary(place);
     }
     setIsModalOpen(false);
   };
 
-  // Helper function to check if place is PlaceDetails type
-  const isPlaceDetails = (place: PlaceDetails | AdditionalPlace): place is PlaceDetails => {
-    return 'title' in place;
-  };
+  // All places are now AdditionalPlace type
 
-  const PlaceCard: React.FC<{ place: PlaceDetails | AdditionalPlace }> = ({ place }) => {
-    const placeTitle = isPlaceDetails(place) ? place.title : place.name;
+  const PlaceCard: React.FC<{ place: AdditionalPlace }> = ({ place }) => {
+    // Handle both 'title' (SERP API) and 'name' (legacy) fields
+    const placeTitle = place.title || place.name || 'Unknown Place';
     const placeRating = place.rating;
-    const placeAddress = isPlaceDetails(place) ? place.address : place.location;
+    const placeAddress = place.address || place.location || 'Location not specified';
     const placeCategory = place.category;
-    const placeThumbnail = isPlaceDetails(place) ? (place.thumbnail || place.serpapi_thumbnail) : undefined;
+    // Photo detection for AdditionalPlace
+    const placeThumbnail = place.thumbnail || place.serpapi_thumbnail;
+    
+    // Debug photo sources in development
+    if (process.env.NODE_ENV === 'development' && !placeThumbnail) {
+      console.log('No photo found for place:', {
+        title: place.title,
+        name: place.name,
+        category: place.category,
+        availableFields: Object.keys(place),
+        hasThumbnail: !!place.thumbnail,
+        hasSerpapiThumbnail: !!place.serpapi_thumbnail
+      });
+    }
+
+    // Determine place type for hover
+    const getPlaceType = (): 'hotel' | 'restaurant' | 'attraction' => {
+      const category = placeCategory?.toLowerCase() || '';
+      if (category.includes('hotel') || category.includes('accommodation')) return 'hotel';
+      if (category.includes('restaurant') || category.includes('food') || category.includes('cafe')) return 'restaurant';
+      return 'attraction';
+    };
 
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer">
+      <div 
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-[1.02]"
+        onMouseEnter={(e) => onPlaceHover?.(e, place, getPlaceType())}
+        onMouseLeave={onPlaceHoverLeave}
+      >
         <div onClick={() => handlePlaceClick(place)} className="p-4">
-          {/* Image */}
-          {placeThumbnail && (
-            <div className="w-full h-32 bg-gray-200 rounded-lg mb-3 overflow-hidden">
+          {/* Image Section */}
+          {placeThumbnail ? (
+            <div className="w-full h-32 bg-gray-200 rounded-lg mb-3 overflow-hidden relative">
               <img
                 src={placeThumbnail}
                 alt={placeTitle}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-opacity duration-300"
                 onError={(e) => {
+                  console.log('Image failed to load:', placeThumbnail);
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
+                onLoad={(e) => {
+                  console.log('Image loaded successfully:', placeThumbnail);
+                  (e.target as HTMLImageElement).style.opacity = '1';
+                }}
+                style={{ opacity: 0 }}
               />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+            </div>
+          ) : (
+            // Placeholder when no photo is available
+            <div className="w-full h-32 bg-gray-200 dark:bg-gray-700 rounded-lg mb-3 flex items-center justify-center">
+              <div className="text-center text-gray-500">
+                <div className="text-2xl mb-1">📷</div>
+                <div className="text-xs">No Photo</div>
+              </div>
             </div>
           )}
 
@@ -102,9 +144,7 @@ const AdditionalPlaces: React.FC<AdditionalPlacesProps> = ({
               <div className="flex items-center gap-1">
                 <Star className="w-4 h-4 text-yellow-400 fill-current" />
                 <span className="text-sm font-medium text-gray-900">{placeRating}</span>
-                {isPlaceDetails(place) && place.reviews && (
-                  <span className="text-xs text-gray-500">({place.reviews})</span>
-                )}
+                {/* Reviews not available for AdditionalPlace type */}
               </div>
             )}
 
@@ -183,7 +223,7 @@ const AdditionalPlaces: React.FC<AdditionalPlacesProps> = ({
       {/* Places Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {currentPlaces.map((place, index) => {
-          const placeId = isPlaceDetails(place) ? place.place_id : place.place_id;
+          const placeId = place.place_id;
           return (
             <PlaceCard
               key={`${placeId}-${index}`}

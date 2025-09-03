@@ -16,7 +16,7 @@ import {
   Sparkles,
   Globe,
   Mountain,
-  Camera,
+
   Coffee,
   ShoppingBag,
   Moon,
@@ -104,15 +104,36 @@ const TripPlannerPage: React.FC = () => {
       // Convert budget tier to actual budget amount
       const budgetAmount = budget === 'low' ? 1000 : budget === 'medium' ? 3000 : 8000;
 
-      // Prepare API request
+      // Prepare API request with comprehensive data
       const apiRequest = {
+        // Basic Information
         destination,
         start_date: startDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
         end_date: endDate.toISOString().split('T')[0],
+        total_days: days,
         budget: budgetAmount,
-        interests: activities,
+        budget_range: budget === 'low' ? 'budget' : budget === 'medium' ? 'mid-range' : 'luxury',
+        
+        // Travel Preferences
         travelers: travelWith === 'solo' ? 1 : travelWith === 'couple' ? 2 : travelWith === 'family' ? 4 : 2,
-        accommodation_type: hotelRating === 3 ? 'budget' : hotelRating === 4 ? 'mid-range' : 'luxury'
+        travel_companion: travelWith,
+        trip_pace: tripPace,
+        interests: activities,
+        
+        // Travel Details
+        departure_city: departureCity,
+        flight_class_preference: flightClass,
+        hotel_rating_preference: `${hotelRating}-star`,
+        accommodation_type: hotelRating === 3 ? 'budget' : hotelRating === 4 ? 'mid-range' : 'luxury',
+        email: email,
+        
+        // Dietary Preferences
+        dietary_preferences: [
+          ...(halal ? ['halal'] : []),
+          ...(vegetarian ? ['vegetarian'] : [])
+        ],
+        halal_preferences: halal ? 'Halal food required' : undefined,
+        vegetarian_preferences: vegetarian ? 'Vegetarian options preferred' : undefined
       };
 
       console.log('Preparing to navigate with data:', apiRequest);

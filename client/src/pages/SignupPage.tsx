@@ -89,7 +89,13 @@ const SignupPage: React.FC = () => {
       setError(null);
       setSuccess(null);
 
-      await signup(formData.firstName, formData.lastName, formData.email, formData.password);
+      await signup({
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        confirm_password: formData.confirmPassword
+      });
       setSuccess('Account created successfully! Redirecting to login...');
       setTimeout(() => {
         navigate('/login');

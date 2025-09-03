@@ -7,6 +7,8 @@ import GoogleMaps from '../components/GoogleMaps';
 import PlaceDetailsModal from '../components/PlaceDetailsModal';
 import AdditionalPlaces from '../components/AdditionalPlaces';
 import EnhancedHoverPopup from '../components/EnhancedHoverPopup';
+import WeatherCard from '../components/WeatherCard';
+import { WeatherDisplay } from '../components/WeatherDisplay';
 
 // Import Location interface from GoogleMaps component
 interface Location {
@@ -26,6 +28,7 @@ interface Location {
 interface DailyPlan {
   day: number;
   date: string;
+  theme?: string;
   activities: Activity[];
   accommodation?: Hotel;
   meals: Restaurant[];
@@ -93,6 +96,7 @@ const ResultsPage: React.FC = () => {
   // Enhanced API Response State
   const [enhancedResponse, setEnhancedResponse] = useState<EnhancedItineraryResponse | null>(null);
   const [allPlaceDetails, setAllPlaceDetails] = useState<Record<string, PlaceDetails>>({});
+  const [weatherData, setWeatherData] = useState<any>(null);
   
   // Legacy state for backward compatibility
   const [dailyPlans, setDailyPlans] = useState<DailyPlan[]>([]);
@@ -200,10 +204,7 @@ const ResultsPage: React.FC = () => {
   }, [itineraryData?.destination]);
 
   // Helper functions for enhanced API
-  const handlePlaceClick = (place: PlaceDetails | AdditionalPlace) => {
-    setSelectedPlace(place);
-    setIsPlaceModalOpen(true);
-  };
+  // (Removed unused handlePlaceClick to satisfy linter)
 
   const handleAddToItinerary = (place: PlaceDetails | AdditionalPlace) => {
     // For now, just close the modal. In the future, this could add to itinerary
@@ -339,8 +340,15 @@ const ResultsPage: React.FC = () => {
           position,
           description: placeDetails.description || placeDetails.address,
           rating: placeDetails.rating,
-          price: placeDetails.price
-        });
+          price: (placeDetails as any).price_range || (placeDetails as any).price,
+          // Extra metadata for richer map popups
+          address: placeDetails.address,
+          website: placeDetails.website,
+          phone: (placeDetails as any).phone,
+          open_state: (placeDetails as any).open_state,
+          hours: placeDetails.hours || (placeDetails as any).operating_hours,
+          thumbnail: placeDetails.thumbnail || placeDetails.serpapi_thumbnail
+        } as any);
         
         console.log(`Added enhanced place: ${placeDetails.title} at`, position);
       });
@@ -432,11 +440,36 @@ const ResultsPage: React.FC = () => {
       console.log('Itinerary already generated, skipping...');
       return;
     }
+
+    // Support injecting a ready enhanced itinerary via navigation state
+    const injected = (location.state as any)?.injectedEnhancedResponse as EnhancedItineraryResponse | undefined;
+    if (injected) {
+      console.log('Detected injected enhanced itinerary in navigation state. Rendering without API call.');
+      const injectedMeta = (location.state as any);
+      // Build minimal ItineraryData from injected meta if available
+      const dataFromInjected: ItineraryData = {
+        destination: injected.itinerary?.destination || injectedMeta.destination || 'Trip',
+        startDate: injectedMeta.startDate || new Date().toISOString(),
+        endDate: injectedMeta.endDate || new Date().toISOString(),
+        days: injected.itinerary?.total_days || injectedMeta.days || injected.itinerary?.daily_plans?.length || 1,
+        travelers: injectedMeta.travelers || 1,
+        budget: injected.itinerary?.budget_estimate || injectedMeta.budget || 0,
+        interests: injectedMeta.interests || []
+      };
+      setItineraryData(dataFromInjected);
+      try {
+        processEnhancedItineraryResponse(injected, dataFromInjected);
+      } catch (e) {
+        console.error('Failed to process injected itinerary:', e);
+        setError(e instanceof Error ? e.message : 'Failed to render provided itinerary');
+      }
+      return;
+    }
     
-    // Start itinerary generation
+    // Start itinerary generation (API)
     console.log('Starting itinerary generation...');
-    setItineraryData(location.state);
-    generateRealItinerary(location.state);
+    setItineraryData(location.state as any);
+    generateRealItinerary(location.state as any);
   }, [location.state, navigate]);
   
   // Separate useEffect for cleanup when location state changes
@@ -470,14 +503,17 @@ const ResultsPage: React.FC = () => {
 
     try {
       // Use the API request data if available, otherwise prepare it
-      const apiRequest = data.apiRequest || {
-        destination: data.destination,
-        start_date: data.startDate,
-        end_date: data.endDate,
-        budget: data.budget,
-        interests: data.interests,
-        travelers: data.travelers,
-        accommodation_type: 'hotel'
+      const apiRequest = {
+        ...(data.apiRequest || {
+          destination: data.destination,
+          start_date: data.startDate,
+          end_date: data.endDate,
+          budget: data.budget,
+          interests: data.interests,
+          travelers: data.travelers,
+          accommodation_type: 'hotel'
+        }),
+        dietary_preferences: (data.apiRequest as any)?.dietary_preferences || []
       };
 
       console.log('Sending API request:', apiRequest);
@@ -510,7 +546,7 @@ const ResultsPage: React.FC = () => {
         // If it's a network/connection error, show error
         if (apiError.message?.includes('Network Error') || 
             apiError.message?.includes('timeout') ||
-            apiError.code === 'ECONNABORTED') {
+            (apiError as any).code === 'ECONNABORTED') {
           console.log('Network error detected.');
           setError('Network error while generating enhanced itinerary. Please check your connection and try again.');
           return;
@@ -519,91 +555,8 @@ const ResultsPage: React.FC = () => {
         throw apiError;
       }
       
-      // Store the complete enhanced response
-      setEnhancedResponse(enhancedItineraryResponse);
-      setAllPlaceDetails(enhancedItineraryResponse?.place_details || {});
-      
-      // Handle the itinerary part of the response
-      const itineraryData = enhancedItineraryResponse?.itinerary;
-      console.log('Processing itinerary data:', itineraryData);
-      
-      if (itineraryData && itineraryData.daily_plans !== undefined) {
-        // Check if we got actual itinerary data
-        if (itineraryData.daily_plans.length === 0) {
-          console.warn('Received empty daily_plans from enhanced API');
-          throw new Error('AI could not generate a detailed itinerary. This might be due to complex requirements or server issues.');
-        }
-        
-        // Process daily plans from enhanced API
-        const normalizedDailyPlans = itineraryData.daily_plans.map((plan: any) => ({
-          ...plan,
-          activities: plan.activities.map((activity: any) => {
-            // Get place details for this activity
-            const placeDetails = enhancedItineraryResponse?.place_details?.[activity.place_id];
-            return {
-              ...activity,
-              cost: activity.estimated_cost || 0,
-              type: activity.type || 'sightseeing',
-              location: placeDetails?.address || activity.location || itineraryData.destination,
-              description: placeDetails?.description || activity.title
-            };
-          }),
-          meals: plan.meals?.map((meal: any) => {
-            // Get place details for this meal
-            const placeDetails = enhancedItineraryResponse?.place_details?.[meal.place_id];
-            return {
-              ...meal,
-              priceRange: meal.price_range || '$$',
-              description: placeDetails?.description || `Great ${meal.cuisine} cuisine`,
-              location: placeDetails?.address || meal.location || itineraryData.destination,
-              rating: placeDetails?.rating || 4.0
-            };
-          }) || []
-        }));
-        
-        setDailyPlans(normalizedDailyPlans);
-        
-        // Set itinerary summary from enhanced response
-        setItinerarySummary({
-          total_days: itineraryData.total_days || data.days,
-          budget_estimate: itineraryData.budget_estimate || 0,
-          destination: itineraryData.destination || data.destination
-        });
-        
-        // Convert accommodation suggestions to legacy hotel format for compatibility
-        if (itineraryData.accommodation_suggestions) {
-          const hotelsFromAccommodation = itineraryData.accommodation_suggestions.map((acc: any) => {
-            const placeDetails = enhancedItineraryResponse?.place_details?.[acc.place_id];
-            return {
-              name: acc.name,
-              rating: placeDetails?.rating || 4.0,
-              price_range: acc.price_range,
-              amenities: ['WiFi'], // Default amenities
-              location: placeDetails?.address || acc.location,
-              description: placeDetails?.description || `Great ${acc.type} in ${itineraryData.destination}`,
-              place_id: acc.place_id
-            };
-          });
-          setHotels(hotelsFromAccommodation);
-        }
-        
-        // Set travel tips
-        if (itineraryData.travel_tips) {
-          setTips(itineraryData.travel_tips);
-        }
-        
-        // Mark as successfully generated
-        hasGeneratedRef.current = true;
-        console.log('✅ Successfully processed enhanced itinerary response');
-      } else {
-        console.error('❌ Invalid enhanced response format. Expected daily_plans but got:', {
-          hasItinerary: !!enhancedItineraryResponse?.itinerary,
-          hasPlaceDetails: !!enhancedItineraryResponse?.place_details,
-          itineraryKeys: Object.keys(itineraryData || {}),
-          itineraryData: itineraryData
-        });
-        throw new Error('Invalid enhanced response format from server - missing itinerary data');
-      }
+      // Process and store the response in state
+      processEnhancedItineraryResponse(enhancedItineraryResponse, data);
 
     } catch (error) {
       console.error('Error generating itinerary:', error);
@@ -612,6 +565,111 @@ const ResultsPage: React.FC = () => {
       
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Helper to process an already available enhanced response (injected or from API)
+  const processEnhancedItineraryResponse = (enhancedItineraryResponse: EnhancedItineraryResponse, dataFallback?: ItineraryData) => {
+    // Store the complete enhanced response
+    setEnhancedResponse(enhancedItineraryResponse);
+    setAllPlaceDetails(enhancedItineraryResponse?.place_details || {});
+    
+    // Extract weather data from response
+    if (enhancedItineraryResponse?.weather) {
+      setWeatherData(enhancedItineraryResponse.weather);
+      console.log('✅ Weather data extracted from response:', enhancedItineraryResponse.weather);
+    } else {
+      console.log('⚠️ No weather data found in response');
+    }
+
+    // Handle the itinerary part of the response
+    const itineraryDataInner = enhancedItineraryResponse?.itinerary as any;
+    console.log('Processing itinerary data (helper):', itineraryDataInner);
+    
+    if (itineraryDataInner && itineraryDataInner.daily_plans !== undefined) {
+      if (itineraryDataInner.daily_plans.length === 0) {
+        console.warn('Received empty daily_plans from enhanced API');
+        throw new Error('AI could not generate a detailed itinerary. This might be due to complex requirements or server issues.');
+      }
+
+      // Process daily plans from enhanced API
+      const normalizedDailyPlans = itineraryDataInner.daily_plans.map((plan: any) => ({
+        ...plan,
+        activities: plan.activities.map((activity: any) => {
+          const placeDetails = enhancedItineraryResponse?.place_details?.[activity.place_id];
+          return {
+            ...activity,
+            cost: activity.estimated_cost || 0,
+            type: activity.type || 'sightseeing',
+            location: placeDetails?.address || activity.location || itineraryDataInner.destination,
+            description: placeDetails?.description || activity.title
+          };
+        }),
+        meals: plan.meals?.map((meal: any) => {
+          const placeDetails = enhancedItineraryResponse?.place_details?.[meal.place_id];
+          return {
+            ...meal,
+            priceRange: meal.price_range || '$$',
+            description: placeDetails?.description || `Great ${meal.cuisine} cuisine`,
+            location: placeDetails?.address || meal.location || itineraryDataInner.destination,
+            rating: placeDetails?.rating || 4.0
+          };
+        }) || [],
+        transport: plan.transportation?.map((transport: any) => ({
+          ...transport,
+          cost: transport.cost || 0
+        })) || []
+      }));
+
+      setDailyPlans(normalizedDailyPlans);
+
+      // Set itinerary summary from enhanced response
+      setItinerarySummary({
+        total_days: itineraryDataInner.total_days || dataFallback?.days,
+        budget_estimate: itineraryDataInner.budget_estimate || 0,
+        destination: itineraryDataInner.destination || dataFallback?.destination
+      });
+
+      // Convert accommodation suggestions to legacy hotel format for compatibility
+      if (itineraryDataInner.accommodation_suggestions) {
+        const hotelsFromAccommodation = itineraryDataInner.accommodation_suggestions.map((acc: any) => {
+          const placeDetails = enhancedItineraryResponse?.place_details?.[acc.place_id];
+          return {
+            name: acc.name,
+            rating: placeDetails?.rating || 4.0,
+            price_range: acc.price_range,
+            amenities: ['WiFi'],
+            location: placeDetails?.address || acc.location,
+            description: placeDetails?.description || `Great ${acc.type} in ${itineraryDataInner.destination}`,
+            place_id: acc.place_id
+          } as any;
+        });
+        setHotels(hotelsFromAccommodation);
+      }
+
+      // Set travel tips
+      let allTips: string[] = [];
+      if (itineraryDataInner.travel_tips) {
+        allTips = [...itineraryDataInner.travel_tips];
+      }
+      
+      // Add weather recommendations if available
+      if (enhancedItineraryResponse?.weather?.recommendations) {
+        allTips = [...allTips, ...enhancedItineraryResponse.weather.recommendations];
+      }
+      
+      setTips(allTips);
+
+      hasGeneratedRef.current = true;
+      console.log('✅ Successfully processed enhanced itinerary (helper)');
+    } else {
+      console.error('❌ Invalid enhanced response format. Expected daily_plans but got:', {
+        hasItinerary: !!enhancedItineraryResponse?.itinerary,
+        hasPlaceDetails: !!enhancedItineraryResponse?.place_details,
+        itineraryKeys: Object.keys(itineraryDataInner || {}),
+        itineraryData: itineraryDataInner
+      });
+      throw new Error('Invalid enhanced response format from server - missing itinerary data');
     }
   };
 
@@ -641,10 +699,10 @@ const ResultsPage: React.FC = () => {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {itineraryData.destination} Itinerary
+                    {enhancedResponse?.itinerary.destination || itineraryData.destination} Itinerary
                   </h1>
                   <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {itineraryData.days} days • {itineraryData.travelers} traveler{itineraryData.travelers > 1 ? 's' : ''}
+                    {enhancedResponse?.itinerary.total_days || itineraryData.days} days • {itineraryData.travelers} traveler{itineraryData.travelers > 1 ? 's' : ''}
                   </p>
                 </div>
               </div>
@@ -652,6 +710,13 @@ const ResultsPage: React.FC = () => {
             
             {/* Right side - Trip details */}
             <div className="flex items-center space-x-6 text-sm text-gray-600 dark:text-gray-300">
+              <button
+                onClick={() => navigate('/itinerary', { state: { itineraryData: enhancedResponse } })}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+              >
+                <span>📅</span>
+                <span>View Timeline</span>
+              </button>
               <div className="flex items-center">
                 <Calendar className="w-4 h-4 mr-2" />
                 <span className="hidden sm:inline">
@@ -672,7 +737,7 @@ const ResultsPage: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="w-full px-4 sm:px-6 lg:px-8 py-8 pt-28">
+      <main className="w-full px-4 sm:px-6 lg:px-8 py-8 pt-8">
                 {isLoading ? (
           <div className="text-center py-20">
             <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-100 dark:bg-blue-900/20 rounded-full mb-8">
@@ -768,7 +833,7 @@ const ResultsPage: React.FC = () => {
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">
                     Journey Overview
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div className="text-center">
                       <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">
@@ -793,7 +858,49 @@ const ResultsPage: React.FC = () => {
                       </div>
                       <div className="text-lg font-semibold text-gray-900 dark:text-white">Planned Days</div>
                     </div>
+                    {weatherData && (
+                      <div className="text-center">
+                        <div className="w-20 h-20 bg-amber-100 dark:bg-amber-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                          <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                            {Math.round(weatherData.current.temperature)}°C
+                          </span>
+                        </div>
+                        <div className="text-lg font-semibold text-gray-900 dark:text-white">Current Weather</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 capitalize">
+                          {weatherData.current.description}
+                        </div>
+                      </div>
+                    )}
                   </div>
+                  
+                  {/* Weather Information */}
+                  {weatherData ? (
+                    <div className="mt-8">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">
+                        🌤️ Current Weather
+                      </h3>
+                      <div className="max-w-2xl mx-auto">
+                        <WeatherDisplay 
+                          weatherData={weatherData}
+                          compact={false}
+                          className="shadow-sm"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-8">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">
+                        🌤️ Current Weather
+                      </h3>
+                      <div className="max-w-md mx-auto">
+                        <WeatherCard 
+                          city={itinerarySummary.destination} 
+                          compact={false}
+                          className="shadow-sm"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -809,9 +916,9 @@ const ResultsPage: React.FC = () => {
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {tips.map((tip, index) => (
-                          <div key={index} className="flex items-start space-x-3 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-2xl">
-                            <span className="text-amber-500 mt-1 text-lg">•</span>
-                            <p className="text-gray-700 dark:text-gray-300">{tip}</p>
+                          <div key={index} className="flex items-start space-x-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-2xl">
+                            <span className="text-amber-500 mt-1 text-sm">•</span>
+                            <p className="text-sm text-gray-700 dark:text-gray-300">{tip}</p>
                           </div>
                         ))}
                       </div>
@@ -820,10 +927,13 @@ const ResultsPage: React.FC = () => {
 
                   {dailyPlans.map((plan) => (
                     <div key={plan.day} className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300 w-full">
-                      <div className="flex items-center justify-between mb-8">
+                      <div className="flex items-center justify-between mb-6">
                         <div>
-                          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Day {plan.day}</h2>
-                          <p className="text-xl text-gray-600 dark:text-gray-400">{plan.date}</p>
+                          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Day {plan.day}</h2>
+                          <p className="text-lg text-gray-600 dark:text-gray-400">{plan.date}</p>
+                          {plan.theme && (
+                            <p className="text-sm text-blue-600 dark:text-blue-400 font-medium mt-1">{plan.theme}</p>
+                          )}
                         </div>
                         {plan.accommodation && (
                           <div className="text-right">
@@ -890,31 +1000,37 @@ const ResultsPage: React.FC = () => {
                                }
                              }}
                              onMouseLeave={enhancedPlaceDetails ? handlePlaceHoverLeave : handleMouseLeave}
+                             onClick={() => {
+                               if (enhancedPlaceDetails) {
+                                 setSelectedPlace(enhancedPlaceDetails);
+                                 setIsPlaceModalOpen(true);
+                               }
+                             }}
                            >
                                                         <div className="flex-shrink-0 w-16 h-16 bg-blue-100 dark:bg-blue-900/50 rounded-2xl flex items-center justify-center">
                                <Clock className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                              </div>
                              <div className="flex-1">
-                               <div className="flex items-center justify-between mb-3">
-                                 <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{activity.title}</h4>
-                                 <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium">
+                               <div className="flex items-center justify-between mb-2">
+                                 <h4 className="text-base font-semibold text-gray-900 dark:text-white">{activity.title}</h4>
+                                 <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
                                    {activity.time}
                                  </span>
                                </div>
-                               <p className="text-gray-600 dark:text-gray-400 mb-4">{activity.description}</p>
-                               <div className="flex items-center space-x-6 text-sm text-gray-500 dark:text-gray-400">
-                                 <span className="flex items-center space-x-2">
-                                   <MapPin className="w-4 h-4" />
+                               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{activity.description}</p>
+                               <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+                                 <span className="flex items-center space-x-1">
+                                   <MapPin className="w-3 h-3" />
                                    <span>{activity.location}</span>
                                  </span>
-                                 <span className="flex items-center space-x-2">
-                                   <Clock className="w-4 h-4" />
+                                 <span className="flex items-center space-x-1">
+                                   <Clock className="w-3 h-3" />
                                    <span>{activity.duration}</span>
                                  </span>
                                  {activity.cost && (
-                                   <span className="flex items-center space-x-2 text-green-600 dark:text-green-400 font-medium">
-                                     <DollarSign className="w-4 h-4" />
-                                     <span>${activity.cost}</span>
+                                   <span className="flex items-center space-x-1 text-green-600 dark:text-green-400 font-medium">
+                                     <DollarSign className="w-3 h-3" />
+                                     <span>{activity.cost}</span>
                                    </span>
                                  )}
                                </div>
@@ -981,16 +1097,22 @@ const ResultsPage: React.FC = () => {
                                  }
                                }}
                                onMouseLeave={enhancedPlaceDetails ? handlePlaceHoverLeave : handleMouseLeave}
+                               onClick={() => {
+                                 if (enhancedPlaceDetails) {
+                                   setSelectedPlace(enhancedPlaceDetails);
+                                   setIsPlaceModalOpen(true);
+                                 }
+                               }}
                              >
-                               <div className="flex items-center justify-between mb-3">
-                                 <h5 className="font-semibold text-gray-900 dark:text-white">{mealTimes[index]}</h5>
+                               <div className="flex items-center justify-between mb-2">
+                                 <h5 className="text-sm font-semibold text-gray-900 dark:text-white">{mealTimes[index]}</h5>
                                  <div className="flex items-center text-amber-500">
-                                   <Star className="w-4 h-4 fill-current mr-1" />
-                                   <span className="text-sm font-medium">{restaurant.rating}</span>
+                                   <Star className="w-3 h-3 fill-current mr-1" />
+                                   <span className="text-xs font-medium">{restaurant.rating}</span>
                                  </div>
                                </div>
-                               <h4 className="font-semibold text-gray-900 dark:text-white mb-2">{restaurant.name}</h4>
-                               <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{restaurant.cuisine} • {restaurant.priceRange}</p>
+                               <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{restaurant.name}</h4>
+                               <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">{restaurant.cuisine} • {restaurant.priceRange}</p>
                                {restaurant.description && (
                                  <p className="text-xs text-gray-500 dark:text-gray-400">{restaurant.description}</p>
                                )}
@@ -1017,11 +1139,22 @@ const ResultsPage: React.FC = () => {
                            <h4 className="font-medium text-gray-900 dark:text-white mb-4">Daily Breakdown</h4>
                            <div className="space-y-3">
                              {dailyPlans.map((plan) => {
-                               const dayCost = plan.activities.reduce((sum, activity) => sum + (activity.cost || 0), 0);
+                               const activityCost = plan.activities.reduce((sum, activity) => {
+                                 const cost = typeof activity.cost === 'string' ? parseFloat(activity.cost) || 0 : (activity.cost || 0);
+                                 return sum + cost;
+                               }, 0);
+                               
+                               const transportCost = plan.transport?.reduce((sum, transport) => {
+                                 const cost = typeof transport.cost === 'string' ? parseFloat(transport.cost) || 0 : (transport.cost || 0);
+                                 return sum + cost;
+                               }, 0) || 0;
+                               
+                               const dayCost = activityCost + transportCost;
+                               
                                return (
                                  <div key={plan.day} className="flex justify-between text-sm">
                                    <span className="font-medium text-gray-700 dark:text-gray-300">Day {plan.day}</span>
-                                   <span className="font-medium text-blue-600 dark:text-blue-400">${dayCost}</span>
+                                   <span className="font-medium text-blue-600 dark:text-blue-400">${dayCost.toFixed(0)}</span>
                                  </div>
                                );
                              })}
@@ -1031,11 +1164,20 @@ const ResultsPage: React.FC = () => {
                            <h4 className="font-medium text-gray-900 dark:text-white mb-4">Total Estimated Cost</h4>
                            <div className="text-3xl font-bold text-green-600 dark:text-green-400">
                              ${dailyPlans.reduce((total, plan) => {
-                               const dayCost = plan.activities.reduce((sum, activity) => sum + (activity.cost || 0), 0);
-                               return total + dayCost;
-                             }, 0).toLocaleString()}
+                               const activityCost = plan.activities.reduce((sum, activity) => {
+                                 const cost = typeof activity.cost === 'string' ? parseFloat(activity.cost) || 0 : (activity.cost || 0);
+                                 return sum + cost;
+                               }, 0);
+                               
+                               const transportCost = plan.transport?.reduce((sum, transport) => {
+                                 const cost = typeof transport.cost === 'string' ? parseFloat(transport.cost) || 0 : (transport.cost || 0);
+                                 return sum + cost;
+                               }, 0) || 0;
+                               
+                               return total + activityCost + transportCost;
+                             }, 0).toFixed(0)}
                            </div>
-                           <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Activities only (excluding accommodation & meals)</p>
+                           <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Activities & transportation (excluding accommodation & meals)</p>
                          </div>
                        </div>
                      </div>

@@ -3,9 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Search, 
-  Filter, 
   MapPin, 
-  Calendar, 
   Users, 
   Plane, 
   Hotel, 
@@ -13,9 +11,7 @@ import {
   Heart,
   ArrowRight,
   Globe,
-  TrendingUp,
-  Clock,
-  DollarSign
+  Clock
 } from 'lucide-react';
 import ModernButton from '../components/ui/ModernButton';
 import ModernCard from '../components/ui/ModernCard';
@@ -49,7 +45,7 @@ const SearchPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Mock search results
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([
+  const [searchResults] = useState<SearchResult[]>([
     {
       id: '1',
       type: 'flight',
@@ -143,7 +139,15 @@ const SearchPage: React.FC = () => {
   };
 
   const filteredResults = searchResults.filter(result => {
-    if (searchType !== 'all' && result.type !== searchType) return false;
+    if (searchType !== 'all') {
+      // Map search type to result type
+      const typeMapping: Record<string, string> = {
+        'flights': 'flight',
+        'hotels': 'hotel',
+        'packages': 'package'
+      };
+      if (result.type !== typeMapping[searchType]) return false;
+    }
     if (searchQuery && !result.destination.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     if (result.price < priceRange[0] || result.price > priceRange[1]) return false;
     return true;

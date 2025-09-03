@@ -139,9 +139,19 @@ async def generate_itinerary(request: ItineraryRequest):
             start_date=request.start_date,
             end_date=request.end_date,
             budget=request.budget,
+            budget_range=request.budget_range,
             interests=request.interests,
             travelers=request.travelers,
-            accommodation_type=request.accommodation_type
+            travel_companion=request.travel_companion,
+            trip_pace=request.trip_pace,
+            departure_city=request.departure_city,
+            flight_class_preference=request.flight_class_preference,
+            hotel_rating_preference=request.hotel_rating_preference,
+            accommodation_type=request.accommodation_type,
+            email=request.email,
+            dietary_preferences=request.dietary_preferences,
+            halal_preferences=request.halal_preferences,
+            vegetarian_preferences=request.vegetarian_preferences
         )
         
         # Log the response structure for debugging

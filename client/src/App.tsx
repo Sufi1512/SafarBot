@@ -17,6 +17,7 @@ import SearchPage from './pages/SearchPage';
 import DatePickerDemo from './pages/DatePickerDemo';
 import ResultsPage from './pages/ResultsPage';
 import TripPlannerPage from './pages/TripPlannerPage';
+import ItineraryPage from './pages/ItineraryPage';
 
 
 function App() {
@@ -27,7 +28,7 @@ function App() {
           <Router>
             <div className="min-h-screen w-full bg-secondary-50 dark:bg-dark-bg text-secondary-900 dark:text-dark-text">
               <ModernHeader />
-              <main className="mt-0 pt-0 w-full">
+              <main className="mt-0 pt-20 w-full">
                 <Routes>
                   <Route path="/" element={<HomePage />} />
                   <Route path="/flights" element={<FlightBookingPage />} />
@@ -41,6 +42,7 @@ function App() {
                   <Route path="/signup" element={<SignupPage />} />
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                   <Route path="/results" element={<ResultsPage />} />
+                  <Route path="/itinerary" element={<ItineraryPage />} />
                   <Route path="/trip-planner" element={<TripPlannerPage />} />
                 </Routes>
               </main>

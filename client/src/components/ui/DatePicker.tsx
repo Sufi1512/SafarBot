@@ -1,7 +1,7 @@
 import React from "react";
 import { format } from "date-fns";
 import { DayPicker } from "react-day-picker";
-import { ChevronRightIcon, ChevronLeftIcon, CalendarIcon } from "@heroicons/react/24/outline";
+import { CalendarIcon } from "@heroicons/react/24/outline";
 
 interface DatePickerProps {
   label?: string;
@@ -87,14 +87,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                   day_disabled: "text-gray-300 dark:text-gray-600 opacity-50 cursor-not-allowed",
                   day_hidden: "invisible",
                 }}
-                components={{
-                  IconLeft: ({ ...props }) => (
-                    <ChevronLeftIcon {...props} className="h-5 w-5 stroke-2" />
-                  ),
-                  IconRight: ({ ...props }) => (
-                    <ChevronRightIcon {...props} className="h-5 w-5 stroke-2" />
-                  ),
-                }}
+
               />
             </div>
           </div>

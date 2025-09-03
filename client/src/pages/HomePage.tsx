@@ -256,33 +256,7 @@ const HomePage: React.FC = () => {
             </motion.p>
 
             {/* CTA Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-8"
-            >
-              <ModernButton
-                size="lg"
-                variant="primary"
-                className="px-8 py-4 text-lg font-semibold shadow-2xl hover:shadow-3xl transform hover:scale-105 inline-flex items-center justify-center whitespace-nowrap"
-              >
-                <svg className="w-5 h-5 mr-2 flex-shrink-0 align-middle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 12L3 7l18-4-4 18-5-7-5 3 3-5z" />
-                </svg>
-                <span>🚀 Launch My Adventure</span>
-              </ModernButton>
-              <motion.button 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center space-x-3 text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors text-lg font-medium group"
-              >
-                <div className="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full shadow-lg group-hover:shadow-xl transition-all">
-                  <PlayCircleIcon className="w-6 h-6" />
-                </div>
-                <span>🎬 Watch Magic Happen</span>
-              </motion.button>
-            </motion.div>
+              
           </div>
 
           {/* Enhanced Search Card */}
@@ -307,7 +281,7 @@ const HomePage: React.FC = () => {
                     className="inline-flex items-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-full text-sm font-medium mb-6"
                   >
                     <FireIcon className="w-4 h-4" />
-                    <span>🔍 Hunt for Deals</span>
+                    <span>Hunt for Deals</span>
                   </motion.div>
                                       <h2 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-4">
                       Where will your story begin?

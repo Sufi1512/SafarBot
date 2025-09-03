@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Star, MapPin, Filter } from 'lucide-react';
-import { PlaceDetails, AdditionalPlace } from '../services/api';
+import { AdditionalPlace } from '../services/api';
 import PlaceDetailsModal from './PlaceDetailsModal';
 
 interface AdditionalPlacesProps {

@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     # Google SERP API (for flight search)
     serp_api_key: Optional[str] = None
     
+    # OpenWeatherMap API
+    open_weather_api_key: Optional[str] = None
+    
     # LangSmith Configuration
     langsmith_api_key: Optional[str] = None
     langsmith_project: str = "safarbot"
@@ -36,6 +39,8 @@ class Settings(BaseSettings):
             self.google_api_key = os.getenv("GOOGLE_API_KEY")
         if not self.serp_api_key:
             self.serp_api_key = os.getenv("SERP_API_KEY")
+        if not self.open_weather_api_key:
+            self.open_weather_api_key = os.getenv("OPEN_WEATHER_API_KEY")
         if not self.langsmith_api_key:
             self.langsmith_api_key = os.getenv("LANGSMITH_API_KEY")
 

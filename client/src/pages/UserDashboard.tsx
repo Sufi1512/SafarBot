@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -14,8 +14,7 @@ import {
   Search,
   Filter,
   Star,
-  Clock,
-  TrendingUp,
+
   Heart
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -36,7 +35,7 @@ const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
-  const [bookings, setBookings] = useState<Booking[]>([
+  const [bookings] = useState<Booking[]>([
     {
       id: '1',
       type: 'flight',

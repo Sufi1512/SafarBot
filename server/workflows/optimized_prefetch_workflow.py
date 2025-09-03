@@ -34,8 +34,13 @@ class OptimizedPrefetchWorkflow:
         print("🚀 OPTIMIZED PREFETCH WORKFLOW - Initialized")
     
     async def generate_complete_itinerary(self, destination: str, start_date: str, end_date: str,
-                                        budget: float, interests: List[str], travelers: int,
-                                        accommodation_type: str = "mid-range") -> Dict[str, Any]:
+                                        budget: Optional[float] = None, budget_range: Optional[str] = None,
+                                        interests: List[str] = [], travelers: int = 1,
+                                        travel_companion: Optional[str] = None, trip_pace: Optional[str] = None,
+                                        departure_city: Optional[str] = None, flight_class_preference: Optional[str] = None,
+                                        hotel_rating_preference: Optional[str] = None, accommodation_type: Optional[str] = None,
+                                        email: Optional[str] = None, dietary_preferences: List[str] = [],
+                                        halal_preferences: Optional[str] = None, vegetarian_preferences: Optional[str] = None) -> Dict[str, Any]:
         """
         Generate complete itinerary with optimized pre-fetch approach
         1. Pre-fetch all SERP data
@@ -48,9 +53,12 @@ class OptimizedPrefetchWorkflow:
         print("🚀 OPTIMIZED WORKFLOW - Starting complete itinerary generation")
         print(f"📍 Destination: {destination}")
         print(f"📅 Dates: {start_date} to {end_date}")
-        print(f"💰 Budget: ${budget}")
-        print(f"👥 Travelers: {travelers}")
+        print(f"💰 Budget: ${budget if budget else 'Flexible'} ({budget_range or 'Not specified'})")
+        print(f"👥 Travelers: {travelers} ({travel_companion or 'General'})")
+        print(f"🚶 Trip Pace: {trip_pace or 'Balanced'}")
         print(f"🎯 Interests: {interests}")
+        print(f"🏨 Accommodation: {hotel_rating_preference or accommodation_type or 'Standard'}")
+        print(f"🍽️ Dietary: {', '.join(dietary_preferences) if dietary_preferences else 'No restrictions'}")
         print("="*80)
         
         try:
@@ -64,14 +72,30 @@ class OptimizedPrefetchWorkflow:
             # STEP 2: Generate itinerary using pre-fetched data
             print("\n🤖 STEP 2: Generating itinerary with LLM using pre-fetched data")
             itinerary_response = await self._generate_itinerary_with_prefetched_data(
-                destination, start_date, end_date, budget, interests, 
-                travelers, accommodation_type, all_places_data
+                destination, start_date, end_date, budget, budget_range, interests, 
+                travelers, travel_companion, trip_pace, departure_city, flight_class_preference,
+                hotel_rating_preference, accommodation_type, email, dietary_preferences,
+                halal_preferences, vegetarian_preferences, all_places_data
             )
             
-            # STEP 3: Map place IDs to complete metadata
-            print("\n🗺️  STEP 3: Mapping place IDs to complete metadata")
+            # STEP 3: Get weather data
+            print("\n🌤️  STEP 3: Fetching weather data")
+            weather_data = None
+            try:
+                from services.weather_service import weather_service
+                weather_data = await weather_service.get_current_weather(destination)
+                if "error" not in weather_data:
+                    print(f"   ✅ Weather data fetched for {destination}")
+                else:
+                    print(f"   ⚠️  Weather data unavailable: {weather_data.get('error', 'Unknown error')}")
+            except Exception as e:
+                print(f"   ⚠️  Failed to fetch weather data: {str(e)}")
+                weather_data = {"error": str(e)}
+            
+            # STEP 4: Map place IDs to complete metadata
+            print("\n🗺️  STEP 4: Mapping place IDs to complete metadata")
             complete_response = await self._map_places_to_complete_data(
-                itinerary_response, all_places_data
+                itinerary_response, all_places_data, weather_data
             )
             
             print("\n✅ OPTIMIZED WORKFLOW COMPLETED - Single complete response ready")
@@ -159,6 +183,7 @@ class OptimizedPrefetchWorkflow:
             logger.error(f"Error in pre-fetch: {str(e)}")
             # Return empty structure on error
             return {
+                
                 'hotels': [],
                 'restaurants': [],
                 'cafes': [],
@@ -167,8 +192,13 @@ class OptimizedPrefetchWorkflow:
             }
     
     async def _generate_itinerary_with_prefetched_data(self, destination: str, start_date: str, 
-                                                     end_date: str, budget: float, interests: List[str],
-                                                     travelers: int, accommodation_type: str,
+                                                     end_date: str, budget: Optional[float], budget_range: Optional[str],
+                                                     interests: List[str], travelers: int, travel_companion: Optional[str],
+                                                     trip_pace: Optional[str], departure_city: Optional[str],
+                                                     flight_class_preference: Optional[str], hotel_rating_preference: Optional[str],
+                                                     accommodation_type: Optional[str], email: Optional[str],
+                                                     dietary_preferences: List[str], halal_preferences: Optional[str],
+                                                     vegetarian_preferences: Optional[str],
                                                      all_places_data: Dict[str, List[Dict[str, Any]]]) -> Dict[str, Any]:
         """Generate itinerary using pre-fetched data"""
         
@@ -180,15 +210,28 @@ class OptimizedPrefetchWorkflow:
         # Create a summary of available places for the LLM
         places_summary = self._create_places_summary_for_llm(all_places_data)
         
+        # Get weather information
+        weather_info = "Weather data unavailable - plan for various conditions and seasons"
+        try:
+            from services.weather_service import weather_service
+            weather_data = await weather_service.get_current_weather(destination)
+            if "error" not in weather_data:
+                weather_info = self._format_weather_info(weather_data, destination)
+        except Exception as e:
+            logger.warning(f"Failed to fetch weather data: {str(e)}")
+        
         # Create optimized prompt
-        prompt = f"""You are an expert travel planner. Create a {total_days}-day itinerary for {destination} using the PRE-FETCHED places data below.
+        prompt = f"""You are an expert travel planner. Create a comprehensive {total_days}-day itinerary for {destination} using the PRE-FETCHED places data below.
 
 DESTINATION: {destination}
 DATES: {start_date} to {end_date} ({total_days} days)
-BUDGET: ${budget} USD
-TRAVELERS: {travelers}
+TRAVELERS: {travel_companion or f'{travelers} people'}
+BUDGET: {budget_range or f'${budget} USD' if budget else 'Flexible'}
+TRIP PACE: {trip_pace or 'Balanced'}
 INTERESTS: {', '.join(interests)}
-ACCOMMODATION: {accommodation_type}
+ACCOMMODATION: {hotel_rating_preference or accommodation_type or 'Standard'}
+DIETARY PREFERENCES: {', '.join(dietary_preferences) if dietary_preferences else 'No restrictions'}
+WEATHER CONDITIONS: {weather_info}
 
 AVAILABLE PLACES (with place IDs):
 {places_summary}
@@ -200,6 +243,10 @@ INSTRUCTIONS:
 4. Mix different types of places (attractions, restaurants, cafes)
 5. Respect the budget constraints
 6. Include accommodation suggestions from available hotels
+7. Consider weather conditions when planning activities
+8. Provide EXACTLY 10-12 travel tips (not fewer)
+9. Include 2-3 activities per day minimum
+10. Include 2-3 meals per day minimum
 
 RESPONSE FORMAT: Return ONLY valid JSON with this structure:
 {{
@@ -252,7 +299,20 @@ RESPONSE FORMAT: Return ONLY valid JSON with this structure:
     }}
   ],
   "place_ids_used": ["hotels_001", "restaurants_001", "attractions_001"],
-  "travel_tips": ["Essential tip 1", "Essential tip 2"]
+  "travel_tips": [
+    "Respect local customs and dress appropriately",
+    "Use public transportation for cost-effective travel",
+    "Book tickets for popular attractions online",
+    "Carry cash for small vendors and markets",
+    "Pack clothing suitable for weather conditions",
+    "Reserve dining spots in advance for popular restaurants",
+    "Use ride-hailing apps for convenient transport",
+    "Learn basic local phrases for better interactions",
+    "Check attraction hours to plan around closures",
+    "Stay hydrated, especially in warm weather",
+    "Keep copies of travel documents separate",
+    "Plan outdoor activities for cooler parts of the day"
+  ]
 }}
 
 Generate the itinerary now:"""
@@ -291,6 +351,33 @@ Generate the itinerary now:"""
                 "travel_tips": ["Explore the local culture", "Try local cuisine"]
             }
     
+    def _format_weather_info(self, weather_data: Dict[str, Any], destination: str) -> str:
+        """Format weather information for the prompt"""
+        if not weather_data or "error" in weather_data:
+            return "Weather data unavailable - plan for various conditions and seasons"
+        
+        current = weather_data.get("current", {})
+        location = weather_data.get("location", {})
+        
+        temp = current.get("temperature", 0)
+        description = current.get("description", "unknown conditions")
+        humidity = current.get("humidity", 0)
+        wind_speed = current.get("wind_speed", 0)
+        
+        weather_info = f"Current weather in {location.get('city', destination)}: {temp}°C, {description}"
+        
+        if humidity > 0:
+            weather_info += f", humidity {humidity}%"
+        if wind_speed > 0:
+            weather_info += f", wind {wind_speed} m/s"
+        
+        # Add recommendations if available
+        recommendations = weather_data.get("recommendations", [])
+        if recommendations:
+            weather_info += f". Recommendations: {'; '.join(recommendations[:3])}"  # Limit to first 3 recommendations
+        
+        return weather_info
+
     def _create_places_summary_for_llm(self, all_places_data: Dict[str, List[Dict[str, Any]]]) -> str:
         """Create a concise summary of available places for the LLM"""
         
@@ -319,7 +406,8 @@ Generate the itinerary now:"""
         return '\n'.join(summary_lines)
     
     async def _map_places_to_complete_data(self, itinerary_response: Dict[str, Any], 
-                                         all_places_data: Dict[str, List[Dict[str, Any]]]) -> Dict[str, Any]:
+                                         all_places_data: Dict[str, List[Dict[str, Any]]], 
+                                         weather_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Map place IDs from itinerary to complete metadata"""
         
         # Create place ID to complete data mapping
@@ -375,17 +463,25 @@ Generate the itinerary now:"""
             "itinerary": itinerary_response,
             "place_details": place_details,
             "additional_places": additional_places,
+            "weather": weather_data if weather_data and "error" not in weather_data else None,
             "metadata": {
                 "total_places_prefetched": sum(len(places) for places in all_places_data.values()),
                 "places_used_in_itinerary": len(place_details),
                 "additional_places_available": sum(len(places) for places in additional_places.values()),
                 "generation_timestamp": datetime.now().isoformat(),
-                "workflow_type": "optimized_prefetch"
+                "workflow_type": "optimized_prefetch",
+                "weather_included": weather_data is not None and "error" not in weather_data
             }
         }
         
         print(f"   ✅ Complete response built:")
         print(f"      📋 Itinerary places: {len(place_details)}")
         print(f"      🎯 Additional places: {sum(len(places) for places in additional_places.values())}")
+        if weather_data and "error" not in weather_data:
+            temp = weather_data.get("current", {}).get("temperature", "N/A")
+            desc = weather_data.get("current", {}).get("description", "N/A")
+            print(f"      🌤️  Weather: {temp}°C, {desc}")
+        else:
+            print(f"      🌤️  Weather: Not available")
         
         return complete_response

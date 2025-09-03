@@ -25,9 +25,19 @@ class ItineraryService:
         start_date: str,
         end_date: str,
         budget: Optional[float] = None,
+        budget_range: Optional[str] = None,
         interests: List[str] = [],
         travelers: int = 1,
-        accommodation_type: Optional[str] = None
+        travel_companion: Optional[str] = None,
+        trip_pace: Optional[str] = None,
+        departure_city: Optional[str] = None,
+        flight_class_preference: Optional[str] = None,
+        hotel_rating_preference: Optional[str] = None,
+        accommodation_type: Optional[str] = None,
+        email: Optional[str] = None,
+        dietary_preferences: List[str] = [],
+        halal_preferences: Optional[str] = None,
+        vegetarian_preferences: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Generate a complete travel itinerary with pre-fetched place details using optimized workflow
@@ -38,10 +48,12 @@ class ItineraryService:
         print("="*80)
         print(f"📍 Destination: {destination}")
         print(f"📅 Dates: {start_date} to {end_date}")
-        print(f"👥 Travelers: {travelers}")
-        print(f"💰 Budget: ${budget if budget else 'Flexible'}")
+        print(f"👥 Travelers: {travelers} ({travel_companion or 'General'})")
+        print(f"💰 Budget: ${budget if budget else 'Flexible'} ({budget_range or 'Not specified'})")
         print(f"🎯 Interests: {', '.join(interests) if interests else 'General'}")
-        print(f"🏨 Accommodation: {accommodation_type or 'Standard'}")
+        print(f"🏨 Accommodation: {hotel_rating_preference or accommodation_type or 'Standard'}")
+        print(f"🚶 Trip Pace: {trip_pace or 'Balanced'}")
+        print(f"🍽️ Dietary: {', '.join(dietary_preferences) if dietary_preferences else 'No restrictions'}")
         print("-"*80)
         
         try:
@@ -60,9 +72,19 @@ class ItineraryService:
                 start_date=start_date,
                 end_date=end_date,
                 budget=budget,
+                budget_range=budget_range,
                 interests=interests,
                 travelers=travelers,
-                accommodation_type=accommodation_type
+                travel_companion=travel_companion,
+                trip_pace=trip_pace,
+                departure_city=departure_city,
+                flight_class_preference=flight_class_preference,
+                hotel_rating_preference=hotel_rating_preference,
+                accommodation_type=accommodation_type,
+                email=email,
+                dietary_preferences=dietary_preferences,
+                halal_preferences=halal_preferences,
+                vegetarian_preferences=vegetarian_preferences
             )
             
             print("✅ COMPLETE ITINERARY GENERATION COMPLETED SUCCESSFULLY")

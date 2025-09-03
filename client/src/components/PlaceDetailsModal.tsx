@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Star, MapPin, Phone, Globe, Clock, Plus } from 'lucide-react';
-import { PlaceDetails, AdditionalPlace } from '../services/api';
+import { AdditionalPlace } from '../services/api';
 
 interface PlaceDetailsModalProps {
   place: AdditionalPlace | null;
@@ -173,14 +173,14 @@ const PlaceDetailsModal: React.FC<PlaceDetailsModalProps> = ({
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Operating Hours</h3>
               <div className="grid grid-cols-1 gap-2">
-                {Object.entries(place.operating_hours).map(([day, hours]) => (
-                  hours && (
+                {Object.entries(place.operating_hours)
+                  .filter(([, hours]) => hours)
+                  .map(([day, hours]) => (
                     <div key={day} className="flex justify-between py-1">
                       <span className="font-medium text-gray-900 dark:text-white capitalize">{day}</span>
-                      <span className="text-gray-700 dark:text-gray-300">{hours}</span>
+                      <span className="text-gray-700 dark:text-gray-300">{String(hours)}</span>
                     </div>
-                  )
-                ))}
+                  ))}
               </div>
             </div>
           )}

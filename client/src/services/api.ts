@@ -108,13 +108,31 @@ export interface APIResponse<T = any> {
 
 // Request Types
 export interface ItineraryRequest {
+  // Basic Information
   destination: string;
   start_date: string;
   end_date: string;
-  budget: number;
-  interests: string[];
+  total_days?: number;
+  budget?: number;
+  budget_range?: string;
+  
+  // Travel Preferences
   travelers: number;
+  travel_companion?: string;
+  trip_pace?: string;
+  interests: string[];
+  
+  // Travel Details
+  departure_city?: string;
+  flight_class_preference?: string;
+  hotel_rating_preference?: string;
   accommodation_type?: string;
+  email?: string;
+  
+  // Dietary Preferences
+  dietary_preferences: string[];
+  halal_preferences?: string;
+  vegetarian_preferences?: string;
 }
 
 export interface ChatRequest {
@@ -420,6 +438,7 @@ export interface EnhancedItineraryResponse {
       type: string;
       location: string;
       price_range: string;
+      brief_description: string;
     }>;
     daily_plans: Array<{
       day: number;
@@ -460,12 +479,14 @@ export interface EnhancedItineraryResponse {
     attractions: AdditionalPlace[];
     interest_based: AdditionalPlace[];
   };
+  weather?: WeatherData;
   metadata: {
     total_places_prefetched: number;
     places_used_in_itinerary: number;
     additional_places_available: number;
     generation_timestamp: string;
     workflow_type: string;
+    weather_included?: boolean;
   };
 }
 
@@ -1000,6 +1021,113 @@ export const authAPI = {
       throw new Error(error.userMessage || 'Password change failed');
     }
   }
+};
+
+// Weather API Types
+export interface WeatherData {
+  location: {
+    city: string;
+    country: string;
+    coordinates: {
+      lat: number;
+      lon: number;
+    };
+  };
+  current: {
+    temperature: number;
+    feels_like: number;
+    humidity: number;
+    pressure: number;
+    description: string;
+    icon: string;
+    wind_speed: number;
+    wind_direction: number;
+    visibility: number;
+    uv_index: number;
+  };
+  recommendations: string[];
+  timestamp: string;
+}
+
+export interface WeatherForecast {
+  location: {
+    city: string;
+    country: string;
+    coordinates: {
+      lat: number;
+      lon: number;
+    };
+  };
+  forecasts: Array<{
+    datetime: string;
+    temperature: {
+      min: number;
+      max: number;
+      current: number;
+    };
+    humidity: number;
+    description: string;
+    icon: string;
+    wind_speed: number;
+    precipitation: number;
+  }>;
+  timestamp: string;
+}
+
+export interface WeatherForItinerary {
+  formatted_weather: string;
+  recommendations: string[];
+  raw_data: WeatherData;
+}
+
+// Weather API
+export const weatherAPI = {
+  getCurrentWeather: async (city: string, country_code?: string): Promise<WeatherData> => {
+    try {
+      const params: Record<string, string> = { city };
+      if (country_code) params.country_code = country_code;
+      
+      const response = await api.get('/weather/current', { params });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to get current weather');
+    }
+  },
+
+  getWeatherForecast: async (city: string, country_code?: string, days: number = 5): Promise<WeatherForecast> => {
+    try {
+      const params: Record<string, string> = { city, days: days.toString() };
+      if (country_code) params.country_code = country_code;
+      
+      const response = await api.get('/weather/forecast', { params });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to get weather forecast');
+    }
+  },
+
+  getWeatherByCoordinates: async (lat: number, lon: number): Promise<WeatherData> => {
+    try {
+      const response = await api.get('/weather/coordinates', {
+        params: { lat: lat.toString(), lon: lon.toString() }
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to get weather by coordinates');
+    }
+  },
+
+  getWeatherForItinerary: async (city: string, country_code?: string): Promise<WeatherForItinerary> => {
+    try {
+      const params: Record<string, string> = { city };
+      if (country_code) params.country_code = country_code;
+      
+      const response = await api.get('/weather/itinerary-format', { params });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to get weather for itinerary');
+    }
+  },
 };
 
 export default api; 

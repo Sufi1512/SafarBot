@@ -88,3 +88,4 @@ class ErrorHandlingMiddleware:
             content["error_id"] = error_id
         
         return JSONResponse(status_code=status_code, content=content)
+

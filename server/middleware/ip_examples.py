@@ -159,3 +159,4 @@ async def report_suspicious_activity(request: Request, activity_type: str = "gen
         },
         "message": "Suspicious activity reported successfully"
     }
+

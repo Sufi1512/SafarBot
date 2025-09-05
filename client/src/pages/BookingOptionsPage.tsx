@@ -410,11 +410,11 @@ const BookingOptionsPage: React.FC = () => {
               whileTap={{ scale: 0.95 }}
             >
               <Button
-                onClick={() => navigate('/flights')}
+                onClick={() => navigate(-1)}
                 icon={ArrowLeft}
                 size="lg"
               >
-                Back to Flight Search
+                Back to Search
               </Button>
             </motion.div>
           </motion.div>
@@ -438,12 +438,12 @@ const BookingOptionsPage: React.FC = () => {
             whileTap={{ scale: 0.95 }}
           >
             <Button
-              onClick={() => navigate('/flights')}
+              onClick={() => navigate(-1)}
               variant="ghost"
               icon={ArrowLeft}
               size="sm"
             >
-              Back to Flights
+              Back
             </Button>
           </motion.div>
           <div className="text-center">

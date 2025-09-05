@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import ModernHeader from './components/ModernHeader';
@@ -20,6 +20,16 @@ import TripPlannerPage from './pages/TripPlannerPage';
 import ItineraryPage from './pages/ItineraryPage';
 
 
+// Component to conditionally render ModernHeader
+const ConditionalHeader: React.FC = () => {
+  const location = useLocation();
+  
+  // Hide ModernHeader on ResultsPage and ItineraryPage
+  const hideHeader = location.pathname === '/results' || location.pathname === '/itinerary';
+  
+  return hideHeader ? null : <ModernHeader />;
+};
+
 function App() {
   return (
     <ErrorBoundary>
@@ -27,8 +37,8 @@ function App() {
         <AuthProvider>
           <Router>
             <div className="min-h-screen w-full bg-secondary-50 dark:bg-dark-bg text-secondary-900 dark:text-dark-text">
-              <ModernHeader />
-              <main className="mt-0 pt-20 w-full">
+              <ConditionalHeader />
+              <main className="mt-0 pt-0 w-full">
                 <Routes>
                   <Route path="/" element={<HomePage />} />
                   <Route path="/flights" element={<FlightBookingPage />} />

@@ -133,3 +133,4 @@ class AuthMiddleware:
                 # Don't raise exception for optional auth
         
         return await call_next(request)
+

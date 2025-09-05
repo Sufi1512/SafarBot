@@ -92,3 +92,4 @@ class LoggingMiddleware:
         logger.info(f"API_USAGE: {json.dumps(usage_data)}")
         
         return response
+

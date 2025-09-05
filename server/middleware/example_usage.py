@@ -105,3 +105,4 @@ async def error_demo(request: Request, error_type: str = "validation"):
             "error_type": error_type,
             "note": "Try ?error_type=validation, ?error_type=not_found, or ?error_type=server_error"
         }
+

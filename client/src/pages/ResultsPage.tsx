@@ -9,6 +9,7 @@ import AdditionalPlaces from '../components/AdditionalPlaces';
 import EnhancedHoverPopup from '../components/EnhancedHoverPopup';
 import WeatherCard from '../components/WeatherCard';
 import { WeatherDisplay } from '../components/WeatherDisplay';
+import ModernHeader from '../components/ModernHeader';
 
 // Import Location interface from GoogleMaps component
 interface Location {
@@ -123,6 +124,7 @@ const ResultsPage: React.FC = () => {
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
   const [isHoverPopupVisible, setIsHoverPopupVisible] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   // Legacy hover state for backward compatibility
   const [hoveredItem, setHoveredItem] = useState<Activity | Hotel | Restaurant | null>(null);
@@ -480,6 +482,17 @@ const ResultsPage: React.FC = () => {
     };
   }, [location.state]);
 
+  // Scroll detection for ModernHeader visibility
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      setIsScrolled(scrollTop > 100);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const generateRealItinerary = async (data: ItineraryData) => {
     console.log('generateRealItinerary called with data:', data);
     
@@ -681,6 +694,13 @@ const ResultsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen w-full bg-white dark:bg-gray-900 overflow-x-hidden">
+      {/* ModernHeader - appears when scrolling */}
+      {isScrolled && (
+        <div className="fixed top-0 left-0 right-0 z-50">
+          <ModernHeader />
+        </div>
+      )}
+      
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 w-full">
         <div className="w-full px-4 sm:px-6 lg:px-8">

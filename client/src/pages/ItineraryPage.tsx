@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Calendar, DollarSign } from 'lucide-react';
 import Card from '../components/ui/Card';
 import LoadingSpinner from '../components/LoadingSpinner';
+import ModernHeader from '../components/ModernHeader';
 import { EnhancedItineraryResponse } from '../services/api';
 
 interface TimelineEvent {
@@ -42,6 +43,7 @@ const ItineraryPage: React.FC = () => {
   const [selectedDay, setSelectedDay] = useState<number>(1);
   const [hoveredEvent, setHoveredEvent] = useState<TimelineEvent | null>(null);
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     const state = location.state as { itineraryData?: EnhancedItineraryResponse };
@@ -53,6 +55,17 @@ const ItineraryPage: React.FC = () => {
     }
     setIsLoading(false);
   }, [location.state]);
+
+  // Scroll detection for ModernHeader visibility
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      setIsScrolled(scrollTop > 100);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const processItineraryData = (data: EnhancedItineraryResponse) => {
     const schedules: DaySchedule[] = data.itinerary.daily_plans.map((plan) => {
@@ -252,6 +265,13 @@ const ItineraryPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* ModernHeader - appears when scrolling */}
+      {isScrolled && (
+        <div className="fixed top-0 left-0 right-0 z-50">
+          <ModernHeader />
+        </div>
+      )}
+      
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 w-full">
         <div className="w-full px-4 sm:px-6 lg:px-8">

@@ -63,3 +63,4 @@ class SecurityMiddleware:
             )
         
         return await call_next(request)
+

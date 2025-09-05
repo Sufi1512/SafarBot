@@ -6,15 +6,21 @@ import {
   Calendar, 
   Users, 
   MapPin, 
-  Search, 
   Filter, 
   Star, 
   Clock, 
-  ArrowRight
+  ArrowRight,
+  Sparkles,
+  Flame,
+  Trophy,
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { flightAPI, Flight, FlightSearchRequest, AirportSuggestion } from '../services/api';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
+import bgVideo2 from '../asset/videos/flight-bg.mp4';
 
 const FlightBookingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -31,6 +37,10 @@ const FlightBookingPage: React.FC = () => {
   const [flights, setFlights] = useState<Flight[]>([]);
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [calendarPosition, setCalendarPosition] = useState({ x: 0, y: 0 });
   const [filters, setFilters] = useState({
     maxPrice: 1000,
     maxStops: 2,
@@ -172,49 +182,129 @@ const FlightBookingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg">
-      {/* Page Header */}
-      <div className="bg-white dark:bg-dark-card border-b border-gray-200 dark:border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
+      {/* Hero Section with Background Video */}
+      <section className="relative min-h-[100vh] pt-20 pb-8 overflow-hidden">
+        {/* Hero Background Video */}
+        <div className="absolute inset-0 overflow-hidden">
+          <video
+            className="w-full h-full object-cover object-center"
+            src={bgVideo2}
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
+        </div>
+        
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-4xl mx-auto mb-8">
+            
+            {/* Badge */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-center"
-          >
-            <div className="flex items-center justify-center space-x-3 mb-4">
-              <div className="w-12 h-12 bg-accent rounded-xl flex items-center justify-center">
-                <Plane className="w-6 h-6 text-white" />
-              </div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                Flight Search
-              </h1>
-            </div>
-            <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Find the best flights for your journey with real-time pricing and booking options
-            </p>
+              className="inline-flex items-center space-x-2 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700 text-primary-700 dark:text-primary-300 px-4 py-2 rounded-full text-sm font-medium mb-6 shadow-lg backdrop-blur-sm"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>AI-Powered Flight Search</span>
           </motion.div>
-        </div>
+
+            {/* Main Heading */}
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 leading-tight"
+            >
+              <span className="gradient-text-with-shimmer" style={{ animationDelay: '0.5s' }}>
+                Find Your Perfect Flight
+              </span>
+            </motion.h1>
+
+            {/* Subtitle */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="text-lg text-gray-700 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed mb-6 font-light"
+            >
+              <motion.span
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.6 }}
+              >
+                Discover the best flight deals with real-time pricing,
+              </motion.span>
+              <br />
+              <motion.span
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.8 }}
+                className="font-medium text-primary-600"
+              >
+                instant booking, and personalized recommendations.
+              </motion.span>
+            </motion.p>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search Form */}
+          {/* Enhanced Search Card */}
         <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+            className="max-w-7xl mx-auto"
+          >
+            <div className="relative bg-white/95 dark:bg-gray-800/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/50 dark:border-gray-700/50 p-4 lg:p-6 hover:shadow-3xl transition-all duration-500" style={{ zIndex: 1 }}>
+              {/* Enhanced Card Background Pattern */}
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-cyan-50/40 via-blue-50/40 to-purple-50/40 dark:from-cyan-900/20 dark:via-blue-900/20 dark:to-purple-900/20" />
+              <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-cyan-400/10 to-blue-500/10 rounded-full blur-3xl animate-pulse" />
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-purple-400/10 to-pink-500/10 rounded-full blur-3xl animate-pulse" />
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-gradient-to-r from-emerald-400/5 to-teal-500/5 rounded-full blur-2xl" />
+              
+              <div className="relative z-10">
+                <div className="text-center mb-4">
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.5, delay: 1 }}
+                    className="inline-flex items-center space-x-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white px-3 py-1.5 rounded-full text-xs font-semibold mb-3 shadow-lg hover:shadow-xl transition-all duration-300"
+                  >
+                    <Sparkles className="w-3 h-3 animate-pulse" />
+                    <span>AI-Powered Flight Search</span>
+                  </motion.div>
+                  <motion.h2 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="mb-8"
-        >
-          <Card className="p-6" shadow="large">
-            <form onSubmit={handleSearch} className="space-y-6">
-              {/* Trip Type Selector */}
-              <div className="flex items-center space-x-6">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Trip Type:</label>
-                <div className="flex items-center space-x-2">
-                  <label className={`flex items-center px-4 py-2 rounded-xl border-2 cursor-pointer transition-all ${
+                    transition={{ duration: 0.6, delay: 1.2 }}
+                    className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-600 to-purple-600 dark:from-white dark:via-blue-400 dark:to-purple-400 bg-clip-text text-transparent mb-2"
+                  >
+                    Where will you fly today?
+                  </motion.h2>
+                  <motion.p 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 1.4 }}
+                    className="text-sm text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed"
+                  >
+                    Discover amazing destinations with our intelligent flight search. Get real-time prices, best deals, and personalized recommendations.
+                  </motion.p>
+                </div>
+
+            <form onSubmit={handleSearch} className="space-y-4">
+                  {/* Enhanced Trip Type Selector */}
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 1.6 }}
+                    className="flex items-center justify-center space-x-4 mb-4"
+                  >
+                    <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 rounded-2xl p-1 shadow-inner">
+                      <label className={`flex items-center px-4 py-2 rounded-xl cursor-pointer transition-all duration-300 ${
                     searchForm.tripType === 'one-way' 
-                      ? 'border-accent bg-accent/10 text-accent' 
-                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card text-gray-600 dark:text-gray-300 hover:border-accent'
+                          ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-lg transform scale-105' 
+                          : 'text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-white/50 dark:hover:bg-gray-600/50'
                   }`}>
                     <input
                       type="radio"
@@ -222,14 +312,15 @@ const FlightBookingPage: React.FC = () => {
                       value="one-way"
                       checked={searchForm.tripType === 'one-way'}
                       onChange={(e) => handleTripTypeChange(e.target.value)}
-                      className="mr-2 text-accent focus:ring-accent"
+                          className="sr-only"
                     />
-                    <span className="text-sm font-medium">One Way</span>
+                        <Plane className="w-3 h-3 mr-1.5" />
+                        <span className="text-xs font-semibold">One Way</span>
                   </label>
-                  <label className={`flex items-center px-4 py-2 rounded-xl border-2 cursor-pointer transition-all ${
+                      <label className={`flex items-center px-4 py-2 rounded-xl cursor-pointer transition-all duration-300 ${
                     searchForm.tripType === 'round-trip' 
-                      ? 'border-accent bg-accent/10 text-accent' 
-                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card text-gray-600 dark:text-gray-300 hover:border-accent'
+                          ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-lg transform scale-105' 
+                          : 'text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-white/50 dark:hover:bg-gray-600/50'
                   }`}>
                     <input
                       type="radio"
@@ -237,38 +328,42 @@ const FlightBookingPage: React.FC = () => {
                       value="round-trip"
                       checked={searchForm.tripType === 'round-trip'}
                       onChange={(e) => handleTripTypeChange(e.target.value)}
-                      className="mr-2 text-accent focus:ring-accent"
+                          className="sr-only"
                     />
-                    <span className="text-sm font-medium">Round Trip</span>
+                        <ArrowRight className="w-3 h-3 mr-1.5" />
+                        <span className="text-xs font-semibold">Round Trip</span>
                   </label>
                 </div>
-              </div>
+                  </motion.div>
               
-              <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${
-                searchForm.tripType === 'round-trip' ? 'lg:grid-cols-5' : 'lg:grid-cols-4'
-              }`}>
+              {/* Form Fields Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                 {/* From */}
                 <div className="relative">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <MapPin className="w-4 h-4 inline mr-2" />
-                    From
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-cyan-500" />
+                        <span>From</span>
                   </label>
+                      <div className="relative group">
                   <input
                     type="text"
                     value={searchForm.from}
                     onChange={(e) => handleFromInputChange(e.target.value)}
                     onFocus={() => searchForm.from.length >= 2 && setShowFromSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowFromSuggestions(false), 200)}
-                    placeholder="Airport code or city"
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-transparent bg-white dark:bg-dark-card text-gray-900 dark:text-white"
+                          placeholder="Departure city"
+                          className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/95 dark:bg-gray-700/95 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500 transition-all duration-300 text-sm font-medium hover:border-cyan-400 shadow-sm hover:shadow-md"
                     required
                   />
+                        <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-cyan-500 group-hover:text-blue-500 transition-colors z-10" />
+                        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                      </div>
                   {showFromSuggestions && fromSuggestions.length > 0 && (
                     <div className="absolute z-10 w-full mt-1 bg-white dark:bg-dark-card border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg max-h-60 overflow-y-auto">
                       {fromSuggestions.map((airport, index) => (
                         <div
                           key={index}
-                          className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                          className="px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
                           onClick={() => selectFromAirport(airport)}
                         >
                           <div className="font-medium text-gray-900 dark:text-white">{airport.code}</div>
@@ -282,26 +377,30 @@ const FlightBookingPage: React.FC = () => {
 
                 {/* To */}
                 <div className="relative">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <MapPin className="w-4 h-4 inline mr-2" />
-                    To
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-cyan-500" />
+                        <span>To</span>
                   </label>
+                      <div className="relative group">
                   <input
                     type="text"
                     value={searchForm.to}
                     onChange={(e) => handleToInputChange(e.target.value)}
                     onFocus={() => searchForm.to.length >= 2 && setShowToSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowToSuggestions(false), 200)}
-                    placeholder="Airport code or city"
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-transparent bg-white dark:bg-dark-card text-gray-900 dark:text-white"
+                    placeholder="Destination city"
+                          className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-sm font-medium hover:border-cyan-400 shadow-sm hover:shadow-md"
                     required
                   />
+                        <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-cyan-500 group-hover:text-blue-500 transition-colors z-10" />
+                        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                      </div>
                   {showToSuggestions && toSuggestions.length > 0 && (
                     <div className="absolute z-10 w-full mt-1 bg-white dark:bg-dark-card border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg max-h-60 overflow-y-auto">
                       {toSuggestions.map((airport, index) => (
                         <div
                           key={index}
-                          className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                          className="px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
                           onClick={() => selectToAirport(airport)}
                         >
                           <div className="font-medium text-gray-900 dark:text-white">{airport.code}</div>
@@ -313,114 +412,425 @@ const FlightBookingPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Departure Date */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <Calendar className="w-4 h-4 inline mr-2" />
-                    Departure
-                  </label>
-                  <input
-                    type="date"
-                    value={searchForm.departureDate}
-                    onChange={(e) => setSearchForm(prev => ({ ...prev, departureDate: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-transparent bg-white dark:bg-dark-card text-gray-900 dark:text-white"
-                    required
-                  />
-                </div>
-
-                {/* Return Date - Only show for round-trip */}
-                {searchForm.tripType === 'round-trip' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      <Calendar className="w-4 h-4 inline mr-2" />
-                      Return
-                    </label>
-                    <input
-                      type="date"
-                      value={searchForm.returnDate}
-                      onChange={(e) => setSearchForm(prev => ({ ...prev, returnDate: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-transparent bg-white dark:bg-dark-card text-gray-900 dark:text-white"
-                      min={searchForm.departureDate}
-                      required={searchForm.tripType === 'round-trip'}
-                    />
-                  </div>
-                )}
 
                 {/* Passengers */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <Users className="w-4 h-4 inline mr-2" />
-                    Passengers
+                <div className="relative">
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+                        <Users className="w-3 h-3 text-cyan-500" />
+                        <span>Passengers</span>
                   </label>
+                      <div className="relative group">
                   <select
                     value={searchForm.passengers}
                     onChange={(e) => setSearchForm(prev => ({ ...prev, passengers: parseInt(e.target.value) }))}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-transparent bg-white dark:bg-dark-card text-gray-900 dark:text-white"
+                          className="w-full pl-10 pr-8 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-sm font-medium appearance-none hover:border-cyan-400 shadow-sm hover:shadow-md cursor-pointer"
+                          aria-label="Select number of passengers"
                   >
                     {[1, 2, 3, 4, 5, 6].map(num => (
-                      <option key={num} value={num}>{num} {num === 1 ? 'Passenger' : 'Passengers'}</option>
+                            <option key={num} value={num} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                              {num} {num === 1 ? 'Passenger' : 'Passengers'}
+                            </option>
                     ))}
                   </select>
+                        <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-cyan-500 group-hover:text-blue-500 transition-colors z-10" />
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                          <svg 
+                            className="w-4 h-4 text-gray-400 group-hover:text-cyan-500 transition-colors" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </div>
+                </div>
+
+                {/* Class Selection */}
+                <div className="relative">
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+                    <Star className="w-3 h-3 text-cyan-500" />
+                    <span>Class</span>
+                  </label>
+                  <div className="relative group">
+                    <select
+                      value={searchForm.class}
+                      onChange={(e) => setSearchForm(prev => ({ ...prev, class: e.target.value }))}
+                      className="w-full pl-10 pr-8 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-sm font-medium appearance-none hover:border-cyan-400 shadow-sm hover:shadow-md cursor-pointer"
+                    >
+                      <option value="economy">Economy</option>
+                      <option value="premium">Premium Economy</option>
+                      <option value="business">Business</option>
+                      <option value="first">First Class</option>
+                    </select>
+                    <Star className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-cyan-500 group-hover:text-yellow-500 transition-colors z-10" />
+                    <div className="absolute right-2.5 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                      <svg 
+                        className="w-3 h-3 text-gray-400 group-hover:text-cyan-500 transition-colors" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="text-sm text-gray-600 dark:text-gray-300">
-                    <span className="font-medium">Trip:</span> {searchForm.tripType === 'one-way' ? 'One Way' : 'Round Trip'}
-                    {searchForm.tripType === 'round-trip' && searchForm.returnDate && (
-                      <span className="ml-2 text-gray-500 dark:text-gray-400">
-                        ({searchForm.departureDate} → {searchForm.returnDate})
-                      </span>
+              {/* Date Selection Section */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 2.0 }}
+                className="mt-4 max-w-md mx-auto"
+              >
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1">
+                  <Calendar className="w-3 h-3 text-cyan-500" />
+                  <span>Travel Dates</span>
+                </label>
+                <div className="bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm border-2 border-gray-200 dark:border-gray-600 rounded-xl p-2">
+                  <div className="flex items-center justify-center gap-4">
+                    <div className="text-center">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Departure</div>
+                      <div 
+                        className="font-semibold text-gray-900 dark:text-white cursor-pointer hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors px-2 py-1 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 text-sm"
+                        onClick={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setCalendarPosition({
+                            x: rect.left + rect.width / 2,
+                            y: rect.bottom + 10
+                          });
+                          setShowCalendar(!showCalendar);
+                        }}
+                      >
+                        {searchForm.departureDate ? 
+                          new Date(searchForm.departureDate).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric'
+                          }) : 'Select date'
+                        }
+                      </div>
+                    </div>
+                    
+                    {searchForm.tripType === 'round-trip' && (
+                      <>
+                        <ArrowRight className="w-3 h-3 text-gray-400" />
+                        <div className="text-center">
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Return</div>
+                          <div 
+                            className="font-semibold text-gray-900 dark:text-white cursor-pointer hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors px-2 py-1 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 text-sm"
+                            onClick={(e) => {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              setCalendarPosition({
+                                x: rect.left + rect.width / 2,
+                                y: rect.bottom + 10
+                              });
+                              setShowCalendar(!showCalendar);
+                            }}
+                          >
+                            {searchForm.returnDate ? 
+                              new Date(searchForm.returnDate).toLocaleDateString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric'
+                              }) : 'Select date'
+                            }
+                          </div>
+                        </div>
+                      </>
                     )}
                   </div>
-                  <select
-                    value={searchForm.class}
-                    onChange={(e) => setSearchForm(prev => ({ ...prev, class: e.target.value }))}
-                    className="text-sm border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 bg-white dark:bg-dark-card text-gray-900 dark:text-white focus:ring-2 focus:ring-accent focus:border-transparent"
-                  >
-                    <option value="economy">Economy</option>
-                    <option value="premium">Premium Economy</option>
-                    <option value="business">Business</option>
-                    <option value="first">First Class</option>
-                  </select>
+                  <div className="text-center mt-2">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Click to open calendar
+                    </div>
+                  </div>
                 </div>
-                <Button
-                  type="submit"
-                  loading={isSearching}
-                  icon={Search}
-                  size="lg"
+              </motion.div>
+
+
+              {/* Search Button Section */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 2.2 }}
+                className="text-center mt-6"
+              >
+                <motion.div
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="inline-block"
                 >
-                  {isSearching 
-                    ? 'Searching...' 
-                    : `Search ${searchForm.tripType === 'one-way' ? 'One-Way' : 'Round-Trip'} Flights`
-                  }
-                </Button>
-              </div>
-            </form>
-          </Card>
-        </motion.div>
+                  <button
+                    type="submit"
+                    disabled={isSearching}
+                    className="px-12 py-4 text-base font-bold shadow-2xl hover:shadow-3xl transform transition-all duration-300 inline-flex items-center justify-center whitespace-nowrap bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800 hover:from-primary-700 hover:via-primary-800 hover:to-primary-900 text-white border-0 rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  >
+                    {isSearching ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
+                        Finding Best Flights...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-5 h-5 mr-3 animate-pulse" />
+                        Search {searchForm.tripType === 'one-way' ? 'One-Way' : 'Round-Trip'} Flights
+                        <ArrowRight className="w-5 h-5 ml-3 group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </button>
+                </motion.div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
+                  ✨ Real-time pricing • Best price guarantee • Instant booking
+                </p>
+              </motion.div>
+                 </form>
+               </div>
+             </div>
+           </motion.div>
+         </div>
+       </section>
+
+       {/* Date Picker Calendar Popup - Outside of card structure */}
+       {showCalendar && (
+         <>
+           {/* Backdrop */}
+           <div 
+             className="fixed inset-0 z-[100]"
+             onClick={() => setShowCalendar(false)}
+           />
+           
+           {/* Calendar Popup */}
+           <motion.div
+             initial={{ opacity: 0, scale: 0.9, y: -10 }}
+             animate={{ opacity: 1, scale: 1, y: 0 }}
+             exit={{ opacity: 0, scale: 0.9, y: -10 }}
+             transition={{ duration: 0.2 }}
+             className="fixed bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-2xl z-[101] w-80"
+             style={{
+               left: `${Math.min(Math.max(calendarPosition.x - 160, 20), window.innerWidth - 340)}px`,
+               top: `${Math.min(calendarPosition.y, window.innerHeight - 400)}px`
+             }}
+           >
+           {/* Calendar Header with Month/Year Navigation */}
+           <div className="flex items-center justify-between mb-4">
+             <div className="flex items-center gap-2">
+               <button
+                 onClick={() => {
+                   if (currentMonth === 0) {
+                     setCurrentMonth(11);
+                     setCurrentYear(currentYear - 1);
+                   } else {
+                     setCurrentMonth(currentMonth - 1);
+                   }
+                 }}
+                 className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+               >
+                 <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+               </button>
+               
+               <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                 {new Date(currentYear, currentMonth).toLocaleDateString('en-US', { 
+                   month: 'short', 
+                   year: 'numeric' 
+                 })}
+               </h3>
+               
+               <button
+                 onClick={() => {
+                   if (currentMonth === 11) {
+                     setCurrentMonth(0);
+                     setCurrentYear(currentYear + 1);
+                   } else {
+                     setCurrentMonth(currentMonth + 1);
+                   }
+                 }}
+                 className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+               >
+                 <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+               </button>
+             </div>
+             
+             <button
+               onClick={() => setShowCalendar(false)}
+               className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+             >
+               <X className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+             </button>
+           </div>
+           
+           {/* Calendar Grid */}
+           <div className="grid grid-cols-7 gap-0.5">
+             {/* Day Headers */}
+             {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
+               <div key={day} className="text-center text-xs font-semibold text-gray-500 dark:text-gray-400 py-2">
+                 {day}
+               </div>
+             ))}
+             
+             {/* Calendar Days */}
+             {(() => {
+               const today = new Date();
+               const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+               const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+               const firstDayOfWeek = firstDayOfMonth.getDay();
+               const daysInMonth = lastDayOfMonth.getDate();
+               
+               const calendarDays = [];
+               
+               // Add previous month's trailing days
+               for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+                 const date = new Date(currentYear, currentMonth, -i);
+                 calendarDays.push({ date, isCurrentMonth: false });
+               }
+               
+               // Add current month's days
+               for (let day = 1; day <= daysInMonth; day++) {
+                 const date = new Date(currentYear, currentMonth, day);
+                 calendarDays.push({ date, isCurrentMonth: true });
+               }
+               
+               // Add next month's leading days to complete the grid
+               const remainingDays = 42 - calendarDays.length;
+               for (let day = 1; day <= remainingDays; day++) {
+                 const date = new Date(currentYear, currentMonth + 1, day);
+                 calendarDays.push({ date, isCurrentMonth: false });
+               }
+               
+               return calendarDays.map(({ date, isCurrentMonth }, i) => {
+                 const isToday = date.toDateString() === today.toDateString();
+                 const dateString = date.toISOString().split('T')[0];
+                 const isDeparture = dateString === searchForm.departureDate;
+                 const isReturn = dateString === searchForm.returnDate;
+                 const isPast = date < today;
+                 
+                 return (
+                   <div
+                     key={i}
+                     className={`relative p-2 rounded transition-all duration-200 text-center ${
+                       isCurrentMonth 
+                         ? isPast
+                           ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                           : 'text-gray-900 dark:text-white cursor-pointer hover:bg-cyan-50 dark:hover:bg-gray-700'
+                         : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                     } ${
+                       isToday ? 'bg-cyan-100 dark:bg-cyan-900/30 font-bold' : ''
+                     } ${
+                       isDeparture ? 'bg-blue-500 text-white hover:bg-blue-600' : ''
+                     } ${
+                       isReturn ? 'bg-green-500 text-white hover:bg-green-600' : ''
+                     }`}
+                     onClick={() => {
+                       if (isCurrentMonth && !isPast) {
+                         const dateString = date.toISOString().split('T')[0];
+                         
+                         if (searchForm.tripType === 'round-trip') {
+                           if (!searchForm.departureDate) {
+                             setSearchForm(prev => ({ ...prev, departureDate: dateString }));
+                           } else if (!searchForm.returnDate && dateString > searchForm.departureDate) {
+                             setSearchForm(prev => ({ ...prev, returnDate: dateString }));
+                             setShowCalendar(false);
+                           } else if (dateString <= searchForm.departureDate) {
+                             setSearchForm(prev => ({ ...prev, departureDate: dateString, returnDate: '' }));
+                           } else {
+                             setSearchForm(prev => ({ ...prev, departureDate: dateString, returnDate: '' }));
+                           }
+                         } else {
+                           setSearchForm(prev => ({ ...prev, departureDate: dateString }));
+                           setShowCalendar(false);
+                         }
+                       }
+                     }}
+                   >
+                     <span className="text-xs font-medium">
+                       {date.getDate()}
+                     </span>
+                   </div>
+                 );
+               });
+             })()}
+           </div>
+           
+           {/* Legend */}
+           <div className="flex items-center justify-center gap-3 mt-3 text-xs text-gray-600 dark:text-gray-300">
+             <div className="flex items-center gap-1">
+               <div className="w-2 h-2 bg-cyan-100 dark:bg-cyan-900/30 rounded-full"></div>
+               <span>Today</span>
+             </div>
+             {searchForm.tripType === 'round-trip' ? (
+               <>
+                 <div className="flex items-center gap-1">
+                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                   <span>Departure</span>
+                 </div>
+                 <div className="flex items-center gap-1">
+                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                   <span>Return</span>
+                 </div>
+               </>
+             ) : (
+               <div className="flex items-center gap-1">
+                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                 <span>Selected</span>
+               </div>
+             )}
+           </div>
+           </motion.div>
+         </>
+       )}
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Popular Destinations */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="mb-8"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+          className="mb-16"
         >
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Popular Destinations</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {popularDestinations.map((dest) => (
-              <Card
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 text-purple-700 dark:text-purple-300 px-4 py-2 rounded-full text-sm font-medium mb-6">
+              <Flame className="w-4 h-4" />
+              <span>🌟 Popular Destinations</span>
+            </div>
+            <h2 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-6">
+              Fly to Amazing Places
+            </h2>
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+              Discover the world's most popular destinations with our curated flight deals
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            {popularDestinations.map((dest, index) => (
+              <motion.div
                 key={dest.code}
-                className="p-4 text-center cursor-pointer hover:shadow-lg transition-all duration-200"
-                hover={true}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                viewport={{ once: true }}
+                className="group cursor-pointer"
+              >
+                <motion.div
+                  whileHover={{ y: -8, scale: 1.02 }}
+                  className="relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50 p-6 text-center"
                 onClick={() => setSearchForm(prev => ({ ...prev, to: dest.name }))}
               >
-                <div className="text-3xl mb-3">✈️</div>
-                <div className="font-semibold text-gray-900 dark:text-white">{dest.name}</div>
-                <div className="text-sm text-gray-600 dark:text-gray-300">{dest.country}</div>
-              </Card>
+                  <div className="w-16 h-16 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <Plane className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-cyan-600 transition-colors">
+                    {dest.name}
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-300 text-sm">
+                    {dest.country}
+                  </p>
+                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
+                </motion.div>
+              </motion.div>
             ))}
           </div>
         </motion.div>
@@ -428,20 +838,41 @@ const FlightBookingPage: React.FC = () => {
         {/* Search Results */}
         {flights.length > 0 && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="space-y-6"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="space-y-8"
           >
+            {/* Results Header */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-700 dark:text-green-300 px-4 py-2 rounded-full text-sm font-medium mb-4">
+                <Trophy className="w-4 h-4" />
+                <span>Search Results</span>
+              </div>
+              <h2 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-4">
+                {flights.length} Amazing Flights Found
+              </h2>
+              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+                Choose from our carefully selected flight options with the best prices and routes
+              </p>
+            </div>
+
             {/* Filters */}
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {flights.length} flights found
-              </h2>
+              <div className="flex items-center space-x-4">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Available Flights
+                </h3>
+                <div className="px-3 py-1 bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 rounded-full text-sm font-medium">
+                  {flights.length} options
+                </div>
+              </div>
               <Button
                 variant="outline"
                 icon={Filter}
                 onClick={() => setShowFilters(!showFilters)}
+                className="shadow-md hover:shadow-lg"
               >
                 Filters
               </Button>
@@ -468,7 +899,7 @@ const FlightBookingPage: React.FC = () => {
                     <select
                       value={filters.maxStops}
                       onChange={(e) => setFilters(prev => ({ ...prev, maxStops: parseInt(e.target.value) }))}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-transparent bg-white dark:bg-dark-card text-gray-900 dark:text-white"
+                      className="w-full px-4 py-4 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-transparent bg-white dark:bg-dark-card text-gray-900 dark:text-white"
                     >
                       <option value={0}>Direct</option>
                       <option value={1}>1 Stop</option>
@@ -494,17 +925,23 @@ const FlightBookingPage: React.FC = () => {
             )}
 
             {/* Flight Results */}
-            <div className="space-y-4">
-              {flights.map((flight) => (
-                <Card
+            <div className="space-y-6">
+              {flights.map((flight, index) => (
+                <motion.div
                   key={flight.id}
-                  className={`cursor-pointer transition-all duration-200 ${
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <Card
+                    className={`cursor-pointer transition-all duration-300 ${
                     selectedFlight?.id === flight.id 
-                      ? 'ring-2 ring-accent bg-accent/5' 
-                      : ''
+                        ? 'ring-2 ring-primary-500 bg-primary-50/50 dark:bg-primary-900/20 shadow-xl' 
+                        : 'hover:shadow-xl'
                   }`}
                   hover={true}
                   onClick={() => handleFlightSelect(flight)}
+                    variant="glass"
                 >
                   {/* Main Flight Info */}
                   <div className="flex items-center justify-between mb-4">
@@ -695,6 +1132,7 @@ const FlightBookingPage: React.FC = () => {
                     </div>
                   </div>
                 </Card>
+                </motion.div>
               ))}
             </div>
           </motion.div>
@@ -706,32 +1144,44 @@ const FlightBookingPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="fixed bottom-0 left-0 right-0 bg-white dark:bg-dark-card border-t border-gray-200 dark:border-gray-800 p-4 shadow-lg"
+            className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-700/50 p-6 shadow-2xl"
           >
-            <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-6">
+                  <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Plane className="w-8 h-8 text-white" />
+                  </div>
               <div>
-                <h3 className="font-semibold text-gray-900 dark:text-white">Selected Flight</h3>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Selected Flight</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">
+                      {selectedFlight.flight_segments[0]?.airline} {selectedFlight.flight_segments[0]?.flight_number}
+                    </p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
-                  {selectedFlight.flight_segments[0]?.airline} {selectedFlight.flight_segments[0]?.flight_number} • 
                   {selectedFlight.flight_segments[0]?.departure.airport} → {selectedFlight.flight_segments[selectedFlight.flight_segments.length - 1]?.arrival.airport}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {selectedFlight.total_duration} • {selectedFlight.stops === 0 ? 'Direct' : `${selectedFlight.stops} stop${selectedFlight.stops > 1 ? 's' : ''}`}
                 </p>
               </div>
-              <div className="flex items-center space-x-4">
+                </div>
+                <div className="flex items-center space-x-6">
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">₹{selectedFlight.price}</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-300">per passenger</div>
+                    <div className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent">
+                      ₹{selectedFlight.price}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">per passenger</div>
                 </div>
                 <Button
                   onClick={handleBooking}
                   icon={ArrowRight}
                   iconPosition="right"
                   size="lg"
+                    className="shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
-                  Continue to Booking
+                    ✨ Continue to Booking
                 </Button>
+                </div>
               </div>
             </div>
           </motion.div>

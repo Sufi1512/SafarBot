@@ -728,14 +728,28 @@ const ResultsPage: React.FC = () => {
               </div>
             </div>
             
-            {/* Right side - Trip details */}
-            <div className="flex items-center space-x-6 text-sm text-gray-600 dark:text-gray-300">
+            {/* Right side - Trip details and action buttons */}
+            <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
               <button
                 onClick={() => navigate('/itinerary', { state: { itineraryData: enhancedResponse } })}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
               >
                 <span>📅</span>
                 <span>View Timeline</span>
+              </button>
+              <button
+                onClick={() => navigate('/itinerary-generation', { state: { itineraryData: enhancedResponse } })}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+              >
+                <span>💾</span>
+                <span>Save Itinerary</span>
+              </button>
+              <button
+                onClick={() => navigate('/edit-itinerary', { state: { itineraryData: enhancedResponse } })}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+              >
+                <span>✏️</span>
+                <span>Edit Itinerary</span>
               </button>
               <div className="flex items-center">
                 <Calendar className="w-4 h-4 mr-2" />

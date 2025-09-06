@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
-import { Bell, Check, X, AlertCircle, Info, CheckCircle, Clock, Plane, Hotel, Car, MapPin, DollarSign, Calendar } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bell, Check, X, AlertCircle, Info, CheckCircle, Clock, Plane, Hotel, Car, MapPin, DollarSign, Calendar, RefreshCw } from 'lucide-react';
+import { dashboardAPI } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 interface Update {
   id: string;
@@ -21,8 +24,82 @@ interface Update {
 }
 
 const UpdatesPage: React.FC = () => {
+  const { user, isAuthenticated } = useAuth();
   const [filter, setFilter] = useState<'all' | 'unread' | 'booking' | 'price' | 'weather' | 'reminder'>('all');
   const [selectedUpdate, setSelectedUpdate] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Load updates data
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      loadUpdatesData();
+    }
+  }, [isAuthenticated, user, filter]);
+
+  const loadUpdatesData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Load dashboard data which includes notifications
+      const dashboardData = await dashboardAPI.getDashboardData();
+      
+      // TODO: Process notifications into updates format
+      // const updates = dashboardData.notifications.map(notification => ({
+      //   id: notification.id,
+      //   type: notification.type,
+      //   title: notification.title,
+      //   message: notification.message,
+      //   timestamp: notification.created_at,
+      //   isRead: notification.is_read,
+      //   priority: 'medium'
+      // }));
+      
+    } catch (err: any) {
+      console.error('Error loading updates data:', err);
+      setError(err.message || 'Failed to load updates data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await loadUpdatesData();
+    setIsRefreshing(false);
+  };
+
+  const handleMarkAsRead = async (updateId: string) => {
+    try {
+      // TODO: Call API to mark update as read
+      // await dashboardAPI.markNotificationAsRead(updateId);
+      console.log('Marked update as read:', updateId);
+    } catch (err: any) {
+      console.error('Error marking update as read:', err);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      // TODO: Call API to mark all updates as read
+      // await dashboardAPI.markAllNotificationsAsRead();
+      console.log('Marked all updates as read');
+    } catch (err: any) {
+      console.error('Error marking all updates as read:', err);
+    }
+  };
+
+  const handleDeleteUpdate = async (updateId: string) => {
+    try {
+      // TODO: Call API to delete update
+      // await dashboardAPI.deleteNotification(updateId);
+      console.log('Deleted update:', updateId);
+    } catch (err: any) {
+      console.error('Error deleting update:', err);
+    }
+  };
 
   const updates: Update[] = [
     {
@@ -160,15 +237,6 @@ const UpdatesPage: React.FC = () => {
 
   const unreadCount = updates.filter(update => !update.isRead).length;
 
-  const markAsRead = (id: string) => {
-    // In a real app, this would update the backend
-    console.log('Mark as read:', id);
-  };
-
-  const markAllAsRead = () => {
-    // In a real app, this would update the backend
-    console.log('Mark all as read');
-  };
 
   return (
     <div className="space-y-6">
@@ -183,7 +251,7 @@ const UpdatesPage: React.FC = () => {
         <div className="flex items-center space-x-3">
           {unreadCount > 0 && (
             <button
-              onClick={markAllAsRead}
+              onClick={handleMarkAllAsRead}
               className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
             >
               Mark all as read
@@ -264,7 +332,7 @@ const UpdatesPage: React.FC = () => {
                       </span>
                       {!update.isRead && (
                         <button
-                          onClick={() => markAsRead(update.id)}
+                          onClick={() => handleMarkAsRead(update.id)}
                           className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                         >
                           <Check className="h-4 w-4" />

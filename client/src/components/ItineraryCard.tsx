@@ -36,6 +36,8 @@ interface ItineraryCardProps {
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onShare: (id: string) => void;
+  onView?: (id: string) => void;
+  viewMode?: 'grid' | 'list';
 }
 
 const ItineraryCard: React.FC<ItineraryCardProps> = ({
@@ -43,7 +45,9 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
   onToggleFavorite,
   onEdit,
   onDelete,
-  onShare
+  onShare,
+  onView,
+  viewMode = 'grid'
 }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -194,6 +198,15 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
           </div>
           
           <div className="flex items-center space-x-2">
+            {onView && (
+              <button
+                onClick={() => onView(itinerary.id)}
+                className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                title="View itinerary"
+              >
+                <Eye className="h-4 w-4" />
+              </button>
+            )}
             <button
               onClick={() => onEdit(itinerary.id)}
               className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

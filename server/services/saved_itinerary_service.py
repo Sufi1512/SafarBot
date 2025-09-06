@@ -87,6 +87,23 @@ class SavedItineraryService:
                 if created_itinerary:
                     created_itinerary["id"] = str(created_itinerary["_id"])
                     created_itinerary["user_id"] = str(created_itinerary["user_id"])
+                    
+                    # Ensure all required fields for ItineraryDetail are present
+                    created_itinerary["description"] = created_itinerary.get("description")
+                    created_itinerary["shares_count"] = created_itinerary.get("shares_count", 0)
+                    created_itinerary["views_count"] = created_itinerary.get("views_count", 0)
+                    created_itinerary["likes_count"] = created_itinerary.get("likes_count", 0)
+                    created_itinerary["is_favorite"] = created_itinerary.get("is_favorite", False)
+                    created_itinerary["status"] = created_itinerary.get("status", "draft")
+                    created_itinerary["tags"] = created_itinerary.get("tags", [])
+                    created_itinerary["travel_style"] = created_itinerary.get("travel_style", [])
+                    created_itinerary["interests"] = created_itinerary.get("interests", [])
+                    created_itinerary["cover_image"] = created_itinerary.get("cover_image")
+                    created_itinerary["budget"] = created_itinerary.get("budget")
+                    created_itinerary["total_estimated_cost"] = created_itinerary.get("total_estimated_cost")
+                    created_itinerary["is_public"] = created_itinerary.get("is_public", False)
+                    created_itinerary["days"] = created_itinerary.get("days", [])
+                    
                     # Convert datetime objects to ISO strings
                     if created_itinerary.get("created_at"):
                         created_itinerary["created_at"] = created_itinerary["created_at"].isoformat()
@@ -129,10 +146,38 @@ class SavedItineraryService:
             cursor = collection.find(query).sort("updated_at", -1).skip(skip).limit(limit)
             itineraries = await cursor.to_list(length=limit)
             
-            # Convert ObjectIds to strings
+            # Convert ObjectIds to strings and ensure all required fields are present
             for itinerary in itineraries:
                 itinerary["_id"] = str(itinerary["_id"])
                 itinerary["user_id"] = str(itinerary["user_id"])
+                
+                # Ensure all required fields for ItinerarySummary are present
+                itinerary["id"] = str(itinerary["_id"])
+                itinerary["description"] = itinerary.get("description")
+                itinerary["shares_count"] = itinerary.get("shares_count", 0)
+                itinerary["views_count"] = itinerary.get("views_count", 0)
+                itinerary["likes_count"] = itinerary.get("likes_count", 0)
+                itinerary["is_favorite"] = itinerary.get("is_favorite", False)
+                itinerary["status"] = itinerary.get("status", "draft")
+                itinerary["tags"] = itinerary.get("tags", [])
+                itinerary["travel_style"] = itinerary.get("travel_style", [])
+                itinerary["interests"] = itinerary.get("interests", [])
+                itinerary["cover_image"] = itinerary.get("cover_image")
+                itinerary["budget"] = itinerary.get("budget")
+                itinerary["total_estimated_cost"] = itinerary.get("total_estimated_cost")
+                
+                # Convert datetime objects to ISO strings
+                if itinerary.get("created_at"):
+                    if hasattr(itinerary["created_at"], 'isoformat'):
+                        itinerary["created_at"] = itinerary["created_at"].isoformat()
+                else:
+                    itinerary["created_at"] = datetime.utcnow().isoformat()
+                    
+                if itinerary.get("updated_at"):
+                    if hasattr(itinerary["updated_at"], 'isoformat'):
+                        itinerary["updated_at"] = itinerary["updated_at"].isoformat()
+                else:
+                    itinerary["updated_at"] = datetime.utcnow().isoformat()
             
             return itineraries
             
@@ -148,14 +193,52 @@ class SavedItineraryService:
             if collection is None:
                 raise Exception("Database connection not available")
             
+            # Try to find itinerary with ObjectId user_id first
             itinerary = await collection.find_one({
                 "_id": ObjectId(itinerary_id),
                 "user_id": ObjectId(user_id)
             })
             
+            # If not found, try with string user_id
+            if not itinerary:
+                itinerary = await collection.find_one({
+                    "_id": ObjectId(itinerary_id),
+                    "user_id": user_id
+                })
+            
             if itinerary:
                 itinerary["_id"] = str(itinerary["_id"])
                 itinerary["user_id"] = str(itinerary["user_id"])
+                
+                # Ensure all required fields for ItineraryDetail are present
+                itinerary["id"] = str(itinerary["_id"])
+                itinerary["description"] = itinerary.get("description")
+                itinerary["shares_count"] = itinerary.get("shares_count", 0)
+                itinerary["views_count"] = itinerary.get("views_count", 0)
+                itinerary["likes_count"] = itinerary.get("likes_count", 0)
+                itinerary["is_favorite"] = itinerary.get("is_favorite", False)
+                itinerary["status"] = itinerary.get("status", "draft")
+                itinerary["tags"] = itinerary.get("tags", [])
+                itinerary["travel_style"] = itinerary.get("travel_style", [])
+                itinerary["interests"] = itinerary.get("interests", [])
+                itinerary["cover_image"] = itinerary.get("cover_image")
+                itinerary["budget"] = itinerary.get("budget")
+                itinerary["total_estimated_cost"] = itinerary.get("total_estimated_cost")
+                itinerary["is_public"] = itinerary.get("is_public", False)
+                itinerary["days"] = itinerary.get("days", [])
+                
+                # Convert datetime objects to ISO strings
+                if itinerary.get("created_at"):
+                    if hasattr(itinerary["created_at"], 'isoformat'):
+                        itinerary["created_at"] = itinerary["created_at"].isoformat()
+                else:
+                    itinerary["created_at"] = datetime.utcnow().isoformat()
+                    
+                if itinerary.get("updated_at"):
+                    if hasattr(itinerary["updated_at"], 'isoformat'):
+                        itinerary["updated_at"] = itinerary["updated_at"].isoformat()
+                else:
+                    itinerary["updated_at"] = datetime.utcnow().isoformat()
                 
                 # Increment view count
                 await collection.update_one(
@@ -206,6 +289,37 @@ class SavedItineraryService:
                 if updated_itinerary:
                     updated_itinerary["_id"] = str(updated_itinerary["_id"])
                     updated_itinerary["user_id"] = str(updated_itinerary["user_id"])
+                    
+                    # Ensure all required fields for ItineraryDetail are present
+                    updated_itinerary["id"] = str(updated_itinerary["_id"])
+                    updated_itinerary["description"] = updated_itinerary.get("description")
+                    updated_itinerary["shares_count"] = updated_itinerary.get("shares_count", 0)
+                    updated_itinerary["views_count"] = updated_itinerary.get("views_count", 0)
+                    updated_itinerary["likes_count"] = updated_itinerary.get("likes_count", 0)
+                    updated_itinerary["is_favorite"] = updated_itinerary.get("is_favorite", False)
+                    updated_itinerary["status"] = updated_itinerary.get("status", "draft")
+                    updated_itinerary["tags"] = updated_itinerary.get("tags", [])
+                    updated_itinerary["travel_style"] = updated_itinerary.get("travel_style", [])
+                    updated_itinerary["interests"] = updated_itinerary.get("interests", [])
+                    updated_itinerary["cover_image"] = updated_itinerary.get("cover_image")
+                    updated_itinerary["budget"] = updated_itinerary.get("budget")
+                    updated_itinerary["total_estimated_cost"] = updated_itinerary.get("total_estimated_cost")
+                    updated_itinerary["is_public"] = updated_itinerary.get("is_public", False)
+                    updated_itinerary["days"] = updated_itinerary.get("days", [])
+                    
+                    # Convert datetime objects to ISO strings
+                    if updated_itinerary.get("created_at"):
+                        if hasattr(updated_itinerary["created_at"], 'isoformat'):
+                            updated_itinerary["created_at"] = updated_itinerary["created_at"].isoformat()
+                    else:
+                        updated_itinerary["created_at"] = datetime.utcnow().isoformat()
+                        
+                    if updated_itinerary.get("updated_at"):
+                        if hasattr(updated_itinerary["updated_at"], 'isoformat'):
+                            updated_itinerary["updated_at"] = updated_itinerary["updated_at"].isoformat()
+                    else:
+                        updated_itinerary["updated_at"] = datetime.utcnow().isoformat()
+                    
                     return updated_itinerary
             
             return None
@@ -299,10 +413,38 @@ class SavedItineraryService:
             cursor = collection.find(query).sort("likes_count", -1).skip(skip).limit(limit)
             itineraries = await cursor.to_list(length=limit)
             
-            # Convert ObjectIds to strings
+            # Convert ObjectIds to strings and ensure all required fields are present
             for itinerary in itineraries:
                 itinerary["_id"] = str(itinerary["_id"])
                 itinerary["user_id"] = str(itinerary["user_id"])
+                
+                # Ensure all required fields for ItinerarySummary are present
+                itinerary["id"] = str(itinerary["_id"])
+                itinerary["description"] = itinerary.get("description")
+                itinerary["shares_count"] = itinerary.get("shares_count", 0)
+                itinerary["views_count"] = itinerary.get("views_count", 0)
+                itinerary["likes_count"] = itinerary.get("likes_count", 0)
+                itinerary["is_favorite"] = itinerary.get("is_favorite", False)
+                itinerary["status"] = itinerary.get("status", "draft")
+                itinerary["tags"] = itinerary.get("tags", [])
+                itinerary["travel_style"] = itinerary.get("travel_style", [])
+                itinerary["interests"] = itinerary.get("interests", [])
+                itinerary["cover_image"] = itinerary.get("cover_image")
+                itinerary["budget"] = itinerary.get("budget")
+                itinerary["total_estimated_cost"] = itinerary.get("total_estimated_cost")
+                
+                # Convert datetime objects to ISO strings
+                if itinerary.get("created_at"):
+                    if hasattr(itinerary["created_at"], 'isoformat'):
+                        itinerary["created_at"] = itinerary["created_at"].isoformat()
+                else:
+                    itinerary["created_at"] = datetime.utcnow().isoformat()
+                    
+                if itinerary.get("updated_at"):
+                    if hasattr(itinerary["updated_at"], 'isoformat'):
+                        itinerary["updated_at"] = itinerary["updated_at"].isoformat()
+                else:
+                    itinerary["updated_at"] = datetime.utcnow().isoformat()
             
             return itineraries
             
@@ -352,3 +494,70 @@ class SavedItineraryService:
         except Exception as e:
             logger.error(f"Error getting itinerary stats: {str(e)}")
             raise Exception(f"Failed to get itinerary stats: {str(e)}")
+    
+    @staticmethod
+    async def get_public_itinerary(share_token: str) -> Optional[Dict[str, Any]]:
+        """Get a public itinerary by share token"""
+        try:
+            collection = get_collection(SAVED_TRIPS_COLLECTION)
+            if collection is None:
+                raise Exception("Database connection not available")
+            
+            # Find itinerary by share token and is_public = True
+            itinerary = await collection.find_one({
+                "share_token": share_token,
+                "is_public": True
+            })
+            
+            if itinerary:
+                # Convert ObjectId to string
+                itinerary["id"] = str(itinerary["_id"])
+                itinerary["_id"] = str(itinerary["_id"])  # Keep _id as string for compatibility
+                
+                # Convert dates to strings
+                if "created_at" in itinerary and isinstance(itinerary["created_at"], datetime):
+                    itinerary["created_at"] = itinerary["created_at"].isoformat()
+                if "updated_at" in itinerary and isinstance(itinerary["updated_at"], datetime):
+                    itinerary["updated_at"] = itinerary["updated_at"].isoformat()
+                
+                # Ensure all required fields for ItineraryDetail are present
+                itinerary["description"] = itinerary.get("description")
+                itinerary["shares_count"] = itinerary.get("shares_count", 0)
+                itinerary["views_count"] = itinerary.get("views_count", 0)
+                itinerary["likes_count"] = itinerary.get("likes_count", 0)
+                itinerary["is_favorite"] = itinerary.get("is_favorite", False)
+                itinerary["status"] = itinerary.get("status", "draft")
+                itinerary["tags"] = itinerary.get("tags", [])
+                itinerary["travel_style"] = itinerary.get("travel_style", [])
+                itinerary["interests"] = itinerary.get("interests", [])
+                itinerary["cover_image"] = itinerary.get("cover_image")
+                itinerary["budget"] = itinerary.get("budget")
+                itinerary["total_estimated_cost"] = itinerary.get("total_estimated_cost")
+                
+                return itinerary
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error getting public itinerary: {str(e)}")
+            raise Exception(f"Failed to get public itinerary: {str(e)}")
+    
+    @staticmethod
+    async def increment_view_count(itinerary_id: str) -> bool:
+        """Increment the view count for an itinerary"""
+        try:
+            collection = get_collection(SAVED_TRIPS_COLLECTION)
+            if collection is None:
+                raise Exception("Database connection not available")
+            
+            # Increment the views_count field
+            result = await collection.update_one(
+                {"_id": ObjectId(itinerary_id)},
+                {"$inc": {"views_count": 1}}
+            )
+            
+            return result.modified_count > 0
+            
+        except Exception as e:
+            logger.error(f"Error incrementing view count: {str(e)}")
+            raise Exception(f"Failed to increment view count: {str(e)}")

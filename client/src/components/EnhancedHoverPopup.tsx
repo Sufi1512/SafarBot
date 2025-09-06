@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Star, MapPin, Clock, DollarSign, Phone, Globe, Utensils, Hotel, MapPinIcon } from 'lucide-react';
+import { Star, MapPin, Clock, DollarSign, Phone, Globe, Utensils, Hotel } from 'lucide-react';
 import { PlaceDetails, AdditionalPlace } from '../services/api';
 
 interface EnhancedHoverPopupProps {
@@ -123,9 +123,9 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
       return <Utensils className="w-4 h-4" />;
     }
     if (type === 'activity' || type === 'attraction' || category.includes('attraction') || category.includes('museum')) {
-      return <MapPinIcon className="w-4 h-4" />;
+      return <MapPin className="w-4 h-4" />;
     }
-    return <MapPinIcon className="w-4 h-4" />;
+    return <MapPin className="w-4 h-4" />;
   };
 
   // Get type label with better mapping

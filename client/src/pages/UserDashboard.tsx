@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { dashboardAPI, savedItineraryAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import DashboardSidebar from '../components/DashboardSidebar';
@@ -7,6 +8,7 @@ import ItineraryCard from '../components/ItineraryCard';
 import Footer from '../components/Footer';
 import ChatsPage from './dashboard/ChatsPage';
 import ExplorePage from './dashboard/ExplorePage';
+import SavedPage from './dashboard/SavedPage';
 import TripsPage from './dashboard/TripsPage';
 import UpdatesPage from './dashboard/UpdatesPage';
 import InspirationPage from './dashboard/InspirationPage';
@@ -103,6 +105,7 @@ interface DashboardData {
 }
 
 const UserDashboard: React.FC = () => {
+  const location = useLocation();
   const { user, isAuthenticated } = useAuth();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -122,6 +125,14 @@ const UserDashboard: React.FC = () => {
       loadItineraries();
     }
   }, [isAuthenticated, user]);
+
+  // Handle activeTab from navigation state
+  useEffect(() => {
+    const state = location.state as { activeTab?: string };
+    if (state?.activeTab) {
+      setActiveTab(state.activeTab);
+    }
+  }, [location.state]);
 
   const loadDashboardData = async (forceRefresh = false) => {
     const now = Date.now();
@@ -491,40 +502,7 @@ const UserDashboard: React.FC = () => {
           )}
 
           {/* Saved Itineraries Tab */}
-          {activeTab === 'saved' && (
-            <div className="space-y-8">
-              {/* Itineraries Grid/List */}
-              {itineraries.length > 0 ? (
-                <div className={viewMode === 'grid' 
-                  ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
-                  : 'space-y-4'
-                }>
-                  {itineraries.map((itinerary) => (
-                    <ItineraryCard
-                      key={itinerary.id}
-                      itinerary={itinerary}
-                      onToggleFavorite={handleToggleFavorite}
-                      onEdit={handleEditItinerary}
-                      onDelete={handleDeleteItinerary}
-                      onShare={handleShareItinerary}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-16">
-                  <MapPin className="h-16 w-16 text-gray-400 mx-auto mb-6" />
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No itineraries yet</h3>
-                  <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                    Start planning your next adventure by creating your first itinerary. 
-                    Our AI will help you build the perfect travel plan.
-                  </p>
-                  <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
-                    Create Your First Itinerary
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+          {activeTab === 'saved' && <SavedPage />}
 
           {/* Other Tabs - Actual Page Content */}
           {activeTab === 'chats' && <ChatsPage />}

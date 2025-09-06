@@ -1,14 +1,9 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
-import { Link } from 'react-router-dom';
-import {
-  ExclamationTriangleIcon,
-  HomeIcon,
-  ArrowPathIcon
-} from '@heroicons/react/24/outline';
+import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import ModernButton from './ui/ModernButton';
 
 interface Props {
   children: ReactNode;
-  fallback?: ReactNode;
 }
 
 interface State {
@@ -24,95 +19,134 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
+    // Update state so the next render will show the fallback UI
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Log the error to console or error reporting service
     console.error('ErrorBoundary caught an error:', error, errorInfo);
-    this.setState({ error, errorInfo });
     
-    // Log error to external service in production
-    if (process.env.NODE_ENV === 'production') {
-      // Example: logErrorToService(error, errorInfo);
-    }
+    this.setState({
+      error,
+      errorInfo
+    });
   }
 
-  handleRetry = () => {
-    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+  handleReload = () => {
+    window.location.reload();
+  };
+
+  handleGoHome = () => {
+    window.location.href = '/';
   };
 
   render() {
     if (this.state.hasError) {
-      if (this.props.fallback) {
-        return this.props.fallback;
-      }
-
       return (
-        <div className="min-h-screen bg-gray-50 dark:bg-dark-bg flex items-center justify-center px-4">
-          <div className="max-w-md w-full text-center">
-            <div className="bg-white dark:bg-dark-card rounded-2xl shadow-soft p-8">
-              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <ExclamationTriangleIcon className="h-8 w-8 text-red-600 dark:text-red-400" />
+        <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50 flex items-center justify-center px-4">
+          <div className="max-w-2xl w-full text-center">
+            <div className="mb-8">
+              <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <AlertTriangle className="w-12 h-12 text-red-600" />
               </div>
-              
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">
                 Oops! Something went wrong
               </h1>
-              
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                We encountered an unexpected error. Please try again or contact support if the problem persists.
+              <p className="text-xl text-gray-600 mb-2">
+                We encountered an unexpected error while loading this page.
               </p>
+              <p className="text-gray-500">
+                Don't worry, our team has been notified and we're working to fix it.
+              </p>
+            </div>
 
-              {process.env.NODE_ENV === 'development' && this.state.error && (
-                <details className="mb-6 text-left">
-                  <summary className="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Error Details (Development)
-                  </summary>
-                  <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 text-xs font-mono text-gray-800 dark:text-gray-200 overflow-auto">
-                    <div className="mb-2">
-                      <strong>Error:</strong> {this.state.error.toString()}
-                    </div>
-                    {this.state.errorInfo && (
-                      <div>
-                        <strong>Stack:</strong>
-                        <pre className="mt-1 whitespace-pre-wrap">
-                          {this.state.errorInfo.componentStack}
-                        </pre>
-                      </div>
-                    )}
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+              <ModernButton
+                onClick={this.handleReload}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg"
+              >
+                <RefreshCw className="w-5 h-5 mr-2" />
+                Try Again
+              </ModernButton>
+              
+              <ModernButton
+                onClick={this.handleGoHome}
+                variant="outline"
+                className="px-8 py-3 text-lg"
+              >
+                <Home className="w-5 h-5 mr-2" />
+                Go Home
+              </ModernButton>
+            </div>
+
+            {/* Error Details (only in development) */}
+            {process.env.NODE_ENV === 'development' && this.state.error && (
+              <div className="mt-8 p-6 bg-gray-100 rounded-lg text-left">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Error Details (Development Only)
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">Error Message:</h4>
+                    <pre className="text-sm text-red-600 bg-red-50 p-3 rounded overflow-auto">
+                      {this.state.error.message}
+                    </pre>
                   </div>
-                </details>
-              )}
-
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={this.handleRetry}
-                  className="flex-1 flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-medium px-4 py-3 rounded-xl transition-colors"
-                >
-                  <ArrowPathIcon className="h-5 w-5" />
-                  Try Again
-                </button>
-                
-                <Link
-                  to="/"
-                  className="flex-1 flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium px-4 py-3 rounded-xl transition-colors"
-                >
-                  <HomeIcon className="h-5 w-5" />
-                  Go Home
-                </Link>
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">Stack Trace:</h4>
+                    <pre className="text-sm text-gray-600 bg-gray-50 p-3 rounded overflow-auto max-h-40">
+                      {this.state.error.stack}
+                    </pre>
+                  </div>
+                  {this.state.errorInfo && (
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-2">Component Stack:</h4>
+                      <pre className="text-sm text-gray-600 bg-gray-50 p-3 rounded overflow-auto max-h-40">
+                        {this.state.errorInfo.componentStack}
+                      </pre>
+                    </div>
+                  )}
+                </div>
               </div>
+            )}
 
-              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                  Still having issues?
-                </p>
-                <a
-                  href="mailto:support@safarbot.com"
-                  className="text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium text-sm"
+            {/* Support Information */}
+            <div className="mt-8 p-6 bg-gray-50 rounded-lg">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Need Help?
+              </h3>
+              <p className="text-gray-600 mb-4">
+                If this error persists, please contact our support team.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <ModernButton
+                  onClick={() => window.open('mailto:support@safarbot.com', '_blank')}
+                  variant="outline"
+                  className="flex items-center justify-center"
                 >
                   Contact Support
-                </a>
+                </ModernButton>
+                <ModernButton
+                  onClick={() => window.open('https://github.com/safarbot/issues', '_blank')}
+                  variant="outline"
+                  className="flex items-center justify-center"
+                >
+                  Report Issue
+                </ModernButton>
               </div>
+            </div>
+
+            {/* Footer Info */}
+            <div className="text-center mt-8 text-gray-500 text-sm">
+              <p>
+                Error Code: 500 | 
+                Timestamp: {new Date().toISOString()}
+              </p>
+              <p className="mt-2">
+                SafarBot - Your AI Travel Companion
+              </p>
             </div>
           </div>
         </div>

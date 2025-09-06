@@ -5,8 +5,8 @@ import CustomDatePicker from '../components/ui/CustomDatePicker';
 import ModernButton from '../components/ui/ModernButton';
 import bgVideo from '../asset/videos/bg-video.mp4';
 import bgVideo2 from '../asset/videos/bg-video2.mp4';
+import { MapPin } from 'lucide-react';
 import {
-  MapPinIcon,
   StarIcon,
   ArrowRightIcon,
   SparklesIcon,
@@ -46,8 +46,8 @@ const HomePage: React.FC = () => {
     if (searchForm.endDate) params.set('endDate', searchForm.endDate.toISOString());
     if (searchForm.travelers) params.set('travelers', String(searchForm.travelers));
 
-    const url = window.location.origin + '/trip-planner' + (params.toString() ? `?${params.toString()}` : '');
-    window.open(url, '_blank');
+    const url = '/trip-planner' + (params.toString() ? `?${params.toString()}` : '');
+    window.location.href = url;
   };
 
   const features = [
@@ -270,7 +270,7 @@ const HomePage: React.FC = () => {
                       🌍 <span>Where would you like to go?</span>
                     </label>
                     <div className="relative group">
-                      <MapPinIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-cyan-500 group-hover:text-blue-500 transition-colors z-10" />
+                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-cyan-500 group-hover:text-blue-500 transition-colors z-10" />
                       <input
                         type="text"
                         placeholder="Enter your dream destination..."

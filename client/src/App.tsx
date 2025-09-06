@@ -17,15 +17,39 @@ import DatePickerDemo from './pages/DatePickerDemo';
 import ResultsPage from './pages/ResultsPage';
 import TripPlannerPage from './pages/TripPlannerPage';
 import ItineraryPage from './pages/ItineraryPage';
+import ItineraryGenerationPage from './pages/ItineraryGenerationPage';
+import EditItineraryPage from './pages/EditItineraryPage';
 import PackagesPage from './pages/PackagesPage';
+import CreateBlogPage from './pages/CreateBlogPage';
+import CreateAlbumPage from './pages/CreateAlbumPage';
+import CreateGuidePage from './pages/CreateGuidePage';
+import PublicItineraryPage from './pages/PublicItineraryPage';
+import ItineraryRedirectPage from './pages/ItineraryRedirectPage';
+import SavedItineraryViewPage from './pages/SavedItineraryViewPage';
+import NotFoundPage from './pages/NotFoundPage';
+import ServerErrorPage from './pages/ServerErrorPage';
+import OfflinePage from './pages/OfflinePage';
 
 
 // Component to conditionally render ModernHeader
 const ConditionalHeader: React.FC = () => {
   const location = useLocation();
   
-  // Hide ModernHeader on ResultsPage and ItineraryPage
-  const hideHeader = location.pathname === '/results' || location.pathname === '/itinerary';
+  // Hide ModernHeader on ResultsPage, ItineraryPage, ItineraryGenerationPage, EditItineraryPage, Create pages, Public Itinerary, and Error pages
+  const hideHeader = location.pathname === '/results' || 
+                     location.pathname === '/itinerary' || 
+                     location.pathname.startsWith('/itinerary/') ||
+                     location.pathname.startsWith('/saved-itinerary/') ||
+                     location.pathname === '/itinerary-generation' || 
+                     location.pathname === '/edit-itinerary' ||
+                     location.pathname === '/create-blog' ||
+                     location.pathname === '/create-album' ||
+                     location.pathname === '/create-guide' ||
+                     location.pathname.startsWith('/public/itinerary/') ||
+                     location.pathname === '/404' ||
+                     location.pathname === '/500' ||
+                     location.pathname === '/offline' ||
+                     location.pathname === '/not-found';
   
   return hideHeader ? null : <ModernHeader />;
 };
@@ -34,8 +58,15 @@ const ConditionalHeader: React.FC = () => {
 const ConditionalFooter: React.FC = () => {
   const location = useLocation();
   
-  // Don't render Footer on dashboard page (it has its own footer)
-  if (location.pathname === '/dashboard') {
+  // Don't render Footer on dashboard page, create pages, and error pages (they have their own footer)
+  if (location.pathname === '/dashboard' || 
+      location.pathname === '/create-blog' ||
+      location.pathname === '/create-album' ||
+      location.pathname === '/create-guide' ||
+      location.pathname === '/404' ||
+      location.pathname === '/500' ||
+      location.pathname === '/offline' ||
+      location.pathname === '/not-found') {
     return null;
   }
   
@@ -65,7 +96,23 @@ function App() {
                   <Route path="/booking-confirmation" element={<BookingConfirmationPage />} />
                   <Route path="/results" element={<ResultsPage />} />
                   <Route path="/itinerary" element={<ItineraryPage />} />
+                  <Route path="/saved-itinerary/:id" element={<SavedItineraryViewPage />} />
+                  <Route path="/itinerary/:id" element={<ItineraryRedirectPage />} />
+                  <Route path="/itinerary-generation" element={<ItineraryGenerationPage />} />
+                  <Route path="/edit-itinerary" element={<EditItineraryPage />} />
                   <Route path="/trip-planner" element={<TripPlannerPage />} />
+                  <Route path="/create-blog" element={<CreateBlogPage />} />
+                  <Route path="/create-album" element={<CreateAlbumPage />} />
+                  <Route path="/create-guide" element={<CreateGuidePage />} />
+                  <Route path="/public/itinerary/:shareToken" element={<PublicItineraryPage />} />
+                  
+                  {/* Error Pages */}
+                  <Route path="/404" element={<NotFoundPage />} />
+                  <Route path="/500" element={<ServerErrorPage />} />
+                  <Route path="/offline" element={<OfflinePage />} />
+                  
+                  {/* 404 Catch-all route - must be last */}
+                  <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </main>
               <ConditionalFooter />

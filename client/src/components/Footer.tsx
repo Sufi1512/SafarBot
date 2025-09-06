@@ -1,10 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Facebook, 
-  Twitter, 
-  Instagram, 
-  Linkedin,
   Mail,
   Phone,
   MapPin
@@ -39,10 +35,10 @@ const Footer: React.FC<FooterProps> = ({ disableCentering = false }) => {
   };
 
   const socialLinks = [
-    { name: 'Facebook', icon: Facebook, href: '#' },
-    { name: 'Twitter', icon: Twitter, href: '#' },
-    { name: 'Instagram', icon: Instagram, href: '#' },
-    { name: 'LinkedIn', icon: Linkedin, href: '#' },
+    { name: 'Facebook', icon: '📘', href: '#' },
+    { name: 'Twitter', icon: '🐦', href: '#' },
+    { name: 'Instagram', icon: '📷', href: '#' },
+    { name: 'LinkedIn', icon: '💼', href: '#' },
   ];
 
   return (
@@ -165,7 +161,7 @@ const Footer: React.FC<FooterProps> = ({ disableCentering = false }) => {
                   className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
                   aria-label={social.name}
                 >
-                  <social.icon className="w-5 h-5" />
+                  <span className="text-lg">{social.icon}</span>
                 </a>
               ))}
             </div>

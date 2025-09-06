@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
-import { Search, MapPin, Star, Heart, Filter, Grid, List, Calendar, Users, DollarSign } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, MapPin, Star, Heart, Filter, Grid, List, Calendar, Users, DollarSign, Plus, Eye } from 'lucide-react';
+import { savedItineraryAPI, placeServiceAPI } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 interface Destination {
   id: string;
@@ -16,10 +19,64 @@ interface Destination {
 }
 
 const ExplorePage: React.FC = () => {
+  const { user, isAuthenticated } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('popular');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load public itineraries and popular destinations
+  useEffect(() => {
+    loadExploreData();
+  }, [searchQuery, selectedFilter, sortBy]);
+
+  const loadExploreData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Load public itineraries for inspiration
+      const publicItineraries = await savedItineraryAPI.getItineraries({
+        limit: 20,
+        skip: 0,
+        status: 'published'
+      });
+      
+      // TODO: Load popular destinations from places API
+      // const popularDestinations = await placeServiceAPI.getPopularDestinations();
+      
+    } catch (err: any) {
+      console.error('Error loading explore data:', err);
+      setError(err.message || 'Failed to load explore data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLikeDestination = async (destinationId: string) => {
+    try {
+      // TODO: Implement like functionality
+      console.log('Liked destination:', destinationId);
+    } catch (err: any) {
+      console.error('Error liking destination:', err);
+    }
+  };
+
+  const handleSaveDestination = async (destinationId: string) => {
+    try {
+      // TODO: Implement save to favorites functionality
+      console.log('Saved destination:', destinationId);
+    } catch (err: any) {
+      console.error('Error saving destination:', err);
+    }
+  };
+
+  const handleViewDestination = (destinationId: string) => {
+    // TODO: Navigate to destination details or create itinerary
+    console.log('View destination:', destinationId);
+  };
 
   const destinations: Destination[] = [
     {
@@ -118,10 +175,6 @@ const ExplorePage: React.FC = () => {
     { id: 'rating', label: 'Highest Rated' }
   ];
 
-  const toggleLike = (id: string) => {
-    // In a real app, this would update the backend
-    console.log('Toggle like for destination:', id);
-  };
 
   const filteredDestinations = destinations.filter(dest => {
     const matchesSearch = dest.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -227,7 +280,7 @@ const ExplorePage: React.FC = () => {
                 className="w-full h-full object-cover"
               />
               <button
-                onClick={() => toggleLike(destination.id)}
+                onClick={() => handleLikeDestination(destination.id)}
                 className="absolute top-3 right-3 p-2 bg-white/80 dark:bg-gray-800/80 rounded-full hover:bg-white dark:hover:bg-gray-800 transition-colors"
               >
                 <Heart

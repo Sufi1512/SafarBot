@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
-import { Heart, Share2, Bookmark, MapPin, Calendar, Users, DollarSign, Star, Filter, Grid, List, Compass, Camera, Plane, Hotel, Car } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Heart, Share2, Bookmark, MapPin, Calendar, Users, DollarSign, Star, Filter, Grid, List, Compass, Camera, Plane, Hotel, Car, Plus, Eye } from 'lucide-react';
+import { savedItineraryAPI, placeServiceAPI } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 interface InspirationItem {
   id: string;
@@ -24,9 +27,88 @@ interface InspirationItem {
 }
 
 const InspirationPage: React.FC = () => {
+  const { user, isAuthenticated } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('trending');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load inspiration data
+  useEffect(() => {
+    loadInspirationData();
+  }, [selectedCategory, sortBy]);
+
+  const loadInspirationData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Load public itineraries for inspiration
+      const publicItineraries = await savedItineraryAPI.getItineraries({
+        limit: 20,
+        skip: 0,
+        status: 'published'
+      });
+      
+      // TODO: Load popular destinations and activities from places API
+      // const popularDestinations = await placeServiceAPI.getPopularDestinations();
+      // const popularActivities = await placeServiceAPI.getPopularActivities();
+      
+    } catch (err: any) {
+      console.error('Error loading inspiration data:', err);
+      setError(err.message || 'Failed to load inspiration data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLikeItem = async (itemId: string) => {
+    try {
+      // TODO: Implement like functionality
+      console.log('Liked item:', itemId);
+    } catch (err: any) {
+      console.error('Error liking item:', err);
+    }
+  };
+
+  const handleBookmarkItem = async (itemId: string) => {
+    try {
+      // TODO: Implement bookmark functionality
+      console.log('Bookmarked item:', itemId);
+    } catch (err: any) {
+      console.error('Error bookmarking item:', err);
+    }
+  };
+
+  const handleShareItem = async (itemId: string) => {
+    try {
+      const shareUrl = `${window.location.origin}/inspiration/${itemId}`;
+      
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Travel Inspiration',
+          text: 'Check out this amazing travel inspiration!',
+          url: shareUrl
+        });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        alert('Inspiration link copied to clipboard!');
+      }
+    } catch (err: any) {
+      console.error('Error sharing item:', err);
+    }
+  };
+
+  const handleViewItem = (itemId: string) => {
+    // TODO: Navigate to item details or create itinerary based on item
+    console.log('View item:', itemId);
+  };
+
+  const handleCreateFromInspiration = (itemId: string) => {
+    // TODO: Navigate to trip planner with inspiration data
+    console.log('Create from inspiration:', itemId);
+  };
 
   const inspirationItems: InspirationItem[] = [
     {
@@ -197,15 +279,6 @@ const InspirationPage: React.FC = () => {
     return item.category === selectedCategory;
   });
 
-  const toggleLike = (id: string) => {
-    // In a real app, this would update the backend
-    console.log('Toggle like for item:', id);
-  };
-
-  const toggleBookmark = (id: string) => {
-    // In a real app, this would update the backend
-    console.log('Toggle bookmark for item:', id);
-  };
 
   return (
     <div className="space-y-6">
@@ -316,7 +389,7 @@ const InspirationPage: React.FC = () => {
               </div>
               <div className="absolute top-3 right-3 flex space-x-2">
                 <button
-                  onClick={() => toggleLike(item.id)}
+                  onClick={() => handleLikeItem(item.id)}
                   className="p-2 bg-white/90 dark:bg-gray-800/90 rounded-full hover:bg-white dark:hover:bg-gray-800 transition-colors"
                 >
                   <Heart
@@ -326,7 +399,7 @@ const InspirationPage: React.FC = () => {
                   />
                 </button>
                 <button
-                  onClick={() => toggleBookmark(item.id)}
+                  onClick={() => handleBookmarkItem(item.id)}
                   className="p-2 bg-white/90 dark:bg-gray-800/90 rounded-full hover:bg-white dark:hover:bg-gray-800 transition-colors"
                 >
                   <Bookmark

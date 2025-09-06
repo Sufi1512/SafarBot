@@ -4,14 +4,16 @@ Handles CRUD operations for user-saved itineraries
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi import status
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 from datetime import date
+import logging
 
 from services.saved_itinerary_service import SavedItineraryService
 from routers.auth import get_current_user
 from mongo_models import User
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -122,7 +124,7 @@ async def create_itinerary(
         
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail=f"Failed to create itinerary: {str(e)}"
         )
 
@@ -148,7 +150,7 @@ async def get_user_itineraries(
         
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail=f"Failed to get itineraries: {str(e)}"
         )
 
@@ -166,7 +168,7 @@ async def get_itinerary(
         
         if not itinerary:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=404,
                 detail="Itinerary not found"
             )
         
@@ -176,7 +178,7 @@ async def get_itinerary(
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail=f"Failed to get itinerary: {str(e)}"
         )
 
@@ -203,7 +205,7 @@ async def update_itinerary(
         
         if not itinerary:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=404,
                 detail="Itinerary not found"
             )
         
@@ -213,7 +215,7 @@ async def update_itinerary(
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail=f"Failed to update itinerary: {str(e)}"
         )
 
@@ -231,7 +233,7 @@ async def delete_itinerary(
         
         if not success:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=404,
                 detail="Itinerary not found"
             )
         
@@ -241,7 +243,7 @@ async def delete_itinerary(
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail=f"Failed to delete itinerary: {str(e)}"
         )
 
@@ -259,7 +261,7 @@ async def toggle_favorite(
         
         if not success:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=404,
                 detail="Itinerary not found"
             )
         
@@ -269,7 +271,7 @@ async def toggle_favorite(
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail=f"Failed to toggle favorite: {str(e)}"
         )
 
@@ -293,7 +295,7 @@ async def discover_public_itineraries(
         
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail=f"Failed to get public itineraries: {str(e)}"
         )
 
@@ -311,6 +313,61 @@ async def get_itinerary_stats(
         
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail=f"Failed to get itinerary stats: {str(e)}"
         )
+
+@router.post("/{itinerary_id}/share")
+async def share_itinerary(
+    itinerary_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Share an itinerary and generate a public link"""
+    try:
+        # Get the itinerary to ensure it exists and user owns it
+        itinerary = await SavedItineraryService.get_itinerary_by_id(itinerary_id, str(current_user.id))
+        if not itinerary:
+            raise HTTPException(status_code=404, detail="Itinerary not found")
+        
+        # Generate a share token (you can use UUID or any other method)
+        import uuid
+        share_token = str(uuid.uuid4())
+        
+        # Update the itinerary with the share token and make it public
+        await SavedItineraryService.update_itinerary(
+            itinerary_id, 
+            str(current_user.id),
+            {"is_public": True, "share_token": share_token}
+        )
+        
+        # Generate the public URL
+        public_url = f"/public/itinerary/{share_token}"
+        
+        return {
+            "message": "Itinerary shared successfully",
+            "public_url": public_url,
+            "share_token": share_token
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error sharing itinerary: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to share itinerary")
+
+@router.get("/public/{share_token}", response_model=ItineraryDetail)
+async def get_public_itinerary(share_token: str):
+    """Get a public itinerary by share token"""
+    try:
+        itinerary = await SavedItineraryService.get_public_itinerary(share_token)
+        if not itinerary:
+            raise HTTPException(status_code=404, detail="Itinerary not found or not public")
+        
+        # Increment view count
+        await SavedItineraryService.increment_view_count(itinerary["id"])
+        
+        return itinerary
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting public itinerary: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get public itinerary")

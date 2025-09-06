@@ -451,6 +451,7 @@ class SavedItineraryDocument(MongoBaseModel):
     views_count: int = 0
     likes_count: int = 0
     shares_count: int = 0
+    share_token: Optional[str] = None
 
 # Enhanced User Model with additional fields
 class EnhancedUser(User):

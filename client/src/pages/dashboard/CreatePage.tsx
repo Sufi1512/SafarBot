@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { Plus, MapPin, Calendar, Users, DollarSign, Plane, Hotel, Car, Camera, FileText, Share2, Save, Eye } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, MapPin, Calendar, Users, DollarSign, Plane, Hotel, Car, Camera, FileText, Share2, Save, Eye, ArrowRight } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface CreateOption {
   id: string;
@@ -13,9 +15,41 @@ interface CreateOption {
 }
 
 const CreatePage: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<CreateOption | null>(null);
+
+
+  const handleStartCreation = (option: CreateOption) => {
+    switch (option.id) {
+      case '1': // Plan a New Trip
+        navigate('/'); // Go to home page
+        break;
+      case '2': // Custom Itinerary
+        navigate('/trip-planner');
+        break;
+      case '3': // Flight Booking
+        navigate('/flights');
+        break;
+      case '4': // Hotel Booking
+        navigate('/hotels');
+        break;
+      case '5': // Car Rental
+        navigate('/packages');
+        break;
+      case '6': // Travel Blog
+        navigate('/create-blog');
+        break;
+      case '7': // Photo Album
+        navigate('/create-album');
+        break;
+      case '8': // Travel Guide
+        navigate('/create-guide');
+        break;
+      default:
+        console.log('Unknown option:', option.id);
+    }
+  };
 
   const createOptions: CreateOption[] = [
     {
@@ -114,16 +148,9 @@ const CreatePage: React.FC = () => {
   });
 
   const handleCreateClick = (option: CreateOption) => {
-    setSelectedOption(option);
-    setShowCreateModal(true);
+    handleStartCreation(option);
   };
 
-  const handleCreateConfirm = () => {
-    // In a real app, this would navigate to the appropriate creation flow
-    console.log('Creating:', selectedOption?.title);
-    setShowCreateModal(false);
-    setSelectedOption(null);
-  };
 
   return (
     <div className="space-y-6">
@@ -238,56 +265,6 @@ const CreatePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Create Modal */}
-      {showCreateModal && selectedOption && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-            <div className="text-center mb-6">
-              <div className={`w-16 h-16 ${selectedOption.color} rounded-full flex items-center justify-center mx-auto mb-4`}>
-                <selectedOption.icon className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                {selectedOption.title}
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                {selectedOption.description}
-              </p>
-            </div>
-
-            <div className="space-y-4 mb-6">
-              <div>
-                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Features included:</h4>
-                <ul className="space-y-1">
-                  {selectedOption.features.map((feature, index) => (
-                    <li key={index} className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                Estimated time: {selectedOption.estimatedTime}
-              </div>
-            </div>
-
-            <div className="flex space-x-3">
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateConfirm}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Start Creating
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

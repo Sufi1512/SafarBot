@@ -1621,7 +1621,7 @@ export const savedItineraryAPI = {
     is_public: boolean;
   }> => {
     try {
-      const response = await api.post('/itineraries/', itineraryData);
+      const response = await api.post('/saved-itinerary/', itineraryData);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Failed to create itinerary');
@@ -1747,6 +1747,53 @@ export const savedItineraryAPI = {
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Failed to load itinerary stats');
+    }
+  },
+
+  // Share itinerary
+  shareItinerary: async (itineraryId: string): Promise<{
+    message: string;
+    public_url: string;
+    share_token: string;
+  }> => {
+    try {
+      const response = await api.post(`/saved-itinerary/${itineraryId}/share`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to share itinerary');
+    }
+  },
+
+  // Get public itinerary
+  getPublicItinerary: async (shareToken: string): Promise<{
+    id: string;
+    title: string;
+    description?: string;
+    destination: string;
+    country: string;
+    city: string;
+    duration_days: number;
+    budget?: number;
+    travel_style: string[];
+    interests: string[];
+    total_estimated_cost?: number;
+    is_favorite: boolean;
+    tags: string[];
+    cover_image?: string;
+    status: string;
+    views_count: number;
+    likes_count: number;
+    shares_count: number;
+    created_at: string;
+    updated_at: string;
+    days: Array<any>;
+    is_public: boolean;
+  }> => {
+    try {
+      const response = await api.get(`/saved-itinerary/public/${shareToken}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to load public itinerary');
     }
   }
 };

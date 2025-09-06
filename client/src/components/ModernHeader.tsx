@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import ModernButton from './ui/ModernButton';
+import AuthModal from './AuthModal';
 import logoImage from '../asset/images/logo.png';
 import {
   Bars3Icon,
@@ -25,9 +26,12 @@ const ModernHeader: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const { isAuthenticated, user, logout } = useAuth();
   const { isDarkMode, toggleDarkMode } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Handle scroll effect
   useEffect(() => {
@@ -44,6 +48,22 @@ const ModernHeader: React.FC = () => {
     setIsProfileMenuOpen(false);
   }, [location.pathname]);
 
+  const handleOpenAuthModal = (mode: 'login' | 'signup') => {
+    console.log('Opening auth modal:', mode);
+    setAuthMode(mode);
+    setIsAuthModalOpen(true);
+  };
+
+  const handleCloseAuthModal = () => {
+    setIsAuthModalOpen(false);
+  };
+
+  const handleAuthSuccess = () => {
+    // Handle successful authentication
+    console.log('Authentication successful');
+    // Close modal after successful login - no automatic redirect
+  };
+
   const navItems = [
     { name: 'Home', href: '/', icon: PaperAirplaneIcon },
     { name: 'Flights', href: '/flights', icon: PaperAirplaneIcon },
@@ -51,7 +71,15 @@ const ModernHeader: React.FC = () => {
     { name: 'Packages', href: '/packages', icon: CubeIcon },
   ];
 
+  const authenticatedNavItems = [
+    { name: 'Flights', href: '/flights', icon: PaperAirplaneIcon },
+    { name: 'Hotels', href: '/hotels', icon: BuildingOfficeIcon },
+    { name: 'Packages', href: '/packages', icon: CubeIcon },
+    { name: 'Dashboard', href: '/dashboard', icon: UserCircleIcon },
+  ];
+
   const profileMenuItems = [
+    { name: 'Dashboard', icon: UserCircleIcon, href: '/dashboard' },
     { name: 'Profile', icon: UserCircleIcon, href: '/profile' },
     { name: 'Settings', icon: Cog6ToothIcon, href: '/settings' },
     { name: 'Sign Out', icon: PowerIcon, action: logout },
@@ -85,14 +113,14 @@ const ModernHeader: React.FC = () => {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-1">
-              {navItems.map((item) => {
+              {(isAuthenticated ? authenticatedNavItems : navItems).map((item) => {
                 const isActive = location.pathname === item.href;
-  return (
+                return (
                   <Link
                     key={item.name}
                     to={item.href}
                     className={`relative px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
-              isActive 
+                      isActive 
                         ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
                         : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800/50'
                     }`}
@@ -107,8 +135,8 @@ const ModernHeader: React.FC = () => {
                       />
                     )}
                   </Link>
-        );
-      })}
+                );
+              })}
             </nav>
 
             {/* Right side actions */}
@@ -136,16 +164,26 @@ const ModernHeader: React.FC = () => {
               {/* Auth Buttons / Profile Menu */}
             {!isAuthenticated ? (
                 <div className="flex items-center space-x-3 ml-4">
-                <Link to="/login">
-                    <ModernButton variant="ghost" size="sm">
-                      Sign In
-                    </ModernButton>
-                </Link>
-                <Link to="/signup">
-                    <ModernButton variant="gradient" size="sm">
-                      Sign Up
-                    </ModernButton>
-                </Link>
+                <ModernButton 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    console.log('Sign In button clicked');
+                    handleOpenAuthModal('login');
+                  }}
+                >
+                  Sign In
+                </ModernButton>
+                <ModernButton 
+                  variant="gradient" 
+                  size="sm"
+                  onClick={() => {
+                    console.log('Sign Up button clicked');
+                    handleOpenAuthModal('signup');
+                  }}
+                >
+                  Sign Up
+                </ModernButton>
               </div>
             ) : (
                 <div className="relative ml-4">
@@ -178,7 +216,7 @@ const ModernHeader: React.FC = () => {
                               if (item.action) {
                                 item.action();
                               } else if (item.href) {
-                                window.location.href = item.href;
+                                navigate(item.href);
                               }
                               setIsProfileMenuOpen(false);
                             }}
@@ -218,7 +256,7 @@ const ModernHeader: React.FC = () => {
               className="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl"
             >
               <div className="px-4 py-4 space-y-2">
-                {navItems.map((item) => {
+                {(isAuthenticated ? authenticatedNavItems : navItems).map((item) => {
                   const isActive = location.pathname === item.href;
                   return (
                     <Link
@@ -238,16 +276,28 @@ const ModernHeader: React.FC = () => {
                 
                 {!isAuthenticated && (
                   <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
-                    <Link to="/login" className="block">
-                      <ModernButton variant="ghost" size="sm" fullWidth>
+                                          <ModernButton 
+                        variant="ghost" 
+                        size="sm"
+                        fullWidth
+                        onClick={() => {
+                          console.log('Mobile Sign In button clicked');
+                          handleOpenAuthModal('login');
+                        }}
+                      >
                         Sign In
                       </ModernButton>
-                    </Link>
-                    <Link to="/signup" className="block">
-                      <ModernButton variant="gradient" size="sm" fullWidth>
+                      <ModernButton 
+                        variant="gradient" 
+                        size="sm"
+                        fullWidth
+                        onClick={() => {
+                          console.log('Mobile Sign Up button clicked');
+                          handleOpenAuthModal('signup');
+                        }}
+                      >
                         Sign Up
                       </ModernButton>
-                    </Link>
      </div>
                 )}
    </div>
@@ -266,6 +316,15 @@ const ModernHeader: React.FC = () => {
           }}
         />
       )}
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={handleCloseAuthModal}
+        defaultMode={authMode}
+        onLoginSuccess={handleAuthSuccess}
+        onSignupSuccess={handleAuthSuccess}
+      />
     </>
    );
  };

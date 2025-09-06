@@ -17,20 +17,34 @@ class Database:
         """Create database connection."""
         mongodb_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
         
-        # MongoDB connection options with proper TLS configuration and certifi
-        connection_options = {
-            "server_api": ServerApi('1'),
-            "tls": True,  # Explicitly enable TLS
-            "tlsCAFile": certifi.where(),  # Use certifi for CA root certificates
-            "retryWrites": True,
-            "w": "majority",
-            "maxPoolSize": 10,
-            "minPoolSize": 1,
-            "maxIdleTimeMS": 30000,
-            "connectTimeoutMS": 30000,  # Increased timeout
-            "socketTimeoutMS": 30000,   # Increased timeout
-            "serverSelectionTimeoutMS": 60000,  # Increased timeout
-        }
+        # Check if it's a local MongoDB connection
+        is_local = "localhost" in mongodb_url or "127.0.0.1" in mongodb_url
+        
+        if is_local:
+            # Local MongoDB connection options (no TLS)
+            connection_options = {
+                "maxPoolSize": 10,
+                "minPoolSize": 1,
+                "maxIdleTimeMS": 30000,
+                "connectTimeoutMS": 5000,
+                "socketTimeoutMS": 5000,
+                "serverSelectionTimeoutMS": 5000,
+            }
+        else:
+            # MongoDB Atlas connection options with TLS
+            connection_options = {
+                "server_api": ServerApi('1'),
+                "tls": True,
+                "tlsCAFile": certifi.where(),
+                "retryWrites": True,
+                "w": "majority",
+                "maxPoolSize": 10,
+                "minPoolSize": 1,
+                "maxIdleTimeMS": 30000,
+                "connectTimeoutMS": 30000,
+                "socketTimeoutMS": 30000,
+                "serverSelectionTimeoutMS": 60000,
+            }
         
         try:
             # Create async client with connection options
@@ -104,5 +118,5 @@ AFFILIATE_CLICKS_COLLECTION = "affiliate_clicks"
 AFFILIATE_BOOKINGS_COLLECTION = "affiliate_bookings"
 CHAT_SESSIONS_COLLECTION = "chat_sessions"
 RESTAURANTS_COLLECTION = "restaurants"
-SAVED_TRIPS_COLLECTION = "saved_trips"
+SAVED_TRIPS_COLLECTION = "saved_itineraries"
 NOTIFICATIONS_COLLECTION = "notifications" 

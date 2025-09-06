@@ -116,6 +116,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem('refreshToken', response.refresh_token);
       
       setUser(response.user);
+      
+      // Preload dashboard data after successful login
+      try {
+        const { dashboardAPI, savedItineraryAPI } = await import('../services/api');
+        
+        // Call dashboard APIs in parallel to preload data
+        await Promise.allSettled([
+          dashboardAPI.getDashboardData(),
+          savedItineraryAPI.getItineraries({ limit: 20 }),
+          savedItineraryAPI.getItineraryStats()
+        ]);
+        
+        console.log('Dashboard data preloaded successfully');
+      } catch (preloadError) {
+        console.warn('Failed to preload dashboard data:', preloadError);
+        // Don't throw error - login was successful, just preloading failed
+      }
+      
     } catch (error: any) {
       console.error('Login error:', error);
       throw new Error(error.message || 'Login failed');

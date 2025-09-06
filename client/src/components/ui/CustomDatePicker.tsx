@@ -11,7 +11,7 @@ interface CustomDatePickerProps {
   minDate?: Date;
   maxDate?: Date;
   className?: string;
-  label?: string;
+  label?: string | React.ReactNode;
 }
 
 const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
@@ -75,8 +75,8 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
     const buttonRect = buttonRef.current.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
-    const calendarHeight = 450; // Approximate height of the calendar including padding
-    const calendarWidth = 320; // Calendar width
+    const calendarHeight = 380; // Approximate height of the calendar including padding
+    const calendarWidth = 288; // Calendar width (w-72 = 18rem = 288px)
     const buffer = 20; // Extra space buffer
     
     const spaceBelow = viewportHeight - buttonRect.bottom - buffer;
@@ -153,7 +153,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
             onClick={() => isCurrentMonth && !isDisabled && handleDateSelect(cloneDay)}
             disabled={isDisabled}
             className={`
-              relative w-10 h-10 rounded-xl text-sm font-bold transition-all duration-200
+              relative w-8 h-8 rounded-lg text-xs font-semibold transition-all duration-200
               ${isSelected 
                 ? 'bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg ring-2 ring-cyan-200 dark:ring-cyan-700' 
                 : isCurrentDay
@@ -175,7 +175,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
         day = addDays(day, 1);
       }
       rows.push(
-        <div key={day.toString()} className="grid grid-cols-7 gap-1">
+        <div key={day.toString()} className="grid grid-cols-7 gap-0.5">
           {days}
         </div>
       );
@@ -190,7 +190,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
           {label}
         </label>
       )}
@@ -205,7 +205,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
           setIsOpen(!isOpen);
         }}
         className={`
-          relative w-full px-4 py-5 text-left border-2 rounded-2xl transition-all duration-300 group
+          relative w-full px-4 py-3 text-left border-2 rounded-2xl transition-all duration-300 group
           ${isOpen 
             ? 'border-cyan-500 ring-4 ring-cyan-500/20 shadow-lg' 
             : 'border-gray-200 dark:border-gray-600 hover:border-cyan-400 dark:hover:border-cyan-500'
@@ -215,11 +215,11 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
         `}
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <CalendarDaysIcon className={`w-5 h-5 transition-colors duration-200 ${
+          <div className="flex items-center space-x-2">
+            <CalendarDaysIcon className={`w-4 h-4 transition-colors duration-200 ${
               isOpen ? 'text-cyan-500' : 'text-gray-400 group-hover:text-cyan-500'
             }`} />
-            <span className={`text-lg font-medium ${
+            <span className={`text-sm font-medium ${
               selectedDate ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
             }`}>
               {selectedDate ? format(selectedDate, 'MMM dd, yyyy') : placeholder}
@@ -229,7 +229,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
             animate={{ rotate: isOpen ? 180 : 0 }}
             transition={{ duration: 0.2 }}
           >
-            <ChevronRightIcon className="w-5 h-5 text-gray-400" />
+            <ChevronRightIcon className="w-4 h-4 text-gray-400" />
           </motion.div>
         </div>
       </motion.button>
@@ -244,7 +244,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: showAbove ? -10 : 10, scale: 0.95 }}
               transition={{ duration: 0.3 }}
-              className="fixed bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 w-80"
+              className="fixed bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 w-72"
               style={{
                 filter: 'drop-shadow(0 25px 25px rgb(0 0 0 / 0.15))',
                 zIndex: 9999,
@@ -278,9 +278,9 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
             </div>
 
             {/* Week Days */}
-            <div className="grid grid-cols-7 gap-1 mb-2">
+            <div className="grid grid-cols-7 gap-0.5 mb-2">
               {weekDays.map(day => (
-                <div key={day} className="h-10 flex items-center justify-center">
+                <div key={day} className="h-8 flex items-center justify-center">
                   <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     {day}
                   </span>
@@ -289,7 +289,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
             </div>
 
             {/* Calendar Grid */}
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {renderCalendar()}
             </div>
 

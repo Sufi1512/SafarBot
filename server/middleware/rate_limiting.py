@@ -18,12 +18,12 @@ class RateLimiter:
     def __init__(self):
         # Store request timestamps for each IP
         self.requests: Dict[str, deque] = defaultdict(deque)
-        # Rate limits (requests per time window)
+            # Rate limits (requests per time window) - Relaxed for testing
         self.limits = {
-            "default": {"requests": 100, "window": 3600},  # 100 requests per hour
-            "auth": {"requests": 10, "window": 300},       # 10 auth attempts per 5 minutes
-            "chat": {"requests": 20, "window": 3600},      # 20 chat requests per hour
-            "search": {"requests": 50, "window": 3600},    # 50 searches per hour
+            "default": {"requests": 1000, "window": 3600},  # 1000 requests per hour
+            "auth": {"requests": 100, "window": 300},       # 100 auth attempts per 5 minutes
+            "chat": {"requests": 200, "window": 3600},      # 200 chat requests per hour
+            "search": {"requests": 500, "window": 3600},    # 500 searches per hour
         }
     
     def is_allowed(self, client_ip: str, endpoint_type: str = "default") -> bool:

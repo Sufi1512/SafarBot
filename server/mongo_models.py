@@ -37,6 +37,7 @@ class UserStatus(str, Enum):
     INACTIVE = "inactive"
     SUSPENDED = "suspended"
     PENDING_VERIFICATION = "pending_verification"
+    PENDING = "pending"  # Legacy status for existing users
 
 class User(MongoBaseModel):
     email: EmailStr
@@ -45,7 +46,7 @@ class User(MongoBaseModel):
     phone: Optional[str] = None
     hashed_password: str
     role: UserRole = UserRole.USER
-    status: UserStatus = UserStatus.PENDING_VERIFICATION
+    status: UserStatus = UserStatus.ACTIVE
     is_email_verified: bool = False
     is_phone_verified: bool = False
     profile_picture: Optional[str] = None
@@ -344,4 +345,120 @@ class NotificationDocument(MongoBaseModel):
     is_push_sent: bool = False
     read_at: Optional[datetime] = None
     action_url: Optional[str] = None
-    priority: int = 1  # 1=low, 2=medium, 3=high 
+    priority: int = 1  # 1=low, 2=medium, 3=high
+
+# Session Management Models
+class SessionStatus(str, Enum):
+    ACTIVE = "active"
+    EXPIRED = "expired"
+    REVOKED = "revoked"
+
+class DeviceType(str, Enum):
+    WEB = "web"
+    MOBILE = "mobile"
+    TABLET = "tablet"
+    DESKTOP = "desktop"
+
+class UserSessionDocument(MongoBaseModel):
+    session_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: PyObjectId
+    device_type: DeviceType
+    device_name: str  # e.g., "Chrome on Windows", "Safari on iPhone"
+    ip_address: str
+    user_agent: str
+    location: Optional[Dict[str, Any]] = None  # city, country, coordinates
+    status: SessionStatus = SessionStatus.ACTIVE
+    last_activity: datetime = Field(default_factory=datetime.utcnow)
+    expires_at: datetime
+    is_remember_me: bool = False
+    refresh_token: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+# User Preferences Models
+class NotificationPreferences(BaseModel):
+    email_notifications: bool = True
+    push_notifications: bool = True
+    sms_notifications: bool = False
+    booking_updates: bool = True
+    price_alerts: bool = True
+    promotional_offers: bool = True
+    travel_reminders: bool = True
+    weather_updates: bool = True
+
+class TravelPreferences(BaseModel):
+    preferred_airlines: List[str] = Field(default_factory=list)
+    preferred_hotel_chains: List[str] = Field(default_factory=list)
+    budget_range: Optional[str] = None  # budget, mid_range, luxury
+    travel_style: List[str] = Field(default_factory=list)  # adventure, luxury, family, business
+    dietary_restrictions: List[str] = Field(default_factory=list)
+    accessibility_needs: List[str] = Field(default_factory=list)
+    language_preferences: List[str] = Field(default_factory=["en"])
+    currency_preference: str = "USD"
+    timezone: str = "UTC"
+
+class UserPreferencesDocument(MongoBaseModel):
+    user_id: PyObjectId
+    notification_preferences: NotificationPreferences = Field(default_factory=NotificationPreferences)
+    travel_preferences: TravelPreferences = Field(default_factory=TravelPreferences)
+    privacy_settings: Dict[str, Any] = Field(default_factory=dict)
+    theme_preference: str = "system"  # light, dark, system
+    language: str = "en"
+    region: str = "US"
+
+# Dashboard Analytics Models
+class UserAnalyticsDocument(MongoBaseModel):
+    user_id: PyObjectId
+    total_bookings: int = 0
+    total_spent: float = 0.0
+    countries_visited: List[str] = Field(default_factory=list)
+    cities_visited: List[str] = Field(default_factory=list)
+    favorite_destinations: List[Dict[str, Any]] = Field(default_factory=list)
+    booking_patterns: Dict[str, Any] = Field(default_factory=dict)
+    spending_patterns: Dict[str, Any] = Field(default_factory=dict)
+    last_updated: datetime = Field(default_factory=datetime.utcnow)
+
+# Saved Itinerary Models
+class ItineraryDay(BaseModel):
+    day_number: int
+    date: Optional[date] = None
+    activities: List[Dict[str, Any]] = Field(default_factory=list)
+    accommodations: Optional[Dict[str, Any]] = None
+    transportation: Optional[Dict[str, Any]] = None
+    meals: List[Dict[str, Any]] = Field(default_factory=list)
+    notes: Optional[str] = None
+    estimated_cost: Optional[float] = None
+
+class SavedItineraryDocument(MongoBaseModel):
+    user_id: PyObjectId
+    title: str
+    description: Optional[str] = None
+    destination: str
+    country: str
+    city: str
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    duration_days: int
+    budget: Optional[float] = None
+    travel_style: List[str] = Field(default_factory=list)  # adventure, luxury, budget, family, solo, etc.
+    interests: List[str] = Field(default_factory=list)  # culture, nature, food, history, etc.
+    days: List[ItineraryDay] = Field(default_factory=list)
+    total_estimated_cost: Optional[float] = None
+    is_public: bool = False
+    is_favorite: bool = False
+    tags: List[str] = Field(default_factory=list)
+    cover_image: Optional[str] = None
+    status: str = "draft"  # draft, published, archived
+    views_count: int = 0
+    likes_count: int = 0
+    shares_count: int = 0
+
+# Enhanced User Model with additional fields
+class EnhancedUser(User):
+    preferences: Optional[PyObjectId] = None  # Reference to UserPreferencesDocument
+    analytics: Optional[PyObjectId] = None  # Reference to UserAnalyticsDocument
+    last_session_id: Optional[str] = None
+    is_premium: bool = False
+    loyalty_tier: str = "bronze"  # bronze, silver, gold, platinum
+    loyalty_points: int = 0
+    referral_code: str = Field(default_factory=lambda: str(uuid.uuid4())[:8].upper())
+    referred_by: Optional[str] = None 

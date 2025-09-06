@@ -11,7 +11,11 @@ import {
 } from 'lucide-react';
 import logoImage from '../asset/images/logo.png';
 
-const Footer: React.FC = () => {
+interface FooterProps {
+  disableCentering?: boolean;
+}
+
+const Footer: React.FC<FooterProps> = ({ disableCentering = false }) => {
   const currentYear = new Date().getFullYear();
 
   const footerLinks = {
@@ -43,11 +47,11 @@ const Footer: React.FC = () => {
 
   return (
     <footer className="bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className={`${disableCentering ? 'w-full' : 'max-w-7xl mx-auto'} px-4 sm:px-6 lg:px-8 py-12`}>
         {/* Main Footer Content */}
         <div className="flex flex-col gap-8">
           {/* Top Row - Brand and Link Sections */}
-          <div className="flex flex-col lg:flex-row lg:items-end gap-8 lg:gap-12">
+          <div className="flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-12">
             {/* Brand Section */}
             <div className="lg:flex-1">
               <div className="flex items-center mb-4">
@@ -83,7 +87,7 @@ const Footer: React.FC = () => {
               </div>
             </div>
 
-            {/* Company and Support Links Row */}
+            {/* Links Section - All aligned to start from top */}
             <div className="flex flex-col sm:flex-row gap-8 lg:gap-12">
               {/* Company Links */}
               <div className="flex flex-col">
@@ -122,26 +126,26 @@ const Footer: React.FC = () => {
                   ))}
                 </ul>
               </div>
-            </div>
-          </div>
 
-          {/* Services Section - Separate Row */}
-          <div className="flex flex-col">
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 uppercase tracking-wide">
-              Services
-            </h4>
-            <ul className="flex flex-wrap gap-6">
-              {footerLinks.services.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    to={link.href}
-                    className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+              {/* Services Links */}
+              <div className="flex flex-col">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 uppercase tracking-wide">
+                  Services
+                </h4>
+                <ul className="space-y-3">
+                  {footerLinks.services.map((link) => (
+                    <li key={link.name}>
+                      <Link
+                        to={link.href}
+                        className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
+                      >
+                        {link.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
 

@@ -1,461 +1,545 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { 
-  Plane, 
-  Hotel, 
-  MapPin, 
-  Calendar, 
-  Users, 
-  CreditCard, 
-  Settings, 
-  LogOut,
-  Plus,
-  Search,
-  Filter,
-  Star,
-
-  Heart
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { dashboardAPI, savedItineraryAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import ModernButton from '../components/ui/ModernButton';
-import ModernCard from '../components/ui/ModernCard';
+import DashboardSidebar from '../components/DashboardSidebar';
+import DashboardStats from '../components/DashboardStats';
+import ItineraryCard from '../components/ItineraryCard';
+import Footer from '../components/Footer';
+import ChatsPage from './dashboard/ChatsPage';
+import ExplorePage from './dashboard/ExplorePage';
+import TripsPage from './dashboard/TripsPage';
+import UpdatesPage from './dashboard/UpdatesPage';
+import InspirationPage from './dashboard/InspirationPage';
+import CreatePage from './dashboard/CreatePage';
+import { 
+  CalendarDays, 
+  MapPin, 
+  Plane
+} from 'lucide-react';
 
-interface Booking {
+interface DashboardData {
+  user_stats: {
+    total_bookings: number;
+    total_spent: number;
+    confirmed_bookings: number;
+    pending_bookings: number;
+    cancelled_bookings: number;
+    flight_bookings: number;
+    hotel_bookings: number;
+    upcoming_trips: number;
+    loyalty_points: number;
+    loyalty_tier: string;
+  };
+  recent_bookings: Array<{
+    id: string;
+    type: string;
+    status: string;
+    destination: string;
+    departure_date: string;
+    return_date?: string;
+    total_cost: number;
+  }>;
+  upcoming_trips: Array<{
+    id: string;
+    destination: string;
+    departure_date: string;
+    return_date?: string;
+    type: string;
+  }>;
+  saved_itineraries: Array<{
+    id: string;
+    title: string;
+    destination: string;
+    country: string;
+    city: string;
+    duration_days: number;
+    budget?: number;
+    total_estimated_cost?: number;
+    travel_style: string[];
+    interests: string[];
+    is_favorite: boolean;
+    status: string;
+    cover_image?: string;
+    views_count: number;
+    likes_count: number;
+    created_at: string;
+  }>;
+  price_alerts: Array<{
+    id: string;
+    destination: string;
+    current_price: number;
+    target_price: number;
+    status: string;
+    created_at: string;
+  }>;
+  notifications: Array<{
   id: string;
-  type: 'flight' | 'hotel';
+    title: string;
+    message: string;
+    type: string;
+    is_read: boolean;
+    created_at: string;
+  }>;
+  travel_analytics: {
+    countries_visited: string[];
+    cities_visited: string[];
+    favorite_destinations: Array<{
   destination: string;
-  date: string;
-  status: 'confirmed' | 'pending' | 'cancelled';
-  price: number;
-  image: string;
+      visit_count: number;
+    }>;
+    spending_by_month: Array<{
+      month: string;
+      amount: number;
+    }>;
+  };
+  session_analytics: {
+    active_sessions: number;
+    last_login: string;
+    device_types: Array<{
+      type: string;
+      count: number;
+    }>;
+  };
 }
 
 const UserDashboard: React.FC = () => {
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
-  const [bookings] = useState<Booking[]>([
-    {
-      id: '1',
-      type: 'flight',
-      destination: 'Paris, France',
-      date: '2024-02-15',
-      status: 'confirmed',
-      price: 899,
-      image: 'https://images.unsplash.com/photo-1502602898535-eb37b0b6d7c3?w=400&h=300&fit=crop'
-    },
-    {
-      id: '2',
-      type: 'hotel',
-      destination: 'Tokyo, Japan',
-      date: '2024-03-20',
-      status: 'pending',
-      price: 1299,
-      image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=300&fit=crop'
-    },
-    {
-      id: '3',
-      type: 'flight',
-      destination: 'New York, USA',
-      date: '2024-04-10',
-      status: 'confirmed',
-      price: 699,
-      image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400&h=300&fit=crop'
-    }
-  ]);
+  const [itineraries, setItineraries] = useState<any[]>([]);
+  const [itineraryStats, setItineraryStats] = useState<any>(null);
+  const [viewMode] = useState<'grid' | 'list'>('grid');
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+  const [lastItineraryFetchTime, setLastItineraryFetchTime] = useState<number>(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
 
-  const stats = [
-    { label: 'Total Bookings', value: '12', icon: Plane, color: 'from-blue-500 to-blue-600' },
-    { label: 'Active Trips', value: '3', icon: MapPin, color: 'from-green-500 to-green-600' },
-    { label: 'Total Spent', value: '$4,250', icon: CreditCard, color: 'from-purple-500 to-purple-600' },
-    { label: 'Reward Points', value: '2,450', icon: Star, color: 'from-yellow-500 to-yellow-600' }
-  ];
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      loadDashboardData();
+      loadItineraries();
+    }
+  }, [isAuthenticated, user]);
+
+  const loadDashboardData = async (forceRefresh = false) => {
+    const now = Date.now();
+    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
+    const CACHE_KEY = 'dashboard_data';
+    const TIMESTAMP_KEY = 'dashboard_timestamp';
+    
+    // Check localStorage cache first
+    if (!forceRefresh) {
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      const cachedTimestamp = localStorage.getItem(TIMESTAMP_KEY);
+      
+      if (cachedData && cachedTimestamp) {
+        const cacheTime = parseInt(cachedTimestamp);
+        if (now - cacheTime < CACHE_DURATION) {
+          setDashboardData(JSON.parse(cachedData));
+          setLastFetchTime(cacheTime);
+          setLoading(false);
+          return;
+        }
+      }
+    }
+
+    // Check if we have in-memory cached data and it's still fresh
+    if (!forceRefresh && dashboardData && (now - lastFetchTime) < CACHE_DURATION) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      if (!forceRefresh) {
+        setLoading(true);
+      } else {
+        setIsRefreshing(true);
+      }
+      setError(null);
+      
+      const data = await dashboardAPI.getDashboardData();
+      setDashboardData(data);
+      setLastFetchTime(now);
+      
+      // Cache in localStorage
+      localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+      localStorage.setItem(TIMESTAMP_KEY, now.toString());
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  const loadItineraries = async (forceRefresh = false) => {
+    const now = Date.now();
+    const CACHE_DURATION = 3 * 60 * 1000; // 3 minutes cache for itineraries
+    const ITINERARIES_CACHE_KEY = 'itineraries_data';
+    const ITINERARIES_TIMESTAMP_KEY = 'itineraries_timestamp';
+    const STATS_CACHE_KEY = 'itinerary_stats';
+    const STATS_TIMESTAMP_KEY = 'itinerary_stats_timestamp';
+    
+    // Check localStorage cache first
+    if (!forceRefresh) {
+      const cachedItineraries = localStorage.getItem(ITINERARIES_CACHE_KEY);
+      const cachedItinerariesTimestamp = localStorage.getItem(ITINERARIES_TIMESTAMP_KEY);
+      const cachedStats = localStorage.getItem(STATS_CACHE_KEY);
+      const cachedStatsTimestamp = localStorage.getItem(STATS_TIMESTAMP_KEY);
+      
+      if (cachedItineraries && cachedItinerariesTimestamp && cachedStats && cachedStatsTimestamp) {
+        const itinerariesCacheTime = parseInt(cachedItinerariesTimestamp);
+        const statsCacheTime = parseInt(cachedStatsTimestamp);
+        
+        if (now - itinerariesCacheTime < CACHE_DURATION && now - statsCacheTime < CACHE_DURATION) {
+          setItineraries(JSON.parse(cachedItineraries));
+          setItineraryStats(JSON.parse(cachedStats));
+          setLastItineraryFetchTime(Math.max(itinerariesCacheTime, statsCacheTime));
+          return;
+        }
+      }
+    }
+    
+    // Check if we have in-memory cached data and it's still fresh
+    if (!forceRefresh && itineraries.length > 0 && (now - lastItineraryFetchTime) < CACHE_DURATION) {
+      return;
+    }
+
+    try {
+      const [itinerariesData, statsData] = await Promise.all([
+        savedItineraryAPI.getItineraries({ limit: 20 }),
+        savedItineraryAPI.getItineraryStats()
+      ]);
+      setItineraries(itinerariesData);
+      setItineraryStats(statsData);
+      setLastItineraryFetchTime(now);
+      
+      // Cache in localStorage
+      localStorage.setItem(ITINERARIES_CACHE_KEY, JSON.stringify(itinerariesData));
+      localStorage.setItem(ITINERARIES_TIMESTAMP_KEY, now.toString());
+      localStorage.setItem(STATS_CACHE_KEY, JSON.stringify(statsData));
+      localStorage.setItem(STATS_TIMESTAMP_KEY, now.toString());
+    } catch (err: any) {
+      console.error('Failed to load itineraries:', err.message);
+    }
+  };
+
+  const handleToggleFavorite = async (itineraryId: string) => {
+    try {
+      await savedItineraryAPI.toggleFavorite(itineraryId);
+      loadItineraries(true); // Force refresh after favorite toggle
+    } catch (err: any) {
+      console.error('Failed to toggle favorite:', err.message);
+    }
+  };
+
+  const handleDeleteItinerary = async (itineraryId: string) => {
+    if (window.confirm('Are you sure you want to delete this itinerary?')) {
+      try {
+        await savedItineraryAPI.deleteItinerary(itineraryId);
+        loadItineraries(true); // Force refresh after delete
+      } catch (err: any) {
+        console.error('Failed to delete itinerary:', err.message);
+      }
+    }
+  };
+
+  const handleEditItinerary = (itineraryId: string) => {
+    console.log('Edit itinerary:', itineraryId);
+    // TODO: Navigate to edit page or open edit modal
+  };
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    // Only refresh data if switching to a tab that needs fresh data
+    if (tab === 'saved' || tab === 'overview') {
+      loadItineraries();
+    }
+  };
+
+  const handleToggleSidebar = () => {
+    setIsSidebarExpanded(!isSidebarExpanded);
+  };
+
+  const handleRefresh = async (forceRefresh?: boolean) => {
+    await loadDashboardData(forceRefresh);
+    await loadItineraries(forceRefresh);
+  };
+
+  const handleRefreshClick = () => {
+    handleRefresh(true);
+  };
+
+  const handleShareItinerary = (itineraryId: string) => {
+    console.log('Share itinerary:', itineraryId);
+    // TODO: Open share modal or copy link
+  };
 
   const handleLogout = () => {
-    logout();
-    navigate('/');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    window.location.href = '/';
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'confirmed': return 'bg-green-500/20 text-green-400 border-green-400/30';
-      case 'pending': return 'bg-yellow-500/20 text-yellow-400 border-yellow-400/30';
-      case 'cancelled': return 'bg-red-500/20 text-red-400 border-red-400/30';
-      default: return 'bg-gray-500/20 text-gray-400 border-gray-400/30';
-    }
-  };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'confirmed': return '✓';
-      case 'pending': return '⏳';
-      case 'cancelled': return '✗';
-      default: return '?';
-    }
-  };
 
-  return (
-    <div 
-      className="min-h-screen bg-white dark:bg-dark-bg"
-      style={{
-        backgroundImage: `linear-gradient(rgba(248, 250, 252, 0.9), rgba(248, 250, 252, 0.9)), url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed'
-      }}
-    >
-      {/* Header */}
-      <div className="bg-white/95 backdrop-blur-xl border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center">
-                <span className="text-white font-bold text-lg">S</span>
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <ModernButton
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/')}
-                className="border-gray-300 dark:border-gray-600"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                New Booking
-              </ModernButton>
-              
-              <ModernButton
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                className="text-gray-600 dark:text-gray-400 hover:text-red-600"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </ModernButton>
-            </div>
-          </div>
+  if (!isAuthenticated || !user) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center pt-16">
+        <div className="text-center">
+          <div className="text-blue-500 text-6xl mb-4">🔐</div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Authentication Required</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">Please log in to access your dashboard.</p>
         </div>
       </div>
+    );
+  }
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="mb-8"
-        >
-          <ModernCard variant="glass" padding="lg" className="text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Users className="w-10 h-10 text-white" />
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Welcome back, {user?.first_name || 'Traveler'}! 👋
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 text-lg">
-              Ready for your next adventure? Let's explore the world together.
-            </p>
-          </ModernCard>
-        </motion.div>
-
-        {/* Stats Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
-        >
-          {stats.map((stat, index) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 + index * 0.1 }}
-            >
-              <ModernCard variant="elevated" padding="lg" className="text-center">
-                <div className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center mx-auto mb-4`}>
-                  <stat.icon className="w-6 h-6 text-white" />
-                </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stat.value}</div>
-                <div className="text-gray-600 dark:text-gray-400 text-sm">{stat.label}</div>
-              </ModernCard>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Tabs */}
-        <div className="flex space-x-1 bg-white/50 dark:bg-gray-800/50 backdrop-blur-md rounded-xl p-1 mb-8">
-          {['overview', 'bookings', 'trips', 'settings'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                activeTab === tab
-                  ? 'bg-primary-500 text-white shadow-lg'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center pt-16">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading your dashboard...</p>
         </div>
+      </div>
+    );
+  }
 
-        {/* Content */}
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center pt-16">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Error Loading Dashboard</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
+          <button 
+            onClick={() => loadDashboardData(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!dashboardData) return null;
+
+  const { user_stats, recent_bookings, upcoming_trips, saved_itineraries, price_alerts, notifications, travel_analytics, session_analytics } = dashboardData;
+
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex pt-16">
+      {/* Sidebar */}
+      <DashboardSidebar 
+        activeTab={activeTab} 
+        onTabChange={handleTabChange}
+        onLogout={handleLogout}
+        isExpanded={isSidebarExpanded}
+        onToggleExpanded={handleToggleSidebar}
+      />
+
+      {/* Main Content */}
+      <div 
+        className={`flex-1 flex flex-col ${isSidebarExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300 ease-in-out`}
+        onClick={(e) => {
+          console.log('Main content clicked');
+        }}
+      >
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Header Bar */}
+          <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {activeTab === 'overview' ? 'Dashboard Overview' : 
+                   activeTab === 'saved' ? 'Saved Itineraries' : 
+                   activeTab === 'chats' ? 'Chats' :
+                   activeTab === 'explore' ? 'Explore' :
+                   activeTab === 'trips' ? 'Trips' :
+                   activeTab === 'updates' ? 'Updates' :
+                   activeTab === 'inspiration' ? 'Inspiration' :
+                   activeTab === 'create' ? 'Create' : 'Dashboard'}
+                </h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {activeTab === 'overview' ? 'Your travel dashboard and analytics' : 
+                   activeTab === 'saved' ? 'Manage your saved travel plans' : 
+                   activeTab === 'chats' ? 'Chat with SafarBot for travel assistance' :
+                   activeTab === 'explore' ? 'Discover new destinations and experiences' :
+                   activeTab === 'trips' ? 'View and manage your trips' :
+                   activeTab === 'updates' ? 'Stay updated with travel news and alerts' :
+                   activeTab === 'inspiration' ? 'Get inspired for your next adventure' :
+                   activeTab === 'create' ? 'Create new travel plans and itineraries' : 'Welcome to your dashboard'}
+                </p>
+              </div>
+              <button
+                onClick={handleRefreshClick}
+                disabled={isRefreshing}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-sm"
+              >
+                {isRefreshing ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                ) : (
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                )}
+                <span className="text-sm font-medium">{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
+              </button>
+            </div>
+          </div>
+          
+          {/* Main Content */}
+          <div className="p-6">
+          {/* Overview Tab */}
         {activeTab === 'overview' && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="space-y-8"
-          >
+            <div className="space-y-8">
+              {/* Stats Overview */}
+              <DashboardStats 
+                userStats={user_stats} 
+                itineraryStats={{
+                  total_itineraries: saved_itineraries.length,
+                  published_itineraries: saved_itineraries.filter(i => i.status === 'published').length,
+                  favorite_itineraries: saved_itineraries.filter(i => i.is_favorite).length,
+                  draft_itineraries: saved_itineraries.filter(i => i.status === 'draft').length,
+                  total_views: saved_itineraries.reduce((sum, i) => sum + (i.views_count || 0), 0)
+                }} 
+              />
+
+              {/* Recent Activity */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Recent Bookings */}
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Recent Bookings</h3>
-                <ModernButton
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setActiveTab('bookings')}
-                >
-                  View All
-                </ModernButton>
+                <div className="bg-white rounded-xl shadow-sm">
+                  <div className="px-6 py-4 border-b border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900">Recent Bookings</h3>
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {bookings.slice(0, 3).map((booking, index) => (
-                  <motion.div
-                    key={booking.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: index * 0.1 }}
-                  >
-                    <ModernCard variant="interactive" padding="none" hover className="overflow-hidden">
-                      <div className="relative h-48 overflow-hidden">
-                        <img
-                          src={booking.image}
-                          alt={booking.destination}
-                          className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                        
-                        {/* Status Badge */}
-                        <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-medium border backdrop-blur-md ${getStatusColor(booking.status)}`}>
-                          {getStatusIcon(booking.status)} {booking.status}
+                  <div className="p-6">
+                    {recent_bookings.length > 0 ? (
+                      <div className="space-y-4">
+                        {recent_bookings.map((booking) => (
+                          <div key={booking.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <div className="p-2 bg-blue-100 rounded-lg">
+                                <Plane className="h-5 w-5 text-blue-600" />
                         </div>
-                        
-                        {/* Type Icon */}
-                        <div className="absolute top-4 right-4 w-8 h-8 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center">
-                          {booking.type === 'flight' ? (
-                            <Plane className="w-4 h-4 text-white" />
-                          ) : (
-                            <Hotel className="w-4 h-4 text-white" />
-                          )}
+                              <div>
+                                <p className="font-medium text-gray-900">{booking.destination}</p>
+                                <p className="text-sm text-gray-600">{booking.departure_date}</p>
                         </div>
                       </div>
-                      
-                      <div className="p-6">
-                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                          {booking.destination}
-                        </h4>
-                        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-3">
-                          <div className="flex items-center">
-                            <Calendar className="w-4 h-4 mr-1" />
-                            {new Date(booking.date).toLocaleDateString()}
+                            <div className="text-right">
+                              <p className="font-medium text-gray-900">${booking.total_cost}</p>
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {booking.status}
+                              </span>
                           </div>
-                          <div className="font-semibold text-primary-600">
-                            ${booking.price}
                           </div>
+                        ))}
                         </div>
-                        
-                        <ModernButton
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={() => navigate(`/booking-details/${booking.id}`)}
-                        >
-                          View Details
-                        </ModernButton>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Plane className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-500">No recent bookings</p>
                       </div>
-                    </ModernCard>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
+                    )}
+                  </div>
+                </div>
 
-            {/* Quick Actions */}
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Quick Actions</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <ModernCard variant="interactive" padding="lg" className="text-center cursor-pointer" onClick={() => navigate('/flights')}>
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <Plane className="w-8 h-8 text-white" />
+                {/* Upcoming Trips */}
+                <div className="bg-white rounded-xl shadow-sm">
+                  <div className="px-6 py-4 border-b border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900">Upcoming Trips</h3>
                   </div>
-                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Book Flight</h4>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm">Find and book your next flight</p>
-                </ModernCard>
-                
-                <ModernCard variant="interactive" padding="lg" className="text-center cursor-pointer" onClick={() => navigate('/hotels')}>
-                  <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <Hotel className="w-8 h-8 text-white" />
+                  <div className="p-6">
+                    {upcoming_trips.length > 0 ? (
+                      <div className="space-y-4">
+                        {upcoming_trips.map((trip) => (
+                          <div key={trip.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <div className="p-2 bg-green-100 rounded-lg">
+                                <CalendarDays className="h-5 w-5 text-green-600" />
                   </div>
-                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Book Hotel</h4>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm">Find the perfect place to stay</p>
-                </ModernCard>
-                
-                <ModernCard variant="interactive" padding="lg" className="text-center cursor-pointer" onClick={() => navigate('/search')}>
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <Search className="w-8 h-8 text-white" />
-                  </div>
-                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Explore</h4>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm">Discover new destinations</p>
-                </ModernCard>
+                              <div>
+                                <p className="font-medium text-gray-900">{trip.destination}</p>
+                                <p className="text-sm text-gray-600">{trip.departure_date}</p>
               </div>
             </div>
-          </motion.div>
-        )}
-
-        {activeTab === 'bookings' && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">All Bookings</h3>
-              <div className="flex space-x-3">
-                <ModernButton variant="outline" size="sm">
-                  <Filter className="w-4 h-4 mr-2" />
-                  Filter
-                </ModernButton>
-                <ModernButton variant="outline" size="sm">
-                  <Search className="w-4 h-4 mr-2" />
-                  Search
-                </ModernButton>
+                            <div className="text-right">
+                              <p className="text-sm text-gray-600">{trip.type}</p>
               </div>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {bookings.map((booking, index) => (
-                <motion.div
-                  key={booking.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                >
-                  <ModernCard variant="interactive" padding="none" hover className="overflow-hidden">
-                    <div className="relative h-48 overflow-hidden">
-                      <img
-                        src={booking.image}
-                        alt={booking.destination}
-                        className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                      
-                      {/* Status Badge */}
-                      <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-medium border backdrop-blur-md ${getStatusColor(booking.status)}`}>
-                        {getStatusIcon(booking.status)} {booking.status}
+                        ))}
                       </div>
-                      
-                      {/* Type Icon */}
-                      <div className="absolute top-4 right-4 w-8 h-8 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center">
-                        {booking.type === 'flight' ? (
-                          <Plane className="w-4 h-4 text-white" />
                         ) : (
-                          <Hotel className="w-4 h-4 text-white" />
-                        )}
+                      <div className="text-center py-8">
+                        <CalendarDays className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-500">No upcoming trips</p>
                       </div>
-                    </div>
-                    
-                    <div className="p-6">
-                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                        {booking.destination}
-                      </h4>
-                      <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-3">
-                        <div className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {new Date(booking.date).toLocaleDateString()}
-                        </div>
-                        <div className="font-semibold text-primary-600">
-                          ${booking.price}
+                    )}
                         </div>
                       </div>
-                      
-                      <div className="flex space-x-2">
-                        <ModernButton
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => navigate(`/booking-details/${booking.id}`)}
-                        >
-                          View Details
-                        </ModernButton>
-                        <ModernButton
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Heart className="w-4 h-4" />
-                        </ModernButton>
-                      </div>
                     </div>
-                  </ModernCard>
-                </motion.div>
-              ))}
             </div>
-          </motion.div>
-        )}
+          )}
 
-        {activeTab === 'trips' && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center py-12"
-          >
-            <div className="w-24 h-24 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center mx-auto mb-6">
-              <MapPin className="w-12 h-12 text-white" />
+          {/* Saved Itineraries Tab */}
+          {activeTab === 'saved' && (
+            <div className="space-y-8">
+              {/* Itineraries Grid/List */}
+              {itineraries.length > 0 ? (
+                <div className={viewMode === 'grid' 
+                  ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
+                  : 'space-y-4'
+                }>
+                  {itineraries.map((itinerary) => (
+                    <ItineraryCard
+                      key={itinerary.id}
+                      itinerary={itinerary}
+                      onToggleFavorite={handleToggleFavorite}
+                      onEdit={handleEditItinerary}
+                      onDelete={handleDeleteItinerary}
+                      onShare={handleShareItinerary}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <MapPin className="h-16 w-16 text-gray-400 mx-auto mb-6" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No itineraries yet</h3>
+                  <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                    Start planning your next adventure by creating your first itinerary. 
+                    Our AI will help you build the perfect travel plan.
+                  </p>
+                  <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                    Create Your First Itinerary
+                  </button>
+                </div>
+              )}
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">No Active Trips</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              You don't have any active trips at the moment. Start planning your next adventure!
-            </p>
-            <ModernButton
-              variant="gradient"
-              size="lg"
-              onClick={() => navigate('/')}
-            >
-              Plan Your Trip
-            </ModernButton>
-          </motion.div>
-        )}
+          )}
 
-        {activeTab === 'settings' && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center py-12"
-          >
-            <div className="w-24 h-24 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Settings className="w-12 h-12 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Settings</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Account settings and preferences will be available here soon.
-            </p>
-            <ModernButton
-              variant="outline"
-              size="lg"
-              disabled
-            >
-              Coming Soon
-            </ModernButton>
-          </motion.div>
-        )}
+          {/* Other Tabs - Actual Page Content */}
+          {activeTab === 'chats' && <ChatsPage />}
+          {activeTab === 'explore' && <ExplorePage />}
+          {activeTab === 'trips' && <TripsPage />}
+          {activeTab === 'updates' && <UpdatesPage />}
+          {activeTab === 'inspiration' && <InspirationPage />}
+          {activeTab === 'create' && <CreatePage />}
+          </div>
+        </div>
+        
+        {/* Footer - Adjusted for sidebar */}
+        <div className={`${isSidebarExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300 ease-in-out`}>
+          <Footer disableCentering={true} />
+        </div>
       </div>
     </div>
   );

@@ -9,15 +9,15 @@ import FlightBookingPage from './pages/FlightBookingPage';
 import HotelBookingPage from './pages/HotelBookingPage';
 import BookingOptionsPage from './pages/BookingOptionsPage';
 import BookingConfirmationPage from './pages/BookingConfirmationPage';
-import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import UserDashboard from './pages/UserDashboard';
+import ProfilePage from './pages/ProfilePage';
+import SettingsPage from './pages/SettingsPage';
 import SearchPage from './pages/SearchPage';
 import DatePickerDemo from './pages/DatePickerDemo';
 import ResultsPage from './pages/ResultsPage';
 import TripPlannerPage from './pages/TripPlannerPage';
 import ItineraryPage from './pages/ItineraryPage';
+import PackagesPage from './pages/PackagesPage';
 
 
 // Component to conditionally render ModernHeader
@@ -28,6 +28,18 @@ const ConditionalHeader: React.FC = () => {
   const hideHeader = location.pathname === '/results' || location.pathname === '/itinerary';
   
   return hideHeader ? null : <ModernHeader />;
+};
+
+// Component to conditionally render Footer
+const ConditionalFooter: React.FC = () => {
+  const location = useLocation();
+  
+  // Don't render Footer on dashboard page (it has its own footer)
+  if (location.pathname === '/dashboard') {
+    return null;
+  }
+  
+  return <Footer />;
 };
 
 function App() {
@@ -43,20 +55,20 @@ function App() {
                   <Route path="/" element={<HomePage />} />
                   <Route path="/flights" element={<FlightBookingPage />} />
                   <Route path="/hotels" element={<HotelBookingPage />} />
-                                  <Route path="/dashboard" element={<UserDashboard />} />
-                <Route path="/search" element={<SearchPage />} />
-                <Route path="/datepicker-demo" element={<DatePickerDemo />} />
-                <Route path="/booking-options/:bookingToken" element={<BookingOptionsPage />} />
+                  <Route path="/packages" element={<PackagesPage />} />
+                  <Route path="/dashboard" element={<UserDashboard />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/search" element={<SearchPage />} />
+                  <Route path="/datepicker-demo" element={<DatePickerDemo />} />
+                  <Route path="/booking-options/:bookingToken" element={<BookingOptionsPage />} />
                   <Route path="/booking-confirmation" element={<BookingConfirmationPage />} />
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/signup" element={<SignupPage />} />
-                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                   <Route path="/results" element={<ResultsPage />} />
                   <Route path="/itinerary" element={<ItineraryPage />} />
                   <Route path="/trip-planner" element={<TripPlannerPage />} />
                 </Routes>
               </main>
-              <Footer />
+              <ConditionalFooter />
             </div>
           </Router>
         </AuthProvider>

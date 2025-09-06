@@ -1130,4 +1130,625 @@ export const weatherAPI = {
   },
 };
 
+// Dashboard API
+export const dashboardAPI = {
+  getDashboardData: async (): Promise<{
+    user_stats: {
+      total_bookings: number;
+      total_spent: number;
+      confirmed_bookings: number;
+      pending_bookings: number;
+      cancelled_bookings: number;
+      flight_bookings: number;
+      hotel_bookings: number;
+      upcoming_trips: number;
+      loyalty_points: number;
+      loyalty_tier: string;
+    };
+    recent_bookings: Array<{
+      id: string;
+      booking_id: string;
+      type: string;
+      status: string;
+      total_amount: number;
+      currency: string;
+      travel_date: string;
+      return_date?: string;
+      passengers: number;
+      destination: string;
+      created_at: string;
+    }>;
+    upcoming_trips: Array<{
+      id: string;
+      booking_id: string;
+      type: string;
+      status: string;
+      total_amount: number;
+      currency: string;
+      travel_date: string;
+      return_date?: string;
+      passengers: number;
+      destination: string;
+      days_until: number;
+    }>;
+    saved_itineraries: Array<{
+      id: string;
+      itinerary_id: string;
+      title: string;
+      destination: string;
+      start_date?: string;
+      end_date?: string;
+      total_days: number;
+      budget_estimate: number;
+      currency: string;
+      is_public: boolean;
+      tags: string[];
+      created_at?: string;
+      updated_at?: string;
+    }>;
+    price_alerts: Array<{
+      id: string;
+      alert_id: string;
+      type: string;
+      destination: string;
+      target_price: number;
+      current_price: number;
+      currency: string;
+      departure_date?: string;
+      return_date?: string;
+      created_at?: string;
+      last_checked?: string;
+    }>;
+    notifications: Array<{
+      id: string;
+      notification_id: string;
+      type: string;
+      status: string;
+      title: string;
+      message: string;
+      data: Record<string, any>;
+      is_read: boolean;
+      created_at?: string;
+      read_at?: string;
+      action_url?: string;
+    }>;
+    travel_analytics: {
+      monthly_trends: Array<Record<string, any>>;
+      top_destinations: Array<Record<string, any>>;
+      total_countries: number;
+      average_booking_value: number;
+    };
+    session_analytics: {
+      total_sessions: number;
+      active_sessions: number;
+      device_types: string[];
+      last_activity?: string;
+    };
+    last_updated: string;
+  }> => {
+    try {
+      const response = await api.get('/dashboard/');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to load dashboard data');
+    }
+  },
+
+  getStats: async (): Promise<{
+    total_bookings: number;
+    total_spent: number;
+    confirmed_bookings: number;
+    pending_bookings: number;
+    cancelled_bookings: number;
+    flight_bookings: number;
+    hotel_bookings: number;
+    upcoming_trips: number;
+    loyalty_points: number;
+    loyalty_tier: string;
+  }> => {
+    try {
+      const response = await api.get('/dashboard/stats');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to load user stats');
+    }
+  },
+
+  getRecentBookings: async (limit: number = 10): Promise<Array<{
+    id: string;
+    booking_id: string;
+    type: string;
+    status: string;
+    total_amount: number;
+    currency: string;
+    travel_date: string;
+    return_date?: string;
+    passengers: number;
+    destination: string;
+    created_at: string;
+  }>> => {
+    try {
+      const response = await api.get(`/dashboard/bookings?limit=${limit}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to load recent bookings');
+    }
+  },
+
+  getUpcomingTrips: async (limit: number = 5): Promise<Array<{
+    id: string;
+    booking_id: string;
+    type: string;
+    status: string;
+    total_amount: number;
+    currency: string;
+    travel_date: string;
+    return_date?: string;
+    passengers: number;
+    destination: string;
+    days_until: number;
+  }>> => {
+    try {
+      const response = await api.get(`/dashboard/trips?limit=${limit}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to load upcoming trips');
+    }
+  },
+
+  getSavedItineraries: async (limit: number = 10): Promise<Array<{
+    id: string;
+    itinerary_id: string;
+    title: string;
+    destination: string;
+    start_date?: string;
+    end_date?: string;
+    total_days: number;
+    budget_estimate: number;
+    currency: string;
+    is_public: boolean;
+    tags: string[];
+    created_at?: string;
+    updated_at?: string;
+  }>> => {
+    try {
+      const response = await api.get(`/saved-itinerary/?limit=${limit}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to load saved itineraries');
+    }
+  },
+
+  getPriceAlerts: async (): Promise<Array<{
+    id: string;
+    alert_id: string;
+    type: string;
+    destination: string;
+    target_price: number;
+    current_price: number;
+    currency: string;
+    departure_date?: string;
+    return_date?: string;
+    created_at?: string;
+    last_checked?: string;
+  }>> => {
+    try {
+      const response = await api.get('/dashboard/price-alerts');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to load price alerts');
+    }
+  },
+
+  getNotifications: async (limit: number = 20): Promise<Array<{
+    id: string;
+    notification_id: string;
+    type: string;
+    status: string;
+    title: string;
+    message: string;
+    data: Record<string, any>;
+    is_read: boolean;
+    created_at?: string;
+    read_at?: string;
+    action_url?: string;
+  }>> => {
+    try {
+      const response = await api.get(`/dashboard/notifications?limit=${limit}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to load notifications');
+    }
+  },
+
+  getTravelAnalytics: async (): Promise<{
+    monthly_trends: Array<Record<string, any>>;
+    top_destinations: Array<Record<string, any>>;
+    total_countries: number;
+    average_booking_value: number;
+  }> => {
+    try {
+      const response = await api.get('/dashboard/analytics');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to load travel analytics');
+    }
+  },
+
+  getSessionAnalytics: async (): Promise<{
+    total_sessions: number;
+    active_sessions: number;
+    device_types: string[];
+    last_activity?: string;
+  }> => {
+    try {
+      const response = await api.get('/dashboard/sessions');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to load session analytics');
+    }
+  },
+
+  getPreferences: async (): Promise<{
+    id: string;
+    notification_preferences: Record<string, any>;
+    travel_preferences: Record<string, any>;
+    privacy_settings: Record<string, any>;
+    theme_preference: string;
+    language: string;
+    region: string;
+    updated_at?: string;
+  }> => {
+    try {
+      const response = await api.get('/dashboard/preferences');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to load user preferences');
+    }
+  },
+
+  updatePreferences: async (preferences: {
+    notification_preferences?: Record<string, any>;
+    travel_preferences?: Record<string, any>;
+    privacy_settings?: Record<string, any>;
+    theme_preference?: string;
+    language?: string;
+    region?: string;
+  }): Promise<{ message: string }> => {
+    try {
+      const response = await api.put('/dashboard/preferences', preferences);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to update preferences');
+    }
+  },
+
+  getActiveSessions: async (): Promise<Array<{
+    id: string;
+    session_id: string;
+    device_type: string;
+    device_name: string;
+    ip_address: string;
+    location?: Record<string, any>;
+    last_activity: string;
+    is_remember_me: boolean;
+    created_at: string;
+  }>> => {
+    try {
+      const response = await api.get('/dashboard/sessions');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to load active sessions');
+    }
+  },
+
+  revokeSession: async (sessionId: string): Promise<{ message: string }> => {
+    try {
+      const response = await api.delete(`/dashboard/sessions/${sessionId}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to revoke session');
+    }
+  },
+
+  revokeAllSessions: async (): Promise<{ message: string; revoked_count: number }> => {
+    try {
+      const response = await api.delete('/dashboard/sessions');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to revoke sessions');
+    }
+  }
+};
+
+// Saved Itinerary API
+export const savedItineraryAPI = {
+  // Get all user itineraries
+  getItineraries: async (params?: {
+    limit?: number;
+    skip?: number;
+    status?: 'draft' | 'published' | 'archived';
+    is_favorite?: boolean;
+  }): Promise<Array<{
+    id: string;
+    title: string;
+    description?: string;
+    destination: string;
+    country: string;
+    city: string;
+    duration_days: number;
+    budget?: number;
+    travel_style: string[];
+    interests: string[];
+    total_estimated_cost?: number;
+    is_favorite: boolean;
+    tags: string[];
+    cover_image?: string;
+    status: string;
+    views_count: number;
+    likes_count: number;
+    shares_count: number;
+    created_at: string;
+    updated_at: string;
+  }>> => {
+    try {
+      const response = await api.get('/saved-itinerary/', { params });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to load itineraries');
+    }
+  },
+
+  // Get specific itinerary
+  getItinerary: async (itineraryId: string): Promise<{
+    id: string;
+    title: string;
+    description?: string;
+    destination: string;
+    country: string;
+    city: string;
+    duration_days: number;
+    budget?: number;
+    travel_style: string[];
+    interests: string[];
+    total_estimated_cost?: number;
+    is_favorite: boolean;
+    tags: string[];
+    cover_image?: string;
+    status: string;
+    views_count: number;
+    likes_count: number;
+    shares_count: number;
+    created_at: string;
+    updated_at: string;
+    days: Array<{
+      day_number: number;
+      date?: string;
+      activities: Array<{
+        name: string;
+        time: string;
+        location: string;
+        description: string;
+        cost: number;
+      }>;
+      accommodations?: {
+        name: string;
+        type: string;
+        cost_per_night: number;
+      };
+      transportation?: Record<string, any>;
+      meals: Array<{
+        name: string;
+        time: string;
+        location: string;
+        description: string;
+        cost: number;
+      }>;
+      notes?: string;
+      estimated_cost?: number;
+    }>;
+    is_public: boolean;
+  }> => {
+    try {
+      const response = await api.get(`/saved-itinerary/${itineraryId}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to load itinerary');
+    }
+  },
+
+  // Create new itinerary
+  createItinerary: async (itineraryData: {
+    title: string;
+    description?: string;
+    destination: string;
+    country: string;
+    city: string;
+    duration_days: number;
+    start_date?: string;
+    end_date?: string;
+    budget?: number;
+    travel_style: string[];
+    interests: string[];
+    days: Array<{
+      day_number: number;
+      date?: string;
+      activities: Array<{
+        name: string;
+        time: string;
+        location: string;
+        description: string;
+        cost: number;
+      }>;
+      accommodations?: {
+        name: string;
+        type: string;
+        cost_per_night: number;
+      };
+      transportation?: Record<string, any>;
+      meals: Array<{
+        name: string;
+        time: string;
+        location: string;
+        description: string;
+        cost: number;
+      }>;
+      notes?: string;
+      estimated_cost?: number;
+    }>;
+  }): Promise<{
+    id: string;
+    title: string;
+    description?: string;
+    destination: string;
+    country: string;
+    city: string;
+    duration_days: number;
+    budget?: number;
+    travel_style: string[];
+    interests: string[];
+    total_estimated_cost?: number;
+    is_favorite: boolean;
+    tags: string[];
+    cover_image?: string;
+    status: string;
+    views_count: number;
+    likes_count: number;
+    shares_count: number;
+    created_at: string;
+    updated_at: string;
+    days: Array<any>;
+    is_public: boolean;
+  }> => {
+    try {
+      const response = await api.post('/itineraries/', itineraryData);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to create itinerary');
+    }
+  },
+
+  // Update itinerary
+  updateItinerary: async (itineraryId: string, updateData: {
+    title?: string;
+    description?: string;
+    destination?: string;
+    country?: string;
+    city?: string;
+    duration_days?: number;
+    start_date?: string;
+    end_date?: string;
+    budget?: number;
+    travel_style?: string[];
+    interests?: string[];
+    days?: Array<any>;
+    is_public?: boolean;
+    tags?: string[];
+    cover_image?: string;
+    status?: string;
+  }): Promise<{
+    id: string;
+    title: string;
+    description?: string;
+    destination: string;
+    country: string;
+    city: string;
+    duration_days: number;
+    budget?: number;
+    travel_style: string[];
+    interests: string[];
+    total_estimated_cost?: number;
+    is_favorite: boolean;
+    tags: string[];
+    cover_image?: string;
+    status: string;
+    views_count: number;
+    likes_count: number;
+    shares_count: number;
+    created_at: string;
+    updated_at: string;
+    days: Array<any>;
+    is_public: boolean;
+  }> => {
+    try {
+      const response = await api.put(`/itineraries/${itineraryId}`, updateData);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to update itinerary');
+    }
+  },
+
+  // Delete itinerary
+  deleteItinerary: async (itineraryId: string): Promise<{ message: string }> => {
+    try {
+      const response = await api.delete(`/itineraries/${itineraryId}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to delete itinerary');
+    }
+  },
+
+  // Toggle favorite
+  toggleFavorite: async (itineraryId: string): Promise<{ message: string }> => {
+    try {
+      const response = await api.post(`/itineraries/${itineraryId}/favorite`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to toggle favorite');
+    }
+  },
+
+  // Discover public itineraries
+  discoverItineraries: async (params?: {
+    limit?: number;
+    skip?: number;
+    destination?: string;
+    travel_style?: string;
+  }): Promise<Array<{
+    id: string;
+    title: string;
+    description?: string;
+    destination: string;
+    country: string;
+    city: string;
+    duration_days: number;
+    budget?: number;
+    travel_style: string[];
+    interests: string[];
+    total_estimated_cost?: number;
+    is_favorite: boolean;
+    tags: string[];
+    cover_image?: string;
+    status: string;
+    views_count: number;
+    likes_count: number;
+    shares_count: number;
+    created_at: string;
+    updated_at: string;
+  }>> => {
+    try {
+      const response = await api.get('/saved-itinerary/public/discover', { params });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to discover itineraries');
+    }
+  },
+
+  // Get itinerary stats
+  getItineraryStats: async (): Promise<{
+    total_itineraries: number;
+    published_itineraries: number;
+    favorite_itineraries: number;
+    draft_itineraries: number;
+    total_views: number;
+  }> => {
+    try {
+      const response = await api.get('/saved-itinerary/stats/summary');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to load itinerary stats');
+    }
+  }
+};
+
 export default api; 

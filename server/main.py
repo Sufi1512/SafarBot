@@ -7,10 +7,11 @@ from dotenv import load_dotenv
 load_dotenv('.env')
 
 # Import routers
-from routers import flights, chat, itinerary, auth
+from routers import flights, chat, itinerary, auth, dashboard
+from routers.saved_itinerary import router as saved_itinerary
 from routers.weather import router as weather_router
 from routers.ip_tracking import router as ip_tracking_router
-from middleware.ip_examples import router as ip_examples_router
+from middleware.example_usage import router as ip_examples_router
 from config import settings
 from database import Database
 
@@ -118,6 +119,8 @@ async def shutdown_db_client():
 
 # Include routers
 app.include_router(auth, prefix="/api/v1/auth", tags=["authentication"])
+app.include_router(dashboard, prefix="/api/v1/dashboard", tags=["dashboard"])
+app.include_router(saved_itinerary, prefix="/api/v1/saved-itinerary", tags=["saved-itineraries"])
 app.include_router(flights, prefix="/api/v1", tags=["flights"])
 app.include_router(chat, prefix="/api/v1", tags=["chat"])
 app.include_router(itinerary, prefix="/api/v1", tags=["itinerary"])

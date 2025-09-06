@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Hotel, 
-  Calendar, 
   Users, 
   MapPin, 
   Search, 
@@ -24,12 +23,16 @@ import {
   Sparkles,
   TrendingUp,
   Award,
-  Clock
+  Clock,
+  CheckCircle,
+  ChevronDown,
+  Calendar,
+  CalendarDays
 } from 'lucide-react';
 import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
 import ModernButton from '../components/ui/ModernButton';
 import ModernCard from '../components/ui/ModernCard';
+import CustomDatePicker from '../components/ui/CustomDatePicker';
 
 interface HotelRoom {
   id: string;
@@ -61,8 +64,8 @@ const HotelBookingPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchForm, setSearchForm] = useState({
     destination: '',
-    checkIn: '',
-    checkOut: '',
+    checkIn: undefined as Date | undefined,
+    checkOut: undefined as Date | undefined,
     guests: 2,
     rooms: 1
   });
@@ -77,6 +80,27 @@ const HotelBookingPage: React.FC = () => {
     minRating: 0,
     amenities: [] as string[]
   });
+  const [showGuestsDropdown, setShowGuestsDropdown] = useState(false);
+  const [showRoomsDropdown, setShowRoomsDropdown] = useState(false);
+  const guestsDropdownRef = useRef<HTMLDivElement>(null);
+  const roomsDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (guestsDropdownRef.current && !guestsDropdownRef.current.contains(event.target as Node)) {
+        setShowGuestsDropdown(false);
+      }
+      if (roomsDropdownRef.current && !roomsDropdownRef.current.contains(event.target as Node)) {
+        setShowRoomsDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const popularDestinations = [
     { name: 'New York', image: '🏙️', country: 'USA' },
@@ -89,7 +113,7 @@ const HotelBookingPage: React.FC = () => {
 
   const hotelCategories = [
     { name: 'Luxury', icon: Sparkles, count: 45, color: 'from-yellow-400 to-orange-500' },
-    { name: 'Business', icon: TrendingUp, count: 32, color: 'from-blue-400 to-blue-600' },
+    { name: 'Business', icon: TrendingUp, count: 32, color: 'from-gray-400 to-gray-600' },
     { name: 'Boutique', icon: Award, count: 28, color: 'from-purple-400 to-pink-500' },
     { name: 'Budget', icon: Clock, count: 67, color: 'from-green-400 to-green-600' }
   ];
@@ -207,6 +231,25 @@ const HotelBookingPage: React.FC = () => {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation
+    if (!searchForm.destination.trim()) {
+      alert('Please enter a destination');
+      return;
+    }
+    if (!searchForm.checkIn) {
+      alert('Please select check-in date');
+      return;
+    }
+    if (!searchForm.checkOut) {
+      alert('Please select check-out date');
+      return;
+    }
+    if (searchForm.checkOut <= searchForm.checkIn) {
+      alert('Check-out date must be after check-in date');
+      return;
+    }
+    
     setIsSearching(true);
     
     // Simulate API call
@@ -242,9 +285,7 @@ const HotelBookingPage: React.FC = () => {
 
   const calculateNights = () => {
     if (searchForm.checkIn && searchForm.checkOut) {
-      const checkIn = new Date(searchForm.checkIn);
-      const checkOut = new Date(searchForm.checkOut);
-      return Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+      return Math.ceil((searchForm.checkOut.getTime() - searchForm.checkIn.getTime()) / (1000 * 60 * 60 * 24));
     }
     return 0;
   };
@@ -253,7 +294,7 @@ const HotelBookingPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-dark-bg">
       {/* Hero Section */}
       <div className="relative h-[70vh] overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-accent/90 to-primary-600/90 z-10"></div>
+        <div className="absolute inset-0 bg-black/40 z-10"></div>
         <video
           autoPlay
           muted
@@ -271,7 +312,7 @@ const HotelBookingPage: React.FC = () => {
             className="text-center text-white max-w-4xl mx-auto px-4"
           >
             <div className="flex items-center justify-center space-x-3 mb-6">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+              <div className="w-16 h-16 bg-white/30 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/40">
                 <Hotel className="w-8 h-8 text-white" />
               </div>
               <h1 className="text-5xl font-bold">
@@ -283,7 +324,7 @@ const HotelBookingPage: React.FC = () => {
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               {hotelCategories.map((category) => (
-                <div key={category.name} className="flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
+                <div key={category.name} className="flex items-center space-x-2 bg-white/30 backdrop-blur-md rounded-full px-4 py-2 border border-white/40">
                   <category.icon className="w-4 h-4" />
                   <span className="text-sm font-medium">{category.name}</span>
                   <span className="text-xs opacity-75">({category.count})</span>
@@ -294,7 +335,7 @@ const HotelBookingPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 relative z-30">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-[66px] relative z-30">
         {/* Enhanced Search Form */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -302,107 +343,197 @@ const HotelBookingPage: React.FC = () => {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="mb-12"
         >
-          <ModernCard className="p-8 shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
-            <form onSubmit={handleSearch} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          <ModernCard className="p-8 shadow-2xl border-0 bg-white dark:bg-gray-800 backdrop-blur-md border border-white/20 dark:border-gray-700/50 overflow-visible">
+            <form onSubmit={handleSearch} className="space-y-6 overflow-visible">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 overflow-visible">
                 {/* Destination */}
-                <div className="lg:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                <div className="relative">
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     <MapPin className="w-4 h-4 inline mr-2 text-accent" />
                     Destination
                   </label>
+                  <div className="relative">
                   <input
                     type="text"
                     value={searchForm.destination}
                     onChange={(e) => setSearchForm(prev => ({ ...prev, destination: e.target.value }))}
                     placeholder="Where are you going?"
-                    className="w-full px-4 py-4 border-2 border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-accent bg-white dark:bg-dark-card text-gray-900 dark:text-white transition-all duration-200"
+                      className="w-full px-4 py-3 pl-10 border-2 border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-accent bg-white dark:bg-dark-card text-gray-900 dark:text-white transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-500 text-sm"
                     required
                   />
+                    <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  </div>
                 </div>
 
                 {/* Check-in */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                <div className="relative">
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     <Calendar className="w-4 h-4 inline mr-2 text-accent" />
                     Check-in
                   </label>
-                  <input
-                    type="date"
+                  <CustomDatePicker
                     value={searchForm.checkIn}
-                    onChange={(e) => setSearchForm(prev => ({ ...prev, checkIn: e.target.value }))}
-                    className="w-full px-4 py-4 border-2 border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-accent bg-white dark:bg-dark-card text-gray-900 dark:text-white transition-all duration-200"
-                    required
+                    onChange={(date) => setSearchForm(prev => ({ ...prev, checkIn: date }))}
+                    placeholder="Select check-in date"
+                    minDate={new Date()}
+                    maxDate={searchForm.checkOut ? new Date(searchForm.checkOut.getTime() - 24 * 60 * 60 * 1000) : undefined}
                   />
                 </div>
 
                 {/* Check-out */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                    <Calendar className="w-4 h-4 inline mr-2 text-accent" />
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    <CalendarDays className="w-4 h-4 inline mr-2 text-accent" />
                     Check-out
                   </label>
-                  <input
-                    type="date"
+                  <CustomDatePicker
                     value={searchForm.checkOut}
-                    onChange={(e) => setSearchForm(prev => ({ ...prev, checkOut: e.target.value }))}
-                    className="w-full px-4 py-4 border-2 border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-accent bg-white dark:bg-dark-card text-gray-900 dark:text-white transition-all duration-200"
-                    required
+                    onChange={(date) => setSearchForm(prev => ({ ...prev, checkOut: date }))}
+                    placeholder="Select check-out date"
+                    minDate={searchForm.checkIn ? new Date(searchForm.checkIn.getTime() + 24 * 60 * 60 * 1000) : new Date()}
                   />
                 </div>
 
                 {/* Guests & Rooms */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                  <div className="relative">
+                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       <Users className="w-4 h-4 inline mr-2 text-accent" />
                       Guests
                     </label>
-                    <select
-                      value={searchForm.guests}
-                      onChange={(e) => setSearchForm(prev => ({ ...prev, guests: parseInt(e.target.value) }))}
-                      className="w-full px-4 py-4 border-2 border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-accent bg-white dark:bg-dark-card text-gray-900 dark:text-white transition-all duration-200"
-                    >
-                      {[1, 2, 3, 4, 5, 6].map(num => (
-                        <option key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</option>
-                      ))}
-                    </select>
+                    <div className="relative" ref={guestsDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => setShowGuestsDropdown(!showGuestsDropdown)}
+                        className="w-full px-4 py-3 pr-10 border-2 border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-accent bg-white dark:bg-dark-card text-gray-900 dark:text-white transition-all duration-300 hover:border-accent/50 dark:hover:border-accent/50 focus:outline-none text-left flex items-center justify-between group text-sm"
+                      >
+                        <span className="font-medium">
+                          {searchForm.guests} {searchForm.guests === 1 ? 'Guest' : 'Guests'}
+                        </span>
+                      </button>
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                        <div className="w-6 h-6 bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-700 dark:to-gray-600 rounded-lg flex items-center justify-center group-hover:from-accent/20 group-hover:to-accent/10 transition-all duration-300">
+                          <ChevronDown className={`w-3 h-3 text-gray-500 group-hover:text-accent transition-all duration-300 ${showGuestsDropdown ? 'rotate-180' : ''}`} />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Custom Dropdown */}
+                    <AnimatePresence>
+                      {showGuestsDropdown && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
+                          className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-2xl shadow-2xl z-[9999] overflow-hidden backdrop-blur-md max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent"
+                        >
+                          {[1, 2, 3, 4].map((num, index) => (
+                            <motion.button
+                              key={num}
+                              type="button"
+                              onClick={() => {
+                                setSearchForm(prev => ({ ...prev, guests: num }));
+                                setShowGuestsDropdown(false);
+                              }}
+                              className={`w-full px-4 py-2 text-left transition-all duration-200 hover:bg-accent/10 ${
+                                searchForm.guests === num 
+                                  ? 'bg-gradient-to-r from-accent to-accent/80 text-white' 
+                                  : 'text-gray-900 dark:text-white hover:text-accent'
+                              } ${index === 0 ? 'rounded-t-2xl' : ''} ${index === 3 ? 'rounded-b-2xl' : ''}`}
+                              whileHover={{ scale: 1.02, x: 4 }}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium text-sm">{num} {num === 1 ? 'Guest' : 'Guests'}</span>
+                                {searchForm.guests === num && (
+                                  <CheckCircle className="w-4 h-4 text-white" />
+                                )}
+                              </div>
+                            </motion.button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                  <div className="relative">
+                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       <Hotel className="w-4 h-4 inline mr-2 text-accent" />
                       Rooms
                     </label>
-                    <select
-                      value={searchForm.rooms}
-                      onChange={(e) => setSearchForm(prev => ({ ...prev, rooms: parseInt(e.target.value) }))}
-                      className="w-full px-4 py-4 border-2 border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-accent bg-white dark:bg-dark-card text-gray-900 dark:text-white transition-all duration-200"
-                    >
-                      {[1, 2, 3, 4].map(num => (
-                        <option key={num} value={num}>{num} {num === 1 ? 'Room' : 'Rooms'}</option>
-                      ))}
-                    </select>
+                    <div className="relative" ref={roomsDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => setShowRoomsDropdown(!showRoomsDropdown)}
+                        className="w-full px-4 py-3 pr-10 border-2 border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-accent bg-white dark:bg-dark-card text-gray-900 dark:text-white transition-all duration-300 hover:border-accent/50 dark:hover:border-accent/50 focus:outline-none text-left flex items-center justify-between group text-sm"
+                      >
+                        <span className="font-medium">
+                          {searchForm.rooms} {searchForm.rooms === 1 ? 'Room' : 'Rooms'}
+                        </span>
+                      </button>
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                        <div className="w-6 h-6 bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-700 dark:to-gray-600 rounded-lg flex items-center justify-center group-hover:from-accent/20 group-hover:to-accent/10 transition-all duration-300">
+                          <ChevronDown className={`w-3 h-3 text-gray-500 group-hover:text-accent transition-all duration-300 ${showRoomsDropdown ? 'rotate-180' : ''}`} />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Custom Dropdown */}
+                    <AnimatePresence>
+                      {showRoomsDropdown && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
+                          className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-2xl shadow-2xl z-[9999] overflow-hidden backdrop-blur-md max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent"
+                        >
+                          {[1, 2, 3, 4].map((num, index) => (
+                            <motion.button
+                              key={num}
+                              type="button"
+                              onClick={() => {
+                                setSearchForm(prev => ({ ...prev, rooms: num }));
+                                setShowRoomsDropdown(false);
+                              }}
+                              className={`w-full px-4 py-2 text-left transition-all duration-200 hover:bg-accent/10 ${
+                                searchForm.rooms === num 
+                                  ? 'bg-gradient-to-r from-accent to-accent/80 text-white' 
+                                  : 'text-gray-900 dark:text-white hover:text-accent'
+                              } ${index === 0 ? 'rounded-t-2xl' : ''} ${index === 3 ? 'rounded-b-2xl' : ''}`}
+                              whileHover={{ scale: 1.02, x: 4 }}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium text-sm">{num} {num === 1 ? 'Room' : 'Rooms'}</span>
+                                {searchForm.rooms === num && (
+                                  <CheckCircle className="w-4 h-4 text-white" />
+                                )}
+                              </div>
+                            </motion.button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-4">
-                <div className="flex items-center space-x-4">
-                  {calculateNights() > 0 && (
-                    <div className="flex items-center space-x-2 bg-accent/10 px-4 py-2 rounded-full">
-                      <Clock className="w-4 h-4 text-accent" />
-                      <span className="text-sm font-medium text-accent">
-                        {calculateNights()} night{calculateNights() > 1 ? 's' : ''}
-                      </span>
-                    </div>
-                  )}
-                </div>
+              <div className="flex flex-col items-center space-y-4 pt-4">
+                {calculateNights() > 0 && (
+                  <div className="flex items-center space-x-2 bg-accent/10 px-4 py-2 rounded-full">
+                    <Clock className="w-4 h-4 text-accent" />
+                    <span className="text-sm font-medium text-accent">
+                      {calculateNights()} night{calculateNights() > 1 ? 's' : ''}
+                    </span>
+                  </div>
+                )}
                 <ModernButton
                   type="submit"
                   loading={isSearching}
                   icon={Search}
                   size="lg"
-                  className="px-8 py-4"
+                  className="px-12 py-4 min-w-[200px]"
                 >
                   {isSearching ? 'Searching...' : 'Search Hotels'}
                 </ModernButton>
@@ -455,7 +586,7 @@ const HotelBookingPage: React.FC = () => {
                       </span>
                     </div>
                     <div className="absolute bottom-4 right-4">
-                      <button className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors">
+                      <button className="p-2 bg-white/30 backdrop-blur-md rounded-full hover:bg-white/40 transition-colors border border-white/40 shadow-sm">
                         <Heart className="w-5 h-5 text-white" />
                       </button>
                     </div>
@@ -694,16 +825,16 @@ const HotelBookingPage: React.FC = () => {
                     }`}>
                       {/* Hotel Image */}
                       <div className="relative h-56 overflow-hidden">
-                        <div className="h-full bg-gradient-to-br from-accent to-primary-600 flex items-center justify-center">
-                          <Hotel className="w-20 h-20 text-white opacity-60" />
+                        <div className="h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                          <Hotel className="w-20 h-20 text-gray-500" />
                         </div>
                         <div className="absolute top-4 left-4">
-                          <span className="bg-white/90 backdrop-blur-sm text-gray-900 px-3 py-1 rounded-full text-sm font-medium">
+                          <span className="bg-white/95 backdrop-blur-md text-gray-900 px-3 py-1 rounded-full text-sm font-medium border border-white/60 shadow-sm">
                             {hotel.rating} ⭐
                           </span>
                         </div>
                         <div className="absolute top-4 right-4">
-                          <button className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors">
+                          <button className="p-2 bg-white/30 backdrop-blur-md rounded-full hover:bg-white/40 transition-colors border border-white/40 shadow-sm">
                             <Heart className="w-5 h-5 text-white" />
                           </button>
                         </div>
@@ -797,8 +928,8 @@ const HotelBookingPage: React.FC = () => {
                     }`}>
                       <div className="flex gap-6">
                         {/* Hotel Image */}
-                        <div className="w-48 h-32 bg-gradient-to-br from-accent to-primary-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                          <Hotel className="w-12 h-12 text-white opacity-60" />
+                        <div className="w-48 h-32 bg-gray-200 dark:bg-gray-700 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <Hotel className="w-12 h-12 text-gray-500" />
                         </div>
                         
                         {/* Hotel Info */}
@@ -863,7 +994,7 @@ const HotelBookingPage: React.FC = () => {
 
         {/* Hotel Details Modal */}
         {selectedHotel && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}

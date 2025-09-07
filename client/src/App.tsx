@@ -28,6 +28,7 @@ import PublicItineraryPage from './pages/PublicItineraryPage';
 import ItineraryRedirectPage from './pages/ItineraryRedirectPage';
 import SavedItineraryViewPage from './pages/SavedItineraryViewPage';
 import LoginPage from './pages/LoginPage';
+import CollaborationAcceptPage from './pages/CollaborationAcceptPage';
 import OTPTestPage from './pages/OTPTestPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ServerErrorPage from './pages/ServerErrorPage';
@@ -139,6 +140,7 @@ function App() {
                   } />
                   <Route path="/public/itinerary/:shareToken" element={<PublicItineraryPage />} />
                   <Route path="/login" element={<LoginPage />} />
+                  <Route path="/collaboration/accept/:invitationToken" element={<CollaborationAcceptPage />} />
                   <Route path="/otp-test" element={<OTPTestPage />} />
                   
                   {/* Error Pages */}

@@ -327,6 +327,14 @@ class NotificationType(str, Enum):
     BOOKING_REMINDER = "booking_reminder"
     SYSTEM_UPDATE = "system_update"
     PROMOTIONAL = "promotional"
+    # Collaboration notifications
+    INVITATION_RECEIVED = "invitation_received"
+    INVITATION_ACCEPTED = "invitation_accepted"
+    INVITATION_DECLINED = "invitation_declined"
+    COLLABORATOR_ADDED = "collaborator_added"
+    COLLABORATOR_REMOVED = "collaborator_removed"
+    ITINERARY_UPDATED = "itinerary_updated"
+    ITINERARY_SHARED = "itinerary_shared"
 
 class NotificationStatus(str, Enum):
     UNREAD = "unread"
@@ -452,6 +460,57 @@ class SavedItineraryDocument(MongoBaseModel):
     likes_count: int = 0
     shares_count: int = 0
     share_token: Optional[str] = None
+    # Collaborative features
+    is_collaborative: bool = False
+    collaborators: List[PyObjectId] = Field(default_factory=list)  # User IDs of collaborators
+    owner_id: PyObjectId  # Original creator/owner
+
+# Collaborative Itinerary Models
+class InvitationStatus(str, Enum):
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    DECLINED = "declined"
+    EXPIRED = "expired"
+    CANCELLED = "cancelled"
+
+class CollaboratorRole(str, Enum):
+    VIEWER = "viewer"  # Can only view
+    EDITOR = "editor"  # Can edit content
+    ADMIN = "admin"    # Can edit and manage collaborators
+
+class ItineraryInvitationDocument(MongoBaseModel):
+    invitation_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    itinerary_id: PyObjectId
+    owner_id: PyObjectId  # User who sent the invitation
+    invited_email: EmailStr
+    invited_user_id: Optional[PyObjectId] = None  # Set when user accepts
+    role: CollaboratorRole = CollaboratorRole.EDITOR
+    status: InvitationStatus = InvitationStatus.PENDING
+    invitation_token: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    expires_at: datetime
+    message: Optional[str] = None  # Optional message from owner
+    accepted_at: Optional[datetime] = None
+    declined_at: Optional[datetime] = None
+
+class ItineraryCollaboratorDocument(MongoBaseModel):
+    itinerary_id: PyObjectId
+    user_id: PyObjectId
+    role: CollaboratorRole
+    invited_by: PyObjectId  # User who invited them
+    joined_at: datetime = Field(default_factory=datetime.utcnow)
+    last_activity: Optional[datetime] = None
+    permissions: Dict[str, bool] = Field(default_factory=dict)  # Custom permissions
+    collaborator_itinerary_id: Optional[PyObjectId] = None  # ID of collaborator's copy of the itinerary
+
+# Enhanced Notification Types for Collaboration
+class CollaborationNotificationType(str, Enum):
+    INVITATION_RECEIVED = "invitation_received"
+    INVITATION_ACCEPTED = "invitation_accepted"
+    INVITATION_DECLINED = "invitation_declined"
+    COLLABORATOR_ADDED = "collaborator_added"
+    COLLABORATOR_REMOVED = "collaborator_removed"
+    ITINERARY_UPDATED = "itinerary_updated"
+    ITINERARY_SHARED = "itinerary_shared"
 
 # Enhanced User Model with additional fields
 class EnhancedUser(User):

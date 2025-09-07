@@ -19,6 +19,14 @@ class Settings(BaseSettings):
     # Brevo API for email OTP
     brevo_api_key: Optional[str] = None
     
+    # Email Configuration
+    smtp_server: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_username: Optional[str] = None
+    smtp_password: Optional[str] = None
+    from_email: str = "noreply@safarbot.com"
+    app_url: str = "http://localhost:3000"
+    
     # LangSmith Configuration
     langsmith_api_key: Optional[str] = None
     langsmith_project: str = "safarbot"

@@ -11,11 +11,51 @@ import logging
 
 from services.saved_itinerary_service import SavedItineraryService
 from routers.auth import get_current_user
-from mongo_models import User
+from mongo_models import User, PyObjectId
+from database import get_database
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+async def check_itinerary_access(itinerary_id: str, user_id: str, db) -> Dict[str, Any]:
+    """Check if user has access to itinerary and return access info"""
+    itinerary = await db.saved_itineraries.find_one({
+        "_id": PyObjectId(itinerary_id)
+    })
+    
+    if not itinerary:
+        raise HTTPException(status_code=404, detail="Itinerary not found")
+    
+    # Check if user is owner
+    if str(itinerary["user_id"]) == user_id:
+        return {
+            "has_access": True,
+            "is_owner": True,
+            "is_collaborator": False,
+            "role": "owner"
+        }
+    
+    # Check if user is collaborator
+    collaborator = await db.itinerary_collaborators.find_one({
+        "itinerary_id": PyObjectId(itinerary_id),
+        "user_id": PyObjectId(user_id)
+    })
+    
+    if collaborator:
+        return {
+            "has_access": True,
+            "is_owner": False,
+            "is_collaborator": True,
+            "role": collaborator["role"]
+        }
+    
+    return {
+        "has_access": False,
+        "is_owner": False,
+        "is_collaborator": False,
+        "role": None
+    }
 
 # Pydantic models for request/response
 class ItineraryDayRequest(BaseModel):
@@ -157,10 +197,21 @@ async def get_user_itineraries(
 @router.get("/{itinerary_id}", response_model=ItineraryDetail)
 async def get_itinerary(
     itinerary_id: str,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db = Depends(get_database)
 ):
-    """Get a specific itinerary by ID"""
+    """Get a specific itinerary by ID (supports collaborative access)"""
     try:
+        # Check access permissions
+        access_info = await check_itinerary_access(itinerary_id, str(current_user.id), db)
+        
+        if not access_info["has_access"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied"
+            )
+        
+        # Get itinerary (service will handle the rest)
         itinerary = await SavedItineraryService.get_itinerary_by_id(
             itinerary_id=itinerary_id,
             user_id=str(current_user.id)
@@ -171,6 +222,9 @@ async def get_itinerary(
                 status_code=404,
                 detail="Itinerary not found"
             )
+        
+        # Add access info to response
+        itinerary["access_info"] = access_info
         
         return ItineraryDetail(**itinerary)
         

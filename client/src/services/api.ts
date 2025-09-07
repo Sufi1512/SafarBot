@@ -1850,4 +1850,54 @@ export const savedItineraryAPI = {
   }
 };
 
+// Collaboration API
+export const collaborationAPI = {
+  // Invite a collaborator to an itinerary
+  inviteCollaborator: async (data: {
+    itinerary_id: string;
+    email: string;
+    role: 'viewer' | 'editor' | 'admin';
+    message?: string;
+  }): Promise<any> => {
+    const response = await api.post('/collaboration/invite', data);
+    return response.data;
+  },
+
+  // Get user's pending invitations
+  getInvitations: async (): Promise<any> => {
+    const response = await api.get('/collaboration/invitations');
+    return response.data;
+  },
+
+  // Accept an invitation
+  acceptInvitation: async (invitationToken: string): Promise<any> => {
+    const response = await api.post(`/collaboration/invitation/${invitationToken}/accept`);
+    return response.data;
+  },
+
+  // Decline an invitation
+  declineInvitation: async (invitationToken: string): Promise<any> => {
+    const response = await api.post(`/collaboration/invitation/${invitationToken}/decline`);
+    return response.data;
+  },
+
+  // Get collaborators for an itinerary
+  getCollaborators: async (itineraryId: string): Promise<any> => {
+    const response = await api.get(`/collaboration/itinerary/${itineraryId}/collaborators`);
+    return response.data;
+  },
+
+  // Remove a collaborator
+  removeCollaborator: async (itineraryId: string, userId: string): Promise<any> => {
+    const response = await api.delete(`/collaboration/itinerary/${itineraryId}/collaborator/${userId}`);
+    return response.data;
+  },
+
+  // Get user's collaborations
+  getMyCollaborations: async (): Promise<any> => {
+    const response = await api.get('/collaboration/my-collaborations');
+    return response.data;
+  }
+};
+
 export default api; 

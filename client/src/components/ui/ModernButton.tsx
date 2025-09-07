@@ -5,7 +5,7 @@ import { cn } from '../../utils/cn';
 
 interface ModernButtonProps extends MotionProps {
   children: React.ReactNode;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'gradient' | 'glass';
+  variant?: 'solid' | 'bordered' | 'secondary' | 'ghost' | 'glass';
   size?: 'sm' | 'md' | 'lg' | 'xl';
   icon?: LucideIcon;
   iconPosition?: 'left' | 'right';
@@ -19,7 +19,7 @@ interface ModernButtonProps extends MotionProps {
 
 const ModernButton: React.FC<ModernButtonProps> = ({
   children,
-  variant = 'primary',
+  variant = 'solid',
   size = 'md',
   icon: Icon,
   iconPosition = 'left',
@@ -44,11 +44,10 @@ const ModernButton: React.FC<ModernButtonProps> = ({
       'w-full': fullWidth,
       
       // Variant styles
-      'bg-primary-500 hover:bg-primary-600 text-white shadow-medium hover:shadow-large focus:ring-primary-500': variant === 'primary',
+      'bg-primary-500 hover:bg-primary-600 text-white shadow-sm hover:shadow-md focus:ring-primary-500 border-0': variant === 'solid',
+      'bg-transparent border-2 border-primary-500 text-primary-500 hover:bg-primary-500 hover:text-white focus:ring-primary-500': variant === 'bordered',
       'bg-secondary-100 hover:bg-secondary-200 text-secondary-800 dark:bg-secondary-800 dark:hover:bg-secondary-700 dark:text-white shadow-soft hover:shadow-medium focus:ring-secondary-300': variant === 'secondary',
-      'border-2 border-primary-500 text-primary-500 hover:bg-primary-500 hover:text-white focus:ring-primary-500': variant === 'outline',
       'text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 focus:ring-primary-500': variant === 'ghost',
-      'bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white shadow-glow focus:ring-primary-500': variant === 'gradient',
       'backdrop-blur-md bg-white/20 dark:bg-dark-card/20 border border-white/30 dark:border-secondary-700/30 text-white hover:bg-white/30 dark:hover:bg-dark-card/30 focus:ring-primary-500': variant === 'glass',
     },
     className

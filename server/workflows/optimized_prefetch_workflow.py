@@ -239,14 +239,15 @@ AVAILABLE PLACES (with place IDs):
 INSTRUCTIONS:
 1. Use ONLY the place_id values from the available places above
 2. Create a realistic day-by-day itinerary
-3. Consider travel time between locations
-4. Mix different types of places (attractions, restaurants, cafes)
-5. Respect the budget constraints
-6. Include accommodation suggestions from available hotels
-7. Consider weather conditions when planning activities
-8. Provide EXACTLY 10-12 travel tips (not fewer)
-9. Include 2-3 activities per day minimum
-10. Include 2-3 meals per day minimum
+3. Day 1 MUST start with hotel check-in/arrival as the FIRST activity
+4. Consider travel time between locations
+5. Mix different types of places (attractions, restaurants, cafes)
+6. Respect the budget constraints
+7. Include accommodation suggestions from available hotels
+8. Consider weather conditions when planning activities
+9. Provide EXACTLY 10-12 travel tips (not fewer)
+10. Include 2-3 activities per day minimum (after check-in on Day 1)
+11. Include 2-3 meals per day minimum
 
 RESPONSE FORMAT: Return ONLY valid JSON with this structure:
 {{
@@ -266,10 +267,18 @@ RESPONSE FORMAT: Return ONLY valid JSON with this structure:
     {{
       "day": 1,
       "date": "{start_date}",
-      "theme": "Arrival & Exploration",
+      "theme": "Arrival & Hotel Check-in",
       "activities": [
         {{
-          "time": "09:00",
+          "time": "12:00",
+          "place_id": "hotels_001",
+          "title": "Hotel Check-in & Arrival",
+          "duration": "1 hour",
+          "estimated_cost": "$0",
+          "type": "accommodation"
+        }},
+        {{
+          "time": "14:00",
           "place_id": "attractions_001",
           "title": "Activity Name",
           "duration": "2 hours",
@@ -279,7 +288,7 @@ RESPONSE FORMAT: Return ONLY valid JSON with this structure:
       ],
       "meals": [
         {{
-          "time": "12:30",
+          "time": "13:00",
           "meal_type": "lunch",
           "place_id": "restaurants_001",
           "name": "Restaurant Name",
@@ -288,6 +297,13 @@ RESPONSE FORMAT: Return ONLY valid JSON with this structure:
         }}
       ],
       "transportation": [
+        {{
+          "from": "Airport",
+          "to": "Hotel",
+          "method": "taxi",
+          "duration": "30 minutes",
+          "cost": "$25"
+        }},
         {{
           "from": "Hotel",
           "to": "First attraction",

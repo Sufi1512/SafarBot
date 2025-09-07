@@ -206,7 +206,7 @@ const SearchPage: React.FC = () => {
             </div>
             
             <ModernButton
-              variant="outline"
+              variant="bordered"
               size="sm"
               onClick={() => navigate('/')}
               className="border-gray-300 dark:border-gray-600"
@@ -346,7 +346,7 @@ const SearchPage: React.FC = () => {
                   onClick={handleSearch}
                   loading={isLoading}
                   icon={Search}
-                  variant="gradient"
+                  variant="solid"
                   size="lg"
                   className="w-full"
                 >
@@ -455,7 +455,7 @@ const SearchPage: React.FC = () => {
                     {/* Action Buttons */}
                     <div className="flex space-x-2 mt-auto">
                       <ModernButton
-                        variant="outline"
+                        variant="bordered"
                         size="sm"
                         className="flex-1"
                         onClick={() => navigate(`/booking/${result.type}/${result.id}`)}
@@ -493,7 +493,7 @@ const SearchPage: React.FC = () => {
               Try adjusting your search criteria or browse our popular destinations.
             </p>
             <ModernButton
-              variant="gradient"
+              variant="solid"
               size="lg"
               onClick={() => navigate('/')}
             >

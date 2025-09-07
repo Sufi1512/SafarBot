@@ -308,7 +308,7 @@ const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
                     onClick={handleVerify}
                     loading={isVerifying}
                     icon={isVerifying ? Loader2 : CheckCircle}
-                    className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+                    className="w-full disabled:opacity-50 disabled:cursor-not-allowed mb-4"
                     size="lg"
                     disabled={!isOtpComplete || isVerifying || isMaxAttemptsReached}
                   >

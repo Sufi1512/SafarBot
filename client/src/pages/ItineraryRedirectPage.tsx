@@ -108,7 +108,7 @@ const ItineraryRedirectPage: React.FC = () => {
           
           <ModernButton
             onClick={handleGoToDashboard}
-            variant="outline"
+            variant="bordered"
             className="px-6 py-3"
           >
             <ExternalLink className="w-4 h-4 mr-2" />

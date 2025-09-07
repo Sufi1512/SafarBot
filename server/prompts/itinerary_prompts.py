@@ -9,14 +9,15 @@ ITINERARY_GENERATION_CHAT_PROMPT = ChatPromptTemplate.from_messages([
 CRITICAL REQUIREMENTS - MUST FOLLOW EXACTLY:
 1. Return ONLY valid JSON - no text or markdown
 2. Generate EXACTLY {total_days} daily plans (Day 1, Day 2, etc.)
-3. Include 2-3 activities per day minimum
-4. Include 2-3 meals per day minimum  
-5. Include transportation between all locations
-6. Provide EXACTLY 10-12 travel tips (NOT 2, NOT 5, EXACTLY 10-12)
-7. Use unique place_ids for all locations
-8. Include realistic costs in USD
-9. Consider weather: {weather_info}
-10. Respect dietary preferences: {dietary_preferences}
+3. Day 1 MUST start with hotel check-in/arrival as the FIRST activity
+4. Include 2-3 activities per day minimum (after check-in on Day 1)
+5. Include 2-3 meals per day minimum  
+6. Include transportation between all locations
+7. Provide EXACTLY 10-12 travel tips (NOT 2, NOT 5, EXACTLY 10-12)
+8. Use unique place_ids for all locations
+9. Include realistic costs in USD
+10. Consider weather: {weather_info}
+11. Respect dietary preferences: {dietary_preferences}
 
 FAILURE TO PROVIDE 10-12 TRAVEL TIPS WILL RESULT IN INVALID RESPONSE
 
@@ -56,10 +57,18 @@ Return this JSON structure:
         {
             "day": 1,
             "date": "{start_date}",
-            "theme": "Arrival & Exploration",
+            "theme": "Arrival & Hotel Check-in",
             "activities": [
                 {
-                    "time": "09:00",
+                    "time": "12:00",
+                    "place_id": "{destination}_hotel_001",
+                    "title": "Hotel Check-in & Arrival",
+                    "duration": "1 hour",
+                    "estimated_cost": "$0",
+                    "type": "accommodation"
+                },
+                {
+                    "time": "14:00",
                     "place_id": "{destination}_attraction_001",
                     "title": "Cultural Site Visit",
                     "duration": "2 hours",
@@ -67,7 +76,7 @@ Return this JSON structure:
                     "type": "sightseeing"
                 },
                 {
-                    "time": "14:00",
+                    "time": "16:00",
                     "place_id": "{destination}_attraction_002",
                     "title": "Museum Visit",
                     "duration": "2 hours",
@@ -77,7 +86,7 @@ Return this JSON structure:
             ],
             "meals": [
                 {
-                    "time": "12:00",
+                    "time": "13:00",
                     "meal_type": "lunch",
                     "place_id": "{destination}_restaurant_001",
                     "name": "Local Restaurant",
@@ -94,6 +103,13 @@ Return this JSON structure:
                 }
             ],
             "transportation": [
+                {
+                    "from": "Airport",
+                    "to": "Hotel",
+                    "method": "taxi",
+                    "duration": "30 minutes",
+                    "cost": "$25"
+                },
                 {
                     "from": "Hotel",
                     "to": "Cultural Site",

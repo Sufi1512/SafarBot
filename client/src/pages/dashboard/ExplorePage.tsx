@@ -164,33 +164,33 @@ const ExplorePage: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Search and Filters */}
-      <div className="space-y-4">
-        {/* Search Bar */}
+    <div className="space-y-8">
+      {/* Enhanced Search and Filters */}
+      <div className="space-y-6">
+        {/* Enhanced Search Bar */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-6 w-6" />
           <input
             type="text"
             placeholder="Search destinations, countries, or experiences..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+            className="w-full pl-12 pr-4 py-4 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 shadow-sm text-lg"
           />
         </div>
 
-        {/* Filters and Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          {/* Filter Tabs */}
-          <div className="flex flex-wrap gap-2">
+        {/* Enhanced Filters and Controls */}
+        <div className="flex flex-wrap items-center justify-between gap-6">
+          {/* Enhanced Filter Tabs */}
+          <div className="flex flex-wrap gap-3">
             {filters.map((filter) => (
               <button
                 key={filter.id}
                 onClick={() => setSelectedFilter(filter.id)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
                   selectedFilter === filter.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg transform scale-105'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 hover:shadow-md'
                 }`}
               >
                 {filter.label}
@@ -198,13 +198,13 @@ const ExplorePage: React.FC = () => {
             ))}
           </div>
 
-          {/* View Controls */}
+          {/* Enhanced View Controls */}
           <div className="flex items-center space-x-4">
-            {/* Sort Dropdown */}
+            {/* Enhanced Sort Dropdown */}
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm font-medium"
             >
               {sortOptions.map((option) => (
                 <option key={option.id} value={option.id}>
@@ -213,40 +213,45 @@ const ExplorePage: React.FC = () => {
               ))}
             </select>
 
-            {/* View Mode Toggle */}
-            <div className="flex border border-gray-300 dark:border-gray-600 rounded-lg">
+            {/* Enhanced View Mode Toggle */}
+            <div className="flex border border-gray-300 dark:border-gray-600 rounded-xl overflow-hidden shadow-sm">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-500 dark:text-gray-400'}`}
+                className={`p-3 transition-all duration-200 ${viewMode === 'grid' ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
               >
-                <Grid className="h-4 w-4" />
+                <Grid className="h-5 w-5" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-500 dark:text-gray-400'}`}
+                className={`p-3 transition-all duration-200 ${viewMode === 'list' ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
               >
-                <List className="h-4 w-4" />
+                <List className="h-5 w-5" />
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Results Count */}
-      <div className="text-sm text-gray-600 dark:text-gray-400">
-        Showing {filteredDestinations.length} destinations
+      {/* Enhanced Results Count */}
+      <div className="flex items-center justify-between">
+        <div className="text-lg font-semibold text-gray-900 dark:text-white">
+          Showing {filteredDestinations.length} destinations
+        </div>
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          Discover your next adventure
+        </div>
       </div>
 
-      {/* Destinations Grid/List */}
+      {/* Enhanced Destinations Grid/List */}
       <div className={
         viewMode === 'grid' 
-          ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
-          : 'space-y-4'
+          ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8'
+          : 'space-y-6'
       }>
         {filteredDestinations.map((destination) => (
           <div
             key={destination.id}
-            className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow ${
+            className={`bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 ${
               viewMode === 'list' ? 'flex' : ''
             }`}
           >

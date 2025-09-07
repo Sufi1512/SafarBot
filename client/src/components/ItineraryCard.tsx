@@ -36,6 +36,7 @@ interface ItineraryCardProps {
   onShare: (id: string) => void;
   onView?: (id: string) => void;
   viewMode?: 'grid' | 'list';
+  editingItineraryId?: string | null;
 }
 
 const ItineraryCard: React.FC<ItineraryCardProps> = ({
@@ -44,7 +45,8 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
   onEdit,
   onDelete,
   onShare,
-  onView
+  onView,
+  editingItineraryId
 }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -206,10 +208,19 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
             )}
             <button
               onClick={() => onEdit(itinerary.id)}
-              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              title="Edit itinerary"
+              disabled={editingItineraryId === itinerary.id}
+              className={`p-2 rounded-lg transition-colors ${
+                editingItineraryId === itinerary.id
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'
+              }`}
+              title={editingItineraryId === itinerary.id ? "Loading..." : "Edit itinerary"}
             >
-              <Edit3 className="h-4 w-4" />
+              {editingItineraryId === itinerary.id ? (
+                <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Edit3 className="h-4 w-4" />
+              )}
             </button>
             <button
               onClick={() => onShare(itinerary.id)}

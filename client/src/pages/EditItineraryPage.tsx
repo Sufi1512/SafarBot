@@ -41,7 +41,7 @@ const EditItineraryPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
-  const [itineraryData, setItineraryData] = useState<EnhancedItineraryResponse | null>(null);
+  const [itineraryData, setItineraryData] = useState<EnhancedItineraryResponse | any>(null);
   const [daySchedules, setDaySchedules] = useState<DaySchedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,14 +54,37 @@ const EditItineraryPage: React.FC = () => {
   const [showAddPlaceModal, setShowAddPlaceModal] = useState(false);
   const [selectedEventToReplace, setSelectedEventToReplace] = useState<TimelineEvent | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [editMode, setEditMode] = useState<'building' | 'saved'>('building');
+  const [originalItineraryId, setOriginalItineraryId] = useState<string | null>(null);
 
   useEffect(() => {
     const state = location.state as { 
-      itineraryData?: EnhancedItineraryResponse;
+      itineraryData?: EnhancedItineraryResponse | any;
       daySchedules?: DaySchedule[];
+      isEditing?: boolean;
     };
+    
     if (state?.itineraryData) {
       setItineraryData(state.itineraryData);
+      
+      // Detect edit mode based on data structure and isEditing flag
+      const isSavedItinerary = state.itineraryData && state.itineraryData.id && state.itineraryData.days;
+      const isBuildingPhase = state.itineraryData && state.itineraryData.itinerary && state.itineraryData.itinerary.daily_plans;
+      
+      if (state.isEditing || isSavedItinerary) {
+        setEditMode('saved');
+        setOriginalItineraryId(state.itineraryData.id);
+        console.log('Edit mode: Saved itinerary edit', { id: state.itineraryData.id });
+      } else if (isBuildingPhase) {
+        setEditMode('building');
+        setOriginalItineraryId(null);
+        console.log('Edit mode: Building phase edit');
+      } else {
+        setEditMode('building');
+        setOriginalItineraryId(null);
+        console.log('Edit mode: Default to building phase');
+      }
+      
       if (state.daySchedules) {
         setDaySchedules(state.daySchedules);
       } else {
@@ -84,8 +107,43 @@ const EditItineraryPage: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const processItineraryData = (data: EnhancedItineraryResponse) => {
-    const schedules: DaySchedule[] = data.itinerary.daily_plans.map((plan) => {
+  const processItineraryData = (data: EnhancedItineraryResponse | any) => {
+    // Add null checks to prevent undefined access
+    console.log('Processing itinerary data:', data);
+    
+    // Check if it's EnhancedItineraryResponse structure
+    const isEnhancedResponse = data && data.itinerary && data.itinerary.daily_plans;
+    // Check if it's SavedItinerary structure
+    const isSavedItinerary = data && data.days && Array.isArray(data.days);
+    
+    if (!isEnhancedResponse && !isSavedItinerary) {
+      console.error('Invalid itinerary data structure:', data);
+      console.error('Data structure breakdown:', {
+        hasData: !!data,
+        hasItinerary: !!(data && data.itinerary),
+        hasDailyPlans: !!(data && data.itinerary && data.itinerary.daily_plans),
+        hasDays: !!(data && data.days),
+        dataKeys: data ? Object.keys(data) : 'no data',
+        itineraryKeys: data && data.itinerary ? Object.keys(data.itinerary) : 'no itinerary'
+      });
+      
+      const errorMessage = data 
+        ? `Invalid itinerary data structure. Expected either:
+          - EnhancedItineraryResponse with data.itinerary.daily_plans
+          - SavedItinerary with data.days array
+          Received keys: ${Object.keys(data).join(', ')}`
+        : 'No itinerary data provided';
+      
+      setError(errorMessage);
+      return;
+    }
+
+    // Handle both data structures
+    const dailyPlans = isEnhancedResponse ? data.itinerary.daily_plans : data.days;
+    const itineraryData = isEnhancedResponse ? data.itinerary : data;
+    const placeDetails = isEnhancedResponse ? data.place_details : {};
+
+    const schedules: DaySchedule[] = dailyPlans.map((plan: any) => {
       const events: TimelineEvent[] = [];
 
       // Add check-in for first day
@@ -95,80 +153,86 @@ const EditItineraryPage: React.FC = () => {
           type: 'checkin',
           title: 'Hotel Check-in',
           description: 'Arrive at your accommodation',
-          location: data.itinerary.accommodation_suggestions[0]?.location || 'Hotel',
+          location: itineraryData.accommodation_suggestions?.[0]?.location || 'Hotel',
           cost: '0',
-          placeId: data.itinerary.accommodation_suggestions[0]?.place_id
+          placeId: itineraryData.accommodation_suggestions?.[0]?.place_id
         });
       }
 
       // Add check-out for last day
-      if (plan.day === data.itinerary.total_days) {
+      if (plan.day === itineraryData.total_days || plan.day === itineraryData.duration_days) {
         events.push({
           time: '09:00',
           type: 'checkout',
           title: 'Hotel Check-out',
           description: 'Depart from your accommodation',
-          location: data.itinerary.accommodation_suggestions[0]?.location || 'Hotel',
+          location: itineraryData.accommodation_suggestions?.[0]?.location || 'Hotel',
           cost: '0',
-          placeId: data.itinerary.accommodation_suggestions[0]?.place_id
+          placeId: itineraryData.accommodation_suggestions?.[0]?.place_id
         });
       }
 
       // Add activities
-      plan.activities.forEach((activity) => {
-        const placeDetails = data.place_details[activity.place_id];
+      plan.activities?.forEach((activity: any) => {
+        const activityPlaceDetails = placeDetails?.[activity.place_id];
         events.push({
           time: activity.time,
           type: 'activity',
           title: activity.title,
-          description: placeDetails?.description || activity.title,
-          location: placeDetails?.address || activity.title,
+          description: activityPlaceDetails?.description || activity.title,
+          location: activityPlaceDetails?.address || activity.title,
           duration: activity.duration,
           cost: activity.estimated_cost,
           placeId: activity.place_id,
-          rating: placeDetails?.rating,
-          photo: placeDetails?.photos_link,
-          website: placeDetails?.website,
-          phone: placeDetails?.phone,
-          openingHours: placeDetails?.operating_hours ? JSON.stringify(placeDetails.operating_hours) : undefined,
-          reviews: placeDetails?.reviews,
-          types: placeDetails?.types
+          rating: activityPlaceDetails?.rating,
+          photo: activityPlaceDetails?.photos_link,
+          website: activityPlaceDetails?.website,
+          phone: activityPlaceDetails?.phone,
+          openingHours: activityPlaceDetails?.operating_hours ? JSON.stringify(activityPlaceDetails.operating_hours) : undefined,
+          reviews: activityPlaceDetails?.reviews,
+          types: activityPlaceDetails?.types
         });
       });
 
       // Add meals
-      plan.meals.forEach((meal) => {
-        const placeDetails = data.place_details[meal.place_id];
+      plan.meals?.forEach((meal: any) => {
+        const mealPlaceDetails = placeDetails?.[meal.place_id];
         events.push({
           time: meal.time,
           type: 'meal',
           title: meal.name,
-          description: placeDetails?.description || `Great ${meal.cuisine} cuisine`,
-          location: placeDetails?.address || meal.name,
+          description: mealPlaceDetails?.description || `Great ${meal.cuisine} cuisine`,
+          location: mealPlaceDetails?.address || meal.name,
           cuisine: meal.cuisine,
           priceRange: meal.price_range,
           placeId: meal.place_id,
-          rating: placeDetails?.rating,
-          photo: placeDetails?.photos_link,
-          website: placeDetails?.website,
-          phone: placeDetails?.phone,
-          openingHours: placeDetails?.operating_hours ? JSON.stringify(placeDetails.operating_hours) : undefined,
-          reviews: placeDetails?.reviews,
-          types: placeDetails?.types
+          rating: mealPlaceDetails?.rating,
+          photo: mealPlaceDetails?.photos_link,
+          website: mealPlaceDetails?.website,
+          phone: mealPlaceDetails?.phone,
+          openingHours: mealPlaceDetails?.operating_hours ? JSON.stringify(mealPlaceDetails.operating_hours) : undefined,
+          reviews: mealPlaceDetails?.reviews,
+          types: mealPlaceDetails?.types
         });
       });
 
-      // Add transportation
-      plan.transportation.forEach((transport) => {
-        events.push({
-          time: transport.from === 'Hotel' ? 'Before next activity' : 'After previous activity',
-          type: 'transport',
-          title: `${transport.method} to ${transport.to}`,
-          description: `Travel from ${transport.from} to ${transport.to}`,
-          duration: transport.duration,
-          cost: transport.cost
+      // Add transportation - handle both array and object formats
+      if (plan.transportation) {
+        const transportationArray = Array.isArray(plan.transportation) 
+          ? plan.transportation 
+          : [plan.transportation];
+        
+        transportationArray.forEach((transport: any) => {
+          events.push({
+            time: transport.from === 'Hotel' ? 'Before next activity' : 'After previous activity',
+            type: 'transport',
+            title: `${transport.method || transport.type} to ${transport.to}`,
+            description: `Travel from ${transport.from} to ${transport.to}`,
+            duration: transport.duration,
+            cost: transport.cost
+          });
         });
-      });
+      }
 
       // Sort events by time
       events.sort((a, b) => {
@@ -309,8 +373,8 @@ const EditItineraryPage: React.FC = () => {
     setIsSaving(true);
     try {
       console.log('Saving edited itinerary:', { itineraryData, daySchedules });
-      console.log('Budget estimate type:', typeof itineraryData.itinerary.budget_estimate);
-      console.log('Budget estimate value:', itineraryData.itinerary.budget_estimate);
+      console.log('Budget estimate type:', typeof (itineraryData.itinerary?.budget_estimate || itineraryData.budget));
+      console.log('Budget estimate value:', itineraryData.itinerary?.budget_estimate || itineraryData.budget);
       
       // Helper function to safely parse cost values
       const parseCost = (value: any): number => {
@@ -324,15 +388,15 @@ const EditItineraryPage: React.FC = () => {
       
       // Convert edited itinerary data to the format expected by the API
       const saveData = {
-        title: `${itineraryData.itinerary.destination} Trip (Edited)`,
-        description: `AI-generated itinerary for ${itineraryData.itinerary.destination} - Customized`,
-        destination: itineraryData.itinerary.destination || 'Unknown Destination',
-        country: itineraryData.itinerary.destination || 'Unknown Country',
-        city: itineraryData.itinerary.destination || 'Unknown City',
-        duration_days: parseInt(String(itineraryData.itinerary.total_days)) || 1,
+        title: `${itineraryData.itinerary?.destination || itineraryData.destination} Trip (Edited)`,
+        description: `AI-generated itinerary for ${itineraryData.itinerary?.destination || itineraryData.destination} - Customized`,
+        destination: itineraryData.itinerary?.destination || itineraryData.destination || 'Unknown Destination',
+        country: itineraryData.itinerary?.destination || itineraryData.destination || 'Unknown Country',
+        city: itineraryData.itinerary?.destination || itineraryData.destination || 'Unknown City',
+        duration_days: parseInt(String(itineraryData.itinerary?.total_days || itineraryData.duration_days)) || 1,
         start_date: daySchedules[0]?.date || undefined,
         end_date: daySchedules[daySchedules.length - 1]?.date || undefined,
-        budget: parseCost(itineraryData.itinerary.budget_estimate),
+        budget: parseCost(itineraryData.itinerary?.budget_estimate || itineraryData.budget),
         travel_style: ['leisure'],
         interests: [],
         days: daySchedules.length > 0 ? daySchedules.map((daySchedule) => {
@@ -341,7 +405,7 @@ const EditItineraryPage: React.FC = () => {
           
           return {
             day_number: parseInt(String(daySchedule.day)) || 1,
-            date: daySchedule.date,
+            date: null, // Backend expects None/null, not a string date
             activities: daySchedule.events
               .filter(event => event.type === 'activity')
               .map(event => ({
@@ -361,17 +425,19 @@ const EditItineraryPage: React.FC = () => {
                 cost: 50.0 // Default meal cost
               })),
             transportation: transportEvents.length > 0 ? {
-              method: transportEvents[0].title || 'Transport',
+              // Backend expects a single dict, not an array
+              primary_method: transportEvents[0].title || 'Transport',
               from: 'Previous location',
               to: 'Next location',
               duration: transportEvents[0].duration || '30 minutes',
-              cost: parseCost(transportEvents[0].cost)
-            } : undefined,
+              cost: parseCost(transportEvents[0].cost),
+              all_transportation: transportEvents // Keep all transportation data in a nested field
+            } : null,
             accommodations: accommodationEvents.length > 0 ? {
               name: accommodationEvents[0].title,
               type: 'hotel',
               cost_per_night: parseCost(accommodationEvents[0].cost)
-            } : undefined,
+            } : null,
             estimated_cost: parseFloat(daySchedule.events.reduce((sum, event) => 
               sum + parseCost(event.cost), 0
             ).toFixed(2))
@@ -391,9 +457,17 @@ const EditItineraryPage: React.FC = () => {
         throw new Error('No days data available to save');
       }
       
-      // Call the actual API
-      const savedItinerary = await savedItineraryAPI.createItinerary(saveData);
-      console.log('Edited itinerary saved successfully:', savedItinerary);
+      // Call the appropriate API based on edit mode
+      let savedItinerary;
+      if (editMode === 'saved' && originalItineraryId) {
+        // Update existing saved itinerary
+        savedItinerary = await savedItineraryAPI.updateItinerary(originalItineraryId, saveData as any);
+        console.log('Saved itinerary updated successfully:', savedItinerary);
+      } else {
+        // Create new saved itinerary
+        savedItinerary = await savedItineraryAPI.createItinerary(saveData as any);
+        console.log('New itinerary saved successfully:', savedItinerary);
+      }
       
       setShowSaveConfirmation(true);
       setTimeout(() => {
@@ -458,22 +532,41 @@ const EditItineraryPage: React.FC = () => {
                 <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300 group-hover:text-gray-800 dark:group-hover:text-white" />
               </button>
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ${
+                  editMode === 'saved' 
+                    ? 'bg-gradient-to-r from-blue-500 to-blue-600' 
+                    : 'bg-gradient-to-r from-green-500 to-green-600'
+                }`}>
                   <Edit3 className="w-7 h-7 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    Edit {itineraryData.itinerary.destination} Itinerary
-                  </h1>
+                  <div className="flex items-center space-x-2 mb-1">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {editMode === 'saved' ? 'Edit' : 'Customize'} {itineraryData.itinerary?.destination || itineraryData.destination} Itinerary
+                    </h1>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      editMode === 'saved' 
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' 
+                        : 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                    }`}>
+                      {editMode === 'saved' ? 'Saved' : 'Building'}
+                    </span>
+                  </div>
                   <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
                     <span className="flex items-center space-x-1">
                       <Calendar className="w-4 h-4" />
-                      <span>{itineraryData.itinerary.total_days} days</span>
+                      <span>{itineraryData.itinerary?.total_days || itineraryData.duration_days} days</span>
                     </span>
                     <span className="flex items-center space-x-1">
                       <Star className="w-4 h-4" />
-                      <span>Customize your trip</span>
+                      <span>{editMode === 'saved' ? 'Modify your saved trip' : 'Customize your trip'}</span>
                     </span>
+                    {editMode === 'saved' && (
+                      <span className="flex items-center space-x-1">
+                        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                        <span>Saved</span>
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -483,8 +576,12 @@ const EditItineraryPage: React.FC = () => {
             <div className="flex items-center space-x-3">
               <ModernButton
                 onClick={handleSaveItinerary}
-                variant="primary"
-                className="flex items-center space-x-2 px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                variant="solid"
+                className={`flex items-center space-x-2 px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200 ${
+                  editMode === 'saved'
+                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
+                    : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
+                }`}
                 disabled={isSaving}
               >
                 {isSaving ? (
@@ -492,17 +589,41 @@ const EditItineraryPage: React.FC = () => {
                 ) : (
                   <Save className="w-4 h-4" />
                 )}
-                <span className="font-medium">{isSaving ? 'Saving...' : 'Save Changes'}</span>
+                <span className="font-medium">
+                  {isSaving 
+                    ? (editMode === 'saved' ? 'Updating...' : 'Saving...') 
+                    : (editMode === 'saved' ? 'Update Itinerary' : 'Save Itinerary')
+                  }
+                </span>
               </ModernButton>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Status Indicator */}
+      <div className="w-full px-4 sm:px-6 lg:px-8 pt-4">
+        <div className={`inline-flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium ${
+          editMode === 'saved'
+            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300'
+            : 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300'
+        }`}>
+          <div className={`w-2 h-2 rounded-full ${
+            editMode === 'saved' ? 'bg-blue-500' : 'bg-green-500'
+          }`}></div>
+          <span>
+            {editMode === 'saved' 
+              ? 'Editing saved itinerary' 
+              : 'Building new itinerary'
+            }
+          </span>
+        </div>
+      </div>
+
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           {/* Left Panel - Current Itinerary */}
-          <div className="space-y-6">
+          <div className="xl:col-span-2 space-y-6">
             <Card className="p-6 shadow-lg border-0 bg-white dark:bg-gray-800">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-3">
@@ -534,22 +655,43 @@ const EditItineraryPage: React.FC = () => {
 
               {/* Enhanced Day Navigation */}
               <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Select Day to Edit</h3>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {daySchedules.length} days total
+                  </span>
+                </div>
                 <div className="flex space-x-3 overflow-x-auto pb-2">
                   {daySchedules.map((day) => (
                     <button
                       key={day.day}
                       onClick={() => setSelectedDay(day.day)}
-                      className={`px-4 py-3 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 border-2 ${
+                      className={`px-6 py-4 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 border-2 min-w-[120px] ${
                         selectedDay === day.day
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-lg transform scale-105'
+                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-600 shadow-lg transform scale-105'
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 border-transparent hover:border-gray-300 dark:hover:border-gray-500 hover:shadow-md'
                       }`}
                     >
-                      <div className="flex items-center space-x-2">
-                        <span>Day {day.day}</span>
-                        <span className="text-xs bg-white/20 dark:bg-gray-600 px-2 py-0.5 rounded-full">
-                          {day.events.length}
-                        </span>
+                      <div className="flex flex-col items-center space-y-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-bold">Day {day.day}</span>
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            selectedDay === day.day
+                              ? 'bg-white/20 text-white'
+                              : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
+                          }`}>
+                            {day.events.length} events
+                          </span>
+                        </div>
+                        {day.date && (
+                          <span className={`text-xs ${
+                            selectedDay === day.day
+                              ? 'text-white/80'
+                              : 'text-gray-500 dark:text-gray-400'
+                          }`}>
+                            {new Date(day.date).toLocaleDateString()}
+                          </span>
+                        )}
                       </div>
                     </button>
                   ))}
@@ -572,7 +714,7 @@ const EditItineraryPage: React.FC = () => {
                     {currentDay.events.map((event, index) => (
                       <div 
                         key={index} 
-                        className="group relative flex items-start space-x-4 p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-xl border border-gray-200 dark:border-gray-600 hover:from-blue-50 hover:to-indigo-50 dark:hover:from-gray-600 dark:hover:to-gray-500 hover:border-blue-300 dark:hover:border-blue-400 transition-all duration-300 cursor-pointer hover:shadow-md transform hover:-translate-y-0.5"
+                        className="group relative flex items-start space-x-6 p-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-300 cursor-pointer hover:shadow-xl transform hover:-translate-y-1 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-gray-700 dark:hover:to-gray-600"
                         onClick={() => handleReplaceEvent(event)}
                       >
                         {/* Enhanced Event Icon */}
@@ -679,20 +821,25 @@ const EditItineraryPage: React.FC = () => {
           </div>
 
           {/* Right Panel - Explore Places */}
-          <div className="space-y-6">
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Explore Places
-                </h2>
+          <div className="xl:col-span-1 space-y-6">
+            <Card className="p-6 shadow-lg border-0 bg-white dark:bg-gray-800">
+              <div className="mb-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-xl flex items-center justify-center">
+                    <Search className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    Explore Places
+                  </h2>
+                </div>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     type="text"
                     placeholder="Search places..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm"
                   />
                 </div>
               </div>
@@ -778,6 +925,38 @@ const EditItineraryPage: React.FC = () => {
         </div>
       )}
 
+      {/* Floating Action Button */}
+      <div className="fixed bottom-6 right-6 z-40">
+        <div className="flex flex-col space-y-3">
+          {/* Quick Add Place Button */}
+          <button
+            onClick={() => setShowAddPlaceModal(true)}
+            className="w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center group transform hover:scale-110"
+            title="Add Place"
+          >
+            <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-200" />
+          </button>
+          
+          {/* Quick Save Button */}
+          <button
+            onClick={handleSaveItinerary}
+            disabled={isSaving}
+            className={`w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center group transform hover:scale-110 ${
+              editMode === 'saved'
+                ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
+                : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
+            } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+            title={editMode === 'saved' ? 'Update Itinerary' : 'Save Itinerary'}
+          >
+            {isSaving ? (
+              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Save className="w-6 h-6 group-hover:scale-110 transition-transform duration-200" />
+            )}
+          </button>
+        </div>
+      </div>
+
       {/* Save Confirmation Modal */}
       {showSaveConfirmation && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -786,10 +965,13 @@ const EditItineraryPage: React.FC = () => {
               <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
             </div>
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Changes Saved!
+              {editMode === 'saved' ? 'Itinerary Updated!' : 'Itinerary Saved!'}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Your itinerary has been successfully updated.
+              {editMode === 'saved' 
+                ? 'Your itinerary has been updated successfully.'
+                : 'Your itinerary has been saved successfully. You can find it in your dashboard.'
+              }
             </p>
             <div className="flex items-center justify-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
               <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>

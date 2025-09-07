@@ -351,7 +351,7 @@ const LoginPopup: React.FC<LoginPopupProps> = ({
                   type="submit"
                   loading={isSubmitting}
                   icon={isSubmitting ? Loader2 : User}
-                  className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
                   size="lg"
                   disabled={isSubmitting}
                 >
@@ -374,7 +374,7 @@ const LoginPopup: React.FC<LoginPopupProps> = ({
               {/* Social Login Buttons */}
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <ModernButton
-                  variant="outline"
+                  variant="bordered"
                   onClick={handleGoogleLogin}
                   className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
                 >
@@ -387,7 +387,7 @@ const LoginPopup: React.FC<LoginPopupProps> = ({
                   <span className="ml-2">Google</span>
                 </ModernButton>
                 <ModernButton
-                  variant="outline"
+                  variant="bordered"
                   onClick={handleFacebookLogin}
                   className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
                 >

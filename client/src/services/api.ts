@@ -63,12 +63,33 @@ api.interceptors.response.use(
           error.config.headers.Authorization = `Bearer ${response.access_token}`;
           return api(error.config);
         } catch (refreshError) {
-          // Refresh failed, clear tokens and redirect to login
+          // Refresh failed, clear tokens and redirect to login with state preservation
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
+          
+          // Store current location for redirect after login
+          const currentPath = window.location.pathname + window.location.search;
+          const state = {
+            from: currentPath,
+            message: 'Session expired. Please log in again.',
+            timestamp: Date.now()
+          };
+          
+          sessionStorage.setItem('authRedirect', JSON.stringify(state));
           window.location.href = '/login';
           return Promise.reject(refreshError);
         }
+      } else {
+        // No refresh token, redirect to login with state preservation
+        const currentPath = window.location.pathname + window.location.search;
+        const state = {
+          from: currentPath,
+          message: 'Please log in to continue',
+          timestamp: Date.now()
+        };
+        
+        sessionStorage.setItem('authRedirect', JSON.stringify(state));
+        window.location.href = '/login';
       }
     }
     
@@ -1603,7 +1624,7 @@ export const savedItineraryAPI = {
     interests: string[];
     days: Array<{
       day_number: number;
-      date?: string;
+      date?: string | null; // Backend expects null, but we allow string for compatibility
       activities: Array<{
         name: string;
         time: string;
@@ -1615,8 +1636,8 @@ export const savedItineraryAPI = {
         name: string;
         type: string;
         cost_per_night: number;
-      };
-      transportation?: Record<string, any>;
+      } | null;
+      transportation?: Record<string, any> | null; // Backend expects single dict or null
       meals: Array<{
         name: string;
         time: string;

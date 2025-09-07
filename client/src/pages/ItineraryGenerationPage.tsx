@@ -254,7 +254,7 @@ const ItineraryGenerationPage: React.FC = () => {
         interests: [], // You might want to extract from the original request
         days: itineraryData.itinerary.daily_plans.map((plan) => ({
           day_number: plan.day,
-          date: plan.date,
+          date: null, // Backend expects None/null, not a string date
           activities: plan.activities.map(activity => ({
             name: activity.title,
             time: activity.time,
@@ -269,13 +269,15 @@ const ItineraryGenerationPage: React.FC = () => {
             description: `Great ${meal.cuisine} cuisine`,
             cost: 50 // Default meal cost
           })),
-          transportation: plan.transportation.map(transport => ({
-            method: transport.method,
-            from: transport.from,
-            to: transport.to,
-            duration: transport.duration,
-            cost: parseFloat(transport.cost.replace('$', '')) || 0
-          })),
+          transportation: plan.transportation.length > 0 ? {
+            // Backend expects a single dict, not an array
+            primary_method: plan.transportation[0].method,
+            from: plan.transportation[0].from,
+            to: plan.transportation[0].to,
+            duration: plan.transportation[0].duration,
+            cost: parseFloat(plan.transportation[0].cost.replace('$', '')) || 0,
+            all_transportation: plan.transportation // Keep all transportation data in a nested field
+          } : null,
           estimated_cost: plan.activities.reduce((sum, activity) => 
             sum + (parseFloat(activity.estimated_cost.replace('$', '')) || 0), 0
           ) + plan.transportation.reduce((sum, transport) => 
@@ -287,7 +289,7 @@ const ItineraryGenerationPage: React.FC = () => {
       console.log('Sending save data:', saveData);
       
       // Call the actual API
-      const savedItinerary = await savedItineraryAPI.createItinerary(saveData);
+      const savedItinerary = await savedItineraryAPI.createItinerary(saveData as any);
       console.log('Itinerary saved successfully:', savedItinerary);
       
       setShowSaveConfirmation(true);
@@ -390,7 +392,7 @@ const ItineraryGenerationPage: React.FC = () => {
             <div className="flex items-center space-x-3">
               <ModernButton
                 onClick={handleEditItinerary}
-                variant="outline"
+                variant="bordered"
                 className="flex items-center space-x-2 px-6 py-3 shadow-sm hover:shadow-md transition-all duration-200"
               >
                 <Edit3 className="w-4 h-4" />
@@ -398,7 +400,7 @@ const ItineraryGenerationPage: React.FC = () => {
               </ModernButton>
               <ModernButton
                 onClick={handleSaveItinerary}
-                variant="primary"
+                variant="solid"
                 className="flex items-center space-x-2 px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
                 disabled={isSaving}
               >

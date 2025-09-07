@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { savedItineraryAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { useAuthenticatedApi } from '../../hooks/useAuthenticatedApi';
 import ItineraryCard from '../../components/ItineraryCard';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ShareModal from '../../components/ShareModal';
@@ -40,6 +41,7 @@ interface SavedItinerary {
 const SavedPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const { callApi } = useAuthenticatedApi();
   const [itineraries, setItineraries] = useState<SavedItinerary[]>([]);
   const [filteredItineraries, setFilteredItineraries] = useState<SavedItinerary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,6 +56,10 @@ const SavedPage: React.FC = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareData, setShareData] = useState<{title: string, url: string, description?: string} | null>(null);
+  const [editingItineraryId, setEditingItineraryId] = useState<string | null>(null);
+  
+  // Cache for full itinerary data to avoid unnecessary API calls
+  const [itineraryCache, setItineraryCache] = useState<Map<string, any>>(new Map());
 
   // Load saved itineraries
   useEffect(() => {
@@ -123,12 +129,12 @@ const SavedPage: React.FC = () => {
       setError(null);
       
       const skip = (page - 1) * itemsPerPage;
-      const data = await savedItineraryAPI.getItineraries({
+      const data = await callApi(() => savedItineraryAPI.getItineraries({
         limit: itemsPerPage,
         skip: skip,
         status: statusFilter === 'all' ? undefined : statusFilter as any,
         is_favorite: favoritesOnly || undefined
-      });
+      }));
       
       setItineraries(data);
       setTotalItems(data.length); // In a real app, you'd get total count from API
@@ -155,7 +161,17 @@ const SavedPage: React.FC = () => {
       ));
 
       // Call API to update favorite status
-      await savedItineraryAPI.toggleFavorite(itineraryId);
+      await callApi(() => savedItineraryAPI.toggleFavorite(itineraryId));
+      
+      // Update cache if it exists
+      setItineraryCache(prev => {
+        const newCache = new Map(prev);
+        const cachedItinerary = newCache.get(itineraryId);
+        if (cachedItinerary) {
+          newCache.set(itineraryId, { ...cachedItinerary, is_favorite: !cachedItinerary.is_favorite });
+        }
+        return newCache;
+      });
       
     } catch (err: any) {
       console.error('Error toggling favorite:', err);
@@ -169,16 +185,33 @@ const SavedPage: React.FC = () => {
     }
   };
 
-  const handleEditItinerary = (itineraryId: string) => {
-    const itinerary = itineraries.find(i => i.id === itineraryId);
-    if (itinerary) {
-      // Navigate to edit page with itinerary data
+  const handleEditItinerary = async (itineraryId: string) => {
+    try {
+      setEditingItineraryId(itineraryId);
+      
+      // Check cache first
+      let fullItinerary = itineraryCache.get(itineraryId);
+      
+      if (!fullItinerary) {
+        // Fetch the full itinerary data with days array if not in cache
+        fullItinerary = await callApi(() => savedItineraryAPI.getItinerary(itineraryId));
+        
+        // Cache the result
+        setItineraryCache(prev => new Map(prev).set(itineraryId, fullItinerary));
+      }
+      
+      // Navigate to edit page with complete itinerary data
       navigate('/edit-itinerary', { 
         state: { 
-          itineraryData: itinerary,
+          itineraryData: fullItinerary,
           isEditing: true 
         } 
       });
+    } catch (error: any) {
+      console.error('Error loading itinerary for editing:', error);
+      alert('Failed to load itinerary for editing. Please try again.');
+    } finally {
+      setEditingItineraryId(null);
     }
   };
 
@@ -189,10 +222,17 @@ const SavedPage: React.FC = () => {
 
     try {
       // Call API to delete itinerary
-      await savedItineraryAPI.deleteItinerary(itineraryId);
+      await callApi(() => savedItineraryAPI.deleteItinerary(itineraryId));
       
       // Remove from local state
       setItineraries(prev => prev.filter(i => i.id !== itineraryId));
+      
+      // Remove from cache
+      setItineraryCache(prev => {
+        const newCache = new Map(prev);
+        newCache.delete(itineraryId);
+        return newCache;
+      });
     } catch (err: any) {
       console.error('Error deleting itinerary:', err);
       alert('Failed to delete itinerary. Please try again.');
@@ -205,7 +245,7 @@ const SavedPage: React.FC = () => {
       if (!itinerary) return;
 
       // Call API to share itinerary and get public link
-      const shareResponse = await savedItineraryAPI.shareItinerary(itineraryId);
+      const shareResponse = await callApi(() => savedItineraryAPI.shareItinerary(itineraryId));
       const shareUrl = `${window.location.origin}${shareResponse.public_url}`;
       
       // Update the itinerary in local state to reflect it's now public
@@ -380,6 +420,7 @@ const SavedPage: React.FC = () => {
               onShare={handleShareItinerary}
               onView={handleViewItinerary}
               viewMode={viewMode}
+              editingItineraryId={editingItineraryId}
             />
           ))}
         </div>

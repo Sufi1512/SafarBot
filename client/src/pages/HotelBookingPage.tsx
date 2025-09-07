@@ -554,7 +554,7 @@ const HotelBookingPage: React.FC = () => {
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Featured Hotels</h2>
               <p className="text-gray-600 dark:text-gray-300">Handpicked accommodations with exclusive deals</p>
             </div>
-            <ModernButton variant="outline" icon={ArrowRight} iconPosition="right">
+            <ModernButton variant="bordered" icon={ArrowRight} iconPosition="right">
               View All
             </ModernButton>
           </div>
@@ -711,7 +711,7 @@ const HotelBookingPage: React.FC = () => {
                 </div>
                 
                 <ModernButton
-                  variant="outline"
+                  variant="bordered"
                   icon={Filter}
                   onClick={() => setShowFilters(!showFilters)}
                 >

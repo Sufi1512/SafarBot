@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import CustomDatePicker from '../components/ui/CustomDatePicker';
 import ModernButton from '../components/ui/ModernButton';
+import { useAuth } from '../contexts/AuthContext';
+import AuthModal from '../components/AuthModal';
 
 type BudgetTier = 'low' | 'medium' | 'high';
 type TravelWith = 'solo' | 'couple' | 'family';
@@ -33,6 +35,7 @@ type FlightClass = 'economy' | 'premium' | 'business' | 'first';
 
 const TripPlannerPage: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [destination, setDestination] = useState<string>('');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [days, setDays] = useState<number>(7);
@@ -48,6 +51,7 @@ const TripPlannerPage: React.FC = () => {
   const [email, setEmail] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Prefill from query params if provided
   const query = useMemo(() => new URLSearchParams(window.location.search), []);
@@ -84,8 +88,41 @@ const TripPlannerPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setError(null);
+    
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      // Store form data in localStorage for after login
+      const formData = {
+        destination,
+        startDate: startDate?.toISOString(),
+        days,
+        budget,
+        travelWith,
+        activities,
+        halal,
+        vegetarian,
+        departureCity,
+        flightClass,
+        hotelRating,
+        tripPace,
+        email,
+        timestamp: Date.now()
+      };
+      
+      localStorage.setItem('pendingItineraryData', JSON.stringify(formData));
+      
+      // Show login modal
+      setShowLoginModal(true);
+      return;
+    }
+
+    // If authenticated, proceed with itinerary generation
+    proceedWithItineraryGeneration();
+  };
+
+  const proceedWithItineraryGeneration = async () => {
+    setIsSubmitting(true);
     
     try {
       console.log('Form submission started');
@@ -175,6 +212,49 @@ const TripPlannerPage: React.FC = () => {
       setError(err.message || 'Failed to prepare navigation. Please try again.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleLoginSuccess = () => {
+    setShowLoginModal(false);
+    
+    // Check if there's pending itinerary data
+    const pendingData = localStorage.getItem('pendingItineraryData');
+    if (pendingData) {
+      try {
+        const data = JSON.parse(pendingData);
+        // Check if data is not too old (within 1 hour)
+        if (Date.now() - data.timestamp < 3600000) {
+          // Restore form data
+          setDestination(data.destination || '');
+          setStartDate(data.startDate ? new Date(data.startDate) : undefined);
+          setDays(data.days || 7);
+          setBudget(data.budget || 'medium');
+          setTravelWith(data.travelWith || 'couple');
+          setActivities(data.activities || []);
+          setHalal(data.halal || false);
+          setVegetarian(data.vegetarian || false);
+          setDepartureCity(data.departureCity || '');
+          setFlightClass(data.flightClass || 'economy');
+          setHotelRating(data.hotelRating || 4);
+          setTripPace(data.tripPace || 'balanced');
+          setEmail(data.email || '');
+          
+          // Clear pending data
+          localStorage.removeItem('pendingItineraryData');
+          
+          // Proceed with itinerary generation
+          setTimeout(() => {
+            proceedWithItineraryGeneration();
+          }, 500); // Small delay to ensure state is updated
+        } else {
+          // Data is too old, clear it
+          localStorage.removeItem('pendingItineraryData');
+        }
+      } catch (error) {
+        console.error('Error parsing pending itinerary data:', error);
+        localStorage.removeItem('pendingItineraryData');
+      }
     }
   };
 
@@ -282,7 +362,7 @@ const TripPlannerPage: React.FC = () => {
                       value={destination}
                       onChange={e => setDestination(e.target.value)}
                       placeholder="e.g., Paris, Tokyo, New York"
-                      className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-600 transition-all duration-200"
+                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-600 transition-all duration-200"
                     />
                   </div>
                 </div>
@@ -291,19 +371,21 @@ const TripPlannerPage: React.FC = () => {
               {/* Start Date field hidden if prefilled */}
               {!startDate && (
                 <div className="space-y-3">
+
                   <label className="block text-lg font-semibold text-gray-900 dark:text-white">
                     When do you want to start?
-                  </label>
-                  <div className="relative">
-                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  </label>  
+                  
+          
                     <CustomDatePicker
                       value={startDate}
                       onChange={(date: Date) => setStartDate(date)}
                       minDate={new Date()}
                       placeholder="Select start date"
-                      className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-4 focus:ring-blue-500/20 focus:border-blue-600 transition-all duration-200"
+                      
+                      
                     />
-                  </div>
+                  
                 </div>
               )}
 
@@ -574,7 +656,7 @@ const TripPlannerPage: React.FC = () => {
           <div className="text-center pt-8">
             <ModernButton 
               size="lg" 
-              variant="primary" 
+              variant="solid" 
               type="submit" 
               className="px-12 py-4 text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               disabled={!destination || !startDate || isSubmitting}
@@ -601,6 +683,16 @@ const TripPlannerPage: React.FC = () => {
           </div>
         </form>
       </div>
+
+      {/* Login Modal */}
+      {showLoginModal && (
+        <AuthModal
+          isOpen={showLoginModal}
+          onClose={() => setShowLoginModal(false)}
+          onLoginSuccess={handleLoginSuccess}
+          defaultMode="login"
+        />
+      )}
     </div>
   );
 };

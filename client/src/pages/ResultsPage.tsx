@@ -728,29 +728,8 @@ const ResultsPage: React.FC = () => {
               </div>
             </div>
             
-            {/* Right side - Trip details and action buttons */}
+            {/* Right side - Trip details only */}
             <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
-              <button
-                onClick={() => navigate('/itinerary', { state: { itineraryData: enhancedResponse } })}
-                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
-              >
-                <span>📅</span>
-                <span>View Timeline</span>
-              </button>
-              <button
-                onClick={() => navigate('/itinerary-generation', { state: { itineraryData: enhancedResponse } })}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              >
-                <span className="text-lg">💾</span>
-                <span className="font-medium">Save Itinerary</span>
-              </button>
-              <button
-                onClick={() => navigate('/edit-itinerary', { state: { itineraryData: enhancedResponse } })}
-                className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              >
-                <span className="text-lg">✏️</span>
-                <span className="font-medium">Edit Itinerary</span>
-              </button>
               <div className="flex items-center">
                 <Calendar className="w-4 h-4 mr-2" />
                 <span className="hidden sm:inline">
@@ -855,6 +834,31 @@ const ResultsPage: React.FC = () => {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Action Buttons - Simple and Small */}
+            <div className="flex items-center justify-center space-x-3 mb-8">
+              <button
+                onClick={() => navigate('/itinerary', { state: { itineraryData: enhancedResponse } })}
+                className="flex items-center space-x-2 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm transition-colors"
+              >
+                <span>📅</span>
+                <span>View Timeline</span>
+              </button>
+              <button
+                onClick={() => navigate('/itinerary-generation', { state: { itineraryData: enhancedResponse } })}
+                className="flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm transition-colors"
+              >
+                <span>💾</span>
+                <span>Save Itinerary</span>
+              </button>
+              <button
+                onClick={() => navigate('/edit-itinerary', { state: { itineraryData: enhancedResponse } })}
+                className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm transition-colors"
+              >
+                <span>✏️</span>
+                <span>Edit Itinerary</span>
+              </button>
             </div>
 
             {/* Split Layout: Itinerary (2/3) and Map (1/3) */}

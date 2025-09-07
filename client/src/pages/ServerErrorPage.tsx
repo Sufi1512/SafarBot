@@ -59,7 +59,7 @@ const ServerErrorPage: React.FC = () => {
             
             <ModernButton
               onClick={handleGoHome}
-              variant="outline"
+              variant="bordered"
               className="px-8 py-3 text-lg"
             >
               <Home className="w-5 h-5 mr-2" />
@@ -119,7 +119,7 @@ const ServerErrorPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <ModernButton
                 onClick={handleContactSupport}
-                variant="outline"
+                variant="bordered"
                 className="flex items-center justify-center"
               >
                 <MessageCircle className="w-4 h-4 mr-2" />
@@ -127,7 +127,7 @@ const ServerErrorPage: React.FC = () => {
               </ModernButton>
               <ModernButton
                 onClick={() => window.open('https://status.safarbot.com', '_blank')}
-                variant="outline"
+                variant="bordered"
                 className="flex items-center justify-center"
               >
                 Check Status

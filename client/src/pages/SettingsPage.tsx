@@ -4,21 +4,11 @@ import { dashboardAPI } from '../services/api';
 import { 
   Bell, 
   Shield, 
-  Globe, 
   Moon, 
   Sun, 
-  Eye, 
-  EyeOff,
   Save,
   RefreshCw,
-  User,
-  Lock,
-  CreditCard,
-  Smartphone,
-  Mail,
   MapPin,
-  Calendar,
-  Star,
   AlertTriangle,
   CheckCircle
 } from 'lucide-react';
@@ -53,7 +43,7 @@ interface UserPreferences {
 }
 
 const SettingsPage: React.FC = () => {
-  const { user } = useAuth();
+  const { } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);

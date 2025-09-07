@@ -117,7 +117,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
           <h5 className="font-medium text-gray-900">Share on</h5>
           
           <div className="grid grid-cols-2 gap-3">
-            {typeof navigator !== 'undefined' && navigator.share && (
+            {typeof navigator !== 'undefined' && navigator.share && typeof navigator.share === 'function' && (
               <button
                 onClick={() => handleShare('native')}
                 className="flex items-center justify-center space-x-2 p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"

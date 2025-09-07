@@ -8,6 +8,9 @@ load_dotenv('.env')
 
 # Import routers
 from routers import flights, chat, itinerary, auth, dashboard
+from routers.bookings import router as bookings_router
+from routers.hotels import router as hotels_router
+from routers.restaurants import router as restaurants_router
 from routers.saved_itinerary import router as saved_itinerary
 from routers.weather import router as weather_router
 from routers.ip_tracking import router as ip_tracking_router
@@ -124,10 +127,12 @@ app.include_router(saved_itinerary, prefix="/api/v1/saved-itinerary", tags=["sav
 app.include_router(flights, prefix="/api/v1", tags=["flights"])
 app.include_router(chat, prefix="/api/v1", tags=["chat"])
 app.include_router(itinerary, prefix="/api/v1", tags=["itinerary"])
+app.include_router(bookings_router, prefix="/api/v1", tags=["bookings"])
+app.include_router(hotels_router, prefix="/api/v1", tags=["hotels"])
+app.include_router(restaurants_router, prefix="/api/v1", tags=["restaurants"])
 app.include_router(weather_router, prefix="/api/v1", tags=["weather"])
 app.include_router(ip_tracking_router, prefix="/api/v1", tags=["ip-tracking"])
 app.include_router(ip_examples_router, prefix="/api/v1", tags=["ip-examples"])
-# Removed alerts and affiliate routers per request
 
 @app.get("/health")
 async def health_check():
@@ -165,6 +170,8 @@ async def root():
         "endpoints": {
             "health": "/health",
             "authentication": "/api/v1/auth",
+            "dashboard": "/api/v1/dashboard",
+            "saved_itineraries": "/api/v1/saved-itinerary",
             "search_flights": "/api/v1/flights/search",
             "booking_options": "/api/v1/flights/booking-options/{booking_token}",
             "popular_flights": "/api/v1/flights/popular",
@@ -178,10 +185,15 @@ async def root():
             "serp_place_details": "/api/v1/places/serp/details",
             "serp_place_search": "/api/v1/places/serp/search",
             "additional_places": "/api/v1/places/additional",
+            "bookings": "/api/v1/bookings",
+            "hotels": "/api/v1/hotels",
+            "restaurants": "/api/v1/restaurants",
             "current_weather": "/api/v1/weather/current",
             "weather_forecast": "/api/v1/weather/forecast",
             "weather_by_coordinates": "/api/v1/weather/coordinates",
-            "weather_for_itinerary": "/api/v1/weather/itinerary-format"
+            "weather_for_itinerary": "/api/v1/weather/itinerary-format",
+            "ip_tracking": "/api/v1/ip-tracking",
+            "otp_verification": "/api/v1/auth/send-verification-otp"
         }
     }
 

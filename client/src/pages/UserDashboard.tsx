@@ -4,7 +4,6 @@ import { dashboardAPI, savedItineraryAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import DashboardSidebar from '../components/DashboardSidebar';
 import DashboardStats from '../components/DashboardStats';
-import ItineraryCard from '../components/ItineraryCard';
 import Footer from '../components/Footer';
 import ChatsPage from './dashboard/ChatsPage';
 import ExplorePage from './dashboard/ExplorePage';
@@ -15,7 +14,6 @@ import InspirationPage from './dashboard/InspirationPage';
 import CreatePage from './dashboard/CreatePage';
 import { 
   CalendarDays, 
-  MapPin, 
   Plane
 } from 'lucide-react';
 
@@ -113,7 +111,6 @@ const UserDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [itineraries, setItineraries] = useState<any[]>([]);
   const [itineraryStats, setItineraryStats] = useState<any>(null);
-  const [viewMode] = useState<'grid' | 'list'>('grid');
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
   const [lastItineraryFetchTime, setLastItineraryFetchTime] = useState<number>(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -237,30 +234,8 @@ const UserDashboard: React.FC = () => {
     }
   };
 
-  const handleToggleFavorite = async (itineraryId: string) => {
-    try {
-      await savedItineraryAPI.toggleFavorite(itineraryId);
-      loadItineraries(true); // Force refresh after favorite toggle
-    } catch (err: any) {
-      console.error('Failed to toggle favorite:', err.message);
-    }
-  };
 
-  const handleDeleteItinerary = async (itineraryId: string) => {
-    if (window.confirm('Are you sure you want to delete this itinerary?')) {
-      try {
-        await savedItineraryAPI.deleteItinerary(itineraryId);
-        loadItineraries(true); // Force refresh after delete
-      } catch (err: any) {
-        console.error('Failed to delete itinerary:', err.message);
-      }
-    }
-  };
 
-  const handleEditItinerary = (itineraryId: string) => {
-    console.log('Edit itinerary:', itineraryId);
-    // TODO: Navigate to edit page or open edit modal
-  };
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -283,10 +258,6 @@ const UserDashboard: React.FC = () => {
     handleRefresh(true);
   };
 
-  const handleShareItinerary = (itineraryId: string) => {
-    console.log('Share itinerary:', itineraryId);
-    // TODO: Open share modal or copy link
-  };
 
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
@@ -339,7 +310,7 @@ const UserDashboard: React.FC = () => {
 
   if (!dashboardData) return null;
 
-  const { user_stats, recent_bookings, upcoming_trips, saved_itineraries, price_alerts, notifications, travel_analytics, session_analytics } = dashboardData;
+  const { user_stats, recent_bookings, upcoming_trips, saved_itineraries } = dashboardData;
 
 
   return (
@@ -356,7 +327,7 @@ const UserDashboard: React.FC = () => {
       {/* Main Content */}
       <div 
         className={`flex-1 flex flex-col ${isSidebarExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300 ease-in-out`}
-        onClick={(e) => {
+        onClick={() => {
           console.log('Main content clicked');
         }}
       >

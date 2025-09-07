@@ -1020,6 +1020,37 @@ export const authAPI = {
     } catch (error: any) {
       throw new Error(error.userMessage || 'Password change failed');
     }
+  },
+
+  // OTP Verification endpoints
+  sendVerificationOTP: async (email: string): Promise<{ message: string }> => {
+    try {
+      const response = await api.post('/auth/send-verification-otp', { email });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to send verification OTP');
+    }
+  },
+
+  verifyOTP: async (data: {
+    email: string;
+    otp: string;
+  }): Promise<{ message: string; is_verified: boolean }> => {
+    try {
+      const response = await api.post('/auth/verify-otp', data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'OTP verification failed');
+    }
+  },
+
+  resendOTP: async (email: string): Promise<{ message: string }> => {
+    try {
+      const response = await api.post('/auth/resend-otp', { email });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to resend OTP');
+    }
   }
 };
 

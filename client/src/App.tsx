@@ -26,6 +26,7 @@ import CreateGuidePage from './pages/CreateGuidePage';
 import PublicItineraryPage from './pages/PublicItineraryPage';
 import ItineraryRedirectPage from './pages/ItineraryRedirectPage';
 import SavedItineraryViewPage from './pages/SavedItineraryViewPage';
+import OTPTestPage from './pages/OTPTestPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ServerErrorPage from './pages/ServerErrorPage';
 import OfflinePage from './pages/OfflinePage';
@@ -35,7 +36,7 @@ import OfflinePage from './pages/OfflinePage';
 const ConditionalHeader: React.FC = () => {
   const location = useLocation();
   
-  // Hide ModernHeader on ResultsPage, ItineraryPage, ItineraryGenerationPage, EditItineraryPage, Create pages, Public Itinerary, and Error pages
+  // Hide ModernHeader on ResultsPage, ItineraryPage, ItineraryGenerationPage, EditItineraryPage, Create pages, Public Itinerary, OTP Test, and Error pages
   const hideHeader = location.pathname === '/results' || 
                      location.pathname === '/itinerary' || 
                      location.pathname.startsWith('/itinerary/') ||
@@ -46,6 +47,7 @@ const ConditionalHeader: React.FC = () => {
                      location.pathname === '/create-album' ||
                      location.pathname === '/create-guide' ||
                      location.pathname.startsWith('/public/itinerary/') ||
+                     location.pathname === '/otp-test' ||
                      location.pathname === '/404' ||
                      location.pathname === '/500' ||
                      location.pathname === '/offline' ||
@@ -58,11 +60,12 @@ const ConditionalHeader: React.FC = () => {
 const ConditionalFooter: React.FC = () => {
   const location = useLocation();
   
-  // Don't render Footer on dashboard page, create pages, and error pages (they have their own footer)
+  // Don't render Footer on dashboard page, create pages, OTP test, and error pages (they have their own footer)
   if (location.pathname === '/dashboard' || 
       location.pathname === '/create-blog' ||
       location.pathname === '/create-album' ||
       location.pathname === '/create-guide' ||
+      location.pathname === '/otp-test' ||
       location.pathname === '/404' ||
       location.pathname === '/500' ||
       location.pathname === '/offline' ||
@@ -105,6 +108,7 @@ function App() {
                   <Route path="/create-album" element={<CreateAlbumPage />} />
                   <Route path="/create-guide" element={<CreateGuidePage />} />
                   <Route path="/public/itinerary/:shareToken" element={<PublicItineraryPage />} />
+                  <Route path="/otp-test" element={<OTPTestPage />} />
                   
                   {/* Error Pages */}
                   <Route path="/404" element={<NotFoundPage />} />

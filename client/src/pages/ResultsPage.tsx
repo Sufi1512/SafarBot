@@ -739,17 +739,17 @@ const ResultsPage: React.FC = () => {
               </button>
               <button
                 onClick={() => navigate('/itinerary-generation', { state: { itineraryData: enhancedResponse } })}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
-                <span>💾</span>
-                <span>Save Itinerary</span>
+                <span className="text-lg">💾</span>
+                <span className="font-medium">Save Itinerary</span>
               </button>
               <button
                 onClick={() => navigate('/edit-itinerary', { state: { itineraryData: enhancedResponse } })}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+                className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
-                <span>✏️</span>
-                <span>Edit Itinerary</span>
+                <span className="text-lg">✏️</span>
+                <span className="font-medium">Edit Itinerary</span>
               </button>
               <div className="flex items-center">
                 <Calendar className="w-4 h-4 mr-2" />

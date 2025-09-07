@@ -4,9 +4,6 @@ import {
   DollarSign, 
   MapPin, 
   Star, 
-  TrendingUp, 
-  Users,
-  CalendarDays,
   Heart,
   Eye,
   Share2

@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 // import { useNavigate } from 'react-router-dom';
 import CustomDatePicker from '../components/ui/CustomDatePicker';
 import ModernButton from '../components/ui/ModernButton';
-import bgVideo from '../asset/videos/bg-video.mp4';
 import bgVideo2 from '../asset/videos/bg-video2.mp4';
 import { MapPin } from 'lucide-react';
 import {
@@ -16,7 +15,6 @@ import {
   HeartIcon,
   GlobeAltIcon,
   ClockIcon,
-  PlayCircleIcon,
   FireIcon,
   TrophyIcon,
   ShieldCheckIcon,

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Check, X, AlertCircle, Info, CheckCircle, Clock, Plane, Hotel, Car, MapPin, DollarSign, Calendar, RefreshCw } from 'lucide-react';
+import { Bell, Check, AlertCircle, Info, CheckCircle, Clock, Plane, Hotel, Car, MapPin, DollarSign, Calendar } from 'lucide-react';
 import { dashboardAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
-import LoadingSpinner from '../../components/LoadingSpinner';
 
 interface Update {
   id: string;
@@ -26,10 +25,6 @@ interface Update {
 const UpdatesPage: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const [filter, setFilter] = useState<'all' | 'unread' | 'booking' | 'price' | 'weather' | 'reminder'>('all');
-  const [selectedUpdate, setSelectedUpdate] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Load updates data
   useEffect(() => {
@@ -40,11 +35,8 @@ const UpdatesPage: React.FC = () => {
 
   const loadUpdatesData = async () => {
     try {
-      setIsLoading(true);
-      setError(null);
-      
       // Load dashboard data which includes notifications
-      const dashboardData = await dashboardAPI.getDashboardData();
+      await dashboardAPI.getDashboardData();
       
       // TODO: Process notifications into updates format
       // const updates = dashboardData.notifications.map(notification => ({
@@ -59,16 +51,7 @@ const UpdatesPage: React.FC = () => {
       
     } catch (err: any) {
       console.error('Error loading updates data:', err);
-      setError(err.message || 'Failed to load updates data');
-    } finally {
-      setIsLoading(false);
     }
-  };
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await loadUpdatesData();
-    setIsRefreshing(false);
   };
 
   const handleMarkAsRead = async (updateId: string) => {
@@ -91,15 +74,6 @@ const UpdatesPage: React.FC = () => {
     }
   };
 
-  const handleDeleteUpdate = async (updateId: string) => {
-    try {
-      // TODO: Call API to delete update
-      // await dashboardAPI.deleteNotification(updateId);
-      console.log('Deleted update:', updateId);
-    } catch (err: any) {
-      console.error('Error deleting update:', err);
-    }
-  };
 
   const updates: Update[] = [
     {

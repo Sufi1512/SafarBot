@@ -8,9 +8,7 @@ import {
   Share2, 
   Edit3, 
   Trash2,
-  Clock,
-  Users,
-  Star
+  Clock
 } from 'lucide-react';
 
 interface ItineraryCardProps {
@@ -46,8 +44,7 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
   onEdit,
   onDelete,
   onShare,
-  onView,
-  viewMode = 'grid'
+  onView
 }) => {
   const getStatusColor = (status: string) => {
     switch (status) {

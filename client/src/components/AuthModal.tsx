@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import LoginPopup from './LoginPopup';
 import SignupPopup from './SignupPopup';
 import ForgotPasswordPopup from './ForgotPasswordPopup';
+import OTPVerificationModal from './OTPVerificationModal';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  defaultMode?: 'login' | 'signup' | 'forgot-password';
+  defaultMode?: 'login' | 'signup' | 'forgot-password' | 'otp-verification';
   onLoginSuccess?: () => void;
   onSignupSuccess?: () => void;
 }
@@ -18,7 +19,8 @@ const AuthModal: React.FC<AuthModalProps> = ({
   onLoginSuccess,
   onSignupSuccess 
 }) => {
-  const [mode, setMode] = useState<'login' | 'signup' | 'forgot-password'>(defaultMode);
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot-password' | 'otp-verification'>(defaultMode);
+  const [signupEmail, setSignupEmail] = useState<string>('');
 
   // Update mode when defaultMode changes
   useEffect(() => {
@@ -36,9 +38,19 @@ const AuthModal: React.FC<AuthModalProps> = ({
     onClose();
   };
 
-  const handleSignupSuccess = () => {
-    onSignupSuccess?.();
-    onClose();
+  const handleSignupSuccess = (email?: string) => {
+    if (email) {
+      setSignupEmail(email);
+      setMode('otp-verification');
+    } else {
+      onSignupSuccess?.();
+      onClose();
+    }
+  };
+
+  const handleOTPVerificationSuccess = () => {
+    // Switch to login mode after successful OTP verification
+    setMode('login');
   };
 
   const switchToSignup = () => setMode('signup');
@@ -59,6 +71,13 @@ const AuthModal: React.FC<AuthModalProps> = ({
         onClose={onClose}
         onSwitchToLogin={switchToLogin}
         onSignupSuccess={handleSignupSuccess}
+      />
+      <OTPVerificationModal
+        isOpen={isOpen && mode === 'otp-verification'}
+        onClose={onClose}
+        email={signupEmail}
+        onVerificationSuccess={handleOTPVerificationSuccess}
+        onBackToSignup={switchToSignup}
       />
       <ForgotPasswordPopup
         isOpen={isOpen && mode === 'forgot-password'}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Eye, Upload, MapPin, Calendar, Tag, Image, Folder, Share2, Plus, X } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Upload, Tag, Image, Folder, Share2, X } from 'lucide-react';
 import ModernButton from '../components/ui/ModernButton';
 import Card from '../components/ui/Card';
 import ModernHeader from '../components/ModernHeader';
@@ -36,7 +36,6 @@ const CreateAlbumPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isPreview, setIsPreview] = useState(false);
   const [newTag, setNewTag] = useState('');
-  const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
 
   const handleInputChange = (field: keyof Album, value: any) => {
     setAlbum(prev => ({

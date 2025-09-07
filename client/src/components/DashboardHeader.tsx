@@ -17,7 +17,6 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   subtitle,
   showSearch = false,
   showCreateButton = false,
-  onSearch,
   searchValue = '',
   onSearchChange
 }) => {

@@ -41,13 +41,6 @@ const NotFoundPage: React.FC = () => {
     navigate('/trip-planner');
   };
 
-  const handleBookFlight = () => {
-    navigate('/flights');
-  };
-
-  const handleBookHotel = () => {
-    navigate('/hotels');
-  };
 
   const handleContactSupport = () => {
     // In a real app, this would open a support chat or email

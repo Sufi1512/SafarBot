@@ -14,7 +14,6 @@ const ItineraryRedirectPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
-  const [shareToken, setShareToken] = useState<string | null>(null);
 
   useEffect(() => {
     // Simulate checking if this itinerary has a public share token
@@ -36,9 +35,6 @@ const ItineraryRedirectPage: React.FC = () => {
     navigate('/');
   };
 
-  const handleGoBack = () => {
-    navigate(-1);
-  };
 
   const handleGoToDashboard = () => {
     navigate('/dashboard');

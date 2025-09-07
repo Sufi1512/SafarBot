@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { authAPI } from '../services/api';
 import { 
   User, 
   Mail, 
   Phone, 
   Calendar, 
-  MapPin, 
   Edit3, 
   Save, 
   X,

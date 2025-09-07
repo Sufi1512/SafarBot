@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Plane, Hotel, Car, Clock, Users, DollarSign, Edit, Trash2, Eye, Share2, Download, Plus } from 'lucide-react';
-import { savedItineraryAPI, bookingAPI } from '../../services/api';
+import { Calendar, MapPin, Plane, Hotel, Car, Users, Edit, Trash2, Eye, Share2, Download } from 'lucide-react';
+import { savedItineraryAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
-import LoadingSpinner from '../../components/LoadingSpinner';
 
 interface Trip {
   id: string;
@@ -37,9 +36,6 @@ const TripsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const [selectedTab, setSelectedTab] = useState<'upcoming' | 'ongoing' | 'completed'>('upcoming');
-  const [selectedTrip, setSelectedTrip] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Load trips data
   useEffect(() => {
@@ -50,11 +46,8 @@ const TripsPage: React.FC = () => {
 
   const loadTripsData = async () => {
     try {
-      setIsLoading(true);
-      setError(null);
-      
       // Load user's saved itineraries as trips
-      const savedItineraries = await savedItineraryAPI.getItineraries({
+      await savedItineraryAPI.getItineraries({
         limit: 50,
         skip: 0
       });
@@ -64,62 +57,9 @@ const TripsPage: React.FC = () => {
       
     } catch (err: any) {
       console.error('Error loading trips data:', err);
-      setError(err.message || 'Failed to load trips data');
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const handleCreateNewTrip = () => {
-    navigate('/trip-planner');
-  };
-
-  const handleEditTrip = (tripId: string) => {
-    navigate('/edit-itinerary', { 
-      state: { 
-        itineraryId: tripId,
-        isEditing: true 
-      } 
-    });
-  };
-
-  const handleDeleteTrip = async (tripId: string) => {
-    if (!window.confirm('Are you sure you want to delete this trip? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      // TODO: Call API to delete trip
-      // await savedItineraryAPI.deleteItinerary(tripId);
-      console.log('Deleted trip:', tripId);
-    } catch (err: any) {
-      console.error('Error deleting trip:', err);
-      alert('Failed to delete trip. Please try again.');
-    }
-  };
-
-  const handleViewTrip = (tripId: string) => {
-    navigate(`/itinerary/${tripId}`);
-  };
-
-  const handleShareTrip = async (tripId: string) => {
-    try {
-      const shareUrl = `${window.location.origin}/itinerary/${tripId}`;
-      
-      if (navigator.share) {
-        await navigator.share({
-          title: 'My Travel Itinerary',
-          text: 'Check out my travel itinerary!',
-          url: shareUrl
-        });
-      } else {
-        await navigator.clipboard.writeText(shareUrl);
-        alert('Trip link copied to clipboard!');
-      }
-    } catch (err: any) {
-      console.error('Error sharing trip:', err);
-    }
-  };
 
   const trips: Trip[] = [
     {

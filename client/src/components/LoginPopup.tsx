@@ -9,8 +9,7 @@ import {
   AlertTriangle,
   Check,
   Loader2,
-  X,
-  ArrowRight
+  X
 } from 'lucide-react';
 import ModernButton from './ui/ModernButton';
 import ModernCard from './ui/ModernCard';

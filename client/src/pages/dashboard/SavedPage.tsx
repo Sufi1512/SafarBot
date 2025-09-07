@@ -2,22 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Heart, 
-  Share2, 
-  Edit, 
-  Trash2, 
-  Eye, 
   MapPin, 
-  Calendar, 
-  Users, 
-  DollarSign, 
-  Star,
-  Filter,
   Grid,
   List,
   Search,
-  Bookmark,
-  Download,
-  MoreVertical
+  Bookmark
 } from 'lucide-react';
 import { savedItineraryAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -263,7 +252,7 @@ const SavedPage: React.FC = () => {
           <h3 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Itineraries</h3>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
-            onClick={loadItineraries}
+            onClick={() => loadItineraries()}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
           >
             Try Again

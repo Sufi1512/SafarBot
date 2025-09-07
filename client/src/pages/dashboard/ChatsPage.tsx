@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { MessageCircle, Send, Bot, User, Phone, Video, MoreVertical } from 'lucide-react';
+import React, { useState } from 'react';
+import { MessageCircle, Send, Bot, Phone, Video, MoreVertical } from 'lucide-react';
 
 interface Chat {
   id: string;
@@ -20,7 +20,7 @@ interface Message {
 }
 
 const ChatsPage: React.FC = () => {
-  const [chats, setChats] = useState<Chat[]>([
+  const [chats] = useState<Chat[]>([
     {
       id: '1',
       title: 'Travel Planning Assistant',

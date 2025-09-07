@@ -45,7 +45,7 @@ interface SignupPopupProps {
   isOpen: boolean;
   onClose: () => void;
   onSwitchToLogin: () => void;
-  onSignupSuccess: () => void;
+  onSignupSuccess: (email?: string) => void;
 }
 
 const SignupPopup: React.FC<SignupPopupProps> = ({ 
@@ -243,10 +243,9 @@ const SignupPopup: React.FC<SignupPopupProps> = ({
         confirm_password: formData.confirmPassword
       });
       
-      setSuccess('Account created successfully!');
+      setSuccess('Account created successfully! Please check your email for verification.');
       setTimeout(() => {
-        onSignupSuccess();
-        onClose();
+        onSignupSuccess(formData.email);
       }, 1500);
       
     } catch (err: any) {

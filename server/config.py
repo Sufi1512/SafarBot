@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     # OpenWeatherMap API
     open_weather_api_key: Optional[str] = None
     
+    # Brevo API for email OTP
+    brevo_api_key: Optional[str] = None
+    
     # LangSmith Configuration
     langsmith_api_key: Optional[str] = None
     langsmith_project: str = "safarbot"
@@ -43,5 +46,7 @@ class Settings(BaseSettings):
             self.open_weather_api_key = os.getenv("OPEN_WEATHER_API_KEY")
         if not self.langsmith_api_key:
             self.langsmith_api_key = os.getenv("LANGSMITH_API_KEY")
+        if not self.brevo_api_key:
+            self.brevo_api_key = os.getenv("BREVO_API_KEY")
 
 settings = Settings() 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Calendar, DollarSign, Clock, Star, Save, Plus, Trash2, Replace, Search, X, CheckCircle } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, DollarSign, Clock, Star, Save, Plus, Trash2, Replace, Search, X, CheckCircle, Edit3 } from 'lucide-react';
 import { EnhancedItineraryResponse, PlaceDetails, AdditionalPlace, savedItineraryAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import ModernButton from '../components/ui/ModernButton';
@@ -49,7 +49,7 @@ const EditItineraryPage: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
-  const [selectedPlace, setSelectedPlace] = useState<PlaceDetails | AdditionalPlace | null>(null);
+  const [selectedPlace] = useState<PlaceDetails | AdditionalPlace | null>(null);
   const [isPlaceModalOpen, setIsPlaceModalOpen] = useState(false);
   const [showAddPlaceModal, setShowAddPlaceModal] = useState(false);
   const [selectedEventToReplace, setSelectedEventToReplace] = useState<TimelineEvent | null>(null);
@@ -222,23 +222,6 @@ const EditItineraryPage: React.FC = () => {
     });
   };
 
-  const calculateTotalCost = () => {
-    if (!itineraryData) return 0;
-    
-    let total = 0;
-    itineraryData.itinerary.daily_plans.forEach(plan => {
-      plan.activities.forEach(activity => {
-        const cost = parseFloat(activity.estimated_cost.replace('$', '')) || 0;
-        total += cost;
-      });
-      plan.transportation.forEach(transport => {
-        const cost = parseFloat(transport.cost.replace('$', '')) || 0;
-        total += cost;
-      });
-    });
-    
-    return total;
-  };
 
   const handleRemoveEvent = (dayIndex: number, eventIndex: number) => {
     const newDaySchedules = [...daySchedules];
@@ -326,57 +309,87 @@ const EditItineraryPage: React.FC = () => {
     setIsSaving(true);
     try {
       console.log('Saving edited itinerary:', { itineraryData, daySchedules });
+      console.log('Budget estimate type:', typeof itineraryData.itinerary.budget_estimate);
+      console.log('Budget estimate value:', itineraryData.itinerary.budget_estimate);
+      
+      // Helper function to safely parse cost values
+      const parseCost = (value: any): number => {
+        if (value === null || value === undefined) return 0;
+        if (typeof value === 'number') return value;
+        if (typeof value === 'string') {
+          return parseFloat(value.replace('$', '').replace(',', '')) || 0;
+        }
+        return 0;
+      };
       
       // Convert edited itinerary data to the format expected by the API
       const saveData = {
         title: `${itineraryData.itinerary.destination} Trip (Edited)`,
         description: `AI-generated itinerary for ${itineraryData.itinerary.destination} - Customized`,
-        destination: itineraryData.itinerary.destination,
-        country: itineraryData.itinerary.destination,
-        city: itineraryData.itinerary.destination,
-        duration_days: itineraryData.itinerary.total_days,
-        start_date: daySchedules[0]?.date,
-        end_date: daySchedules[daySchedules.length - 1]?.date,
-        budget: itineraryData.itinerary.budget_estimate,
+        destination: itineraryData.itinerary.destination || 'Unknown Destination',
+        country: itineraryData.itinerary.destination || 'Unknown Country',
+        city: itineraryData.itinerary.destination || 'Unknown City',
+        duration_days: parseInt(String(itineraryData.itinerary.total_days)) || 1,
+        start_date: daySchedules[0]?.date || undefined,
+        end_date: daySchedules[daySchedules.length - 1]?.date || undefined,
+        budget: parseCost(itineraryData.itinerary.budget_estimate),
         travel_style: ['leisure'],
         interests: [],
-        days: daySchedules.map((daySchedule) => ({
-          day_number: daySchedule.day,
-          date: daySchedule.date,
-          activities: daySchedule.events
-            .filter(event => event.type === 'activity')
-            .map(event => ({
-              name: event.title,
-              time: event.time,
-              location: event.location || event.title,
-              description: event.description || event.title,
-              cost: parseFloat(event.cost?.replace('$', '') || '0') || 0
-            })),
-          meals: daySchedule.events
-            .filter(event => event.type === 'meal')
-            .map(event => ({
-              name: event.title,
-              time: event.time,
-              location: event.location || event.title,
-              description: event.description || event.title,
-              cost: 50 // Default meal cost
-            })),
-          transportation: daySchedule.events
-            .filter(event => event.type === 'transport')
-            .map(event => ({
-              method: event.title.split(' to ')[0] || 'Transport',
+        days: daySchedules.length > 0 ? daySchedules.map((daySchedule) => {
+          const transportEvents = daySchedule.events.filter(event => event.type === 'transport');
+          const accommodationEvents = daySchedule.events.filter(event => event.type === 'checkin' || event.type === 'checkout');
+          
+          return {
+            day_number: parseInt(String(daySchedule.day)) || 1,
+            date: daySchedule.date,
+            activities: daySchedule.events
+              .filter(event => event.type === 'activity')
+              .map(event => ({
+                name: event.title,
+                time: event.time,
+                location: event.location || event.title,
+                description: event.description || event.title,
+                cost: parseCost(event.cost)
+              })),
+            meals: daySchedule.events
+              .filter(event => event.type === 'meal')
+              .map(event => ({
+                name: event.title,
+                time: event.time,
+                location: event.location || event.title,
+                description: event.description || event.title,
+                cost: 50.0 // Default meal cost
+              })),
+            transportation: transportEvents.length > 0 ? {
+              method: transportEvents[0].title || 'Transport',
               from: 'Previous location',
-              to: event.title.split(' to ')[1] || 'Next location',
-              duration: event.duration || '30 minutes',
-              cost: parseFloat(event.cost?.replace('$', '') || '0') || 0
-            })),
-          estimated_cost: daySchedule.events.reduce((sum, event) => 
-            sum + (parseFloat(event.cost?.replace('$', '') || '0') || 0), 0
-          )
-        }))
+              to: 'Next location',
+              duration: transportEvents[0].duration || '30 minutes',
+              cost: parseCost(transportEvents[0].cost)
+            } : undefined,
+            accommodations: accommodationEvents.length > 0 ? {
+              name: accommodationEvents[0].title,
+              type: 'hotel',
+              cost_per_night: parseCost(accommodationEvents[0].cost)
+            } : undefined,
+            estimated_cost: parseFloat(daySchedule.events.reduce((sum, event) => 
+              sum + parseCost(event.cost), 0
+            ).toFixed(2))
+          };
+        }) : []
       };
       
-      console.log('Sending edited save data:', saveData);
+      console.log('Sending edited save data:', JSON.stringify(saveData, null, 2));
+      console.log('Transportation structure check:', saveData.days.map(day => ({ day: day.day_number, transportation: day.transportation })));
+      
+      // Validate required fields
+      if (!saveData.title || !saveData.destination || !saveData.country || !saveData.city) {
+        throw new Error('Missing required fields: title, destination, country, or city');
+      }
+      
+      if (saveData.days.length === 0) {
+        throw new Error('No days data available to save');
+      }
       
       // Call the actual API
       const savedItinerary = await savedItineraryAPI.createItinerary(saveData);
@@ -387,9 +400,10 @@ const EditItineraryPage: React.FC = () => {
         setShowSaveConfirmation(false);
         navigate('/dashboard', { state: { activeTab: 'trips' } });
       }, 3000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving edited itinerary:', error);
-      alert('Failed to save edited itinerary. Please try again.');
+      console.error('Error details:', error.response?.data);
+      alert(`Failed to save edited itinerary: ${error.response?.data?.detail || error.message || 'Unknown error'}`);
     } finally {
       setIsSaving(false);
     }
@@ -431,39 +445,46 @@ const EditItineraryPage: React.FC = () => {
         </div>
       )}
       
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 w-full">
+      {/* Enhanced Header */}
+      <header className="bg-white dark:bg-gray-800 shadow-lg border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 w-full backdrop-blur-sm bg-white/95 dark:bg-gray-800/95">
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-6">
             {/* Left side - Back button and Logo/Name */}
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => navigate('/itinerary-generation', { state: { itineraryData, daySchedules } })}
-                className="p-3 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all duration-200 group"
+                className="p-3 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all duration-200 group shadow-sm hover:shadow-md"
               >
                 <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300 group-hover:text-gray-800 dark:group-hover:text-white" />
               </button>
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                  <MapPin className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Edit3 className="w-7 h-7 text-white" />
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                     Edit {itineraryData.itinerary.destination} Itinerary
                   </h1>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Customize your perfect trip
-                  </p>
+                  <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
+                    <span className="flex items-center space-x-1">
+                      <Calendar className="w-4 h-4" />
+                      <span>{itineraryData.itinerary.total_days} days</span>
+                    </span>
+                    <span className="flex items-center space-x-1">
+                      <Star className="w-4 h-4" />
+                      <span>Customize your trip</span>
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
             
-            {/* Right side - Save button */}
-            <div className="flex items-center space-x-4">
+            {/* Right side - Enhanced Save button */}
+            <div className="flex items-center space-x-3">
               <ModernButton
                 onClick={handleSaveItinerary}
                 variant="primary"
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-2 px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
                 disabled={isSaving}
               >
                 {isSaving ? (
@@ -471,7 +492,7 @@ const EditItineraryPage: React.FC = () => {
                 ) : (
                   <Save className="w-4 h-4" />
                 )}
-                <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
+                <span className="font-medium">{isSaving ? 'Saving...' : 'Save Changes'}</span>
               </ModernButton>
             </div>
           </div>
@@ -482,36 +503,54 @@ const EditItineraryPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Panel - Current Itinerary */}
           <div className="space-y-6">
-            <Card className="p-6">
+            <Card className="p-6 shadow-lg border-0 bg-white dark:bg-gray-800">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Current Itinerary
-                </h2>
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+                    <MapPin className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Current Itinerary
+                  </h2>
+                </div>
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => setShowAddPlaceModal(true)}
-                    className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                    className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center space-x-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                   >
                     <Plus className="w-4 h-4" />
-                    <span>Add Place</span>
+                    <span className="font-medium">Add Place</span>
                   </button>
                 </div>
               </div>
+              
+              {/* Add visual indicator for where places can be added */}
+              <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium">Click on any event to replace it, or use "Add Place" to insert new places</span>
+                </div>
+              </div>
 
-              {/* Day Navigation */}
+              {/* Enhanced Day Navigation */}
               <div className="mb-6">
-                <div className="flex space-x-2 overflow-x-auto pb-2">
+                <div className="flex space-x-3 overflow-x-auto pb-2">
                   {daySchedules.map((day) => (
                     <button
                       key={day.day}
                       onClick={() => setSelectedDay(day.day)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                      className={`px-4 py-3 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 border-2 ${
                         selectedDay === day.day
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-lg transform scale-105'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 border-transparent hover:border-gray-300 dark:hover:border-gray-500 hover:shadow-md'
                       }`}
                     >
-                      Day {day.day}
+                      <div className="flex items-center space-x-2">
+                        <span>Day {day.day}</span>
+                        <span className="text-xs bg-white/20 dark:bg-gray-600 px-2 py-0.5 rounded-full">
+                          {day.events.length}
+                        </span>
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -529,70 +568,110 @@ const EditItineraryPage: React.FC = () => {
                     </p>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {currentDay.events.map((event, index) => (
                       <div 
                         key={index} 
-                        className="flex items-start space-x-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                        className="group relative flex items-start space-x-4 p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-xl border border-gray-200 dark:border-gray-600 hover:from-blue-50 hover:to-indigo-50 dark:hover:from-gray-600 dark:hover:to-gray-500 hover:border-blue-300 dark:hover:border-blue-400 transition-all duration-300 cursor-pointer hover:shadow-md transform hover:-translate-y-0.5"
+                        onClick={() => handleReplaceEvent(event)}
                       >
-                        {/* Event Icon */}
-                        <div className="flex-shrink-0">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${getEventColor(event.type)}`}>
+                        {/* Enhanced Event Icon */}
+                        <div className="flex-shrink-0 relative">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg shadow-md ${getEventColor(event.type)} border-2 border-white dark:border-gray-800 group-hover:scale-110 transition-transform duration-300`}>
                             {getEventIcon(event.type)}
+                          </div>
+                          <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                            {index + 1}
                           </div>
                         </div>
 
-                        {/* Event Content */}
+                        {/* Enhanced Event Content */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="text-base font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                               {event.title}
                             </h4>
                             <div className="flex items-center space-x-2">
                               {event.time && (
-                                <span className="text-xs text-gray-500 dark:text-gray-400">
-                                  {event.time}
-                                </span>
+                                <div className="flex items-center space-x-1 bg-white dark:bg-gray-700 px-2 py-1 rounded-full shadow-sm">
+                                  <Clock className="w-3 h-3 text-gray-500" />
+                                  <span className="text-xs text-gray-600 dark:text-gray-300">
+                                    {event.time}
+                                  </span>
+                                </div>
                               )}
                               <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button
-                                  onClick={() => handleReplaceEvent(event)}
-                                  className="p-1 text-blue-600 hover:text-blue-700 transition-colors"
-                                  title="Replace"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleReplaceEvent(event);
+                                  }}
+                                  className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200"
+                                  title="Replace this place"
                                 >
-                                  <Replace className="w-3 h-3" />
+                                  <Replace className="w-4 h-4" />
                                 </button>
                                 <button
-                                  onClick={() => handleRemoveEvent(daySchedules.findIndex(day => day.day === selectedDay), index)}
-                                  className="p-1 text-red-600 hover:text-red-700 transition-colors"
-                                  title="Remove"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveEvent(daySchedules.findIndex(day => day.day === selectedDay), index);
+                                  }}
+                                  className="p-2 text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
+                                  title="Remove this place"
                                 >
-                                  <Trash2 className="w-3 h-3" />
+                                  <Trash2 className="w-4 h-4" />
                                 </button>
                               </div>
                             </div>
                           </div>
                           
                           {event.description && (
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
                               {event.description}
                             </p>
                           )}
                           
-                          <div className="flex items-center space-x-3 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                          <div className="flex flex-wrap items-center gap-2">
                             {event.location && (
-                              <span>📍 {event.location}</span>
+                              <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-600 px-2 py-1 rounded-full">
+                                <MapPin className="w-3 h-3 text-gray-500" />
+                                <span className="text-xs text-gray-600 dark:text-gray-300">{event.location}</span>
+                              </div>
                             )}
                             {event.duration && (
-                              <span>⏱️ {event.duration}</span>
+                              <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-600 px-2 py-1 rounded-full">
+                                <Clock className="w-3 h-3 text-gray-500" />
+                                <span className="text-xs text-gray-600 dark:text-gray-300">{event.duration}</span>
+                              </div>
                             )}
                             {event.cost && event.cost !== '0' && (
-                              <span>💰 {event.cost}</span>
+                              <div className="flex items-center space-x-1 bg-green-100 dark:bg-green-900/20 px-2 py-1 rounded-full">
+                                <DollarSign className="w-3 h-3 text-green-600" />
+                                <span className="text-xs text-green-600 dark:text-green-400">{event.cost}</span>
+                              </div>
                             )}
+                          </div>
+                        </div>
+                        
+                        {/* Hover indicator */}
+                        <div className="absolute inset-0 rounded-xl border-2 border-dashed border-blue-300 dark:border-blue-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                          <div className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                            Click to replace
                           </div>
                         </div>
                       </div>
                     ))}
+                    
+                    {/* Add place button at the end */}
+                    <div className="mt-6 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 transition-colors cursor-pointer group"
+                         onClick={() => setShowAddPlaceModal(true)}>
+                      <div className="flex items-center justify-center space-x-3 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400">
+                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center group-hover:bg-blue-100 dark:group-hover:bg-blue-900/20 transition-colors">
+                          <Plus className="w-5 h-5" />
+                        </div>
+                        <span className="font-medium">Add a new place to this day</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

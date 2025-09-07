@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Share2, Bookmark, MapPin, Calendar, Users, DollarSign, Star, Filter, Grid, List, Compass, Camera, Plane, Hotel, Car, Plus, Eye } from 'lucide-react';
-import { savedItineraryAPI, placeServiceAPI } from '../../services/api';
+import { Heart, Share2, Bookmark, MapPin, Calendar, DollarSign, Filter, Grid, List, Compass, Camera, Plane, Hotel } from 'lucide-react';
+import { savedItineraryAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
-import LoadingSpinner from '../../components/LoadingSpinner';
 
 interface InspirationItem {
   id: string;
@@ -27,12 +26,10 @@ interface InspirationItem {
 }
 
 const InspirationPage: React.FC = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('trending');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Load inspiration data
   useEffect(() => {
@@ -41,11 +38,8 @@ const InspirationPage: React.FC = () => {
 
   const loadInspirationData = async () => {
     try {
-      setIsLoading(true);
-      setError(null);
-      
       // Load public itineraries for inspiration
-      const publicItineraries = await savedItineraryAPI.getItineraries({
+      await savedItineraryAPI.getItineraries({
         limit: 20,
         skip: 0,
         status: 'published'
@@ -57,9 +51,6 @@ const InspirationPage: React.FC = () => {
       
     } catch (err: any) {
       console.error('Error loading inspiration data:', err);
-      setError(err.message || 'Failed to load inspiration data');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -81,34 +72,6 @@ const InspirationPage: React.FC = () => {
     }
   };
 
-  const handleShareItem = async (itemId: string) => {
-    try {
-      const shareUrl = `${window.location.origin}/inspiration/${itemId}`;
-      
-      if (navigator.share) {
-        await navigator.share({
-          title: 'Travel Inspiration',
-          text: 'Check out this amazing travel inspiration!',
-          url: shareUrl
-        });
-      } else {
-        await navigator.clipboard.writeText(shareUrl);
-        alert('Inspiration link copied to clipboard!');
-      }
-    } catch (err: any) {
-      console.error('Error sharing item:', err);
-    }
-  };
-
-  const handleViewItem = (itemId: string) => {
-    // TODO: Navigate to item details or create itinerary based on item
-    console.log('View item:', itemId);
-  };
-
-  const handleCreateFromInspiration = (itemId: string) => {
-    // TODO: Navigate to trip planner with inspiration data
-    console.log('Create from inspiration:', itemId);
-  };
 
   const inspirationItems: InspirationItem[] = [
     {

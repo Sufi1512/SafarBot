@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { 
   MapPin, 
   Calendar, 
-  Users, 
   Star, 
   ArrowRight,
   Clock,
@@ -11,7 +10,6 @@ import {
   Heart,
   Plane,
   Building,
-  Car
 } from 'lucide-react';
 import ModernButton from '../components/ui/ModernButton';
 import ModernCard from '../components/ui/ModernCard';

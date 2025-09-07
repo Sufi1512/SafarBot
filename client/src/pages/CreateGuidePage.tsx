@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Eye, Upload, MapPin, Calendar, Tag, FileText, Share2, Plus, X, Star, Clock, DollarSign } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Upload, Tag, FileText, Share2, Plus, X, Star, Clock, DollarSign, MapPin } from 'lucide-react';
 import ModernButton from '../components/ui/ModernButton';
 import Card from '../components/ui/Card';
 import ModernHeader from '../components/ModernHeader';

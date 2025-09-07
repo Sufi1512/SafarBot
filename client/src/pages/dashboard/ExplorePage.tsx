@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Star, Heart, Filter, Grid, List, Calendar, Users, DollarSign, Plus, Eye } from 'lucide-react';
-import { savedItineraryAPI, placeServiceAPI } from '../../services/api';
+import { Search, MapPin, Star, Heart, Grid, List, Calendar, Users } from 'lucide-react';
+import { savedItineraryAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
-import LoadingSpinner from '../../components/LoadingSpinner';
 
 interface Destination {
   id: string;
@@ -19,13 +18,11 @@ interface Destination {
 }
 
 const ExplorePage: React.FC = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('popular');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Load public itineraries and popular destinations
   useEffect(() => {
@@ -34,11 +31,8 @@ const ExplorePage: React.FC = () => {
 
   const loadExploreData = async () => {
     try {
-      setIsLoading(true);
-      setError(null);
-      
       // Load public itineraries for inspiration
-      const publicItineraries = await savedItineraryAPI.getItineraries({
+      await savedItineraryAPI.getItineraries({
         limit: 20,
         skip: 0,
         status: 'published'
@@ -49,9 +43,6 @@ const ExplorePage: React.FC = () => {
       
     } catch (err: any) {
       console.error('Error loading explore data:', err);
-      setError(err.message || 'Failed to load explore data');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -64,19 +55,6 @@ const ExplorePage: React.FC = () => {
     }
   };
 
-  const handleSaveDestination = async (destinationId: string) => {
-    try {
-      // TODO: Implement save to favorites functionality
-      console.log('Saved destination:', destinationId);
-    } catch (err: any) {
-      console.error('Error saving destination:', err);
-    }
-  };
-
-  const handleViewDestination = (destinationId: string) => {
-    // TODO: Navigate to destination details or create itinerary
-    console.log('View destination:', destinationId);
-  };
 
   const destinations: Destination[] = [
     {

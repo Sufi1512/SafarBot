@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { weatherAPI, WeatherData, WeatherForecast } from '../services/api';
-import { Card } from './ui/Card';
-import { LoadingSpinner } from './LoadingSpinner';
+import Card from './ui/Card';
+import LoadingSpinner from './LoadingSpinner';
 
 interface WeatherWidgetProps {
   city: string;

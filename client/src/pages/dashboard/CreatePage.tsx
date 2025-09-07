@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, MapPin, Calendar, Users, DollarSign, Plane, Hotel, Car, Camera, FileText, Share2, Save, Eye, ArrowRight } from 'lucide-react';
+import { Plus, MapPin, Calendar, Plane, Hotel, Car, Camera, FileText, Share2, Eye } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface CreateOption {
@@ -16,7 +16,7 @@ interface CreateOption {
 
 const CreatePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('all');
 
 

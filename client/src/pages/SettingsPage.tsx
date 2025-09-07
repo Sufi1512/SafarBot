@@ -87,7 +87,7 @@ const SettingsPage: React.FC = () => {
       setLoading(true);
       const data = await dashboardAPI.getPreferences();
       if (data) {
-        setPreferences(data);
+        setPreferences(data as any);
       }
     } catch (err: any) {
       console.error('Failed to load preferences:', err);
@@ -116,7 +116,7 @@ const SettingsPage: React.FC = () => {
     setPreferences(prev => ({
       ...prev,
       [section]: {
-        ...prev[section],
+        ...(prev[section] as any),
         [key]: value
       }
     }));
@@ -132,7 +132,7 @@ const SettingsPage: React.FC = () => {
       return {
         ...prev,
         [section]: {
-          ...prev[section],
+          ...(prev[section] as any),
           [key]: newArray
         }
       };

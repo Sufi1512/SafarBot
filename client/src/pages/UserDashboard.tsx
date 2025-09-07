@@ -110,7 +110,7 @@ const UserDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [itineraries, setItineraries] = useState<any[]>([]);
-  const [itineraryStats, setItineraryStats] = useState<any>(null);
+  const [, setItineraryStats] = useState<any>(null);
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
   const [lastItineraryFetchTime, setLastItineraryFetchTime] = useState<number>(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -168,7 +168,7 @@ const UserDashboard: React.FC = () => {
       setError(null);
       
       const data = await dashboardAPI.getDashboardData();
-      setDashboardData(data);
+      setDashboardData(data as any);
       setLastFetchTime(now);
       
       // Cache in localStorage

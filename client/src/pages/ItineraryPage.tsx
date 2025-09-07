@@ -110,10 +110,10 @@ const ItineraryPage: React.FC = () => {
           cost: activity.estimated_cost,
           placeId: activity.place_id,
           rating: placeDetails?.rating,
-          photo: placeDetails?.photo,
+          photo: placeDetails?.photos_link,
           website: placeDetails?.website,
           phone: placeDetails?.phone,
-          openingHours: placeDetails?.opening_hours,
+          openingHours: placeDetails?.operating_hours ? JSON.stringify(placeDetails.operating_hours) : undefined,
           reviews: placeDetails?.reviews,
           types: placeDetails?.types
         });
@@ -132,10 +132,10 @@ const ItineraryPage: React.FC = () => {
           priceRange: meal.price_range,
           placeId: meal.place_id,
           rating: placeDetails?.rating,
-          photo: placeDetails?.photo,
+          photo: placeDetails?.photos_link,
           website: placeDetails?.website,
           phone: placeDetails?.phone,
-          openingHours: placeDetails?.opening_hours,
+          openingHours: placeDetails?.operating_hours ? JSON.stringify(placeDetails.operating_hours) : undefined,
           reviews: placeDetails?.reviews,
           types: placeDetails?.types
         });

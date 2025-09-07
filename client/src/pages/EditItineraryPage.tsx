@@ -127,10 +127,10 @@ const EditItineraryPage: React.FC = () => {
           cost: activity.estimated_cost,
           placeId: activity.place_id,
           rating: placeDetails?.rating,
-          photo: placeDetails?.photo,
+          photo: placeDetails?.photos_link,
           website: placeDetails?.website,
           phone: placeDetails?.phone,
-          openingHours: placeDetails?.opening_hours,
+          openingHours: placeDetails?.operating_hours ? JSON.stringify(placeDetails.operating_hours) : undefined,
           reviews: placeDetails?.reviews,
           types: placeDetails?.types
         });
@@ -149,10 +149,10 @@ const EditItineraryPage: React.FC = () => {
           priceRange: meal.price_range,
           placeId: meal.place_id,
           rating: placeDetails?.rating,
-          photo: placeDetails?.photo,
+          photo: placeDetails?.photos_link,
           website: placeDetails?.website,
           phone: placeDetails?.phone,
-          openingHours: placeDetails?.opening_hours,
+          openingHours: placeDetails?.operating_hours ? JSON.stringify(placeDetails.operating_hours) : undefined,
           reviews: placeDetails?.reviews,
           types: placeDetails?.types
         });
@@ -249,17 +249,17 @@ const EditItineraryPage: React.FC = () => {
         newDaySchedules[dayIndex].events[eventIndex] = {
           time: selectedEventToReplace.time,
           type: selectedEventToReplace.type,
-          title: place.title,
+          title: place.title || 'Unknown Place',
           description: place.description,
           location: place.address,
           duration: '2 hours',
           cost: '$50',
           placeId: place.place_id,
           rating: place.rating,
-          photo: place.photo,
+          photo: (place as any).photos_link || (place as any).thumbnail || (place as any).serpapi_thumbnail,
           website: place.website,
           phone: place.phone,
-          openingHours: place.opening_hours,
+          openingHours: place.operating_hours,
           reviews: place.reviews,
           types: place.types
         };
@@ -270,17 +270,17 @@ const EditItineraryPage: React.FC = () => {
       const newEvent: TimelineEvent = {
         time: '14:00',
         type: 'activity',
-        title: place.title,
+        title: place.title || 'Unknown Place',
         description: place.description,
         location: place.address,
         duration: '2 hours',
         cost: '$50',
         placeId: place.place_id,
         rating: place.rating,
-        photo: place.photo,
+        photo: (place as any).photos_link || (place as any).thumbnail || (place as any).serpapi_thumbnail,
         website: place.website,
         phone: place.phone,
-        openingHours: place.opening_hours,
+        openingHours: place.operating_hours,
         reviews: place.reviews,
         types: place.types
       };

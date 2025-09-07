@@ -109,7 +109,7 @@ const PriceComparison: React.FC<PriceComparisonProps> = ({
         bookingUrl: 'https://hotels.com/affiliate-link-4',
         affiliateId: 'safarbot_hotels_1',
         commission: 6.8,
-        features: ['Free Night Program', 'Price Match'],
+        features: ['Price Match', 'Rewards Program'],
         lastUpdated: '2024-02-15T08:20:00Z'
       },
       {
@@ -123,11 +123,12 @@ const PriceComparison: React.FC<PriceComparisonProps> = ({
         bookingUrl: 'https://trip.com/affiliate-link-5',
         affiliateId: 'safarbot_trip_1',
         commission: 8.9,
-        features: ['Asian Market Specialists', 'Multi-language Support'],
+        features: ['Best Price Guarantee', '24/7 Support'],
         lastUpdated: '2024-02-15T12:00:00Z'
       }
     ];
 
+    // Simulate API delay
     setTimeout(() => {
       setComparisonData(mockData);
       setIsLoading(false);
@@ -171,28 +172,29 @@ const PriceComparison: React.FC<PriceComparisonProps> = ({
     }
   });
 
-  const filteredData = filterPlatform === 'all' 
-    ? sortedData 
-    : sortedData.filter(item => item.platform.toLowerCase().includes(filterPlatform.toLowerCase()));
+  const filteredData = sortedData.filter(item => 
+    filterPlatform === 'all' || item.platform.toLowerCase().includes(filterPlatform.toLowerCase())
+  );
 
   const getPriceChange = (item: PriceComparisonItem) => {
     if (!item.originalPrice) return null;
-    const change = item.originalPrice - item.price;
-    const percentage = (change / item.originalPrice) * 100;
-    return { change, percentage };
+    const change = ((item.originalPrice - item.price) / item.originalPrice) * 100;
+    return Math.round(change);
   };
 
   const handleBookingClick = (item: PriceComparisonItem) => {
     // Track affiliate click
-    console.log('Affiliate click tracked:', {
-      platform: item.platform,
-      affiliateId: item.affiliateId,
-      price: item.price,
-      commission: item.commission,
-      timestamp: new Date().toISOString()
-    });
-
-    // Open booking URL in new tab
+    console.log(`Affiliate click: ${item.affiliateId}`);
+    
+    // In a real app, you would track this with analytics
+    // analytics.track('affiliate_click', {
+    //   platform: item.platform,
+    //   affiliate_id: item.affiliateId,
+    //   price: item.price,
+    //   commission: item.commission
+    // });
+    
+    // Open booking URL
     window.open(item.bookingUrl, '_blank');
   };
 
@@ -202,106 +204,73 @@ const PriceComparison: React.FC<PriceComparisonProps> = ({
     );
   };
 
-  const bestDeal = getBestDeal();
+  const formatPrice = (price: number, currency: string) => {
+    return `${currency === 'USD' ? '$' : '₹'}${price.toLocaleString()}`;
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   if (isLoading) {
     return (
-      <div className="bg-white/10 rounded-lg p-8 text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-        <p className="text-gray-300">Comparing prices across platforms...</p>
+      <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-xl border border-blue-100 p-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full border-b-2 border-blue-600 w-12 h-12 mx-auto mb-4"></div>
+          <h3 className="text-xl font-bold text-slate-800 mb-2">Loading Price Comparison</h3>
+          <p className="text-slate-600">Finding the best deals for you...</p>
+        </div>
       </div>
     );
   }
 
+  const bestDeal = getBestDeal();
+
   return (
-    <div className="space-y-6">
+    <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-xl border border-blue-100 p-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-bold">Price Comparison</h2>
-          <p className="text-gray-300">
-            {type === 'flight' ? 'Flight' : 'Hotel'} prices for {destination}
+          <h2 className="text-3xl font-bold text-slate-800 mb-2">
+            Price Comparison for {destination}
+          </h2>
+          <p className="text-slate-600 font-medium">
+            {type === 'flight' ? 'Flight' : 'Hotel'} • {dates.start} {dates.end && `- ${dates.end}`}
           </p>
         </div>
-        <button
-          onClick={() => setShowAffiliateInfo(!showAffiliateInfo)}
-          className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors"
-        >
-          <DollarSign className="w-4 h-4" />
-          <span>Affiliate Info</span>
-        </button>
-      </div>
-
-      {/* Affiliate Information */}
-      {showAffiliateInfo && (
-        <div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30 rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4">Affiliate Partnership</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div>
-              <p className="text-gray-300 mb-2">Commission Rates:</p>
-              <ul className="space-y-1 text-gray-300">
-                <li>• Booking.com: 8.5%</li>
-                <li>• Expedia: 7.2%</li>
-                <li>• Agoda: 9.1%</li>
-                <li>• Hotels.com: 6.8%</li>
-                <li>• Trip.com: 8.9%</li>
-              </ul>
-            </div>
-            <div>
-              <p className="text-gray-300 mb-2">Benefits:</p>
-              <ul className="space-y-1 text-gray-300">
-                <li>• No extra cost to you</li>
-                <li>• Same prices as direct booking</li>
-                <li>• Supports SafarBot development</li>
-                <li>• Exclusive member benefits</li>
-              </ul>
-            </div>
-            <div>
-              <p className="text-gray-300 mb-2">How it works:</p>
-              <ul className="space-y-1 text-gray-300">
-                <li>• Click any booking link</li>
-                <li>• Complete your booking</li>
-                <li>• We earn a small commission</li>
-                <li>• You get the same price</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Best Deal Highlight */}
-      {bestDeal && (
-        <div className="bg-gradient-to-r from-green-600/20 to-emerald-600/20 border border-green-500/30 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <CheckCircle className="w-6 h-6 text-green-400" />
-              <div>
-                <p className="font-semibold text-green-400">Best Deal Found!</p>
-                <p className="text-sm text-gray-300">
-                  {bestDeal.platform} - ${bestDeal.price} ({bestDeal.commission}% commission)
-                </p>
+        
+        {bestDeal && (
+          <div className="mt-4 lg:mt-0">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <TrendingDown className="w-5 h-5 text-blue-600" />
+                <span className="text-sm font-bold text-blue-700">Best Deal</span>
+              </div>
+              <div className="text-2xl font-bold text-slate-800">
+                {formatPrice(bestDeal.price, bestDeal.currency)}
+              </div>
+              <div className="text-sm text-slate-600 font-medium">
+                on {bestDeal.platform}
               </div>
             </div>
-            <button
-              onClick={() => handleBookingClick(bestDeal)}
-              className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
-            >
-              <ExternalLink className="w-4 h-4" />
-              <span>Book Now</span>
-            </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Filters and Sorting */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white/10 rounded-lg p-4">
+      {/* Filters and Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
-            <Filter className="w-4 h-4 text-gray-300" />
+            <Filter className="w-5 h-5 text-slate-600" />
             <select
               value={filterPlatform}
               onChange={(e) => setFilterPlatform(e.target.value)}
-              className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white"
+              className="px-3 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-700 font-medium"
             >
               <option value="all">All Platforms</option>
               <option value="booking">Booking.com</option>
@@ -312,170 +281,185 @@ const PriceComparison: React.FC<PriceComparisonProps> = ({
             </select>
           </div>
         </div>
+
         <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-300">Sort by:</span>
-          {[
-            { key: 'price', label: 'Price' },
-            { key: 'rating', label: 'Rating' },
-            { key: 'commission', label: 'Commission' }
-          ].map((sort) => (
-            <button
-              key={sort.key}
-              onClick={() => handleSort(sort.key as any)}
-              className={`flex items-center space-x-1 px-3 py-1 rounded-lg transition-colors ${
-                sortBy === sort.key
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
+          <span className="text-sm font-bold text-slate-700">Sort by:</span>
+          <button
+            onClick={() => handleSort('price')}
+            className={`px-3 py-2 rounded-lg font-medium transition-colors ${
+              sortBy === 'price' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-white text-slate-700 border border-blue-200 hover:bg-blue-50'
+            }`}
+          >
+            Price {sortBy === 'price' && (sortOrder === 'asc' ? <SortAsc className="w-4 h-4 inline ml-1" /> : <SortDesc className="w-4 h-4 inline ml-1" />)}
+          </button>
+          <button
+            onClick={() => handleSort('rating')}
+            className={`px-3 py-2 rounded-lg font-medium transition-colors ${
+              sortBy === 'rating' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-white text-slate-700 border border-blue-200 hover:bg-blue-50'
+            }`}
+          >
+            Rating {sortBy === 'rating' && (sortOrder === 'asc' ? <SortAsc className="w-4 h-4 inline ml-1" /> : <SortDesc className="w-4 h-4 inline ml-1" />)}
+          </button>
+        </div>
+      </div>
+
+      {/* Comparison Table */}
+      <div className="space-y-4">
+        {filteredData.map((item) => {
+          const priceChange = getPriceChange(item);
+          return (
+            <div
+              key={item.id}
+              className={`bg-white border rounded-xl p-6 transition-all duration-200 hover:shadow-lg ${
+                item.isRecommended 
+                  ? 'border-blue-200 shadow-md' 
+                  : 'border-slate-200 hover:border-blue-200'
               }`}
             >
-              <span>{sort.label}</span>
-              {sortBy === sort.key && (
-                sortOrder === 'asc' ? <SortAsc className="w-3 h-3" /> : <SortDesc className="w-3 h-3" />
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Price Comparison Table */}
-      <div className="bg-white/10 rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-white/5">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Platform
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Price
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Rating
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Commission
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Features
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Last Updated
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/10">
-              {filteredData.map((item) => {
-                const priceChange = getPriceChange(item);
-                return (
-                  <tr key={item.id} className={`hover:bg-white/5 ${item.isRecommended ? 'bg-purple-600/10' : ''}`}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-3">
-                        <div className="flex-shrink-0">
-                          <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                            {item.platform.charAt(0)}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium">{item.platform}</div>
-                          {item.isRecommended && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
-                              Recommended
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm">
-                        <div className="font-medium">${item.price}</div>
-                        {priceChange && (
-                          <div className="flex items-center space-x-1 text-xs text-green-400">
-                            <TrendingDown className="w-3 h-3" />
-                            <span>Save ${priceChange.change} ({priceChange.percentage.toFixed(1)}%)</span>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {item.rating ? (
-                        <div className="flex items-center space-x-1">
-                          <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                          <span className="text-sm">{item.rating}</span>
-                          <span className="text-xs text-gray-400">({item.reviews})</span>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-gray-400">N/A</span>
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                {/* Platform Info */}
+                <div className="flex items-start space-x-4 mb-4 lg:mb-0">
+                  <div className="flex-shrink-0">
+                    <div className={`w-16 h-16 rounded-xl flex items-center justify-center ${
+                      item.isRecommended ? 'bg-blue-100' : 'bg-slate-100'
+                    }`}>
+                      <span className={`text-lg font-bold ${
+                        item.isRecommended ? 'text-blue-600' : 'text-slate-600'
+                      }`}>
+                        {item.platform.charAt(0)}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <h3 className="text-xl font-bold text-slate-800">{item.platform}</h3>
+                      {item.isRecommended && (
+                        <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-bold">
+                          RECOMMENDED
+                        </span>
                       )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm">
-                        <span className="font-medium">{item.commission}%</span>
-                        <div className="text-xs text-gray-400">
-                          ${((item.price * item.commission) / 100).toFixed(2)}
+                    </div>
+                    
+                    {item.rating && (
+                      <div className="flex items-center space-x-2 mb-2">
+                        <div className="flex items-center space-x-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-4 h-4 ${
+                                i < Math.floor(item.rating!) 
+                                  ? 'text-yellow-400 fill-current' 
+                                  : 'text-slate-300'
+                              }`}
+                            />
+                          ))}
                         </div>
+                        <span className="text-sm text-slate-600 font-medium">
+                          {item.rating} ({item.reviews?.toLocaleString()} reviews)
+                        </span>
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-wrap gap-1">
-                        {item.features.slice(0, 2).map((feature, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800"
-                          >
-                            {feature}
-                          </span>
-                        ))}
-                        {item.features.length > 2 && (
-                          <span className="text-xs text-gray-400">
-                            +{item.features.length - 2} more
-                          </span>
-                        )}
+                    )}
+                    
+                    <div className="flex flex-wrap gap-2">
+                      {item.features.map((feature, index) => (
+                        <span
+                          key={index}
+                          className="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full"
+                        >
+                          {feature}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Price and Actions */}
+                <div className="flex flex-col items-end space-y-4">
+                  <div className="text-right">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <span className="text-3xl font-bold text-slate-800">
+                        {formatPrice(item.price, item.currency)}
+                      </span>
+                      {priceChange && (
+                        <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold">
+                          -{priceChange}%
+                        </span>
+                      )}
+                    </div>
+                    
+                    {item.originalPrice && (
+                      <div className="text-sm text-slate-500 line-through">
+                        {formatPrice(item.originalPrice, item.currency)}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      {new Date(item.lastUpdated).toLocaleTimeString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => handleBookingClick(item)}
-                        className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 px-3 py-2 rounded-lg transition-colors"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                        <span className="text-sm">Book</span>
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                    )}
+                    
+                    <div className="text-xs text-slate-500 font-medium">
+                      Updated {formatDate(item.lastUpdated)}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col space-y-2">
+                    <button
+                      onClick={() => handleBookingClick(item)}
+                      className={`px-6 py-3 rounded-lg font-bold transition-colors flex items-center justify-center space-x-2 ${
+                        item.isRecommended
+                          ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                          : 'bg-white hover:bg-blue-50 text-slate-700 border border-blue-200'
+                      }`}
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      <span>Book Now</span>
+                    </button>
+                    
+                    <div className="text-xs text-slate-500 text-center">
+                      Commission: {item.commission}%
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Summary */}
-      <div className="bg-white/10 rounded-lg p-6">
-        <h3 className="text-lg font-semibold mb-4">Price Summary</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-green-400">${Math.min(...comparisonData.map(d => d.price))}</p>
-            <p className="text-sm text-gray-300">Lowest Price</p>
+      {/* Affiliate Info Toggle */}
+      <div className="mt-8 pt-6 border-t border-blue-200">
+        <button
+          onClick={() => setShowAffiliateInfo(!showAffiliateInfo)}
+          className="text-blue-600 hover:text-blue-700 font-bold text-sm flex items-center space-x-1"
+        >
+          <span>{showAffiliateInfo ? 'Hide' : 'Show'} Affiliate Information</span>
+          <DollarSign className="w-4 h-4" />
+        </button>
+        
+        {showAffiliateInfo && (
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+            <h4 className="text-lg font-bold text-slate-800 mb-2">How Our Affiliate Program Works</h4>
+            <p className="text-sm text-slate-700 mb-3">
+              We partner with leading travel platforms to bring you the best deals. When you book through our links, 
+              we earn a small commission at no extra cost to you. This helps us keep SafarBot free and continue improving our services.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <span className="text-slate-700 font-medium">No extra cost to you</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <span className="text-slate-700 font-medium">Same prices as direct booking</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <span className="text-slate-700 font-medium">Helps support SafarBot</span>
+              </div>
+            </div>
           </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-red-400">${Math.max(...comparisonData.map(d => d.price))}</p>
-            <p className="text-sm text-gray-300">Highest Price</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-blue-400">${(comparisonData.reduce((sum, d) => sum + d.price, 0) / comparisonData.length).toFixed(0)}</p>
-            <p className="text-sm text-gray-300">Average Price</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-purple-400">${(comparisonData.reduce((sum, d) => sum + (d.price * d.commission / 100), 0)).toFixed(2)}</p>
-            <p className="text-sm text-gray-300">Total Commission</p>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

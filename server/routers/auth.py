@@ -6,7 +6,9 @@ from datetime import datetime
 from bson import ObjectId
 
 from services.auth_service import AuthService
+from services.otp_service import OTPService
 from database import get_collection, USERS_COLLECTION
+from mongo_models import User
 
 router = APIRouter()
 security = HTTPBearer()
@@ -58,6 +60,13 @@ class UserUpdateRequest(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     phone: Optional[str] = None
+
+class OTPVerificationRequest(BaseModel):
+    email: EmailStr
+    otp: str
+
+class ResendOTPRequest(BaseModel):
+    email: EmailStr
 
 # Dependency to get current user
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
@@ -141,8 +150,16 @@ async def signup(user_data: UserSignupRequest):
         result = await collection.insert_one(user_dict)
         user_dict["_id"] = result.inserted_id
         
+        # Send verification OTP
+        user_name = f"{user_data.first_name} {user_data.last_name}"
+        otp_result = await OTPService.send_verification_otp(user_data.email, user_name)
+        
+        if not otp_result["success"]:
+            # Log the error but don't fail the registration
+            print(f"Warning: Failed to send verification OTP: {otp_result['message']}")
+        
         return {
-            "message": "User registered successfully. Please check your email for verification.",
+            "message": "User registered successfully. Please check your email for verification OTP.",
             "user_id": str(result.inserted_id)
         }
         
@@ -288,18 +305,18 @@ async def refresh_token(refresh_token: str):
         )
 
 @router.get("/me", response_model=UserResponse)
-async def get_current_user_info(current_user: dict = Depends(get_current_user)):
+async def get_current_user_info(current_user: User = Depends(get_current_user)):
     """Get current user information."""
     return UserResponse(
-        id=str(current_user["_id"]),
-        first_name=current_user["first_name"],
-        last_name=current_user["last_name"],
-        email=current_user["email"],
-        phone=current_user.get("phone"),
-        is_email_verified=current_user.get("is_email_verified", False),
-        status=current_user.get("status", "pending"),
-        created_at=current_user["created_at"],
-        updated_at=current_user["updated_at"]
+        id=str(current_user.id),
+        first_name=current_user.first_name,
+        last_name=current_user.last_name,
+        email=current_user.email,
+        phone=current_user.phone,
+        is_email_verified=current_user.is_email_verified,
+        status=current_user.status,
+        created_at=current_user.created_at,
+        updated_at=current_user.updated_at
     )
 
 @router.put("/me", response_model=UserResponse)
@@ -445,4 +462,119 @@ async def reset_password(request: PasswordResetConfirmRequest):
 async def logout(current_user: dict = Depends(get_current_user)):
     """Logout user (client should discard tokens)."""
     # In a more advanced implementation, you might want to blacklist the token
-    return {"message": "Logged out successfully"} 
+    return {"message": "Logged out successfully"}
+
+@router.post("/send-verification-otp")
+async def send_verification_otp(request: ResendOTPRequest):
+    """Send OTP for email verification."""
+    try:
+        # Check if user exists
+        collection = get_collection(USERS_COLLECTION)
+        if collection is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Authentication service is temporarily unavailable. Please try again later."
+            )
+        
+        user_doc = await collection.find_one({"email": request.email})
+        if not user_doc:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found. Please complete signup first."
+            )
+        
+        # Check if email is already verified
+        if user_doc.get("is_email_verified", False):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email is already verified"
+            )
+        
+        # Get user name for email
+        user_name = f"{user_doc.get('first_name', '')} {user_doc.get('last_name', '')}".strip()
+        if not user_name:
+            user_name = "User"
+        
+        # Send OTP
+        result = await OTPService.send_verification_otp(request.email, user_name)
+        
+        if result["success"]:
+            return {"message": "Verification OTP sent successfully"}
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=result["message"]
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to send verification OTP: {str(e)}"
+        )
+
+@router.post("/verify-otp")
+async def verify_otp(request: OTPVerificationRequest):
+    """Verify OTP for email verification."""
+    try:
+        result = await OTPService.verify_otp(request.email, request.otp)
+        
+        if result["success"]:
+            return {"message": "Email verified successfully", "is_verified": True}
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=result["message"]
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"OTP verification failed: {str(e)}"
+        )
+
+@router.post("/resend-otp")
+async def resend_otp(request: ResendOTPRequest):
+    """Resend OTP for email verification."""
+    try:
+        # Check if user exists
+        collection = get_collection(USERS_COLLECTION)
+        if collection is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Authentication service is temporarily unavailable. Please try again later."
+            )
+        
+        user_doc = await collection.find_one({"email": request.email})
+        if not user_doc:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        # Get user name for email
+        user_name = f"{user_doc.get('first_name', '')} {user_doc.get('last_name', '')}".strip()
+        if not user_name:
+            user_name = "User"
+        
+        # Resend OTP
+        result = await OTPService.resend_otp(request.email, user_name)
+        
+        if result["success"]:
+            return {"message": "OTP resent successfully"}
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=result["message"]
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to resend OTP: {str(e)}"
+        ) 

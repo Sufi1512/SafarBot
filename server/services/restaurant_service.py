@@ -1,156 +1,124 @@
-import json
-import os
-from typing import List, Dict, Any, Optional
 import logging
+from typing import List, Dict, Any
+import asyncio
 from models import RestaurantInfo
 
 logger = logging.getLogger(__name__)
 
 class RestaurantService:
+    """Service for restaurant recommendations and data"""
+    
     def __init__(self):
-        self.data_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'data')
-        
+        self.logger = logging.getLogger(__name__)
+    
     async def get_recommendations(
-        self,
-        location: str,
-        cuisine: Optional[str] = None,
-        budget: Optional[str] = None,
-        rating: Optional[float] = None
+        self, 
+        location: str, 
+        cuisine: str = None, 
+        budget: str = None, 
+        rating: float = None
     ) -> List[RestaurantInfo]:
         """
         Get restaurant recommendations for a location
         """
         try:
-            # Load mock restaurant data
-            restaurants_data = await self._load_restaurant_data(location.lower())
+            self.logger.info(f"Getting restaurant recommendations for {location}")
             
-            # Apply filters
-            if cuisine:
-                restaurants_data = self._filter_by_cuisine(restaurants_data, cuisine)
-            
-            if budget:
-                restaurants_data = self._filter_by_budget(restaurants_data, budget)
-            
-            if rating:
-                restaurants_data = self._filter_by_rating(restaurants_data, rating)
-            
-            # Convert to RestaurantInfo objects
-            restaurants = []
-            for restaurant_data in restaurants_data[:10]:  # Limit to 10 results
-                restaurant = RestaurantInfo(
-                    name=restaurant_data.get('name', ''),
-                    cuisine=restaurant_data.get('cuisine', ''),
-                    address=restaurant_data.get('address', ''),
-                    price_range=restaurant_data.get('price_range', ''),
-                    rating=restaurant_data.get('rating', 0.0),
-                    specialties=restaurant_data.get('specialties', []),
-                    description=restaurant_data.get('description', '')
+            # Mock data for now - in production, this would integrate with restaurant APIs
+            mock_restaurants = [
+                RestaurantInfo(
+                    name="The Local Bistro",
+                    cuisine="International",
+                    rating=4.5,
+                    price_range="$$",
+                    address="123 Main St, " + location,
+                    phone="+1-555-0123",
+                    website="https://example.com",
+                    description="A cozy local bistro serving international cuisine"
+                ),
+                RestaurantInfo(
+                    name="Spice Garden",
+                    cuisine="Indian",
+                    rating=4.3,
+                    price_range="$$",
+                    address="456 Oak Ave, " + location,
+                    phone="+1-555-0456",
+                    website="https://example.com",
+                    description="Authentic Indian flavors in a modern setting"
+                ),
+                RestaurantInfo(
+                    name="Pizza Corner",
+                    cuisine="Italian",
+                    rating=4.2,
+                    price_range="$",
+                    address="789 Pine St, " + location,
+                    phone="+1-555-0789",
+                    website="https://example.com",
+                    description="Traditional Italian pizza and pasta"
                 )
-                restaurants.append(restaurant)
+            ]
             
-            return restaurants
+            # Filter by cuisine if specified
+            if cuisine:
+                mock_restaurants = [r for r in mock_restaurants if cuisine.lower() in r.cuisine.lower()]
+            
+            # Filter by budget if specified
+            if budget:
+                mock_restaurants = [r for r in mock_restaurants if r.price_range == budget]
+            
+            # Filter by rating if specified
+            if rating:
+                mock_restaurants = [r for r in mock_restaurants if r.rating >= rating]
+            
+            return mock_restaurants
             
         except Exception as e:
-            logger.error(f"Error getting restaurant recommendations: {str(e)}")
-            return []
+            self.logger.error(f"Error getting restaurant recommendations: {str(e)}")
+            raise e
     
     async def get_popular_restaurants(self, location: str) -> List[RestaurantInfo]:
         """
         Get popular restaurants for a location
         """
         try:
-            restaurants_data = await self._load_restaurant_data(location.lower())
+            self.logger.info(f"Getting popular restaurants for {location}")
             
-            # Sort by rating and get top 5
-            popular_restaurants = sorted(restaurants_data, key=lambda x: x.get('rating', 0), reverse=True)[:5]
-            
-            restaurants = []
-            for restaurant_data in popular_restaurants:
-                restaurant = RestaurantInfo(
-                    name=restaurant_data.get('name', ''),
-                    cuisine=restaurant_data.get('cuisine', ''),
-                    address=restaurant_data.get('address', ''),
-                    price_range=restaurant_data.get('price_range', ''),
-                    rating=restaurant_data.get('rating', 0.0),
-                    specialties=restaurant_data.get('specialties', []),
-                    description=restaurant_data.get('description', '')
+            # Mock data for popular restaurants
+            popular_restaurants = [
+                RestaurantInfo(
+                    name="The Signature Restaurant",
+                    cuisine="Fine Dining",
+                    rating=4.8,
+                    price_range="$$$",
+                    address="100 Premium Blvd, " + location,
+                    phone="+1-555-0001",
+                    website="https://example.com",
+                    description="Award-winning fine dining experience"
+                ),
+                RestaurantInfo(
+                    name="Street Food Central",
+                    cuisine="Street Food",
+                    rating=4.6,
+                    price_range="$",
+                    address="200 Market St, " + location,
+                    phone="+1-555-0002",
+                    website="https://example.com",
+                    description="Authentic street food from around the world"
+                ),
+                RestaurantInfo(
+                    name="Ocean View Cafe",
+                    cuisine="Seafood",
+                    rating=4.4,
+                    price_range="$$",
+                    address="300 Harbor Dr, " + location,
+                    phone="+1-555-0003",
+                    website="https://example.com",
+                    description="Fresh seafood with ocean views"
                 )
-                restaurants.append(restaurant)
+            ]
             
-            return restaurants
+            return popular_restaurants
             
         except Exception as e:
-            logger.error(f"Error getting popular restaurants: {str(e)}")
-            return []
-    
-    async def _load_restaurant_data(self, location: str) -> List[Dict[str, Any]]:
-        """
-        Load restaurant data from JSON file
-        """
-        try:
-            file_path = os.path.join(self.data_dir, f'restaurants_{location}.json')
-            if os.path.exists(file_path):
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            else:
-                # Return default data if file doesn't exist
-                return self._get_default_restaurants()
-        except Exception as e:
-            logger.error(f"Error loading restaurant data: {str(e)}")
-            return self._get_default_restaurants()
-    
-    def _filter_by_cuisine(self, restaurants: List[Dict[str, Any]], cuisine: str) -> List[Dict[str, Any]]:
-        """
-        Filter restaurants by cuisine
-        """
-        return [restaurant for restaurant in restaurants 
-                if cuisine.lower() in restaurant.get('cuisine', '').lower()]
-    
-    def _filter_by_budget(self, restaurants: List[Dict[str, Any]], budget: str) -> List[Dict[str, Any]]:
-        """
-        Filter restaurants by budget
-        """
-        budget_mapping = {
-            'budget': ['$', '$$'],
-            'mid-range': ['$$', '$$$'],
-            'luxury': ['$$$', '$$$$']
-        }
-        
-        if budget in budget_mapping:
-            allowed_ranges = budget_mapping[budget]
-            return [restaurant for restaurant in restaurants 
-                    if restaurant.get('price_range') in allowed_ranges]
-        
-        return restaurants
-    
-    def _filter_by_rating(self, restaurants: List[Dict[str, Any]], min_rating: float) -> List[Dict[str, Any]]:
-        """
-        Filter restaurants by minimum rating
-        """
-        return [restaurant for restaurant in restaurants 
-                if restaurant.get('rating', 0) >= min_rating]
-    
-    def _get_default_restaurants(self) -> List[Dict[str, Any]]:
-        """
-        Return default restaurant data
-        """
-        return [
-            {
-                "name": "La Trattoria",
-                "cuisine": "Italian",
-                "address": "789 Pine Street",
-                "price_range": "$$",
-                "rating": 4.2,
-                "specialties": ["Pasta", "Pizza", "Wine"],
-                "description": "Authentic Italian cuisine in a cozy atmosphere"
-            },
-            {
-                "name": "Sakura Sushi",
-                "cuisine": "Japanese",
-                "address": "321 Elm Street",
-                "price_range": "$$$",
-                "rating": 4.6,
-                "specialties": ["Sushi", "Sashimi", "Tempura"],
-                "description": "Premium Japanese dining experience"
-            }
-        ] 
+            self.logger.error(f"Error getting popular restaurants: {str(e)}")
+            raise e

@@ -1,39 +1,130 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { AuthProvider } from './contexts/AuthContext';
+import ModernHeader from './components/ModernHeader';
+import Footer from './components/Footer';
+import ErrorBoundary from './components/ErrorBoundary';
 import HomePage from './pages/HomePage';
-import ResultsPage from './pages/ResultsPage';
 import FlightBookingPage from './pages/FlightBookingPage';
 import HotelBookingPage from './pages/HotelBookingPage';
-import BookingConfirmationPage from './pages/BookingConfirmationPage';
 import BookingOptionsPage from './pages/BookingOptionsPage';
+import BookingConfirmationPage from './pages/BookingConfirmationPage';
 import UserDashboard from './pages/UserDashboard';
-import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import ChatWidget from './components/ChatWidget';
-import { AuthProvider } from './contexts/AuthContext';
-import './App.css';
+import ProfilePage from './pages/ProfilePage';
+import SettingsPage from './pages/SettingsPage';
+import SearchPage from './pages/SearchPage';
+import DatePickerDemo from './pages/DatePickerDemo';
+import ResultsPage from './pages/ResultsPage';
+import TripPlannerPage from './pages/TripPlannerPage';
+import ItineraryPage from './pages/ItineraryPage';
+import ItineraryGenerationPage from './pages/ItineraryGenerationPage';
+import EditItineraryPage from './pages/EditItineraryPage';
+import PackagesPage from './pages/PackagesPage';
+import CreateBlogPage from './pages/CreateBlogPage';
+import CreateAlbumPage from './pages/CreateAlbumPage';
+import CreateGuidePage from './pages/CreateGuidePage';
+import PublicItineraryPage from './pages/PublicItineraryPage';
+import ItineraryRedirectPage from './pages/ItineraryRedirectPage';
+import SavedItineraryViewPage from './pages/SavedItineraryViewPage';
+import OTPTestPage from './pages/OTPTestPage';
+import NotFoundPage from './pages/NotFoundPage';
+import ServerErrorPage from './pages/ServerErrorPage';
+import OfflinePage from './pages/OfflinePage';
+
+
+// Component to conditionally render ModernHeader
+const ConditionalHeader: React.FC = () => {
+  const location = useLocation();
+  
+  // Hide ModernHeader on ResultsPage, ItineraryPage, ItineraryGenerationPage, EditItineraryPage, Create pages, Public Itinerary, OTP Test, and Error pages
+  const hideHeader = location.pathname === '/results' || 
+                     location.pathname === '/itinerary' || 
+                     location.pathname.startsWith('/itinerary/') ||
+                     location.pathname.startsWith('/saved-itinerary/') ||
+                     location.pathname === '/itinerary-generation' || 
+                     location.pathname === '/edit-itinerary' ||
+                     location.pathname === '/create-blog' ||
+                     location.pathname === '/create-album' ||
+                     location.pathname === '/create-guide' ||
+                     location.pathname.startsWith('/public/itinerary/') ||
+                     location.pathname === '/otp-test' ||
+                     location.pathname === '/404' ||
+                     location.pathname === '/500' ||
+                     location.pathname === '/offline' ||
+                     location.pathname === '/not-found';
+  
+  return hideHeader ? null : <ModernHeader />;
+};
+
+// Component to conditionally render Footer
+const ConditionalFooter: React.FC = () => {
+  const location = useLocation();
+  
+  // Don't render Footer on dashboard page, create pages, OTP test, and error pages (they have their own footer)
+  if (location.pathname === '/dashboard' || 
+      location.pathname === '/create-blog' ||
+      location.pathname === '/create-album' ||
+      location.pathname === '/create-guide' ||
+      location.pathname === '/otp-test' ||
+      location.pathname === '/404' ||
+      location.pathname === '/500' ||
+      location.pathname === '/offline' ||
+      location.pathname === '/not-found') {
+    return null;
+  }
+  
+  return <Footer />;
+};
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <div className="App min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-x-hidden">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/results" element={<ResultsPage />} />
-            <Route path="/flights" element={<FlightBookingPage />} />
-            <Route path="/hotels" element={<HotelBookingPage />} />
-            <Route path="/booking-confirmation" element={<BookingConfirmationPage />} />
-            <Route path="/booking-options/:bookingToken" element={<BookingOptionsPage />} />
-            <Route path="/dashboard" element={<UserDashboard />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          </Routes>
-          <ChatWidget />
-        </div>
-      </Router>
-    </AuthProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <AuthProvider>
+          <Router>
+            <div className="min-h-screen w-full bg-secondary-50 dark:bg-dark-bg text-secondary-900 dark:text-dark-text">
+              <ConditionalHeader />
+              <main className="mt-0 pt-0 w-full">
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/flights" element={<FlightBookingPage />} />
+                  <Route path="/hotels" element={<HotelBookingPage />} />
+                  <Route path="/packages" element={<PackagesPage />} />
+                  <Route path="/dashboard" element={<UserDashboard />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/search" element={<SearchPage />} />
+                  <Route path="/datepicker-demo" element={<DatePickerDemo />} />
+                  <Route path="/booking-options/:bookingToken" element={<BookingOptionsPage />} />
+                  <Route path="/booking-confirmation" element={<BookingConfirmationPage />} />
+                  <Route path="/results" element={<ResultsPage />} />
+                  <Route path="/itinerary" element={<ItineraryPage />} />
+                  <Route path="/saved-itinerary/:id" element={<SavedItineraryViewPage />} />
+                  <Route path="/itinerary/:id" element={<ItineraryRedirectPage />} />
+                  <Route path="/itinerary-generation" element={<ItineraryGenerationPage />} />
+                  <Route path="/edit-itinerary" element={<EditItineraryPage />} />
+                  <Route path="/trip-planner" element={<TripPlannerPage />} />
+                  <Route path="/create-blog" element={<CreateBlogPage />} />
+                  <Route path="/create-album" element={<CreateAlbumPage />} />
+                  <Route path="/create-guide" element={<CreateGuidePage />} />
+                  <Route path="/public/itinerary/:shareToken" element={<PublicItineraryPage />} />
+                  <Route path="/otp-test" element={<OTPTestPage />} />
+                  
+                  {/* Error Pages */}
+                  <Route path="/404" element={<NotFoundPage />} />
+                  <Route path="/500" element={<ServerErrorPage />} />
+                  <Route path="/offline" element={<OfflinePage />} />
+                  
+                  {/* 404 Catch-all route - must be last */}
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </main>
+              <ConditionalFooter />
+            </div>
+          </Router>
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

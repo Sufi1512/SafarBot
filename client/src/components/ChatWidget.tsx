@@ -98,7 +98,7 @@ const ChatWidget: React.FC = () => {
         timestamp: new Date(),
         isError: true
       };
-      
+
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsTyping(false);
@@ -112,31 +112,23 @@ const ChatWidget: React.FC = () => {
     }
   };
 
-  // Function to render markdown-like text with basic formatting
   const renderMarkdownText = (text: string) => {
-    // Convert **bold** to <strong>
-    let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
-    // Convert *italic* to <em>
-    formattedText = formattedText.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    
-    // Convert bullet points (•) 
-    formattedText = formattedText.replace(/^\s*\*\s+(.+)$/gm, '• $1');
-    
-    return formattedText;
+    // Simple markdown rendering for bold, italic, and links
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-700 underline">$1</a>')
+      .replace(/\n/g, '<br>');
   };
 
   const clearChat = () => {
-    setMessages([
-      {
-        id: '1',
-        text: '🌍 Hello! I\'m SafarBot, your AI travel assistant powered by Google Gemini 2.5 Flash.\n\nI can help you with:\n✈️ Planning personalized itineraries\n🏨 Finding accommodations\n🍽️ Restaurant recommendations\n🗺️ Travel tips and advice\n\nTo get started, try asking me something like:\n• "Plan a 3-day trip to Paris"\n• "Find hotels in Tokyo under $200"\n• "What are the best restaurants in Rome?"\n• "Give me travel tips for Thailand"\n\nWhat would you like to explore today?',
-        sender: 'bot',
-        timestamp: new Date()
-      }
-    ]);
+    setMessages([{
+      id: '1',
+      text: '🌍 Hello! I\'m SafarBot, your AI travel assistant powered by Google Gemini 2.5 Flash.\n\nI can help you with:\n✈️ Planning personalized itineraries\n🏨 Finding accommodations\n🍽️ Restaurant recommendations\n🗺️ Travel tips and advice\n\nTo get started, try asking me something like:\n• "Plan a 3-day trip to Paris"\n• "Find hotels in Tokyo under $200"\n• "What are the best restaurants in Rome?"\n• "Give me travel tips for Thailand"\n\nWhat would you like to explore today?',
+      sender: 'bot',
+      timestamp: new Date()
+    }]);
     setError(null);
-    // Note: conversationId stays the same to maintain session context
   };
 
   return (
@@ -144,7 +136,7 @@ const ChatWidget: React.FC = () => {
       {/* Chat Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 z-50 transform hover:scale-110 ${
+        className={`fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 z-50 transform hover:scale-110 ${
           isOpen ? 'rotate-180' : ''
         }`}
       >
@@ -164,11 +156,11 @@ const ChatWidget: React.FC = () => {
 
       {/* Chat Widget */}
       {isOpen && (
-        <div className={`fixed bottom-24 right-6 w-96 max-w-[calc(100vw-3rem)] bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col z-50 transform transition-all duration-300 ease-out ${
+        <div className={`fixed bottom-24 right-6 w-96 max-w-[calc(100vw-3rem)] bg-white rounded-2xl shadow-2xl border border-blue-100 flex flex-col z-50 transform transition-all duration-300 ease-out ${
           isMinimized ? 'h-16' : 'h-[600px] max-h-[calc(100vh-8rem)]'
         } animate-slide-up`}>
           {/* Header */}
-          <div className="bg-gradient-to-r from-primary-600 to-purple-600 text-white p-4 rounded-t-2xl">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-2xl">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="relative">
@@ -177,27 +169,27 @@ const ChatWidget: React.FC = () => {
                 </div>
                 <div>
                   <span className="font-bold text-lg">SafarBot</span>
-                  <p className="text-xs text-purple-100">AI Travel Assistant</p>
+                  <p className="text-xs text-blue-100">AI Travel Assistant</p>
                 </div>
               </div>
               <div className="flex items-center space-x-1">
                 <button
                   onClick={clearChat}
-                  className="text-white hover:text-purple-200 transition-colors p-1 rounded-full hover:bg-white/10 button-ripple"
+                  className="text-white hover:text-blue-200 transition-colors p-1 rounded-full hover:bg-white/10 button-ripple"
                   title="Clear Chat"
                 >
                   <RotateCcw className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setIsMinimized(!isMinimized)}
-                  className="text-white hover:text-purple-200 transition-colors p-1 rounded-full hover:bg-white/10 button-ripple"
+                  className="text-white hover:text-blue-200 transition-colors p-1 rounded-full hover:bg-white/10 button-ripple"
                   title={isMinimized ? 'Maximize' : 'Minimize'}
                 >
                   {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="text-white hover:text-purple-200 transition-colors p-1 rounded-full hover:bg-white/10 button-ripple"
+                  className="text-white hover:text-blue-200 transition-colors p-1 rounded-full hover:bg-white/10 button-ripple"
                   title="Close"
                 >
                   <X className="w-5 h-5" />
@@ -205,7 +197,7 @@ const ChatWidget: React.FC = () => {
               </div>
             </div>
             {!isMinimized && (
-              <div className="mt-2 text-sm text-purple-100 animate-fade-in">
+              <div className="mt-2 text-sm text-blue-100 animate-fade-in">
                 🌍 Ready to plan your next adventure? Ask me anything!
               </div>
             )}
@@ -214,7 +206,7 @@ const ChatWidget: React.FC = () => {
           {!isMinimized && (
             <>
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-gray-50 to-white chat-scroll">
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-blue-50 to-white chat-scroll">
                 {messages.map((message, index) => (
                   <div
                     key={message.id}
@@ -224,16 +216,16 @@ const ChatWidget: React.FC = () => {
                     <div
                       className={`max-w-[85%] px-4 py-3 rounded-2xl shadow-sm message-bubble transition-all duration-200 ${
                         message.sender === 'user'
-                          ? 'bg-gradient-to-r from-primary-600 to-purple-600 text-white ml-4'
+                          ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white ml-4'
                           : message.isError
                           ? 'bg-red-50 text-red-800 border border-red-200 mr-4'
-                          : 'bg-white text-gray-900 border border-gray-200 mr-4 hover:shadow-md'
+                          : 'bg-white text-slate-800 border border-blue-200 mr-4 hover:shadow-md'
                       }`}
                     >
                       <div className="flex items-start space-x-2">
                         {message.sender === 'bot' && (
                           <Bot className={`w-5 h-5 mt-0.5 flex-shrink-0 ${
-                            message.isError ? 'text-red-500' : 'text-primary-600'
+                            message.isError ? 'text-red-500' : 'text-blue-600'
                           }`} />
                         )}
                         <div className="flex-1">
@@ -245,8 +237,8 @@ const ChatWidget: React.FC = () => {
                           />
                           <p className={`text-xs mt-2 text-left ${
                             message.sender === 'user' 
-                              ? 'text-purple-200' 
-                              : 'text-gray-500'
+                              ? 'text-blue-200' 
+                              : 'text-slate-500'
                           }`}>
                             {message.timestamp.toLocaleTimeString([], { 
                               hour: '2-digit', 
@@ -255,7 +247,7 @@ const ChatWidget: React.FC = () => {
                           </p>
                         </div>
                         {message.sender === 'user' && (
-                          <User className="w-5 h-5 mt-0.5 flex-shrink-0 text-purple-200" />
+                          <User className="w-5 h-5 mt-0.5 flex-shrink-0 text-blue-200" />
                         )}
                       </div>
                     </div>
@@ -264,15 +256,15 @@ const ChatWidget: React.FC = () => {
                 
                 {isTyping && (
                   <div className="flex justify-start animate-fade-in">
-                    <div className="bg-white text-gray-900 px-4 py-3 rounded-2xl shadow-sm border border-gray-200 mr-4">
+                    <div className="bg-white text-slate-800 px-4 py-3 rounded-2xl shadow-sm border border-blue-200 mr-4">
                       <div className="flex items-center space-x-3">
-                        <Bot className="w-5 h-5 text-primary-600" />
+                        <Bot className="w-5 h-5 text-blue-600" />
                         <div className="flex space-x-1">
-                          <div className="w-2 h-2 bg-primary-600 rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-primary-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                          <div className="w-2 h-2 bg-primary-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                          <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                         </div>
-                        <span className="text-xs text-gray-500">SafarBot is thinking...</span>
+                        <span className="text-xs text-slate-500">SafarBot is thinking...</span>
                       </div>
                     </div>
                   </div>
@@ -282,7 +274,7 @@ const ChatWidget: React.FC = () => {
               </div>
 
               {/* Input */}
-              <div className="p-4 border-t border-gray-100 bg-white rounded-b-2xl">
+              <div className="p-4 border-t border-blue-100 bg-white rounded-b-2xl">
                 {error && (
                   <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2 animate-fade-in">
                     <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
@@ -305,19 +297,19 @@ const ChatWidget: React.FC = () => {
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder="Ask me about destinations, hotels, activities..."
-                    className="flex-1 px-4 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-gray-50 focus:bg-white transition-all duration-200"
+                    className="flex-1 px-4 py-3 border border-blue-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-blue-50 focus:bg-white transition-all duration-200"
                     disabled={isTyping}
                   />
                   <button
                     onClick={handleSendMessage}
                     disabled={!inputText.trim() || isTyping}
-                    className="px-6 py-3 bg-gradient-to-r from-primary-600 to-purple-600 text-white rounded-full hover:from-primary-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 shadow-lg button-ripple"
+                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 shadow-lg button-ripple"
                     title="Send message"
                   >
                     <Send className="w-5 h-5" />
                   </button>
                 </div>
-                <div className="mt-2 text-xs text-gray-400 text-center">
+                <div className="mt-2 text-xs text-slate-400 text-center">
                   Powered by Google Gemini 2.5 Flash ✨
                 </div>
               </div>

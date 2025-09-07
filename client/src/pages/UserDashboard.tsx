@@ -1,866 +1,495 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import { dashboardAPI, savedItineraryAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import ConfirmModal from '../components/ConfirmModal';
+import DashboardSidebar from '../components/DashboardSidebar';
+import DashboardStats from '../components/DashboardStats';
+import Footer from '../components/Footer';
+import ChatsPage from './dashboard/ChatsPage';
+import ExplorePage from './dashboard/ExplorePage';
+import SavedPage from './dashboard/SavedPage';
+import TripsPage from './dashboard/TripsPage';
+import UpdatesPage from './dashboard/UpdatesPage';
+import InspirationPage from './dashboard/InspirationPage';
+import CreatePage from './dashboard/CreatePage';
 import { 
-  User, 
-  Calendar, 
-  MapPin, 
-  DollarSign, 
-  Bell, 
-  
-  Settings, 
-  LogOut, 
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  Clock,
-  Star,
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
-  Plane,
-  Menu,
-  X
+  CalendarDays, 
+  Plane
 } from 'lucide-react';
-import { alertsAPI } from '../services/api';
 
-interface SavedTrip {
-  id: string;
-  destination: string;
-  startDate: string;
-  endDate: string;
-  budget: number;
-  status: 'planned' | 'booked' | 'completed' | 'cancelled';
-  totalCost?: number;
-  imageUrl?: string;
-  createdAt: string;
-}
-
-interface PriceAlert {
-  id: string;
-  destination: string;
-  current_price: number;
-  target_price: number;
-  alert_type: 'flight' | 'hotel';
-  status: 'active' | 'inactive' | 'triggered';
-  is_active: boolean;
-  created_at: string;
-  last_checked: string;
-  next_check: string;
-  check_in_date?: string;
-  check_out_date?: string;
-  departure_date?: string;
-  return_date?: string;
-  passengers?: number;
-  guests?: number;
-}
-
-interface UserProfile {
-  name: string;
-  email: string;
-  phone?: string;
-  preferences: {
-    budgetRange: string;
-    travelStyle: string[];
-    preferredAirlines: string[];
-    preferredHotels: string[];
+interface DashboardData {
+  user_stats: {
+    total_bookings: number;
+    total_spent: number;
+    confirmed_bookings: number;
+    pending_bookings: number;
+    cancelled_bookings: number;
+    flight_bookings: number;
+    hotel_bookings: number;
+    upcoming_trips: number;
+    loyalty_points: number;
+    loyalty_tier: string;
   };
-  stats: {
-    totalTrips: number;
-    totalSpent: number;
-    averageRating: number;
-    favoriteDestinations: string[];
+  recent_bookings: Array<{
+    id: string;
+    type: string;
+    status: string;
+    destination: string;
+    departure_date: string;
+    return_date?: string;
+    total_cost: number;
+  }>;
+  upcoming_trips: Array<{
+    id: string;
+    destination: string;
+    departure_date: string;
+    return_date?: string;
+    type: string;
+  }>;
+  saved_itineraries: Array<{
+    id: string;
+    title: string;
+    destination: string;
+    country: string;
+    city: string;
+    duration_days: number;
+    budget?: number;
+    total_estimated_cost?: number;
+    travel_style: string[];
+    interests: string[];
+    is_favorite: boolean;
+    status: string;
+    cover_image?: string;
+    views_count: number;
+    likes_count: number;
+    created_at: string;
+  }>;
+  price_alerts: Array<{
+    id: string;
+    destination: string;
+    current_price: number;
+    target_price: number;
+    status: string;
+    created_at: string;
+  }>;
+  notifications: Array<{
+  id: string;
+    title: string;
+    message: string;
+    type: string;
+    is_read: boolean;
+    created_at: string;
+  }>;
+  travel_analytics: {
+    countries_visited: string[];
+    cities_visited: string[];
+    favorite_destinations: Array<{
+  destination: string;
+      visit_count: number;
+    }>;
+    spending_by_month: Array<{
+      month: string;
+      amount: number;
+    }>;
+  };
+  session_analytics: {
+    active_sessions: number;
+    last_login: string;
+    device_types: Array<{
+      type: string;
+      count: number;
+    }>;
   };
 }
 
 const UserDashboard: React.FC = () => {
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'trips' | 'alerts' | 'profile'>('overview');
-  const [savedTrips, setSavedTrips] = useState<SavedTrip[]>([]);
-  const [priceAlerts, setPriceAlerts] = useState<PriceAlert[]>([]);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [editableProfile, setEditableProfile] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  const { user, isAuthenticated } = useAuth();
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [itineraries, setItineraries] = useState<any[]>([]);
+  const [, setItineraryStats] = useState<any>(null);
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+  const [lastItineraryFetchTime, setLastItineraryFetchTime] = useState<number>(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    if (isAuthenticated && user) {
+      loadDashboardData();
+      loadItineraries();
+    }
+  }, [isAuthenticated, user]);
 
-  const loadDashboardData = async () => {
+  // Handle activeTab from navigation state
+  useEffect(() => {
+    const state = location.state as { activeTab?: string };
+    if (state?.activeTab) {
+      setActiveTab(state.activeTab);
+    }
+  }, [location.state]);
+
+  const loadDashboardData = async (forceRefresh = false) => {
+    const now = Date.now();
+    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
+    const CACHE_KEY = 'dashboard_data';
+    const TIMESTAMP_KEY = 'dashboard_timestamp';
+    
+    // Check localStorage cache first
+    if (!forceRefresh) {
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      const cachedTimestamp = localStorage.getItem(TIMESTAMP_KEY);
+      
+      if (cachedData && cachedTimestamp) {
+        const cacheTime = parseInt(cachedTimestamp);
+        if (now - cacheTime < CACHE_DURATION) {
+          setDashboardData(JSON.parse(cachedData));
+          setLastFetchTime(cacheTime);
+          setLoading(false);
+          return;
+        }
+      }
+    }
+
+    // Check if we have in-memory cached data and it's still fresh
+    if (!forceRefresh && dashboardData && (now - lastFetchTime) < CACHE_DURATION) {
+      setLoading(false);
+      return;
+    }
+
     try {
-      setIsLoading(true);
+      if (!forceRefresh) {
+        setLoading(true);
+      } else {
+        setIsRefreshing(true);
+      }
       setError(null);
       
-      // Load price alerts from API
-      const alertsResponse = await alertsAPI.getAlerts();
-      if (alertsResponse.success && alertsResponse.data) {
-        setPriceAlerts(alertsResponse.data);
-      }
-
-      // Load real user profile data from auth context
-      if (user) {
-        const realProfile: UserProfile = {
-          name: `${user.first_name} ${user.last_name}`,
-          email: user.email,
-          phone: user.phone || '+1-555-0123',
-          preferences: {
-            budgetRange: '$1000-$3000',
-            travelStyle: ['Adventure', 'Cultural', 'Luxury'],
-            preferredAirlines: ['Emirates', 'Qatar Airways', 'Turkish Airlines'],
-            preferredHotels: ['Marriott', 'Hilton', 'Hyatt']
-          },
-          stats: {
-            totalTrips: 8,
-            totalSpent: 18500,
-            averageRating: 4.6,
-            favoriteDestinations: ['Dubai', 'Tokyo', 'Paris', 'Istanbul']
-          }
-        };
-        setUserProfile(realProfile);
-        setEditableProfile(realProfile);
-      }
+      const data = await dashboardAPI.getDashboardData();
+      setDashboardData(data as any);
+      setLastFetchTime(now);
       
-      // Load mock trips data (will be replaced with real API calls)
-      loadMockData();
-      
+      // Cache in localStorage
+      localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+      localStorage.setItem(TIMESTAMP_KEY, now.toString());
     } catch (err: any) {
-      console.error('Error loading dashboard data:', err);
-      setError(err.message || 'Failed to load dashboard data');
-      // Fallback to mock data
-      loadMockData();
+      setError(err.message);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
-  const loadMockData = () => {
-    // Mock saved trips
-    const mockTrips: SavedTrip[] = [
-      {
-        id: '1',
-        destination: 'Dubai, UAE',
-        startDate: '2024-03-15',
-        endDate: '2024-03-20',
-        budget: 2000,
-        status: 'booked',
-        totalCost: 1850,
-        imageUrl: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400',
-        createdAt: '2024-01-15'
-      },
-      {
-        id: '2',
-        destination: 'Tokyo, Japan',
-        startDate: '2024-05-10',
-        endDate: '2024-05-17',
-        budget: 3000,
-        status: 'planned',
-        imageUrl: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400',
-        createdAt: '2024-02-01'
-      },
-      {
-        id: '3',
-        destination: 'Paris, France',
-        startDate: '2024-07-20',
-        endDate: '2024-07-25',
-        budget: 2500,
-        status: 'completed',
-        totalCost: 2300,
-        imageUrl: 'https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=400',
-        createdAt: '2024-01-10'
+  const loadItineraries = async (forceRefresh = false) => {
+    const now = Date.now();
+    const CACHE_DURATION = 3 * 60 * 1000; // 3 minutes cache for itineraries
+    const ITINERARIES_CACHE_KEY = 'itineraries_data';
+    const ITINERARIES_TIMESTAMP_KEY = 'itineraries_timestamp';
+    const STATS_CACHE_KEY = 'itinerary_stats';
+    const STATS_TIMESTAMP_KEY = 'itinerary_stats_timestamp';
+    
+    // Check localStorage cache first
+    if (!forceRefresh) {
+      const cachedItineraries = localStorage.getItem(ITINERARIES_CACHE_KEY);
+      const cachedItinerariesTimestamp = localStorage.getItem(ITINERARIES_TIMESTAMP_KEY);
+      const cachedStats = localStorage.getItem(STATS_CACHE_KEY);
+      const cachedStatsTimestamp = localStorage.getItem(STATS_TIMESTAMP_KEY);
+      
+      if (cachedItineraries && cachedItinerariesTimestamp && cachedStats && cachedStatsTimestamp) {
+        const itinerariesCacheTime = parseInt(cachedItinerariesTimestamp);
+        const statsCacheTime = parseInt(cachedStatsTimestamp);
+        
+        if (now - itinerariesCacheTime < CACHE_DURATION && now - statsCacheTime < CACHE_DURATION) {
+          setItineraries(JSON.parse(cachedItineraries));
+          setItineraryStats(JSON.parse(cachedStats));
+          setLastItineraryFetchTime(Math.max(itinerariesCacheTime, statsCacheTime));
+          return;
+        }
       }
-    ];
-
-    // Create user profile from auth context
-    const mockProfile: UserProfile = {
-      name: user ? `${user.first_name} ${user.last_name}` : 'User',
-      email: user?.email || 'user@example.com',
-      phone: user?.phone || '+1-555-0123',
-      preferences: {
-        budgetRange: '$1000-$3000',
-        travelStyle: ['Adventure', 'Cultural', 'Luxury'],
-        preferredAirlines: ['Emirates', 'Qatar Airways', 'Turkish Airlines'],
-        preferredHotels: ['Marriott', 'Hilton', 'Hyatt']
-      },
-      stats: {
-        totalTrips: 8,
-        totalSpent: 18500,
-        averageRating: 4.6,
-        favoriteDestinations: ['Dubai', 'Tokyo', 'Paris', 'Istanbul']
-      }
-    };
-
-    setSavedTrips(mockTrips);
-    setUserProfile(mockProfile);
-    setEditableProfile(mockProfile);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'booked': return 'text-green-500 bg-green-100';
-      case 'planned': return 'text-blue-500 bg-blue-100';
-      case 'completed': return 'text-gray-500 bg-gray-100';
-      case 'cancelled': return 'text-red-500 bg-red-100';
-      default: return 'text-gray-500 bg-gray-100';
     }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'booked': return <CheckCircle className="w-4 h-4" />;
-      case 'planned': return <Clock className="w-4 h-4" />;
-      case 'completed': return <Star className="w-4 h-4" />;
-      case 'cancelled': return <XCircle className="w-4 h-4" />;
-      default: return <Clock className="w-4 h-4" />;
+    
+    // Check if we have in-memory cached data and it's still fresh
+    if (!forceRefresh && itineraries.length > 0 && (now - lastItineraryFetchTime) < CACHE_DURATION) {
+      return;
     }
-  };
 
-  const handleCreateNewTrip = () => {
-    navigate('/');
-  };
-
-  const handleEditTrip = (tripId: string) => {
-    // Navigate to trip editing page
-    console.log('Edit trip:', tripId);
-  };
-
-  const handleDeleteTrip = (tripId: string) => {
-    setSavedTrips(prev => prev.filter(trip => trip.id !== tripId));
-  };
-
-  const handleToggleAlert = async (alertId: string) => {
     try {
-      const response = await alertsAPI.toggleAlert(alertId);
-      if (response.success) {
-        setPriceAlerts(prev => 
-          prev.map(alert => 
-            alert.id === alertId 
-              ? { ...alert, is_active: !alert.is_active }
-              : alert
-          )
-        );
-      }
+      const [itinerariesData, statsData] = await Promise.all([
+        savedItineraryAPI.getItineraries({ limit: 20 }),
+        savedItineraryAPI.getItineraryStats()
+      ]);
+      setItineraries(itinerariesData);
+      setItineraryStats(statsData);
+      setLastItineraryFetchTime(now);
+      
+      // Cache in localStorage
+      localStorage.setItem(ITINERARIES_CACHE_KEY, JSON.stringify(itinerariesData));
+      localStorage.setItem(ITINERARIES_TIMESTAMP_KEY, now.toString());
+      localStorage.setItem(STATS_CACHE_KEY, JSON.stringify(statsData));
+      localStorage.setItem(STATS_TIMESTAMP_KEY, now.toString());
     } catch (err: any) {
-      console.error('Error toggling alert:', err);
-      setError(err.message || 'Failed to toggle alert');
+      console.error('Failed to load itineraries:', err.message);
     }
   };
 
-  const handleDeleteAlert = async (alertId: string) => {
-    try {
-      const response = await alertsAPI.deleteAlert(alertId);
-      if (response.success) {
-        setPriceAlerts(prev => prev.filter(alert => alert.id !== alertId));
-      }
-    } catch (err: any) {
-      console.error('Error deleting alert:', err);
-      setError(err.message || 'Failed to delete alert');
+
+
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    // Only refresh data if switching to a tab that needs fresh data
+    if (tab === 'saved' || tab === 'overview') {
+      loadItineraries();
     }
   };
 
-  const handleCreateAlert = () => {
-    // Navigate to alert creation page or open modal
-    console.log('Create new alert');
+  const handleToggleSidebar = () => {
+    setIsSidebarExpanded(!isSidebarExpanded);
   };
 
-  const handleLogout = async () => {
-    setShowLogoutConfirm(true);
+  const handleRefresh = async (forceRefresh?: boolean) => {
+    await loadDashboardData(forceRefresh);
+    await loadItineraries(forceRefresh);
   };
 
-  const confirmLogout = async () => {
-    try {
-      await logout();
-      navigate('/');
-    } catch (err: any) {
-      console.error('Error during logout:', err);
-      setError('Failed to logout. Please try again.');
-    }
+  const handleRefreshClick = () => {
+    handleRefresh(true);
   };
 
-  const handleUpdateProfile = async (updatedData: Partial<UserProfile>) => {
-    try {
-      // This would call the backend API to update user profile
-      console.log('Updating profile:', updatedData);
-      setUserProfile(prev => prev ? { ...prev, ...updatedData } : null);
-      setError(null);
-    } catch (err: any) {
-      console.error('Error updating profile:', err);
-      setError('Failed to update profile. Please try again.');
-    }
+
+  const handleLogout = () => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    window.location.href = '/';
   };
 
-  const handleSavePreferences = async () => {
-    try {
-      if (editableProfile) {
-        await handleUpdateProfile(editableProfile);
-        setUserProfile(editableProfile);
-        setError(null);
-      }
-    } catch (err: any) {
-      console.error('Error saving preferences:', err);
-      setError('Failed to save preferences. Please try again.');
-    }
-  };
 
-  if (isLoading) {
+
+  if (!isAuthenticated || !user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-500"></div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center pt-16">
+        <div className="text-center">
+          <div className="text-blue-500 text-6xl mb-4">🔐</div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Authentication Required</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">Please log in to access your dashboard.</p>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Animated Background Particles */}
-      <div className="particles">
-        {Array.from({ length: 20 }, (_, i) => (
-          <div
-            key={i}
-            className="particle"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 20}s`
-            }}
-          />
-        ))}
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center pt-16">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading your dashboard...</p>
+        </div>
       </div>
+    );
+  }
 
-      {/* Header - Matching HomePage styling */}
-      <header className="glass-dark sticky top-0 z-50 border-b border-white/10">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            {/* Left side - Logo and Name */}
-            <div className="flex items-center space-x-1">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center pulse-glow">
-                <Plane className="w-7 h-7 text-white" />
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center pt-16">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Error Loading Dashboard</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
+          <button 
+            onClick={() => loadDashboardData(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!dashboardData) return null;
+
+  const { user_stats, recent_bookings, upcoming_trips, saved_itineraries } = dashboardData;
+
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex pt-16">
+      {/* Sidebar */}
+      <DashboardSidebar 
+        activeTab={activeTab} 
+        onTabChange={handleTabChange}
+        onLogout={handleLogout}
+        isExpanded={isSidebarExpanded}
+        onToggleExpanded={handleToggleSidebar}
+      />
+
+      {/* Main Content */}
+      <div 
+        className={`flex-1 flex flex-col ${isSidebarExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300 ease-in-out`}
+        onClick={() => {
+          console.log('Main content clicked');
+        }}
+      >
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Header Bar */}
+          <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {activeTab === 'overview' ? 'Dashboard Overview' : 
+                   activeTab === 'saved' ? 'Saved Itineraries' : 
+                   activeTab === 'chats' ? 'Chats' :
+                   activeTab === 'explore' ? 'Explore' :
+                   activeTab === 'trips' ? 'Trips' :
+                   activeTab === 'updates' ? 'Updates' :
+                   activeTab === 'inspiration' ? 'Inspiration' :
+                   activeTab === 'create' ? 'Create' : 'Dashboard'}
+                </h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {activeTab === 'overview' ? 'Your travel dashboard and analytics' : 
+                   activeTab === 'saved' ? 'Manage your saved travel plans' : 
+                   activeTab === 'chats' ? 'Chat with SafarBot for travel assistance' :
+                   activeTab === 'explore' ? 'Discover new destinations and experiences' :
+                   activeTab === 'trips' ? 'View and manage your trips' :
+                   activeTab === 'updates' ? 'Stay updated with travel news and alerts' :
+                   activeTab === 'inspiration' ? 'Get inspired for your next adventure' :
+                   activeTab === 'create' ? 'Create new travel plans and itineraries' : 'Welcome to your dashboard'}
+                </p>
               </div>
-              <h1 className="text-3xl font-bold gradient-text">SafarBot</h1>
-            </div>
-            
-            {/* Right side - Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
-              <button 
-                onClick={() => navigate('/')}
-                className="nav-link hover:text-blue-400 transition-colors"
+              <button
+                onClick={handleRefreshClick}
+                disabled={isRefreshing}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-sm"
               >
-                Home
+                {isRefreshing ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                ) : (
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                )}
+                <span className="text-sm font-medium">{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
               </button>
-              <button 
-                onClick={() => navigate('/flights')}
-                className="nav-link hover:text-blue-400 transition-colors"
-              >
-                Flights
-              </button>
-              <button 
-                onClick={() => navigate('/hotels')}
-                className="nav-link hover:text-blue-400 transition-colors"
-              >
-                Hotels
-              </button>
-              <button className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
-                <Bell className="w-5 h-5" />
-              </button>
-              <button className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
-                <Settings className="w-5 h-5" />
-              </button>
-              <button 
-                onClick={handleLogout}
-                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-            </nav>
-
-            {/* Right side - Mobile menu button */}
-            <button
-              className="md:hidden p-2 hover:bg-white/10 rounded-lg transition-colors"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-
-          {/* Mobile Navigation */}
-          {mobileMenuOpen && (
-            <nav className="md:hidden py-4 border-t border-white/10 slide-in-left">
-              <div className="flex flex-col space-y-4">
-                <button 
-                  onClick={() => {
-                    navigate('/');
-                    setMobileMenuOpen(false);
-                  }}
-                  className="nav-link hover:text-blue-400 transition-colors text-left"
-                >
-                  Home
-                </button>
-                <button 
-                  onClick={() => {
-                    navigate('/flights');
-                    setMobileMenuOpen(false);
-                  }}
-                  className="nav-link hover:text-blue-400 transition-colors text-left"
-                >
-                  Flights
-                </button>
-                <button 
-                  onClick={() => {
-                    navigate('/hotels');
-                    setMobileMenuOpen(false);
-                  }}
-                  className="nav-link hover:text-blue-400 transition-colors text-left"
-                >
-                  Hotels
-                </button>
-                <div className="flex space-x-2 pt-2">
-                  <button className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
-                    <Bell className="w-5 h-5" />
-                  </button>
-                  <button className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
-                    <Settings className="w-5 h-5" />
-                  </button>
-                  <button 
-                    onClick={handleLogout}
-                    className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-                  >
-                    <LogOut className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            </nav>
-          )}
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Error Display */}
-        {error && (
-          <div className="mb-6 bg-red-500/20 border border-red-500/30 rounded-lg p-4">
-            <div className="flex items-center space-x-2">
-              <AlertTriangle className="w-5 h-5 text-red-400" />
-              <span className="text-red-400">{error}</span>
             </div>
           </div>
-        )}
-
-        {/* User Welcome Section */}
-        <div className="mb-8">
-          <div className="flex items-center space-x-4 mb-4">
-            <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-              <User className="w-8 h-8" />
-            </div>
-                         <div>
-               <h1 className="text-3xl font-bold">Welcome back, {userProfile?.name || user?.first_name || 'User'}!</h1>
-               <p className="text-gray-300">Manage your trips, alerts, and preferences</p>
-             </div>
-          </div>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="flex space-x-1 bg-white/10 rounded-lg p-1 mb-8">
-          {[
-            { id: 'overview', label: 'Overview', icon: <TrendingUp className="w-4 h-4" /> },
-            { id: 'trips', label: 'My Trips', icon: <MapPin className="w-4 h-4" /> },
-            { id: 'alerts', label: 'Price Alerts', icon: <Bell className="w-4 h-4" /> },
-            { id: 'profile', label: 'Profile', icon: <User className="w-4 h-4" /> }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
-                activeTab === tab.id
-                  ? 'bg-purple-600 text-white'
-                  : 'text-gray-300 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              {tab.icon}
-              <span>{tab.label}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Tab Content */}
+          
+          {/* Main Content */}
+          <div className="p-6">
+          {/* Overview Tab */}
         {activeTab === 'overview' && (
-          <div className="space-y-6">
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="card-3d">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-300 text-sm">Total Trips</p>
-                    <p className="text-2xl font-bold">{userProfile?.stats.totalTrips}</p>
-                  </div>
-                  <MapPin className="w-8 h-8 text-purple-400" />
-                </div>
-              </div>
-              <div className="card-3d">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-300 text-sm">Total Spent</p>
-                    <p className="text-2xl font-bold">${userProfile?.stats.totalSpent.toLocaleString()}</p>
-                  </div>
-                  <DollarSign className="w-8 h-8 text-green-400" />
-                </div>
-              </div>
-              <div className="card-3d">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-300 text-sm">Avg Rating</p>
-                    <p className="text-2xl font-bold">{userProfile?.stats.averageRating}</p>
-                  </div>
-                  <Star className="w-8 h-8 text-yellow-400" />
-                </div>
-              </div>
-              <div className="card-3d">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-300 text-sm">Active Alerts</p>
-                    <p className="text-2xl font-bold">{priceAlerts.filter(a => a.is_active).length}</p>
-                  </div>
-                  <Bell className="w-8 h-8 text-red-400" />
-                </div>
-              </div>
-            </div>
+            <div className="space-y-8">
+              {/* Stats Overview */}
+              <DashboardStats 
+                userStats={user_stats} 
+                itineraryStats={{
+                  total_itineraries: saved_itineraries.length,
+                  published_itineraries: saved_itineraries.filter(i => i.status === 'published').length,
+                  favorite_itineraries: saved_itineraries.filter(i => i.is_favorite).length,
+                  draft_itineraries: saved_itineraries.filter(i => i.status === 'draft').length,
+                  total_views: saved_itineraries.reduce((sum, i) => sum + (i.views_count || 0), 0)
+                }} 
+              />
 
-            {/* Recent Trips */}
-            <div className="card-3d">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Recent Trips</h2>
-                <button
-                  onClick={handleCreateNewTrip}
-                  className="btn-primary px-4 py-2 flex items-center space-x-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>New Trip</span>
-                </button>
+              {/* Recent Activity */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Recent Bookings */}
+                <div className="bg-white rounded-xl shadow-sm">
+                  <div className="px-6 py-4 border-b border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900">Recent Bookings</h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {savedTrips.slice(0, 3).map((trip) => (
-                  <div key={trip.id} className="bg-white/5 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold">{trip.destination}</h3>
-                      <span className={`px-2 py-1 rounded-full text-xs flex items-center space-x-1 ${getStatusColor(trip.status)}`}>
-                        {getStatusIcon(trip.status)}
-                        <span>{trip.status}</span>
-                      </span>
-                    </div>
-                    <p className="text-gray-300 text-sm mb-2">
-                      {new Date(trip.startDate).toLocaleDateString()} - {new Date(trip.endDate).toLocaleDateString()}
-                    </p>
-                    <p className="text-sm">Budget: ${trip.budget.toLocaleString()}</p>
-                    {trip.totalCost && (
-                      <p className="text-sm text-green-400">Spent: ${trip.totalCost.toLocaleString()}</p>
+                  <div className="p-6">
+                    {recent_bookings.length > 0 ? (
+                      <div className="space-y-4">
+                        {recent_bookings.map((booking) => (
+                          <div key={booking.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <div className="p-2 bg-blue-100 rounded-lg">
+                                <Plane className="h-5 w-5 text-blue-600" />
+                        </div>
+                              <div>
+                                <p className="font-medium text-gray-900">{booking.destination}</p>
+                                <p className="text-sm text-gray-600">{booking.departure_date}</p>
+                        </div>
+                      </div>
+                            <div className="text-right">
+                              <p className="font-medium text-gray-900">${booking.total_cost}</p>
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {booking.status}
+                              </span>
+                          </div>
+                          </div>
+                        ))}
+                        </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Plane className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-500">No recent bookings</p>
+                      </div>
                     )}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
 
-            {/* Favorite Destinations */}
-            <div className="card-3d">
-              <h2 className="text-xl font-semibold mb-4">Favorite Destinations</h2>
-              <div className="flex flex-wrap gap-2">
-                {userProfile?.stats.favoriteDestinations.map((dest, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 bg-purple-600/20 border border-purple-500/30 rounded-full text-sm"
-                  >
-                    {dest}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'trips' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">My Trips</h2>
-              <button
-                onClick={handleCreateNewTrip}
-                className="btn-primary px-4 py-2 flex items-center space-x-2"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Plan New Trip</span>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {savedTrips.map((trip) => (
-                <div key={trip.id} className="card-3d overflow-hidden">
-                  {trip.imageUrl && (
-                    <div className="h-48 bg-cover bg-center" style={{ backgroundImage: `url(${trip.imageUrl})` }} />
-                  )}
+                {/* Upcoming Trips */}
+                <div className="bg-white rounded-xl shadow-sm">
+                  <div className="px-6 py-4 border-b border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900">Upcoming Trips</h3>
+                  </div>
                   <div className="p-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-lg font-semibold">{trip.destination}</h3>
-                      <span className={`px-2 py-1 rounded-full text-xs flex items-center space-x-1 ${getStatusColor(trip.status)}`}>
-                        {getStatusIcon(trip.status)}
-                        <span>{trip.status}</span>
-                      </span>
-                    </div>
-                    <div className="space-y-2 mb-4">
-                      <p className="text-gray-300 text-sm">
-                        <Calendar className="w-4 h-4 inline mr-2" />
-                        {new Date(trip.startDate).toLocaleDateString()} - {new Date(trip.endDate).toLocaleDateString()}
-                      </p>
-                      <p className="text-sm">
-                        <DollarSign className="w-4 h-4 inline mr-2" />
-                        Budget: ${trip.budget.toLocaleString()}
-                      </p>
-                      {trip.totalCost && (
-                        <p className="text-sm text-green-400">
-                          <DollarSign className="w-4 h-4 inline mr-2" />
-                          Spent: ${trip.totalCost.toLocaleString()}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEditTrip(trip.id)}
-                        className="flex-1 flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg transition-colors"
-                      >
-                        <Eye className="w-4 h-4" />
-                        <span>View</span>
-                      </button>
-                      <button
-                        onClick={() => handleEditTrip(trip.id)}
-                        className="flex-1 flex items-center justify-center space-x-2 bg-gray-600 hover:bg-gray-700 px-3 py-2 rounded-lg transition-colors"
-                      >
-                        <Edit className="w-4 h-4" />
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteTrip(trip.id)}
-                        className="flex-1 flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        <span>Delete</span>
-                      </button>
-                    </div>
+                    {upcoming_trips.length > 0 ? (
+                      <div className="space-y-4">
+                        {upcoming_trips.map((trip) => (
+                          <div key={trip.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <div className="p-2 bg-green-100 rounded-lg">
+                                <CalendarDays className="h-5 w-5 text-green-600" />
                   </div>
-                </div>
-              ))}
+                              <div>
+                                <p className="font-medium text-gray-900">{trip.destination}</p>
+                                <p className="text-sm text-gray-600">{trip.departure_date}</p>
+              </div>
             </div>
+                            <div className="text-right">
+                              <p className="text-sm text-gray-600">{trip.type}</p>
+              </div>
+            </div>
+                        ))}
+                      </div>
+                        ) : (
+                      <div className="text-center py-8">
+                        <CalendarDays className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-500">No upcoming trips</p>
+                      </div>
+                    )}
+                        </div>
+                      </div>
+                    </div>
+            </div>
+          )}
+
+          {/* Saved Itineraries Tab */}
+          {activeTab === 'saved' && <SavedPage />}
+
+          {/* Other Tabs - Actual Page Content */}
+          {activeTab === 'chats' && <ChatsPage />}
+          {activeTab === 'explore' && <ExplorePage />}
+          {activeTab === 'trips' && <TripsPage />}
+          {activeTab === 'updates' && <UpdatesPage />}
+          {activeTab === 'inspiration' && <InspirationPage />}
+          {activeTab === 'create' && <CreatePage />}
           </div>
-        )}
-
-        {activeTab === 'alerts' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Price Alerts</h2>
-              <button 
-                onClick={handleCreateAlert}
-                className="btn-primary px-4 py-2 flex items-center space-x-2"
-              >
-                <Plus className="w-4 h-4" />
-                <span>New Alert</span>
-              </button>
-            </div>
-
-            <div className="card-3d overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-white/5">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Destination
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Type
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Current Price
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Target Price
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/10">
-                    {priceAlerts.map((alert) => (
-                      <tr key={alert.id} className="hover:bg-white/5">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium">{alert.destination}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            alert.alert_type === 'flight' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                          }`}>
-                            {alert.alert_type}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          ${alert.current_price}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          ${alert.target_price}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <button
-                            onClick={() => handleToggleAlert(alert.id)}
-                            className={`px-2 py-1 rounded-full text-xs ${
-                              alert.is_active 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-gray-100 text-gray-800'
-                            }`}
-                          >
-                            {alert.is_active ? 'Active' : 'Inactive'}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <button
-                            onClick={() => handleDeleteAlert(alert.id)}
-                            className="text-red-400 hover:text-red-300"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'profile' && editableProfile && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Profile Settings</h2>
-              <button
-                onClick={handleSavePreferences}
-                className="btn-primary px-4 py-2 flex items-center space-x-2"
-              >
-                <Edit className="w-4 h-4" />
-                <span>Save Changes</span>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Personal Information */}
-              <div className="card-3d">
-                <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Name</label>
-                    <input
-                      type="text"
-                      value={editableProfile.name}
-                      onChange={(e) => setEditableProfile(prev => prev ? { ...prev, name: e.target.value } : null)}
-                      className="input-field w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
-                    <input
-                      type="email"
-                      value={editableProfile.email}
-                      onChange={(e) => setEditableProfile(prev => prev ? { ...prev, email: e.target.value } : null)}
-                      className="input-field w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Phone</label>
-                    <input
-                      type="tel"
-                      value={editableProfile.phone || ''}
-                      onChange={(e) => setEditableProfile(prev => prev ? { ...prev, phone: e.target.value } : null)}
-                      className="input-field w-full"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Travel Preferences */}
-              <div className="card-3d">
-                <h3 className="text-lg font-semibold mb-4">Travel Preferences</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Budget Range</label>
-                    <select 
-                      className="input-field w-full"
-                      value={editableProfile.preferences.budgetRange}
-                      onChange={(e) => setEditableProfile(prev => prev ? { 
-                        ...prev, 
-                        preferences: { ...prev.preferences, budgetRange: e.target.value }
-                      } : null)}
-                    >
-                      <option value="$500-$1000">$500-$1000</option>
-                      <option value="$1000-$3000">$1000-$3000</option>
-                      <option value="$3000-$5000">$3000-$5000</option>
-                      <option value="$5000+">$5000+</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Travel Style</label>
-                    <div className="flex flex-wrap gap-2">
-                      {editableProfile.preferences.travelStyle.map((style, index) => (
-                        <span
-                          key={index}
-                          className="px-3 py-1 bg-purple-600/20 border border-purple-500/30 rounded-full text-sm"
-                        >
-                          {style}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Statistics */}
-            <div className="card-3d">
-              <h3 className="text-lg font-semibold mb-4">Travel Statistics</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-purple-400">{editableProfile.stats.totalTrips}</p>
-                  <p className="text-sm text-gray-300">Total Trips</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-green-400">${editableProfile.stats.totalSpent.toLocaleString()}</p>
-                  <p className="text-sm text-gray-300">Total Spent</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-yellow-400">{editableProfile.stats.averageRating}</p>
-                  <p className="text-sm text-gray-300">Avg Rating</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-400">{editableProfile.stats.favoriteDestinations.length}</p>
-                  <p className="text-sm text-gray-300">Favorites</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        </div>
+        
+        {/* Footer - Adjusted for sidebar */}
+        <div className={`${isSidebarExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300 ease-in-out`}>
+          <Footer disableCentering={true} />
+        </div>
       </div>
-
-      {/* Logout Confirmation Modal */}
-      <ConfirmModal
-        isOpen={showLogoutConfirm}
-        onClose={() => setShowLogoutConfirm(false)}
-        onConfirm={confirmLogout}
-        title="Confirm Logout"
-        message="Are you sure you want to logout? You will need to sign in again to access your dashboard."
-        confirmText="Logout"
-        cancelText="Cancel"
-        type="warning"
-      />
     </div>
   );
 };

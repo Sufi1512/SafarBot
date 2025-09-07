@@ -1,234 +1,165 @@
 import asyncio
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from typing import List, Dict, Any, Optional
 import logging
 from models import ItineraryResponse, DailyPlan
 from config import settings
-import google.generativeai as genai
+from workflows.optimized_prefetch_workflow import OptimizedPrefetchWorkflow
 import json
 
 logger = logging.getLogger(__name__)
 
 class ItineraryService:
     def __init__(self):
-        # Initialize Google Gemini API
-        if settings.google_api_key:
-            try:
-                genai.configure(api_key=settings.google_api_key)
-                self.model = genai.GenerativeModel('gemini-2.5-flash')
-                logger.info("Google Gemini API initialized for itinerary generation")
-            except Exception as e:
-                logger.warning(f"Failed to initialize Google Gemini API: {str(e)}")
-                self.model = None
-        else:
-            logger.warning("No Google API key provided")
-            self.model = None
+        # Initialize structured workflow
+        try:
+            self.workflow = OptimizedPrefetchWorkflow()
+            logger.info("Structured itinerary workflow initialized")
+        except Exception as e:
+            logger.warning(f"Failed to initialize itinerary workflow: {str(e)}")
+            self.workflow = None
         
     async def generate_itinerary(
         self,
         destination: str,
-        start_date: date,
-        end_date: date,
+        start_date: str,
+        end_date: str,
         budget: Optional[float] = None,
+        budget_range: Optional[str] = None,
         interests: List[str] = [],
         travelers: int = 1,
-        accommodation_type: Optional[str] = None
-    ) -> ItineraryResponse:
+        travel_companion: Optional[str] = None,
+        trip_pace: Optional[str] = None,
+        departure_city: Optional[str] = None,
+        flight_class_preference: Optional[str] = None,
+        hotel_rating_preference: Optional[str] = None,
+        accommodation_type: Optional[str] = None,
+        email: Optional[str] = None,
+        dietary_preferences: List[str] = [],
+        halal_preferences: Optional[str] = None,
+        vegetarian_preferences: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
-        Generate a personalized travel itinerary using AI
+        Generate a complete travel itinerary with pre-fetched place details using optimized workflow
+        Returns: Complete response with itinerary, place_details, and additional_places
         """
+        print("\n" + "="*80)
+        print("🚀 ITINERARY SERVICE - STARTING GENERATION")
+        print("="*80)
+        print(f"📍 Destination: {destination}")
+        print(f"📅 Dates: {start_date} to {end_date}")
+        print(f"👥 Travelers: {travelers} ({travel_companion or 'General'})")
+        print(f"💰 Budget: ${budget if budget else 'Flexible'} ({budget_range or 'Not specified'})")
+        print(f"🎯 Interests: {', '.join(interests) if interests else 'General'}")
+        print(f"🏨 Accommodation: {hotel_rating_preference or accommodation_type or 'Standard'}")
+        print(f"🚶 Trip Pace: {trip_pace or 'Balanced'}")
+        print(f"🍽️ Dietary: {', '.join(dietary_preferences) if dietary_preferences else 'No restrictions'}")
+        print("-"*80)
+        
         try:
-            if not self.model:
-                # Return a fallback itinerary when AI is not available
-                logger.warning("AI service not configured, returning fallback itinerary")
+            if not self.workflow:
+                print("⚠️  WORKFLOW NOT CONFIGURED - Using fallback")
+                logger.warning("LangGraph workflow not configured, returning fallback itinerary")
                 return await self._generate_fallback_itinerary(
                     destination, start_date, end_date, budget, interests, travelers, accommodation_type
                 )
             
-            # Calculate trip duration
-            total_days = (end_date - start_date).days + 1
+            print("✅ OPTIMIZED WORKFLOW INITIALIZED - Starting complete generation")
+            logger.info(f"Generating complete itinerary for {destination} using optimized workflow")
             
-            # Create prompt for itinerary generation
-            prompt = f"""
-            You are a travel planning AI assistant. Create a detailed travel itinerary for {destination} for {total_days} days.
-            
-            Trip Details:
-            - Destination: {destination}
-            - Duration: {total_days} days
-            - Travelers: {travelers}
-            - Budget: ${budget if budget else 'Flexible'}
-            - Interests: {', '.join(interests) if interests else 'General sightseeing'}
-            - Accommodation: {accommodation_type if accommodation_type else 'Standard'}
-            
-            IMPORTANT: 
-            1. Respond ONLY with valid JSON. Do not include any text before or after the JSON.
-            2. Do NOT use markdown formatting (no asterisks, bold, etc.) in any text fields.
-            3. Write tips in plain text without any formatting.
-            
-            Required JSON structure:
-            {{
-                "daily_plans": [
-                    {{
-                        "day": 1,
-                        "activities": [
-                            {{
-                                "time": "09:00",
-                                "title": "Activity name",
-                                "description": "Description",
-                                "location": "Location",
-                                "duration": "2 hours",
-                                "cost": 50,
-                                "type": "sightseeing"
-                            }}
-                        ],
-                        "meals": [
-                            {{
-                                "name": "Restaurant name",
-                                "cuisine": "Cuisine type",
-                                "rating": 4.5,
-                                "price_range": "$$",
-                                "description": "Description"
-                            }}
-                        ],
-                        "accommodation": {{
-                            "name": "Hotel name",
-                            "rating": 4.0,
-                            "price": 150,
-                            "amenities": ["WiFi", "Pool"],
-                            "location": "Location"
-                        }},
-                        "transport": [
-                            {{
-                                "type": "walking",
-                                "description": "Walk to next location",
-                                "duration": "15 minutes"
-                            }}
-                        ]
-                    }}
-                ],
-                "budget_estimate": 2000,
-                "recommendations": {{
-                    "hotels": [],
-                    "restaurants": [],
-                    "tips": []
-                }}
-            }}
-            
-            Note: Write all tips in plain text without markdown formatting. For example:
-            "Transportation: Use local trains for cost-effective travel. Auto-rickshaws are great for short distances."
-            Instead of:
-            "**Transportation:** Use local trains for cost-effective travel. Auto-rickshaws are great for short distances."
-            """
-            
-            response = self.model.generate_content(prompt)
-            
-            # Check if response is valid
-            if not response.text or response.text.strip() == "":
-                raise Exception("AI service returned empty response")
-            
-            # Clean the response text - remove markdown code blocks if present
-            cleaned_text = response.text.strip()
-            if cleaned_text.startswith("```json"):
-                cleaned_text = cleaned_text[7:]  # Remove ```json
-            if cleaned_text.startswith("```"):
-                cleaned_text = cleaned_text[3:]  # Remove ```
-            if cleaned_text.endswith("```"):
-                cleaned_text = cleaned_text[:-3]  # Remove trailing ```
-            
-            cleaned_text = cleaned_text.strip()
-            
-            try:
-                itinerary_data = json.loads(cleaned_text)
-            except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse JSON response: {cleaned_text[:200]}...")
-                raise Exception(f"Invalid JSON response from AI service: {str(e)}")
-            
-            # Create daily plans
-            daily_plans = []
-            current_date = start_date
-            
-            for day_num, day_data in enumerate(itinerary_data.get('daily_plans', []), 1):
-                daily_plan = DailyPlan(
-                    day=day_num,
-                    date=current_date.strftime("%Y-%m-%d"),
-                    activities=day_data.get('activities', []),
-                    meals=day_data.get('meals', []),
-                    accommodation=day_data.get('accommodation'),
-                    transport=day_data.get('transport', [])
-                )
-                daily_plans.append(daily_plan)
-                current_date += timedelta(days=1)
-            
-            # Create response
-            response_obj = ItineraryResponse(
+            response = await self.workflow.generate_complete_itinerary(
                 destination=destination,
-                total_days=total_days,
-                budget_estimate=itinerary_data.get('budget_estimate', 0.0),
-                daily_plans=daily_plans,
-                recommendations=itinerary_data.get('recommendations', {})
+                start_date=start_date,
+                end_date=end_date,
+                budget=budget,
+                budget_range=budget_range,
+                interests=interests,
+                travelers=travelers,
+                travel_companion=travel_companion,
+                trip_pace=trip_pace,
+                departure_city=departure_city,
+                flight_class_preference=flight_class_preference,
+                hotel_rating_preference=hotel_rating_preference,
+                accommodation_type=accommodation_type,
+                email=email,
+                dietary_preferences=dietary_preferences,
+                halal_preferences=halal_preferences,
+                vegetarian_preferences=vegetarian_preferences
             )
             
-            return response_obj
+            print("✅ COMPLETE ITINERARY GENERATION COMPLETED SUCCESSFULLY")
+            itinerary = response.get('itinerary', {})
+            place_details = response.get('place_details', {})
+            additional_places = response.get('additional_places', {})
+            
+            print(f"📊 Generated {len(itinerary.get('daily_plans', []))} days")
+            print(f"💰 Budget: ${itinerary.get('budget_estimate', 0)}")
+            print(f"📍 Place details: {len(place_details)} places")
+            print(f"🎯 Additional places: {sum(len(places) for places in additional_places.values())}")
+            print("="*80)
+            
+            return response
             
         except Exception as e:
+            print(f"❌ ERROR IN ITINERARY GENERATION: {str(e)}")
             logger.error(f"Error generating itinerary: {str(e)}")
             
             # Check if it's a Google API error
             if "500 An internal error has occurred" in str(e):
+                print("🔧 ERROR TYPE: Google API Internal Error")
                 raise Exception("AI service is temporarily unavailable. Please try again in a few minutes.")
             elif "API key" in str(e).lower() or "authentication" in str(e).lower():
+                print("🔑 ERROR TYPE: API Key/Authentication Error")
                 raise Exception("AI service configuration error. Please contact support.")
             elif "quota" in str(e).lower() or "rate limit" in str(e).lower():
+                print("⏱️  ERROR TYPE: Rate Limit/Quota Error")
                 raise Exception("AI service is currently busy. Please try again later.")
             else:
+                print(f"🚨 ERROR TYPE: General Error - {str(e)}")
                 raise Exception(f"Failed to generate itinerary: {str(e)}")
     
     async def predict_prices(
         self,
         destination: str,
-        start_date: date,
-        end_date: date,
+        start_date: str,
+        end_date: str,
         travelers: int = 1,
         accommodation_type: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Predict travel costs for the given destination and dates
+        Predict travel costs for the given destination and dates using LangGraph workflow
         """
         try:
-            if not self.model:
-                raise Exception("AI service is not properly configured")
+            if not self.workflow:
+                raise Exception("LangGraph workflow is not properly configured")
             
-            total_days = (end_date - start_date).days + 1
+            # Use the workflow's LLM directly for price prediction
+            # This could be enhanced to be part of the main workflow in the future
+            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+            total_days = (end_date_obj - start_date_obj).days + 1
             
-            prompt = f"""
-            Estimate travel costs for {destination} for {total_days} days with {travelers} travelers.
+            from prompts.itinerary_prompts import PRICE_PREDICTION_PROMPT, format_accommodation_type
             
-            Please provide a JSON response with cost estimates:
-            {{
-                "accommodation_cost": 1200,
-                "food_cost": 800,
-                "transportation_cost": 400,
-                "activities_cost": 600,
-                "total_estimated_cost": 3000,
-                "cost_breakdown": {{
-                    "per_day": 300,
-                    "per_person": 1500
-                }}
-            }}
-            """
+            # Prepare prompt variables
+            prompt_vars = {
+                "destination": destination,
+                "total_days": total_days,
+                "travelers": travelers,
+                "start_date": start_date,
+                "end_date": end_date,
+                "accommodation_type": format_accommodation_type(accommodation_type)
+            }
             
-            response = self.model.generate_content(prompt)
+            # Use the workflow's LLM for consistency
+            if not self.workflow.llm:
+                raise Exception("AI service not available in workflow")
             
-            # Clean the response text - remove markdown code blocks if present
-            cleaned_text = response.text.strip()
-            if cleaned_text.startswith("```json"):
-                cleaned_text = cleaned_text[7:]  # Remove ```json
-            if cleaned_text.startswith("```"):
-                cleaned_text = cleaned_text[3:]  # Remove ```
-            if cleaned_text.endswith("```"):
-                cleaned_text = cleaned_text[:-3]  # Remove trailing ```
+            messages = PRICE_PREDICTION_PROMPT.format_messages(**prompt_vars)
+            response = await self.workflow.llm.ainvoke(messages)
             
-            cleaned_text = cleaned_text.strip()
+            # Clean and parse the response
+            cleaned_text = self.workflow._clean_json_response(response.content)
             
             try:
                 price_prediction = json.loads(cleaned_text)
@@ -245,18 +176,30 @@ class ItineraryService:
     async def _generate_fallback_itinerary(
         self,
         destination: str,
-        start_date: date,
-        end_date: date,
+        start_date: str,
+        end_date: str,
         budget: Optional[float] = None,
         interests: List[str] = [],
         travelers: int = 1,
         accommodation_type: Optional[str] = None
     ) -> ItineraryResponse:
         """
-        Generate a basic fallback itinerary when AI service is unavailable
+        Generate a basic fallback itinerary when LangGraph workflow is unavailable
         """
-        total_days = (end_date - start_date).days + 1
-        current_date = start_date
+        # Use the workflow's fallback method if available, otherwise create a simple one
+        if self.workflow:
+            try:
+                return await self.workflow._generate_fallback_itinerary(
+                    destination, start_date, end_date, budget, interests, travelers, accommodation_type
+                )
+            except:
+                pass  # Fall through to simple fallback
+        
+        # Simple fallback when everything else fails
+        start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+        total_days = (end_date_obj - start_date_obj).days + 1
+        current_date = start_date_obj
         
         daily_plans = []
         for day_num in range(1, total_days + 1):
@@ -275,8 +218,8 @@ class ItineraryService:
                     },
                     {
                         "time": "14:00",
-                        "title": "Local Cuisine",
-                        "description": f"Try local food in {destination}",
+                        "title": "Local Cuisine Experience",
+                        "description": f"Try authentic local food in {destination}",
                         "location": destination,
                         "duration": "2 hours",
                         "cost": 15,
@@ -289,7 +232,7 @@ class ItineraryService:
                         "cuisine": "Local",
                         "rating": 4.0,
                         "price_range": "$$",
-                        "description": f"Enjoy local cuisine in {destination}"
+                        "description": f"Enjoy authentic local cuisine in {destination}"
                     }
                 ],
                 accommodation={
@@ -302,7 +245,7 @@ class ItineraryService:
                 transport=[
                     {
                         "type": "walking",
-                        "description": "Explore on foot",
+                        "description": "Explore the city on foot",
                         "duration": "30 minutes"
                     }
                 ]
@@ -316,13 +259,14 @@ class ItineraryService:
             budget_estimate=budget or 1000.0,
             daily_plans=daily_plans,
             recommendations={
-                "hotels": [f"Look for hotels in {destination}"],
+                "hotels": [f"Look for well-reviewed hotels in {destination}"],
                 "restaurants": [f"Try local restaurants in {destination}"],
                 "tips": [
-                    "AI service is temporarily unavailable. This is a basic itinerary.",
+                    "Service is temporarily unavailable. This is a basic itinerary.",
                     "Transportation: Use local public transport for cost-effective travel.",
                     "Safety: Always be aware of your surroundings and keep belongings secure.",
-                    "Culture: Respect local customs and dress appropriately for religious sites."
+                    "Culture: Respect local customs and dress appropriately for religious sites.",
+                    "Planning: Book popular attractions in advance to avoid disappointment."
                 ]
             }
         ) 

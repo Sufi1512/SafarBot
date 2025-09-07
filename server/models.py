@@ -1,15 +1,59 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional, Dict, Any
-from datetime import date
+from datetime import date, datetime
 
 class ItineraryRequest(BaseModel):
+    # Basic Information
     destination: str = Field(..., description="Travel destination")
-    start_date: date = Field(..., description="Start date of the trip")
-    end_date: date = Field(..., description="End date of the trip")
+    start_date: str = Field(..., description="Start date of the trip (YYYY-MM-DD)")
+    end_date: str = Field(..., description="End date of the trip (YYYY-MM-DD)")
+    total_days: Optional[int] = Field(None, description="Total number of days")
     budget: Optional[float] = Field(None, description="Budget in USD")
-    interests: List[str] = Field(default=[], description="List of interests (nature, food, history, etc.)")
+    budget_range: Optional[str] = Field(None, description="Budget range (budget, mid-range, luxury)")
+    
+    # Travel Preferences
     travelers: int = Field(default=1, description="Number of travelers")
-    accommodation_type: Optional[str] = Field(None, description="Type of accommodation (budget, luxury, etc.)")
+    travel_companion: Optional[str] = Field(None, description="Travel companion type (solo, couple, family, friends, business)")
+    trip_pace: Optional[str] = Field(None, description="Trip pace (relaxed, balanced, fast-paced)")
+    interests: List[str] = Field(default=[], description="List of interests (culture, nature, food, adventure, etc.)")
+    
+    # Travel Details
+    departure_city: Optional[str] = Field(None, description="Departure city")
+    flight_class_preference: Optional[str] = Field(None, description="Flight class preference (economy, business, first)")
+    hotel_rating_preference: Optional[str] = Field(None, description="Hotel rating preference (3-star, 4-star, 5-star)")
+    accommodation_type: Optional[str] = Field(None, description="Type of accommodation (budget, mid-range, luxury)")
+    email: Optional[str] = Field(None, description="Email address for notifications")
+    
+    # Dietary Preferences
+    dietary_preferences: List[str] = Field(default=[], description="Dietary preferences (halal, vegetarian, vegan, etc.)")
+    halal_preferences: Optional[str] = Field(None, description="Halal food preferences")
+    vegetarian_preferences: Optional[str] = Field(None, description="Vegetarian food preferences")
+
+    @field_validator('start_date', 'end_date')
+    @classmethod
+    def validate_date_format(cls, v: str) -> str:
+        """Validate date format is YYYY-MM-DD"""
+        try:
+            datetime.strptime(v, '%Y-%m-%d')
+            return v
+        except ValueError:
+            raise ValueError('Date must be in YYYY-MM-DD format')
+    
+    def get_start_date(self) -> date:
+        """Convert string to date object"""
+        return datetime.strptime(self.start_date, '%Y-%m-%d').date()
+    
+    def get_end_date(self) -> date:
+        """Convert string to date object"""
+        return datetime.strptime(self.end_date, '%Y-%m-%d').date()
+    
+    def get_total_days(self) -> int:
+        """Calculate total days from start and end dates"""
+        if self.total_days:
+            return self.total_days
+        start = self.get_start_date()
+        end = self.get_end_date()
+        return (end - start).days + 1
 
 class ChatRequest(BaseModel):
     message: str = Field(..., description="User message")
@@ -31,16 +75,24 @@ class RestaurantRequest(BaseModel):
 class DailyPlan(BaseModel):
     day: int = Field(..., description="Day number")
     date: str = Field(..., description="Date")
-    activities: List[Dict[str, Any]] = Field(..., description="List of activities")
+    theme: str = Field(..., description="Daily theme")
+    hotel: Optional[Dict[str, Any]] = Field(None, description="Hotel details for the day")
+    morning_schedule: List[Dict[str, Any]] = Field(default=[], description="Morning activities and schedule")
+    activities: List[Dict[str, Any]] = Field(..., description="List of main activities")
     meals: List[Dict[str, Any]] = Field(..., description="Meal suggestions")
-    accommodation: Optional[Dict[str, Any]] = Field(None, description="Accommodation details")
-    transport: List[Dict[str, Any]] = Field(..., description="Transportation details")
+    cafes: List[Dict[str, Any]] = Field(default=[], description="Cafe visits and coffee breaks")
+    transportation: List[Dict[str, Any]] = Field(..., description="Transportation details")
+    evening_activities: List[Dict[str, Any]] = Field(default=[], description="Evening activities")
+    budget_breakdown: Dict[str, Any] = Field(default={}, description="Daily budget breakdown")
 
 class ItineraryResponse(BaseModel):
     destination: str
     total_days: int
     budget_estimate: float
+    accommodation_suggestions: List[Dict[str, Any]] = Field(default=[], description="Accommodation suggestions")
     daily_plans: List[DailyPlan]
+    place_ids_used: List[str] = Field(default=[], description="List of all place IDs used in itinerary")
+    travel_tips: List[str] = Field(default=[], description="Comprehensive travel tips")
     recommendations: Dict[str, Any]
     weather_info: Optional[Dict[str, Any]] = None
 
@@ -166,6 +218,98 @@ class FlightSearchResponse(BaseModel):
     success: bool
     flights: List[Flight]
     total_count: int
+    message: str = ""
+
+# Place Details Models
+class PlaceImage(BaseModel):
+    url: str
+    width: Optional[int] = None
+    height: Optional[int] = None
+    caption: Optional[str] = None
+
+class PlaceReview(BaseModel):
+    rating: float
+    review_text: str
+    author: str
+    date: Optional[str] = None
+    source: Optional[str] = None
+
+class PlaceLocation(BaseModel):
+    latitude: float
+    longitude: float
+    address: str
+    neighborhood: Optional[str] = None
+
+class PlaceDetails(BaseModel):
+    place_id: str
+    name: str
+    description: str
+    location: PlaceLocation
+    images: List[PlaceImage] = []
+    reviews: List[PlaceReview] = []
+    rating: Optional[float] = None
+    price_level: Optional[str] = None
+    opening_hours: Optional[List[str]] = []
+    contact: Optional[Dict[str, str]] = {}  # phone, website, etc.
+    amenities: List[str] = []
+    type: str  # hotel, restaurant, attraction, etc.
+    
+class PlaceDetailsRequest(BaseModel):
+    place_ids: List[str] = Field(..., description="List of place IDs to get details for")
+
+class PlaceDetailsResponse(BaseModel):
+    places: List[PlaceDetails]
+    total_count: int
+    message: str = ""
+
+# Raw SERP API Models
+class SerpPlaceRequest(BaseModel):
+    place_id: str = Field(..., description="Google place_id to get details for")
+
+class SerpPlaceResponse(BaseModel):
+    place_data: Optional[Dict[str, Any]] = None
+    message: str = ""
+
+class SerpSearchRequest(BaseModel):
+    query: str = Field(..., description="Search query for places")
+    location: Optional[str] = Field(None, description="Location to search around")
+    place_type: Optional[str] = Field(None, description="Type of place to search for")
+
+class SerpSearchResponse(BaseModel):
+    places: List[Dict[str, Any]] = []
+    total_count: int
+    message: str = ""
+
+# Additional Places Models
+class AdditionalPlacesRequest(BaseModel):
+    destination: str = Field(..., description="Destination to get additional places for")
+    interests: List[str] = Field(default=[], description="User interests to tailor suggestions")
+
+class AdditionalPlacesResponse(BaseModel):
+    destination: str
+    summary: Dict[str, Any]
+    suggestions: Dict[str, Any]
+    message: str = ""
+
+# Unified Itinerary Models
+class UnifiedItineraryRequest(BaseModel):
+    destination: str = Field(..., description="Travel destination")
+    start_date: str = Field(..., description="Start date of the trip (YYYY-MM-DD)")
+    end_date: str = Field(..., description="End date of the trip (YYYY-MM-DD)")
+    budget: Optional[float] = Field(None, description="Budget in USD")
+    interests: List[str] = Field(default=[], description="List of interests")
+    travelers: int = Field(default=1, description="Number of travelers")
+    accommodation_type: Optional[str] = Field(None, description="Type of accommodation")
+
+class UnifiedItineraryResponse(BaseModel):
+    success: bool
+    destination: str
+    dates: Dict[str, Any]
+    request_info: Dict[str, Any]
+    itinerary: Dict[str, Any]
+    additional_places: Dict[str, Any]
+    summary: Dict[str, Any]
+    usage_guide: Dict[str, Any]
     message: str = ""
 
 class APIResponse(BaseModel):

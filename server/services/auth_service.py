@@ -189,6 +189,18 @@ class AuthService:
         return result.modified_count > 0
 
     @staticmethod
+    async def is_email_verified(user_id: str) -> bool:
+        """Check if user's email is verified."""
+        collection = get_collection(USERS_COLLECTION)
+        user_doc = await collection.find_one({"_id": ObjectId(user_id)})
+        return user_doc.get("is_email_verified", False) if user_doc else False
+
+    @staticmethod
+    async def require_email_verification(user_id: str) -> bool:
+        """Check if user needs to verify email before accessing certain features."""
+        return not await AuthService.is_email_verified(user_id)
+
+    @staticmethod
     async def create_password_reset_token(email: str) -> Optional[str]:
         """Create password reset token."""
         collection = get_collection(USERS_COLLECTION)
@@ -270,6 +282,18 @@ class AuthService:
         return result.modified_count > 0
 
     @staticmethod
+    async def is_email_verified(user_id: str) -> bool:
+        """Check if user's email is verified."""
+        collection = get_collection(USERS_COLLECTION)
+        user_doc = await collection.find_one({"_id": ObjectId(user_id)})
+        return user_doc.get("is_email_verified", False) if user_doc else False
+
+    @staticmethod
+    async def require_email_verification(user_id: str) -> bool:
+        """Check if user needs to verify email before accessing certain features."""
+        return not await AuthService.is_email_verified(user_id)
+
+    @staticmethod
     async def resend_verification_email(email: str) -> bool:
         """Resend email verification token."""
         collection = get_collection(USERS_COLLECTION)
@@ -292,4 +316,16 @@ class AuthService:
             }
         )
         
-        return result.modified_count > 0 
+        return result.modified_count > 0
+
+    @staticmethod
+    async def is_email_verified(user_id: str) -> bool:
+        """Check if user's email is verified."""
+        collection = get_collection(USERS_COLLECTION)
+        user_doc = await collection.find_one({"_id": ObjectId(user_id)})
+        return user_doc.get("is_email_verified", False) if user_doc else False
+
+    @staticmethod
+    async def require_email_verification(user_id: str) -> bool:
+        """Check if user needs to verify email before accessing certain features."""
+        return not await AuthService.is_email_verified(user_id) 

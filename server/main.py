@@ -7,9 +7,24 @@ from dotenv import load_dotenv
 load_dotenv('.env')
 
 # Import routers
-from routers import flights, chat, itinerary, alerts, affiliate, auth
+from routers import flights, chat, itinerary, auth, dashboard
+from routers.bookings import router as bookings_router
+from routers.hotels import router as hotels_router
+from routers.restaurants import router as restaurants_router
+from routers.saved_itinerary import router as saved_itinerary
+from routers.weather import router as weather_router
+from routers.ip_tracking import router as ip_tracking_router
+from middleware.example_usage import router as ip_examples_router
 from config import settings
 from database import Database
+
+# Import middleware
+from middleware.security import SecurityMiddleware
+from middleware.logging import LoggingMiddleware
+from middleware.rate_limiting import RateLimitingMiddleware
+from middleware.auth import AuthMiddleware
+from middleware.error_handling import ErrorHandlingMiddleware
+from middleware.ip_tracking import IPTrackingMiddleware
 
 app = FastAPI(
     title="SafarBot API",
@@ -17,7 +32,56 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS middleware - updated for Render backend + Vercel frontend
+# =============================================================================
+# MIDDLEWARE SETUP (Order matters - they execute in reverse order)
+# =============================================================================
+
+# 1. Error Handling (should be first to catch all errors)
+@app.middleware("http")
+async def error_handling_middleware(request, call_next):
+    return await ErrorHandlingMiddleware.handle_errors(request, call_next)
+
+# 2. Security Headers (add security headers to all responses)
+@app.middleware("http")
+async def security_headers_middleware(request, call_next):
+    return await SecurityMiddleware.add_security_headers(request, call_next)
+
+# 3. Request Size Validation (prevent large payload attacks)
+@app.middleware("http")
+async def request_size_middleware(request, call_next):
+    return await SecurityMiddleware.validate_request_size(request, call_next)
+
+# 4. Block Suspicious Requests (block known attack tools)
+@app.middleware("http")
+async def block_suspicious_middleware(request, call_next):
+    return await SecurityMiddleware.block_suspicious_requests(request, call_next)
+
+# 5. Rate Limiting (prevent API abuse)
+@app.middleware("http")
+async def rate_limiting_middleware(request, call_next):
+    return await RateLimitingMiddleware.apply_rate_limiting(request, call_next)
+
+# 6. Request Logging (log all requests and responses)
+@app.middleware("http")
+async def logging_middleware(request, call_next):
+    return await LoggingMiddleware.log_requests(request, call_next)
+
+# 7. API Usage Logging (log API usage for analytics)
+@app.middleware("http")
+async def api_usage_middleware(request, call_next):
+    return await LoggingMiddleware.log_api_usage(request, call_next)
+
+# 8. IP Tracking (track and analyze IP activity)
+@app.middleware("http")
+async def ip_tracking_middleware(request, call_next):
+    return await IPTrackingMiddleware.track_ip_activity(request, call_next)
+
+# 9. Authentication (validate JWT tokens for protected endpoints)
+@app.middleware("http")
+async def auth_middleware(request, call_next):
+    return await AuthMiddleware.validate_token(request, call_next)
+
+# 10. CORS middleware - updated for Render backend + Vercel frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -57,12 +121,18 @@ async def shutdown_db_client():
     print("✅ Database connection closed")
 
 # Include routers
-app.include_router(auth.router, prefix="/api/v1/auth", tags=["authentication"])
-app.include_router(flights.router, prefix="/api/v1", tags=["flights"])
-app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
-app.include_router(itinerary.router, prefix="/api/v1", tags=["itinerary"])
-app.include_router(alerts.router, prefix="/api/v1", tags=["alerts"])
-app.include_router(affiliate.router, prefix="/api/v1", tags=["affiliate"])
+app.include_router(auth, prefix="/api/v1/auth", tags=["authentication"])
+app.include_router(dashboard, prefix="/api/v1/dashboard", tags=["dashboard"])
+app.include_router(saved_itinerary, prefix="/api/v1/saved-itinerary", tags=["saved-itineraries"])
+app.include_router(flights, prefix="/api/v1", tags=["flights"])
+app.include_router(chat, prefix="/api/v1", tags=["chat"])
+app.include_router(itinerary, prefix="/api/v1", tags=["itinerary"])
+app.include_router(bookings_router, prefix="/api/v1", tags=["bookings"])
+app.include_router(hotels_router, prefix="/api/v1", tags=["hotels"])
+app.include_router(restaurants_router, prefix="/api/v1", tags=["restaurants"])
+app.include_router(weather_router, prefix="/api/v1", tags=["weather"])
+app.include_router(ip_tracking_router, prefix="/api/v1", tags=["ip-tracking"])
+app.include_router(ip_examples_router, prefix="/api/v1", tags=["ip-examples"])
 
 @app.get("/health")
 async def health_check():
@@ -94,20 +164,36 @@ async def root():
             "AI-powered travel planning",
             "Flight & hotel booking",
             "Price alerts & predictions",
-            "Affiliate integration",
+            "Weather integration",
             "User authentication"
         ],
         "endpoints": {
             "health": "/health",
             "authentication": "/api/v1/auth",
+            "dashboard": "/api/v1/dashboard",
+            "saved_itineraries": "/api/v1/saved-itinerary",
             "search_flights": "/api/v1/flights/search",
             "booking_options": "/api/v1/flights/booking-options/{booking_token}",
             "popular_flights": "/api/v1/flights/popular",
             "airport_suggestions": "/api/v1/flights/airports",
             "chat": "/api/v1/chat",
             "chat_history": "/api/v1/chat/history",
+            "generate_complete_itinerary": "/api/v1/generate-complete-itinerary",
             "generate_itinerary": "/api/v1/generate-itinerary",
-            "predict_prices": "/api/v1/predict-prices"
+            "predict_prices": "/api/v1/predict-prices",
+            "place_details": "/api/v1/places/details",
+            "serp_place_details": "/api/v1/places/serp/details",
+            "serp_place_search": "/api/v1/places/serp/search",
+            "additional_places": "/api/v1/places/additional",
+            "bookings": "/api/v1/bookings",
+            "hotels": "/api/v1/hotels",
+            "restaurants": "/api/v1/restaurants",
+            "current_weather": "/api/v1/weather/current",
+            "weather_forecast": "/api/v1/weather/forecast",
+            "weather_by_coordinates": "/api/v1/weather/coordinates",
+            "weather_for_itinerary": "/api/v1/weather/itinerary-format",
+            "ip_tracking": "/api/v1/ip-tracking",
+            "otp_verification": "/api/v1/auth/send-verification-otp"
         }
     }
 

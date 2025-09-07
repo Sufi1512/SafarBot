@@ -16,12 +16,12 @@ const ErrorDisplay: FC<ErrorBoundaryProps> = ({
     <div className="flex items-center justify-center py-12">
       <div className="text-center max-w-md">
         <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-        <p className="text-gray-600 mb-4">{error}</p>
+        <h3 className="text-lg font-semibold text-slate-800 mb-2">{title}</h3>
+        <p className="text-slate-600 mb-4">{error}</p>
         {onRetry && (
           <button
             onClick={onRetry}
-            className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Try Again

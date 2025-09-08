@@ -13,10 +13,10 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/client/$1"
+      "dest": "/"
     }
   ],
   "env": {
-    "REACT_APP_API_URL": "https://safarbot-backend.onrender.com"
+    "VITE_API_BASE_URL": "https://safarbot-backend.onrender.com/api/v1"
   }
 } 

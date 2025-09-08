@@ -173,7 +173,7 @@ class DashboardService:
                     "travel_date": booking.get("travel_date", ""),
                     "return_date": booking.get("return_date"),
                     "passengers": booking.get("passengers", 1),
-                    "created_at": booking.get("created_at", ""),
+                    "created_at": booking.get("created_at").isoformat() if booking.get("created_at") else "",
                     "destination": booking.get("destination", "")
                 }
                 for booking in bookings
@@ -475,8 +475,8 @@ class DashboardService:
                     "cover_image": itinerary.get("cover_image"),
                     "views_count": itinerary.get("views_count", 0),
                     "likes_count": itinerary.get("likes_count", 0),
-                    "created_at": itinerary.get("created_at"),
-                    "updated_at": itinerary.get("updated_at")
+                    "created_at": itinerary.get("created_at").isoformat() if itinerary.get("created_at") else None,
+                    "updated_at": itinerary.get("updated_at").isoformat() if itinerary.get("updated_at") else None
                 })
 
             return formatted_itineraries

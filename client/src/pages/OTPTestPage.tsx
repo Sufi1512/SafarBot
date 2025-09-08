@@ -35,7 +35,7 @@ const OTPTestPage: React.FC = () => {
                   setAuthMode('signup');
                   setIsAuthModalOpen(true);
                 }}
-                className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700"
+                className="w-full"
                 size="lg"
               >
                 Test Signup with OTP Verification
@@ -46,7 +46,7 @@ const OTPTestPage: React.FC = () => {
                   setAuthMode('login');
                   setIsAuthModalOpen(true);
                 }}
-                variant="outline"
+                variant="bordered"
                 className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
                 size="lg"
               >
@@ -58,7 +58,7 @@ const OTPTestPage: React.FC = () => {
                   setAuthMode('forgot-password');
                   setIsAuthModalOpen(true);
                 }}
-                variant="outline"
+                variant="bordered"
                 className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
                 size="lg"
               >

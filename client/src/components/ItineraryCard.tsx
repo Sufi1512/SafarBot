@@ -8,7 +8,9 @@ import {
   Share2, 
   Edit3, 
   Trash2,
-  Clock
+  Clock,
+  Users,
+  UserPlus
 } from 'lucide-react';
 
 interface ItineraryCardProps {
@@ -35,7 +37,12 @@ interface ItineraryCardProps {
   onDelete: (id: string) => void;
   onShare: (id: string) => void;
   onView?: (id: string) => void;
+  onInviteCollaborator?: (itinerary: any) => void;
+  onShowCollaborators?: (id: string) => void;
   viewMode?: 'grid' | 'list';
+  editingItineraryId?: string | null;
+  isOwner?: boolean;
+  isCollaborative?: boolean;
 }
 
 const ItineraryCard: React.FC<ItineraryCardProps> = ({
@@ -44,7 +51,12 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
   onEdit,
   onDelete,
   onShare,
-  onView
+  onView,
+  onInviteCollaborator,
+  onShowCollaborators,
+  editingItineraryId,
+  isOwner = true,
+  isCollaborative = false
 }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -206,10 +218,19 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
             )}
             <button
               onClick={() => onEdit(itinerary.id)}
-              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              title="Edit itinerary"
+              disabled={editingItineraryId === itinerary.id}
+              className={`p-2 rounded-lg transition-colors ${
+                editingItineraryId === itinerary.id
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'
+              }`}
+              title={editingItineraryId === itinerary.id ? "Loading..." : "Edit itinerary"}
             >
-              <Edit3 className="h-4 w-4" />
+              {editingItineraryId === itinerary.id ? (
+                <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Edit3 className="h-4 w-4" />
+              )}
             </button>
             <button
               onClick={() => onShare(itinerary.id)}
@@ -218,6 +239,27 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
             >
               <Share2 className="h-4 w-4" />
             </button>
+            
+            {/* Collaboration buttons */}
+            {isOwner && onInviteCollaborator && (
+              <button
+                onClick={() => onInviteCollaborator(itinerary)}
+                className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                title="Invite collaborator"
+              >
+                <UserPlus className="h-4 w-4" />
+              </button>
+            )}
+            
+            {isCollaborative && onShowCollaborators && (
+              <button
+                onClick={() => onShowCollaborators(itinerary.id)}
+                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                title="View collaborators"
+              >
+                <Users className="h-4 w-4" />
+              </button>
+            )}
             <button
               onClick={() => onDelete(itinerary.id)}
               className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"

@@ -59,7 +59,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
           {/* Create button */}
           {showCreateButton && (
-            <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+            <button className="flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors">
               <Plus className="h-4 w-4" />
               <span>Create New</span>
             </button>
@@ -67,7 +67,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
           {/* User profile */}
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center">
               <User className="h-4 w-4 text-white" />
             </div>
             <div className="hidden sm:block">

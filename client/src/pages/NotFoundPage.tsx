@@ -98,7 +98,7 @@ const NotFoundPage: React.FC = () => {
             
             <ModernButton
               onClick={handleGoBack}
-              variant="outline"
+              variant="bordered"
               className="px-8 py-3 text-lg"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
@@ -225,7 +225,7 @@ const NotFoundPage: React.FC = () => {
             </div>
             <ModernButton
               onClick={handleSearch}
-              variant="outline"
+              variant="bordered"
               className="w-full"
             >
               Start Searching
@@ -263,7 +263,7 @@ const NotFoundPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <ModernButton
                 onClick={handleContactSupport}
-                variant="outline"
+                variant="bordered"
                 className="flex items-center justify-center"
               >
                 <MessageCircle className="w-4 h-4 mr-2" />
@@ -271,7 +271,7 @@ const NotFoundPage: React.FC = () => {
               </ModernButton>
               <ModernButton
                 onClick={handleHelpCenter}
-                variant="outline"
+                variant="bordered"
                 className="flex items-center justify-center"
               >
                 <HelpCircle className="w-4 h-4 mr-2" />

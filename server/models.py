@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional, Dict, Any
 from datetime import date, datetime
+from enum import Enum
 
 class ItineraryRequest(BaseModel):
     # Basic Information
@@ -315,4 +316,19 @@ class UnifiedItineraryResponse(BaseModel):
 class APIResponse(BaseModel):
     success: bool
     message: str
-    data: Optional[Any] = None 
+    data: Optional[Any] = None
+
+# Collaboration Models
+class CollaboratorRole(str, Enum):
+    VIEWER = "viewer"
+    EDITOR = "editor"
+    ADMIN = "admin"
+
+class InviteCollaboratorRequest(BaseModel):
+    itinerary_id: str = Field(..., description="ID of the itinerary to invite to")
+    email: str = Field(..., description="Email address of the user to invite")
+    role: CollaboratorRole = Field(default=CollaboratorRole.EDITOR, description="Role for the collaborator")
+    message: Optional[str] = Field(None, description="Optional personal message")
+
+class AcceptInvitationRequest(BaseModel):
+    invitation_token: str = Field(..., description="Invitation token to accept") 

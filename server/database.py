@@ -107,6 +107,11 @@ def get_sync_collection(collection_name: str):
         return None
     return db[collection_name]
 
+# FastAPI dependency for getting database
+async def get_database():
+    """FastAPI dependency to get database instance."""
+    return Database.get_db()
+
 # Collection names - Updated to match user's existing collection
 USERS_COLLECTION = "user_fields"
 FLIGHTS_COLLECTION = "flights"
@@ -119,4 +124,9 @@ AFFILIATE_BOOKINGS_COLLECTION = "affiliate_bookings"
 CHAT_SESSIONS_COLLECTION = "chat_sessions"
 RESTAURANTS_COLLECTION = "restaurants"
 SAVED_TRIPS_COLLECTION = "saved_itineraries"
-NOTIFICATIONS_COLLECTION = "notifications" 
+NOTIFICATIONS_COLLECTION = "notifications"
+
+# Collaboration collections
+SAVED_ITINERARIES_COLLECTION = "saved_itineraries"
+ITINERARY_INVITATIONS_COLLECTION = "itinerary_invitations"
+ITINERARY_COLLABORATORS_COLLECTION = "itinerary_collaborators" 

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import CustomDatePicker from '../components/ui/CustomDatePicker';
 import ModernButton from '../components/ui/ModernButton';
 import bgVideo2 from '../asset/videos/bg-video2.mp4';
-import { MapPin } from 'lucide-react';
+import { MapPin, Calendar, Users, DollarSign, Cloud, Sun, Wind, Eye, Thermometer } from 'lucide-react';
 import {
   StarIcon,
   ArrowRightIcon,
@@ -36,6 +36,30 @@ const HomePage: React.FC = () => {
     endDate: null,
     travelers: 1,
   });
+
+  // Mock weather data - in real app, this would come from an API
+  const weatherData = {
+    location: 'Mumbai, IN',
+    temperature: 27,
+    feelsLike: 27,
+    condition: 'Overcast Clouds',
+    humidity: 80,
+    wind: 3.69,
+    pressure: 1007,
+    visibility: 10,
+    icon: 'cloud'
+  };
+
+  // Calculate journey overview data
+  const journeyOverview = {
+    totalDays: searchForm.startDate && searchForm.endDate 
+      ? Math.ceil((searchForm.endDate.getTime() - searchForm.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
+      : 5,
+    estimatedBudget: searchForm.travelers * 300, // $300 per person per day
+    plannedDays: searchForm.startDate && searchForm.endDate 
+      ? Math.ceil((searchForm.endDate.getTime() - searchForm.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
+      : 5
+  };
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -308,14 +332,14 @@ const HomePage: React.FC = () => {
 
                     {/* Travelers */}
                     <div className="relative">
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                         👥 <span>Travelers</span>
                       </label>
                       <div className="relative group">
                         <select
                           value={searchForm.travelers}
                           onChange={(e) => setSearchForm(prev => ({ ...prev, travelers: parseInt(e.target.value) }))}
-                          className="w-full px-3 py-3 pr-10 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-4 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-base font-medium appearance-none hover:border-cyan-400 shadow-sm hover:shadow-md cursor-pointer"
+                          className="w-full px-3 py-2.5 pr-10 border-2 border-gray-200 dark:border-gray-600 rounded-2xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-4 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-base font-medium appearance-none hover:border-cyan-400 shadow-sm hover:shadow-md cursor-pointer"
                           aria-label="Select number of travelers"
                         >
                           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
@@ -324,17 +348,7 @@ const HomePage: React.FC = () => {
                             </option>
                           ))}
                         </select>
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                          <svg 
-                            className="w-4 h-4 text-gray-400 group-hover:text-cyan-500 transition-colors" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            viewBox="0 0 24 24"
-                            aria-hidden="true"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </div>
+                        {/* Removed custom arrow to avoid duplicate caret; rely on native select indicator */}
                         <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                       </div>
                     </div>
@@ -350,7 +364,7 @@ const HomePage: React.FC = () => {
                     <ModernButton
                       onClick={handleSearch}
                       size="lg"
-                      variant="primary"
+                      variant="solid"
                       className="px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transform transition-all duration-300 inline-flex items-center justify-center whitespace-nowrap"
                     >
                       <svg className="w-4 h-4 mr-2 flex-shrink-0 align-middle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -369,9 +383,175 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
+      {/* Journey Overview & Weather Section */}
+      <section className="py-16 bg-gradient-to-b from-gray-50 to-white dark:from-gray-800 dark:to-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            {/* Journey Overview */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="space-y-6"
+            >
+              <div className="text-center lg:text-left">
+                <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                  Journey Overview
+                </h2>
+                <p className="text-gray-600 dark:text-gray-300">
+                  Your trip details at a glance
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Total Days */}
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-2xl p-6 text-center border border-blue-200/50 dark:border-blue-700/50"
+                >
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <Calendar className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="text-2xl font-bold text-blue-700 dark:text-blue-300 mb-1">
+                    {journeyOverview.totalDays}
+                  </div>
+                  <div className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                    Total Days
+                  </div>
+                </motion.div>
 
+                {/* Estimated Budget */}
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-2xl p-6 text-center border border-green-200/50 dark:border-green-700/50"
+                >
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <DollarSign className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="text-2xl font-bold text-green-700 dark:text-green-300 mb-1">
+                    ${journeyOverview.estimatedBudget}
+                  </div>
+                  <div className="text-sm font-medium text-green-600 dark:text-green-400">
+                    Estimated Budget
+                  </div>
+                </motion.div>
 
+                {/* Planned Days */}
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 rounded-2xl p-6 text-center border border-purple-200/50 dark:border-purple-700/50"
+                >
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <Users className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="text-2xl font-bold text-purple-700 dark:text-purple-300 mb-1">
+                    {journeyOverview.plannedDays}
+                  </div>
+                  <div className="text-sm font-medium text-purple-600 dark:text-purple-400">
+                    Planned Days
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
 
+            {/* Current Weather */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="space-y-6"
+            >
+              <div className="text-center lg:text-left">
+                <div className="flex items-center justify-center lg:justify-start space-x-2 mb-2">
+                  <div className="w-6 h-6 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                    <Sun className="w-4 h-4 text-white" />
+                  </div>
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+                    Current Weather
+                  </h2>
+                </div>
+                <p className="text-gray-600 dark:text-gray-300">
+                  Stay informed about your destination
+                </p>
+              </div>
+
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {weatherData.location}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Current weather
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-4xl font-bold text-orange-500 mb-1">
+                      {weatherData.temperature}°C
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Feels like {weatherData.feelsLike}°C
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <Cloud className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">
+                      {weatherData.condition}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {weatherData.humidity}% humidity
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div className="text-center">
+                    <Wind className="w-4 h-4 text-gray-500 dark:text-gray-400 mx-auto mb-1" />
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Wind</div>
+                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {weatherData.wind} m/s
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <Eye className="w-4 h-4 text-gray-500 dark:text-gray-400 mx-auto mb-1" />
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Pressure</div>
+                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {weatherData.pressure} hPa
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <Thermometer className="w-4 h-4 text-gray-500 dark:text-gray-400 mx-auto mb-1" />
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Visibility</div>
+                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {weatherData.visibility} km
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-xl p-3 border border-blue-200/50 dark:border-blue-700/50">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-5 h-5 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                      <Sun className="w-3 h-3 text-white" />
+                    </div>
+                    <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                      Travel Tip: Pack summer clothing and sun protection
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
 
       {/* Features Section with Enhanced UI */}
       <section className="py-20 bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
@@ -628,4 +808,4 @@ const HomePage: React.FC = () => {
   );
 };
 
-export default HomePage;  
+export default HomePage;

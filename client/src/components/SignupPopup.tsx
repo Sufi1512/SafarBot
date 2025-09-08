@@ -591,7 +591,7 @@ const SignupPopup: React.FC<SignupPopupProps> = ({
                   type="submit"
                   loading={isSubmitting}
                   icon={isSubmitting ? Loader2 : UserPlus}
-                  className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
                   size="lg"
                   disabled={isSubmitting}
                 >
@@ -614,7 +614,7 @@ const SignupPopup: React.FC<SignupPopupProps> = ({
               {/* Social Signup Buttons */}
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <ModernButton
-                  variant="outline"
+                  variant="bordered"
                   onClick={handleGoogleSignup}
                   className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
                 >
@@ -627,7 +627,7 @@ const SignupPopup: React.FC<SignupPopupProps> = ({
                   <span className="ml-2">Google</span>
                 </ModernButton>
                 <ModernButton
-                  variant="outline"
+                  variant="bordered"
                   onClick={handleFacebookSignup}
                   className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
                 >

@@ -357,7 +357,7 @@ const PackagesPage: React.FC = () => {
                         <span className="text-sm text-gray-500">per person</span>
                       </div>
                       <ModernButton
-                        variant="gradient"
+                        variant="solid"
                         size="sm"
                         className="group-hover:scale-105 transition-transform duration-200"
                       >

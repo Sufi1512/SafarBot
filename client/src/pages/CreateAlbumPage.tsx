@@ -162,14 +162,14 @@ const CreateAlbumPage: React.FC = () => {
             
             <div className="flex items-center space-x-3">
               <ModernButton
-                variant="outline"
+                variant="bordered"
                 onClick={() => setIsPreview(!isPreview)}
                 icon={isPreview ? Folder : Eye}
               >
                 {isPreview ? 'Edit' : 'Preview'}
               </ModernButton>
               <ModernButton
-                variant="outline"
+                variant="bordered"
                 onClick={handleSaveAlbum}
                 loading={isSaving}
                 icon={Save}

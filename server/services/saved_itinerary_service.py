@@ -129,22 +129,42 @@ class SavedItineraryService:
         status: Optional[str] = None,
         is_favorite: Optional[bool] = None
     ) -> List[Dict[str, Any]]:
-        """Get user's saved itineraries"""
+        """Get user's saved itineraries including collaborative ones"""
         try:
             collection = get_collection(SAVED_TRIPS_COLLECTION)
             if collection is None:
                 raise Exception("Database connection not available")
             
-            # Build query
-            query = {"user_id": user_id}
+            # Build query for owned itineraries
+            owned_query = {"user_id": user_id}
             if status:
-                query["status"] = status
+                owned_query["status"] = status
             if is_favorite is not None:
-                query["is_favorite"] = is_favorite
+                owned_query["is_favorite"] = is_favorite
             
-            # Get itineraries
-            cursor = collection.find(query).sort("updated_at", -1).skip(skip).limit(limit)
-            itineraries = await cursor.to_list(length=limit)
+            # Get owned itineraries
+            owned_cursor = collection.find(owned_query).sort("updated_at", -1)
+            owned_itineraries = await owned_cursor.to_list(length=None)
+            
+            # Get collaborative itineraries where user is a collaborator
+            collaborative_query = {
+                "collaborators": user_id,
+                "user_id": {"$ne": user_id}  # Exclude owned itineraries
+            }
+            if status:
+                collaborative_query["status"] = status
+            if is_favorite is not None:
+                collaborative_query["is_favorite"] = is_favorite
+            
+            collaborative_cursor = collection.find(collaborative_query).sort("updated_at", -1)
+            collaborative_itineraries = await collaborative_cursor.to_list(length=None)
+            
+            # Combine and sort all itineraries
+            all_itineraries = owned_itineraries + collaborative_itineraries
+            all_itineraries.sort(key=lambda x: x.get("updated_at", datetime.min), reverse=True)
+            
+            # Apply pagination
+            itineraries = all_itineraries[skip:skip + limit]
             
             # Convert ObjectIds to strings and ensure all required fields are present
             for itinerary in itineraries:

@@ -73,7 +73,7 @@ class ErrorBoundary extends Component<Props, State> {
               
               <ModernButton
                 onClick={this.handleGoHome}
-                variant="outline"
+                variant="bordered"
                 className="px-8 py-3 text-lg"
               >
                 <Home className="w-5 h-5 mr-2" />
@@ -123,14 +123,14 @@ class ErrorBoundary extends Component<Props, State> {
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <ModernButton
                   onClick={() => window.open('mailto:support@safarbot.com', '_blank')}
-                  variant="outline"
+                  variant="bordered"
                   className="flex items-center justify-center"
                 >
                   Contact Support
                 </ModernButton>
                 <ModernButton
                   onClick={() => window.open('https://github.com/safarbot/issues', '_blank')}
-                  variant="outline"
+                  variant="bordered"
                   className="flex items-center justify-center"
                 >
                   Report Issue

@@ -63,12 +63,33 @@ api.interceptors.response.use(
           error.config.headers.Authorization = `Bearer ${response.access_token}`;
           return api(error.config);
         } catch (refreshError) {
-          // Refresh failed, clear tokens and redirect to login
+          // Refresh failed, clear tokens and redirect to login with state preservation
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
+          
+          // Store current location for redirect after login
+          const currentPath = window.location.pathname + window.location.search;
+          const state = {
+            from: currentPath,
+            message: 'Session expired. Please log in again.',
+            timestamp: Date.now()
+          };
+          
+          sessionStorage.setItem('authRedirect', JSON.stringify(state));
           window.location.href = '/login';
           return Promise.reject(refreshError);
         }
+      } else {
+        // No refresh token, redirect to login with state preservation
+        const currentPath = window.location.pathname + window.location.search;
+        const state = {
+          from: currentPath,
+          message: 'Please log in to continue',
+          timestamp: Date.now()
+        };
+        
+        sessionStorage.setItem('authRedirect', JSON.stringify(state));
+        window.location.href = '/login';
       }
     }
     
@@ -1603,7 +1624,7 @@ export const savedItineraryAPI = {
     interests: string[];
     days: Array<{
       day_number: number;
-      date?: string;
+      date?: string | null; // Backend expects null, but we allow string for compatibility
       activities: Array<{
         name: string;
         time: string;
@@ -1615,8 +1636,8 @@ export const savedItineraryAPI = {
         name: string;
         type: string;
         cost_per_night: number;
-      };
-      transportation?: Record<string, any>;
+      } | null;
+      transportation?: Record<string, any> | null; // Backend expects single dict or null
       meals: Array<{
         name: string;
         time: string;
@@ -1826,6 +1847,56 @@ export const savedItineraryAPI = {
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Failed to load public itinerary');
     }
+  }
+};
+
+// Collaboration API
+export const collaborationAPI = {
+  // Invite a collaborator to an itinerary
+  inviteCollaborator: async (data: {
+    itinerary_id: string;
+    email: string;
+    role: 'viewer' | 'editor' | 'admin';
+    message?: string;
+  }): Promise<any> => {
+    const response = await api.post('/collaboration/invite', data);
+    return response.data;
+  },
+
+  // Get user's pending invitations
+  getInvitations: async (): Promise<any> => {
+    const response = await api.get('/collaboration/invitations');
+    return response.data;
+  },
+
+  // Accept an invitation
+  acceptInvitation: async (invitationToken: string): Promise<any> => {
+    const response = await api.post(`/collaboration/invitation/${invitationToken}/accept`);
+    return response.data;
+  },
+
+  // Decline an invitation
+  declineInvitation: async (invitationToken: string): Promise<any> => {
+    const response = await api.post(`/collaboration/invitation/${invitationToken}/decline`);
+    return response.data;
+  },
+
+  // Get collaborators for an itinerary
+  getCollaborators: async (itineraryId: string): Promise<any> => {
+    const response = await api.get(`/collaboration/itinerary/${itineraryId}/collaborators`);
+    return response.data;
+  },
+
+  // Remove a collaborator
+  removeCollaborator: async (itineraryId: string, userId: string): Promise<any> => {
+    const response = await api.delete(`/collaboration/itinerary/${itineraryId}/collaborator/${userId}`);
+    return response.data;
+  },
+
+  // Get user's collaborations
+  getMyCollaborations: async (): Promise<any> => {
+    const response = await api.get('/collaboration/my-collaborations');
+    return response.data;
   }
 };
 

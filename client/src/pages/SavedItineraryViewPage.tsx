@@ -231,7 +231,7 @@ const SavedItineraryViewPage: React.FC = () => {
             <div className="flex items-center space-x-4">
               <ModernButton
                 onClick={handleGoBack}
-                variant="outline"
+                variant="bordered"
                 className="flex items-center"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -246,29 +246,29 @@ const SavedItineraryViewPage: React.FC = () => {
             <div className="flex items-center space-x-2">
               <ModernButton
                 onClick={handleToggleFavorite}
-                variant="outline"
+                variant="bordered"
                 className={itinerary.is_favorite ? "text-red-600 border-red-600" : ""}
               >
                 <Heart className={`w-4 h-4 ${itinerary.is_favorite ? "fill-current" : ""}`} />
               </ModernButton>
               
-              <ModernButton onClick={handleShare} variant="outline">
+              <ModernButton onClick={handleShare} variant="bordered">
                 <Share2 className="w-4 h-4" />
               </ModernButton>
               
-              <ModernButton onClick={handleEdit} variant="outline">
+              <ModernButton onClick={handleEdit} variant="bordered">
                 <Edit className="w-4 h-4" />
               </ModernButton>
               
-              <ModernButton onClick={handleDownload} variant="outline">
+              <ModernButton onClick={handleDownload} variant="bordered">
                 <Download className="w-4 h-4" />
               </ModernButton>
               
-              <ModernButton onClick={handlePrint} variant="outline">
+              <ModernButton onClick={handlePrint} variant="bordered">
                 <Printer className="w-4 h-4" />
               </ModernButton>
               
-              <ModernButton onClick={handleDelete} variant="outline" className="text-red-600 hover:bg-red-50">
+              <ModernButton onClick={handleDelete} variant="bordered" className="text-red-600 hover:bg-red-50">
                 <Trash2 className="w-4 h-4" />
               </ModernButton>
             </div>

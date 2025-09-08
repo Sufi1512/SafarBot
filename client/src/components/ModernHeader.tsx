@@ -20,6 +20,7 @@ import {
   PaperAirplaneIcon,
   BuildingOfficeIcon,
   CubeIcon,
+  HomeIcon,
 } from '@heroicons/react/24/outline';
 
 const ModernHeader: React.FC = () => {
@@ -65,13 +66,14 @@ const ModernHeader: React.FC = () => {
   };
 
   const navItems = [
-    { name: 'Home', href: '/', icon: PaperAirplaneIcon },
+    { name: 'Home', href: '/', icon: HomeIcon },
     { name: 'Flights', href: '/flights', icon: PaperAirplaneIcon },
     { name: 'Hotels', href: '/hotels', icon: BuildingOfficeIcon },
     { name: 'Packages', href: '/packages', icon: CubeIcon },
   ];
 
   const authenticatedNavItems = [
+    { name: 'Home', href: '/', icon: HomeIcon },
     { name: 'Flights', href: '/flights', icon: PaperAirplaneIcon },
     { name: 'Hotels', href: '/hotels', icon: BuildingOfficeIcon },
     { name: 'Packages', href: '/packages', icon: CubeIcon },
@@ -143,20 +145,20 @@ const ModernHeader: React.FC = () => {
             <div className="flex items-center space-x-2">
               
             {/* Search Button */}
-              <button className="p-2 rounded-xl text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200">
+              <button className="p-2 rounded-xl text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200">
                 <MagnifyingGlassIcon className="w-5 h-5" />
               </button>
 
             {/* Theme Toggle */}
               <button
               onClick={toggleDarkMode}
-                className="p-2 rounded-xl text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+                className="p-2 rounded-xl text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
               >
                 {isDarkMode ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
               </button>
 
             {/* Notifications */}
-              <button className="relative p-2 rounded-xl text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200">
+              <button className="relative p-2 rounded-xl text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200">
                 <BellIcon className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
               </button>
@@ -175,7 +177,7 @@ const ModernHeader: React.FC = () => {
                   Sign In
                 </ModernButton>
                 <ModernButton 
-                  variant="gradient" 
+                  variant="solid" 
                   size="sm"
                   onClick={() => {
                     console.log('Sign Up button clicked');
@@ -288,7 +290,7 @@ const ModernHeader: React.FC = () => {
                         Sign In
                       </ModernButton>
                       <ModernButton 
-                        variant="gradient" 
+                        variant="solid" 
                         size="sm"
                         fullWidth
                         onClick={() => {

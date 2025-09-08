@@ -8,11 +8,15 @@ import {
   Search,
   Bookmark
 } from 'lucide-react';
-import { savedItineraryAPI } from '../../services/api';
+import { savedItineraryAPI, collaborationAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { useAuthenticatedApi } from '../../hooks/useAuthenticatedApi';
 import ItineraryCard from '../../components/ItineraryCard';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ShareModal from '../../components/ShareModal';
+import CollaborationInviteModal from '../../components/CollaborationInviteModal';
+import CollaboratorsList from '../../components/CollaboratorsList';
+import CollaborationNotifications from '../../components/CollaborationNotifications';
 
 interface SavedItinerary {
   id: string;
@@ -40,6 +44,7 @@ interface SavedItinerary {
 const SavedPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const { callApi } = useAuthenticatedApi();
   const [itineraries, setItineraries] = useState<SavedItinerary[]>([]);
   const [filteredItineraries, setFilteredItineraries] = useState<SavedItinerary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,6 +59,16 @@ const SavedPage: React.FC = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareData, setShareData] = useState<{title: string, url: string, description?: string} | null>(null);
+  const [editingItineraryId, setEditingItineraryId] = useState<string | null>(null);
+  
+  // Cache for full itinerary data to avoid unnecessary API calls
+  const [itineraryCache, setItineraryCache] = useState<Map<string, any>>(new Map());
+  
+  // Collaboration state
+  const [collaborationInviteModalOpen, setCollaborationInviteModalOpen] = useState(false);
+  const [collaborationNotificationsOpen, setCollaborationNotificationsOpen] = useState(false);
+  const [selectedItineraryForCollaboration, setSelectedItineraryForCollaboration] = useState<SavedItinerary | null>(null);
+  const [showCollaborators, setShowCollaborators] = useState<string | null>(null);
 
   // Load saved itineraries
   useEffect(() => {
@@ -123,12 +138,12 @@ const SavedPage: React.FC = () => {
       setError(null);
       
       const skip = (page - 1) * itemsPerPage;
-      const data = await savedItineraryAPI.getItineraries({
+      const data = await callApi(() => savedItineraryAPI.getItineraries({
         limit: itemsPerPage,
         skip: skip,
         status: statusFilter === 'all' ? undefined : statusFilter as any,
         is_favorite: favoritesOnly || undefined
-      });
+      }));
       
       setItineraries(data);
       setTotalItems(data.length); // In a real app, you'd get total count from API
@@ -155,7 +170,17 @@ const SavedPage: React.FC = () => {
       ));
 
       // Call API to update favorite status
-      await savedItineraryAPI.toggleFavorite(itineraryId);
+      await callApi(() => savedItineraryAPI.toggleFavorite(itineraryId));
+      
+      // Update cache if it exists
+      setItineraryCache(prev => {
+        const newCache = new Map(prev);
+        const cachedItinerary = newCache.get(itineraryId);
+        if (cachedItinerary) {
+          newCache.set(itineraryId, { ...cachedItinerary, is_favorite: !cachedItinerary.is_favorite });
+        }
+        return newCache;
+      });
       
     } catch (err: any) {
       console.error('Error toggling favorite:', err);
@@ -169,16 +194,33 @@ const SavedPage: React.FC = () => {
     }
   };
 
-  const handleEditItinerary = (itineraryId: string) => {
-    const itinerary = itineraries.find(i => i.id === itineraryId);
-    if (itinerary) {
-      // Navigate to edit page with itinerary data
+  const handleEditItinerary = async (itineraryId: string) => {
+    try {
+      setEditingItineraryId(itineraryId);
+      
+      // Check cache first
+      let fullItinerary = itineraryCache.get(itineraryId);
+      
+      if (!fullItinerary) {
+        // Fetch the full itinerary data with days array if not in cache
+        fullItinerary = await callApi(() => savedItineraryAPI.getItinerary(itineraryId));
+        
+        // Cache the result
+        setItineraryCache(prev => new Map(prev).set(itineraryId, fullItinerary));
+      }
+      
+      // Navigate to edit page with complete itinerary data
       navigate('/edit-itinerary', { 
         state: { 
-          itineraryData: itinerary,
+          itineraryData: fullItinerary,
           isEditing: true 
         } 
       });
+    } catch (error: any) {
+      console.error('Error loading itinerary for editing:', error);
+      alert('Failed to load itinerary for editing. Please try again.');
+    } finally {
+      setEditingItineraryId(null);
     }
   };
 
@@ -189,10 +231,17 @@ const SavedPage: React.FC = () => {
 
     try {
       // Call API to delete itinerary
-      await savedItineraryAPI.deleteItinerary(itineraryId);
+      await callApi(() => savedItineraryAPI.deleteItinerary(itineraryId));
       
       // Remove from local state
       setItineraries(prev => prev.filter(i => i.id !== itineraryId));
+      
+      // Remove from cache
+      setItineraryCache(prev => {
+        const newCache = new Map(prev);
+        newCache.delete(itineraryId);
+        return newCache;
+      });
     } catch (err: any) {
       console.error('Error deleting itinerary:', err);
       alert('Failed to delete itinerary. Please try again.');
@@ -205,7 +254,7 @@ const SavedPage: React.FC = () => {
       if (!itinerary) return;
 
       // Call API to share itinerary and get public link
-      const shareResponse = await savedItineraryAPI.shareItinerary(itineraryId);
+      const shareResponse = await callApi(() => savedItineraryAPI.shareItinerary(itineraryId));
       const shareUrl = `${window.location.origin}${shareResponse.public_url}`;
       
       // Update the itinerary in local state to reflect it's now public
@@ -226,6 +275,26 @@ const SavedPage: React.FC = () => {
       console.error('Error sharing itinerary:', err);
       alert('Failed to share itinerary. Please try again.');
     }
+  };
+
+  // Collaboration handlers
+  const handleInviteCollaborator = (itinerary: SavedItinerary) => {
+    setSelectedItineraryForCollaboration(itinerary);
+    setCollaborationInviteModalOpen(true);
+  };
+
+  const handleShowCollaborators = (itineraryId: string) => {
+    setShowCollaborators(showCollaborators === itineraryId ? null : itineraryId);
+  };
+
+  const handleInvitationSent = () => {
+    // Refresh the itineraries to show updated collaboration status
+    loadItineraries(currentPage);
+  };
+
+  const handleInvitationAccepted = (itineraryId: string) => {
+    // Refresh the itineraries to show the new collaboration
+    loadItineraries(currentPage);
   };
 
   const handleViewItinerary = (itineraryId: string) => {
@@ -274,6 +343,15 @@ const SavedPage: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setCollaborationNotificationsOpen(true)}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+            title="View collaboration invitations"
+          >
+            <Bookmark className="w-4 h-4" />
+            <span>Invitations</span>
+          </button>
+          
           <button
             onClick={handleCreateNew}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
@@ -379,7 +457,12 @@ const SavedPage: React.FC = () => {
               onDelete={handleDeleteItinerary}
               onShare={handleShareItinerary}
               onView={handleViewItinerary}
+              onInviteCollaborator={handleInviteCollaborator}
+              onShowCollaborators={handleShowCollaborators}
               viewMode={viewMode}
+              editingItineraryId={editingItineraryId}
+              isOwner={true}
+              isCollaborative={itinerary.is_collaborative || false}
             />
           ))}
         </div>
@@ -406,6 +489,22 @@ const SavedPage: React.FC = () => {
               Create Your First Itinerary
             </button>
           )}
+        </div>
+      )}
+
+      {/* Collaborators List */}
+      {showCollaborators && (
+        <div className="mt-8">
+          <CollaboratorsList
+            itineraryId={showCollaborators}
+            isOwner={true}
+            onInviteClick={() => {
+              const itinerary = itineraries.find(i => i.id === showCollaborators);
+              if (itinerary) {
+                handleInviteCollaborator(itinerary);
+              }
+            }}
+          />
         </div>
       )}
 
@@ -475,6 +574,27 @@ const SavedPage: React.FC = () => {
           description={shareData.description}
         />
       )}
+
+      {/* Collaboration Invite Modal */}
+      {selectedItineraryForCollaboration && (
+        <CollaborationInviteModal
+          isOpen={collaborationInviteModalOpen}
+          onClose={() => {
+            setCollaborationInviteModalOpen(false);
+            setSelectedItineraryForCollaboration(null);
+          }}
+          itineraryId={selectedItineraryForCollaboration.id}
+          itineraryTitle={selectedItineraryForCollaboration.title}
+          onInviteSent={handleInvitationSent}
+        />
+      )}
+
+      {/* Collaboration Notifications Modal */}
+      <CollaborationNotifications
+        isOpen={collaborationNotificationsOpen}
+        onClose={() => setCollaborationNotificationsOpen(false)}
+        onInvitationAccepted={handleInvitationAccepted}
+      />
     </div>
   );
 };

@@ -127,14 +127,14 @@ const CreateBlogPage: React.FC = () => {
             
             <div className="flex items-center space-x-3">
               <ModernButton
-                variant="outline"
+                variant="bordered"
                 onClick={handlePreview}
                 icon={isPreview ? FileText : Eye}
               >
                 {isPreview ? 'Edit' : 'Preview'}
               </ModernButton>
               <ModernButton
-                variant="outline"
+                variant="bordered"
                 onClick={handleSaveDraft}
                 loading={isSaving}
                 icon={Save}

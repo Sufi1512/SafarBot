@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import ModernHeader from './components/ModernHeader';
 import Footer from './components/Footer';
 import ErrorBoundary from './components/ErrorBoundary';
+import ProtectedRoute from './components/ProtectedRoute';
 import HomePage from './pages/HomePage';
 import FlightBookingPage from './pages/FlightBookingPage';
 import HotelBookingPage from './pages/HotelBookingPage';
@@ -26,6 +27,8 @@ import CreateGuidePage from './pages/CreateGuidePage';
 import PublicItineraryPage from './pages/PublicItineraryPage';
 import ItineraryRedirectPage from './pages/ItineraryRedirectPage';
 import SavedItineraryViewPage from './pages/SavedItineraryViewPage';
+import LoginPage from './pages/LoginPage';
+import CollaborationAcceptPage from './pages/CollaborationAcceptPage';
 import OTPTestPage from './pages/OTPTestPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ServerErrorPage from './pages/ServerErrorPage';
@@ -90,24 +93,54 @@ function App() {
                   <Route path="/flights" element={<FlightBookingPage />} />
                   <Route path="/hotels" element={<HotelBookingPage />} />
                   <Route path="/packages" element={<PackagesPage />} />
-                  <Route path="/dashboard" element={<UserDashboard />} />
-                  <Route path="/profile" element={<ProfilePage />} />
-                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/dashboard" element={
+                    <ProtectedRoute>
+                      <UserDashboard />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/profile" element={
+                    <ProtectedRoute>
+                      <ProfilePage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/settings" element={
+                    <ProtectedRoute>
+                      <SettingsPage />
+                    </ProtectedRoute>
+                  } />
                   <Route path="/search" element={<SearchPage />} />
                   <Route path="/datepicker-demo" element={<DatePickerDemo />} />
                   <Route path="/booking-options/:bookingToken" element={<BookingOptionsPage />} />
                   <Route path="/booking-confirmation" element={<BookingConfirmationPage />} />
                   <Route path="/results" element={<ResultsPage />} />
                   <Route path="/itinerary" element={<ItineraryPage />} />
-                  <Route path="/saved-itinerary/:id" element={<SavedItineraryViewPage />} />
+                  <Route path="/saved-itinerary/:id" element={
+                    <ProtectedRoute>
+                      <SavedItineraryViewPage />
+                    </ProtectedRoute>
+                  } />
                   <Route path="/itinerary/:id" element={<ItineraryRedirectPage />} />
                   <Route path="/itinerary-generation" element={<ItineraryGenerationPage />} />
                   <Route path="/edit-itinerary" element={<EditItineraryPage />} />
                   <Route path="/trip-planner" element={<TripPlannerPage />} />
-                  <Route path="/create-blog" element={<CreateBlogPage />} />
-                  <Route path="/create-album" element={<CreateAlbumPage />} />
-                  <Route path="/create-guide" element={<CreateGuidePage />} />
+                  <Route path="/create-blog" element={
+                    <ProtectedRoute>
+                      <CreateBlogPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/create-album" element={
+                    <ProtectedRoute>
+                      <CreateAlbumPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/create-guide" element={
+                    <ProtectedRoute>
+                      <CreateGuidePage />
+                    </ProtectedRoute>
+                  } />
                   <Route path="/public/itinerary/:shareToken" element={<PublicItineraryPage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/collaboration/accept/:invitationToken" element={<CollaborationAcceptPage />} />
                   <Route path="/otp-test" element={<OTPTestPage />} />
                   
                   {/* Error Pages */}

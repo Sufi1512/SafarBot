@@ -26,28 +26,36 @@ const AdditionalPlaces: React.FC<AdditionalPlacesProps> = ({
   const [selectedPlace, setSelectedPlace] = useState<AdditionalPlace | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Categories with counts
+  // Categories with counts - handle null/undefined additionalPlaces
+  const safeAdditionalPlaces = additionalPlaces || {
+    hotels: [],
+    restaurants: [],
+    cafes: [],
+    attractions: [],
+    interest_based: []
+  };
+  
   const categories = [
-    { key: 'all', label: 'All Places', count: Object.values(additionalPlaces).flat().length },
-    { key: 'hotels', label: 'Hotels', count: additionalPlaces.hotels.length },
-    { key: 'restaurants', label: 'Restaurants', count: additionalPlaces.restaurants.length },
-    { key: 'cafes', label: 'Cafes', count: additionalPlaces.cafes.length },
-    { key: 'attractions', label: 'Attractions', count: additionalPlaces.attractions.length },
-    { key: 'interest_based', label: 'Interest-Based', count: additionalPlaces.interest_based.length }
+    { key: 'all', label: 'All Places', count: Object.values(safeAdditionalPlaces).flat().length },
+    { key: 'hotels', label: 'Hotels', count: safeAdditionalPlaces.hotels?.length || 0 },
+    { key: 'restaurants', label: 'Restaurants', count: safeAdditionalPlaces.restaurants?.length || 0 },
+    { key: 'cafes', label: 'Cafes', count: safeAdditionalPlaces.cafes?.length || 0 },
+    { key: 'attractions', label: 'Attractions', count: safeAdditionalPlaces.attractions?.length || 0 },
+    { key: 'interest_based', label: 'Interest-Based', count: safeAdditionalPlaces.interest_based?.length || 0 }
   ];
 
   // Get places for current category
   const getCurrentPlaces = (): AdditionalPlace[] => {
     if (activeCategory === 'all') {
       return [
-        ...additionalPlaces.hotels,
-        ...additionalPlaces.restaurants,
-        ...additionalPlaces.cafes,
-        ...additionalPlaces.attractions,
-        ...additionalPlaces.interest_based
+        ...(safeAdditionalPlaces.hotels || []),
+        ...(safeAdditionalPlaces.restaurants || []),
+        ...(safeAdditionalPlaces.cafes || []),
+        ...(safeAdditionalPlaces.attractions || []),
+        ...(safeAdditionalPlaces.interest_based || [])
       ];
     }
-    return additionalPlaces[activeCategory as keyof typeof additionalPlaces] || [];
+    return safeAdditionalPlaces[activeCategory as keyof typeof safeAdditionalPlaces] || [];
   };
 
   const currentPlaces = getCurrentPlaces();

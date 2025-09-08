@@ -187,14 +187,14 @@ const CreateGuidePage: React.FC = () => {
             
             <div className="flex items-center space-x-3">
               <ModernButton
-                variant="outline"
+                variant="bordered"
                 onClick={() => setIsPreview(!isPreview)}
                 icon={isPreview ? FileText : Eye}
               >
                 {isPreview ? 'Edit' : 'Preview'}
               </ModernButton>
               <ModernButton
-                variant="outline"
+                variant="bordered"
                 onClick={handleSaveGuide}
                 loading={isSaving}
                 icon={Save}

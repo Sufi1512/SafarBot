@@ -6,7 +6,6 @@ import {
   Check, 
   X, 
   Clock, 
-  Mail,
   Loader2,
   AlertTriangle,
   Users
@@ -46,7 +45,7 @@ const CollaborationNotifications: React.FC<CollaborationNotificationsProps> = ({
   onClose,
   onInvitationAccepted
 }) => {
-  const { user } = useAuth();
+  const { } = useAuth();
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -299,7 +298,7 @@ const CollaborationNotifications: React.FC<CollaborationNotificationsProps> = ({
                                 <div className="flex items-center space-x-2">
                                   <ModernButton
                                     onClick={() => handleDeclineInvitation(invitation)}
-                                    variant="outline"
+                                    variant="bordered"
                                     size="sm"
                                     disabled={processing}
                                     className="text-red-600 border-red-200 hover:bg-red-50"

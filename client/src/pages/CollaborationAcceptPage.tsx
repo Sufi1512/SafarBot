@@ -18,7 +18,7 @@ import { useAuth } from '../contexts/AuthContext';
 const CollaborationAcceptPage: React.FC = () => {
   const { invitationToken } = useParams<{ invitationToken: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   
   const [invitation, setInvitation] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -304,7 +304,7 @@ const CollaborationAcceptPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <ModernButton
               onClick={handleDecline}
-              variant="outline"
+              variant="bordered"
               size="lg"
               disabled={isProcessing}
               className="flex items-center justify-center space-x-2 text-red-600 border-red-200 hover:bg-red-50"

@@ -8,7 +8,7 @@ import {
   Search,
   Bookmark
 } from 'lucide-react';
-import { savedItineraryAPI, collaborationAPI } from '../../services/api';
+import { savedItineraryAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAuthenticatedApi } from '../../hooks/useAuthenticatedApi';
 import ItineraryCard from '../../components/ItineraryCard';
@@ -292,7 +292,7 @@ const SavedPage: React.FC = () => {
     loadItineraries(currentPage);
   };
 
-  const handleInvitationAccepted = (itineraryId: string) => {
+  const handleInvitationAccepted = (_itineraryId: string) => {
     // Refresh the itineraries to show the new collaboration
     loadItineraries(currentPage);
   };
@@ -462,7 +462,7 @@ const SavedPage: React.FC = () => {
               viewMode={viewMode}
               editingItineraryId={editingItineraryId}
               isOwner={true}
-              isCollaborative={itinerary.is_collaborative || false}
+              isCollaborative={false}
             />
           ))}
         </div>

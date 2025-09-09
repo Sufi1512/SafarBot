@@ -16,6 +16,10 @@
       "dest": "/client/dist/assets/$1"
     },
     {
+      "src": "/favicon.png",
+      "dest": "/client/dist/favicon.png"
+    },
+    {
       "src": "/(.*)",
       "dest": "/client/dist/index.html"
     }

@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { 
   Users, 
   UserPlus, 
-  MoreVertical, 
   Trash2, 
   Crown,
   Eye,
@@ -164,7 +163,7 @@ const CollaboratorsList: React.FC<CollaboratorsListProps> = ({
           {isOwner && (
             <ModernButton
               onClick={onInviteClick}
-              variant="outline"
+              variant="bordered"
               size="sm"
               className="flex items-center space-x-2"
             >
@@ -281,7 +280,7 @@ const CollaboratorsList: React.FC<CollaboratorsListProps> = ({
             {isOwner && (
               <ModernButton
                 onClick={onInviteClick}
-                variant="outline"
+                variant="bordered"
                 size="sm"
               >
                 <UserPlus className="w-4 h-4 mr-2" />

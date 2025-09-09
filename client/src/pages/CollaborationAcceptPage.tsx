@@ -56,7 +56,7 @@ const CollaborationAcceptPage: React.FC = () => {
       setError(null);
       
       // Use the public endpoint to get invitation info
-      const response = await fetch(`http://localhost:8000/api/v1/collaboration/invitation/${invitationToken}/info`);
+      const response = await fetch(`https://safarbot-backend.onrender.com/api/v1/collaboration/invitation/${invitationToken}/info`);
       
       if (!response.ok) {
         const errorData = await response.json();

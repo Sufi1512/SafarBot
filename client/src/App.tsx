@@ -14,7 +14,6 @@ import UserDashboard from './pages/UserDashboard';
 import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
 import SearchPage from './pages/SearchPage';
-import DatePickerDemo from './pages/DatePickerDemo';
 import ResultsPage from './pages/ResultsPage';
 import TripPlannerPage from './pages/TripPlannerPage';
 import ItineraryPage from './pages/ItineraryPage';
@@ -29,7 +28,6 @@ import ItineraryRedirectPage from './pages/ItineraryRedirectPage';
 import SavedItineraryViewPage from './pages/SavedItineraryViewPage';
 import LoginPage from './pages/LoginPage';
 import CollaborationAcceptPage from './pages/CollaborationAcceptPage';
-import OTPTestPage from './pages/OTPTestPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ServerErrorPage from './pages/ServerErrorPage';
 import OfflinePage from './pages/OfflinePage';
@@ -109,7 +107,6 @@ function App() {
                     </ProtectedRoute>
                   } />
                   <Route path="/search" element={<SearchPage />} />
-                  <Route path="/datepicker-demo" element={<DatePickerDemo />} />
                   <Route path="/booking-options/:bookingToken" element={<BookingOptionsPage />} />
                   <Route path="/booking-confirmation" element={<BookingConfirmationPage />} />
                   <Route path="/results" element={<ResultsPage />} />
@@ -141,7 +138,6 @@ function App() {
                   <Route path="/public/itinerary/:shareToken" element={<PublicItineraryPage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/collaboration/accept/:invitationToken" element={<CollaborationAcceptPage />} />
-                  <Route path="/otp-test" element={<OTPTestPage />} />
                   
                   {/* Error Pages */}
                   <Route path="/404" element={<NotFoundPage />} />

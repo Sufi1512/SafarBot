@@ -6,17 +6,41 @@
       "use": "@vercel/static-build",
       "config": {
         "distDir": "dist",
-        "buildCommand": "npm run build"
+        "buildCommand": "cd client && npm install && npm run build"
       }
     }
   ],
   "routes": [
     {
+      "src": "/static/(.*)",
+      "dest": "/client/dist/static/$1"
+    },
+    {
       "src": "/assets/(.*)",
       "dest": "/client/dist/assets/$1"
     },
     {
-      "src": "/(.*)", 
+      "src": "/favicon.ico",
+      "dest": "/client/dist/favicon.ico"
+    },
+    {
+      "src": "/logo192.png",
+      "dest": "/client/dist/logo192.png"
+    },
+    {
+      "src": "/logo512.png",
+      "dest": "/client/dist/logo512.png"
+    },
+    {
+      "src": "/manifest.json",
+      "dest": "/client/dist/manifest.json"
+    },
+    {
+      "src": "/robots.txt",
+      "dest": "/client/dist/robots.txt"
+    },
+    {
+      "src": "/(.*)",
       "dest": "/client/dist/index.html"
     }
   ],

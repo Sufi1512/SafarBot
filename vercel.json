@@ -16,15 +16,11 @@
       "dest": "/client/dist/assets/$1"
     },
     {
-      "src": "/favicon.png",
-      "dest": "/client/dist/favicon.png"
-    },
-    {
-      "src": "/(.*)",
+      "src": "/(.*)", 
       "dest": "/client/dist/index.html"
     }
   ],
   "env": {
-    "REACT_APP_API_URL": "https://safarbot-backend.onrender.com"
+    "VITE_API_BASE_URL": "https://safarbot-backend.onrender.com/api/v1"
   }
 } 

@@ -1723,7 +1723,7 @@ export const savedItineraryAPI = {
     is_public: boolean;
   }> => {
     try {
-      const response = await api.put(`/itineraries/${itineraryId}`, updateData);
+      const response = await api.put(`/saved-itinerary/${itineraryId}`, updateData);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Failed to update itinerary');
@@ -1733,7 +1733,7 @@ export const savedItineraryAPI = {
   // Delete itinerary
   deleteItinerary: async (itineraryId: string): Promise<{ message: string }> => {
     try {
-      const response = await api.delete(`/itineraries/${itineraryId}`);
+      const response = await api.delete(`/saved-itinerary/${itineraryId}`);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Failed to delete itinerary');
@@ -1743,7 +1743,7 @@ export const savedItineraryAPI = {
   // Toggle favorite
   toggleFavorite: async (itineraryId: string): Promise<{ message: string }> => {
     try {
-      const response = await api.post(`/itineraries/${itineraryId}/favorite`);
+      const response = await api.post(`/saved-itinerary/${itineraryId}/favorite`);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Failed to toggle favorite');

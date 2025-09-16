@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { weatherAPI, WeatherData, WeatherForecast } from '../services/api';
+import { WeatherData, WeatherForecast } from '../services/api';
+import { weatherAPI } from '../services/cachedApi';
 import Card from './ui/Card';
 import LoadingSpinner from './LoadingSpinner';
 

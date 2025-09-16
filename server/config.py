@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     smtp_username: Optional[str] = None
     smtp_password: Optional[str] = None
     from_email: str = "noreply@safarbot.com"
-    app_url: str = "http://localhost:3000"
+    app_url: str = os.getenv("APP_URL", "http://localhost:3000")
     
     # LangSmith Configuration
     langsmith_api_key: Optional[str] = None
@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     chroma_persist_directory: str = "./chroma_db"
     
     # CORS Origins
-    cors_origins: list = ["http://localhost:3000", "http://localhost:5173"]
+    cors_origins: list = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173").split(",")
     
     class Config:
         env_file = ".env"

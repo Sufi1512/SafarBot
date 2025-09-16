@@ -15,7 +15,7 @@ import {
   Download,
   Printer
 } from 'lucide-react';
-import { savedItineraryAPI } from '../services/api';
+import { savedItineraryAPI } from '../services/cachedApi';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ModernCard from '../components/ui/ModernCard';

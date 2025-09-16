@@ -2,6 +2,18 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { LucideIcon } from 'lucide-react';
 
+/**
+ * Unified Button component
+ *
+ * Variants: 'primary' | 'secondary' | 'outline' | 'ghost' | 'success' | 'warning' | 'error'
+ * Sizes: 'sm' | 'md' | 'lg' | 'xl'
+ *
+ * Examples:
+ * <Button variant="primary" size="md">Book now</Button>
+ * <Button variant="outline" size="sm" icon={Plus}>Add</Button>
+ * <Button variant="secondary" size="lg" fullWidth>Continue</Button>
+ */
+
 interface ButtonProps {
   children: React.ReactNode;
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'success' | 'warning' | 'error';

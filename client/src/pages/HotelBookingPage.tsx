@@ -64,8 +64,8 @@ const HotelBookingPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchForm, setSearchForm] = useState({
     destination: '',
-    checkIn: undefined as Date | undefined,
-    checkOut: undefined as Date | undefined,
+    expectedDate: undefined as Date | undefined,
+    days: 1,
     guests: 2,
     rooms: 1
   });
@@ -237,16 +237,12 @@ const HotelBookingPage: React.FC = () => {
       alert('Please enter a destination');
       return;
     }
-    if (!searchForm.checkIn) {
-      alert('Please select check-in date');
+    if (!searchForm.expectedDate) {
+      alert('Please select expected date');
       return;
     }
-    if (!searchForm.checkOut) {
-      alert('Please select check-out date');
-      return;
-    }
-    if (searchForm.checkOut <= searchForm.checkIn) {
-      alert('Check-out date must be after check-in date');
+    if (!searchForm.days || searchForm.days < 1) {
+      alert('Please enter number of days (min 1)');
       return;
     }
     
@@ -270,13 +266,15 @@ const HotelBookingPage: React.FC = () => {
 
   const handleBooking = () => {
     if (selectedHotel && selectedRoom) {
+      const checkIn = searchForm.expectedDate ? new Date(searchForm.expectedDate) : undefined;
+      const checkOut = checkIn ? new Date(checkIn.getTime() + (searchForm.days || 1) * 24 * 60 * 60 * 1000) : undefined;
       navigate('/booking-confirmation', { 
         state: { 
           type: 'hotel', 
           hotel: selectedHotel,
           room: selectedRoom,
-          checkIn: searchForm.checkIn,
-          checkOut: searchForm.checkOut,
+          checkIn,
+          checkOut,
           guests: searchForm.guests
         } 
       });
@@ -284,10 +282,7 @@ const HotelBookingPage: React.FC = () => {
   };
 
   const calculateNights = () => {
-    if (searchForm.checkIn && searchForm.checkOut) {
-      return Math.ceil((searchForm.checkOut.getTime() - searchForm.checkIn.getTime()) / (1000 * 60 * 60 * 24));
-    }
-    return 0;
+    return searchForm.days && searchForm.days > 0 ? searchForm.days : 0;
   };
 
   return (
@@ -365,32 +360,33 @@ const HotelBookingPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Check-in */}
+                {/* Expected Date */}
                 <div className="relative">
                   <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     <Calendar className="w-4 h-4 inline mr-2 text-accent" />
-                    Check-in
+                    Expected Date
                   </label>
                   <CustomDatePicker
-                    value={searchForm.checkIn}
-                    onChange={(date) => setSearchForm(prev => ({ ...prev, checkIn: date }))}
-                    placeholder="Select check-in date"
+                    value={searchForm.expectedDate}
+                    onChange={(date) => setSearchForm(prev => ({ ...prev, expectedDate: date }))}
+                    placeholder="Select expected date"
                     minDate={new Date()}
-                    maxDate={searchForm.checkOut ? new Date(searchForm.checkOut.getTime() - 24 * 60 * 60 * 1000) : undefined}
                   />
                 </div>
 
-                {/* Check-out */}
+                {/* Days */}
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     <CalendarDays className="w-4 h-4 inline mr-2 text-accent" />
-                    Check-out
+                    Days
                   </label>
-                  <CustomDatePicker
-                    value={searchForm.checkOut}
-                    onChange={(date) => setSearchForm(prev => ({ ...prev, checkOut: date }))}
-                    placeholder="Select check-out date"
-                    minDate={searchForm.checkIn ? new Date(searchForm.checkIn.getTime() + 24 * 60 * 60 * 1000) : new Date()}
+                  <input
+                    type="number"
+                    min={1}
+                    value={searchForm.days}
+                    onChange={(e) => setSearchForm(prev => ({ ...prev, days: Math.max(1, parseInt(e.target.value || '1')) }))}
+                    placeholder="Number of days"
+                    className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-accent bg-white dark:bg-dark-card text-gray-900 dark:text-white transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-500 text-sm"
                   />
                 </div>
 

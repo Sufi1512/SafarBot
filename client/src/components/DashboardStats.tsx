@@ -94,32 +94,32 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ userStats, itinerarySta
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Main Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {statsCards.map((stat, index) => {
           const Icon = stat.icon;
           const colorClasses = getColorClasses(stat.color);
           
           return (
-            <div key={index} className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div key={index} className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
-                  <p className={`text-2xl font-bold ${colorClasses.text}`}>
+                  <p className="text-xs font-medium text-gray-600 mb-1">{stat.title}</p>
+                  <p className={`text-lg font-bold ${colorClasses.text}`}>
                     {stat.value}
                   </p>
-                  <div className="flex items-center mt-2">
-                    <span className={`text-xs font-medium ${
+                  <div className="flex items-center mt-1">
+                    <span className={`text-[10px] font-medium ${
                       stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
                     }`}>
                       {stat.change}
                     </span>
-                    <span className="text-xs text-gray-500 ml-1">vs last month</span>
+                    <span className="text-[10px] text-gray-500 ml-1">vs last month</span>
                   </div>
                 </div>
-                <div className={`p-3 rounded-lg ${colorClasses.bg}`}>
-                  <Icon className={`h-6 w-6 ${colorClasses.icon}`} />
+                <div className={`p-2 rounded-md ${colorClasses.bg}`}>
+                  <Icon className={`h-4 w-4 ${colorClasses.icon}`} />
                 </div>
               </div>
             </div>
@@ -128,89 +128,89 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ userStats, itinerarySta
       </div>
 
       {/* Detailed Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Booking Breakdown */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Booking Breakdown</h3>
-          <div className="space-y-4">
+        <div className="bg-white rounded-lg shadow-sm p-4">
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">Booking Breakdown</h3>
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">Confirmed</span>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-xs text-gray-600">Confirmed</span>
               </div>
-              <span className="font-semibold text-gray-900">{userStats.confirmed_bookings}</span>
+              <span className="text-sm font-semibold text-gray-900">{userStats.confirmed_bookings}</span>
             </div>
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">Pending</span>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                <span className="text-xs text-gray-600">Pending</span>
               </div>
-              <span className="font-semibold text-gray-900">{userStats.pending_bookings}</span>
+              <span className="text-sm font-semibold text-gray-900">{userStats.pending_bookings}</span>
             </div>
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">Cancelled</span>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <span className="text-xs text-gray-600">Cancelled</span>
               </div>
-              <span className="font-semibold text-gray-900">{userStats.cancelled_bookings}</span>
+              <span className="text-sm font-semibold text-gray-900">{userStats.cancelled_bookings}</span>
             </div>
           </div>
         </div>
 
         {/* Itinerary Stats */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Itinerary Stats</h3>
-          <div className="space-y-4">
+        <div className="bg-white rounded-lg shadow-sm p-4">
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">Itinerary Stats</h3>
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">Published</span>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span className="text-xs text-gray-600">Published</span>
               </div>
-              <span className="font-semibold text-gray-900">{itineraryStats?.published_itineraries || 0}</span>
+              <span className="text-sm font-semibold text-gray-900">{itineraryStats?.published_itineraries || 0}</span>
             </div>
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">Favorites</span>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <span className="text-xs text-gray-600">Favorites</span>
               </div>
-              <span className="font-semibold text-gray-900">{itineraryStats?.favorite_itineraries || 0}</span>
+              <span className="text-sm font-semibold text-gray-900">{itineraryStats?.favorite_itineraries || 0}</span>
             </div>
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">Drafts</span>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                <span className="text-xs text-gray-600">Drafts</span>
               </div>
-              <span className="font-semibold text-gray-900">{itineraryStats?.draft_itineraries || 0}</span>
+              <span className="text-sm font-semibold text-gray-900">{itineraryStats?.draft_itineraries || 0}</span>
             </div>
           </div>
         </div>
 
         {/* Engagement Stats */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Engagement</h3>
-          <div className="space-y-4">
+        <div className="bg-white rounded-lg shadow-sm p-4">
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">Engagement</h3>
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Eye className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-600">Total Views</span>
+              <div className="flex items-center space-x-2">
+                <Eye className="h-3 w-3 text-gray-500" />
+                <span className="text-xs text-gray-600">Total Views</span>
               </div>
-              <span className="font-semibold text-gray-900">{itineraryStats?.total_views || 0}</span>
+              <span className="text-sm font-semibold text-gray-900">{itineraryStats?.total_views || 0}</span>
             </div>
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Heart className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-600">Total Likes</span>
+              <div className="flex items-center space-x-2">
+                <Heart className="h-3 w-3 text-gray-500" />
+                <span className="text-xs text-gray-600">Total Likes</span>
               </div>
-              <span className="font-semibold text-gray-900">
+              <span className="text-sm font-semibold text-gray-900">
                 {itineraryStats ? itineraryStats.favorite_itineraries * 5 : 0}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Share2 className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-600">Shares</span>
+              <div className="flex items-center space-x-2">
+                <Share2 className="h-3 w-3 text-gray-500" />
+                <span className="text-xs text-gray-600">Shares</span>
               </div>
-              <span className="font-semibold text-gray-900">
+              <span className="text-sm font-semibold text-gray-900">
                 {itineraryStats ? Math.floor((itineraryStats.total_views || 0) * 0.1) : 0}
               </span>
             </div>

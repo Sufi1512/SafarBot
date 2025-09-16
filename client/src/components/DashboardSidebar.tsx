@@ -16,7 +16,8 @@ import {
   Menu,
   UserCircle,
   Settings,
-  Power
+  Power,
+  Home
 } from 'lucide-react';
 
 interface DashboardSidebarProps {
@@ -58,6 +59,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   };
 
   const navigationItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'chats', label: 'Chats', icon: MessageCircle, notification: 1 },
     { id: 'explore', label: 'Explore', icon: Search },
     { id: 'saved', label: 'Saved', icon: Heart },
@@ -69,7 +71,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
   return (
     <div 
-      className={`${isExpanded ? 'w-64' : 'w-16'} bg-gray-100 dark:bg-black text-gray-900 dark:text-white h-[calc(100vh-4rem)] flex flex-col fixed top-16 left-0 z-50 transition-all duration-300 ease-in-out`}
+      className={`${isExpanded ? 'w-64' : 'w-16'} bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-[calc(100vh-4rem)] flex flex-col fixed top-16 left-0 z-50 transition-all duration-300 ease-in-out border-r border-gray-200 dark:border-gray-700`}
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -77,7 +79,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
       }}
     >
       {/* Header */}
-      <div className="pt-3 pb-2 px-4">
+      <div className="pt-2 pb-1 px-3">
         <div className="flex items-center justify-end">
           {onToggleExpanded && (
             <button
@@ -87,14 +89,14 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                 console.log('Toggle button clicked');
                 onToggleExpanded();
               }}
-              className="w-10 h-10 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex-shrink-0 flex items-center justify-center pointer-events-auto"
+              className="w-8 h-8 rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex-shrink-0 flex items-center justify-center pointer-events-auto"
               title={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
               type="button"
             >
               {isExpanded ? (
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-4 w-4" />
               ) : (
-                <Menu className="h-5 w-5" />
+                <Menu className="h-4 w-4" />
               )}
             </button>
           )}
@@ -102,10 +104,11 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-1 space-y-2">
+      <nav className="flex-1 px-3 py-1 space-y-1">
         {navigationItems.map((item) => {
           const Icon = item.icon;
-          const isActive = activeTab === item.id;
+          // Map 'overview' to 'dashboard' for highlighting
+          const isActive = activeTab === item.id || (item.id === 'dashboard' && activeTab === 'overview');
           
           return (
             <button
@@ -115,7 +118,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                 e.stopPropagation();
                 onTabChange(item.id);
               }}
-              className={`w-full flex items-center ${isExpanded ? 'justify-between' : 'justify-center'} px-4 py-3 rounded-lg text-left transition-all duration-200 relative group ${
+              className={`w-full flex items-center ${isExpanded ? 'justify-between' : 'justify-center'} px-3 py-2 rounded-md text-left transition-all duration-200 relative group ${
                 isActive 
                   ? 'bg-blue-600 text-white shadow-sm' 
                   : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
@@ -123,19 +126,19 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
               title={!isExpanded ? item.label : undefined}
               type="button"
             >
-              <div className="flex items-center space-x-3">
-                <Icon className={`h-6 w-6 ${isActive ? 'text-white' : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200'}`} />
+              <div className="flex items-center space-x-2">
+                <Icon className={`h-4 w-4 ${isActive ? 'text-white' : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200'}`} />
                 {isExpanded && (
-                  <span className="font-medium text-base">{item.label}</span>
+                  <span className="font-medium text-sm">{item.label}</span>
                 )}
               </div>
               {isExpanded && item.notification && (
-                <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 min-w-[18px] text-center font-medium">
+                <span className="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[16px] text-center font-medium">
                   {item.notification}
                 </span>
               )}
               {!isExpanded && item.notification && (
-                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-white dark:border-gray-900"></div>
+                <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-gray-900"></div>
               )}
             </button>
           );
@@ -145,10 +148,10 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
       {/* App Promotion */}
       {isExpanded && (
-        <div className="px-4 pb-3">
-          <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-lg p-3 text-white hover:from-green-700 hover:to-green-800 transition-all duration-200 cursor-pointer">
-            <div className="flex items-center space-x-2 mb-2">
-              <div className="w-6 h-6 bg-white bg-opacity-20 rounded flex items-center justify-center">
+        <div className="px-3 pb-2">
+          <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-md p-2 text-white hover:from-green-700 hover:to-green-800 transition-all duration-200 cursor-pointer">
+            <div className="flex items-center space-x-2 mb-1">
+              <div className="w-5 h-5 bg-white bg-opacity-20 rounded flex items-center justify-center">
                 <span className="text-xs">📱</span>
               </div>
               <div className="flex-1 min-w-0">
@@ -162,31 +165,31 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
       )}
 
       {/* User Profile */}
-      <div className="px-4 py-2 relative">
+      <div className="px-3 py-2 relative">
         <button
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             setShowProfileDropdown(!showProfileDropdown);
           }}
-          className={`w-full flex items-center ${isExpanded ? 'space-x-3' : 'justify-center'} p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-all duration-200 group`}
+          className={`w-full flex items-center ${isExpanded ? 'space-x-2' : 'justify-center'} p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 transition-all duration-200 group`}
           title={!isExpanded ? `${user?.first_name} ${user?.last_name}` : undefined}
           type="button"
         >
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
-            <User className="h-5 w-5 text-white" />
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+            <User className="h-4 w-4 text-white" />
           </div>
           {isExpanded && (
             <>
               <div className="flex-1 text-left min-w-0">
-                <p className="font-medium text-base text-gray-900 dark:text-white truncate">
+                <p className="font-medium text-sm text-gray-900 dark:text-white truncate">
                   {user?.first_name} {user?.last_name}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                   {user?.email}
                 </p>
               </div>
-              <MoreHorizontal className="h-5 w-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-200 flex-shrink-0" />
+              <MoreHorizontal className="h-4 w-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-200 flex-shrink-0" />
             </>
           )}
         </button>

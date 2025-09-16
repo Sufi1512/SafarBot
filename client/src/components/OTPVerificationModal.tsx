@@ -196,15 +196,15 @@ const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
             <ModernCard variant="glass" padding="xl" shadow="glow" className="backdrop-blur-xl">
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-4">
                   <img 
                     src={logoImage} 
                     alt="SafarBot Logo" 
-                    className="w-10 h-10 object-contain"
+                    className="w-16 h-16 object-contain drop-shadow-lg"
                   />
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Verify Email</h2>
-                    <p className="text-gray-600 text-sm">Enter the code sent to your email</p>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Verify Email</h2>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm">Enter the code sent to your email</p>
                   </div>
                 </div>
                 <button

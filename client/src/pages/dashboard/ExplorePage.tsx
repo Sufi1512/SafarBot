@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Star, Heart, Grid, List, Calendar, Users } from 'lucide-react';
-import { savedItineraryAPI } from '../../services/api';
+import { savedItineraryAPI } from '../../services/cachedApi';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface Destination {

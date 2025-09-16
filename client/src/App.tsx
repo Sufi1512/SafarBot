@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
 import ModernHeader from './components/ModernHeader';
 import Footer from './components/Footer';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -27,6 +28,7 @@ import PublicItineraryPage from './pages/PublicItineraryPage';
 import ItineraryRedirectPage from './pages/ItineraryRedirectPage';
 import SavedItineraryViewPage from './pages/SavedItineraryViewPage';
 import LoginPage from './pages/LoginPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import CollaborationAcceptPage from './pages/CollaborationAcceptPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ServerErrorPage from './pages/ServerErrorPage';
@@ -82,7 +84,8 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider>
         <AuthProvider>
-          <Router>
+          <ToastProvider>
+            <Router>
             <div className="min-h-screen w-full bg-secondary-50 dark:bg-dark-bg text-secondary-900 dark:text-dark-text">
               <ConditionalHeader />
               <main className="mt-0 pt-0 w-full">
@@ -137,6 +140,7 @@ function App() {
                   } />
                   <Route path="/public/itinerary/:shareToken" element={<PublicItineraryPage />} />
                   <Route path="/login" element={<LoginPage />} />
+                  <Route path="/reset-password" element={<ResetPasswordPage />} />
                   <Route path="/collaboration/accept/:invitationToken" element={<CollaborationAcceptPage />} />
                   
                   {/* Error Pages */}
@@ -150,7 +154,8 @@ function App() {
               </main>
               <ConditionalFooter />
             </div>
-          </Router>
+            </Router>
+          </ToastProvider>
         </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>

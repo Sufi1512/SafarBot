@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, Share2, Bookmark, MapPin, Calendar, DollarSign, Filter, Grid, List, Compass, Camera, Plane, Hotel } from 'lucide-react';
-import { savedItineraryAPI } from '../../services/api';
+import { savedItineraryAPI } from '../../services/cachedApi';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface InspirationItem {

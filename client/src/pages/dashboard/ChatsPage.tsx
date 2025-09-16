@@ -101,8 +101,8 @@ const ChatsPage: React.FC = () => {
     <div className="flex h-full">
       {/* Chat List */}
       <div className="w-80 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Chats</h2>
+        <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Chats</h2>
         </div>
         
         <div className="overflow-y-auto">
@@ -110,34 +110,34 @@ const ChatsPage: React.FC = () => {
             <div
               key={chat.id}
               onClick={() => setSelectedChat(chat.id)}
-              className={`p-4 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${
+              className={`p-3 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${
                 selectedChat === chat.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''
               }`}
             >
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
                 <div className="relative">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
-                    <Bot className="h-5 w-5 text-white" />
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+                    <Bot className="h-4 w-4 text-white" />
                   </div>
                   {chat.isOnline && (
-                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
+                    <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    <h3 className="text-xs font-medium text-gray-900 dark:text-white truncate">
                       {chat.title}
                     </h3>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
                       {chat.timestamp}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between mt-1">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                  <div className="flex items-center justify-between mt-0.5">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
                       {chat.lastMessage}
                     </p>
                     {chat.unreadCount > 0 && (
-                      <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                      <span className="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[16px] text-center">
                         {chat.unreadCount}
                       </span>
                     )}

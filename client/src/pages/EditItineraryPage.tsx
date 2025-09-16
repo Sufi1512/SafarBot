@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Calendar, DollarSign, Clock, Star, Save, Plus, Trash2, Replace, Search, X, CheckCircle, Edit3 } from 'lucide-react';
-import { EnhancedItineraryResponse, PlaceDetails, AdditionalPlace, savedItineraryAPI } from '../services/api';
+import { EnhancedItineraryResponse, PlaceDetails, AdditionalPlace } from '../services/api';
+import { savedItineraryAPI } from '../services/cachedApi';
 import { useAuth } from '../contexts/AuthContext';
 import ModernButton from '../components/ui/ModernButton';
 import Card from '../components/ui/Card';

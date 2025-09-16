@@ -7,6 +7,7 @@ from bson import ObjectId
 
 from services.auth_service import AuthService
 from services.otp_service import OTPService
+from services.email_service import email_service
 from database import get_collection, USERS_COLLECTION
 from mongo_models import User
 
@@ -410,15 +411,47 @@ async def change_password(
 async def forgot_password(request: PasswordResetRequest):
     """Request password reset."""
     try:
+        # Check if user exists first
+        collection = get_collection(USERS_COLLECTION)
+        if collection is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Authentication service is temporarily unavailable. Please try again later."
+            )
+        
+        user_doc = await collection.find_one({"email": request.email})
+        if not user_doc:
+            # Don't reveal if email exists or not for security
+            return {"message": "If the email exists, a password reset link has been sent"}
+        
+        # Create reset token
         reset_token = await AuthService.create_password_reset_token(request.email)
         if not reset_token:
             # Don't reveal if email exists or not
             return {"message": "If the email exists, a password reset link has been sent"}
         
-        # TODO: Send email with reset token
-        # For now, just return success message
+        # Get user name for email
+        user_name = f"{user_doc.get('first_name', '')} {user_doc.get('last_name', '')}".strip()
+        if not user_name:
+            user_name = "User"
+        
+        # Send password reset email
+        email_sent = await email_service.send_password_reset_email(
+            to_email=request.email,
+            reset_token=reset_token,
+            user_name=user_name
+        )
+        
+        if email_sent:
+            print(f"✅ Password reset email sent successfully to {request.email}")
+        else:
+            print(f"⚠️ Password reset email failed to send to {request.email}")
+        
+        # Always return success message for security (don't reveal if email exists)
         return {"message": "If the email exists, a password reset link has been sent"}
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

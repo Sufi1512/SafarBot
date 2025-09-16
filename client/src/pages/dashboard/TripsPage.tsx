@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, Plane, Hotel, Car, Users, Edit, Trash2, Eye, Share2, Download } from 'lucide-react';
-import { savedItineraryAPI } from '../../services/api';
+import { savedItineraryAPI } from '../../services/cachedApi';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface Trip {
@@ -203,12 +203,12 @@ const TripsPage: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Trips</h1>
-          <p className="text-gray-600 dark:text-gray-400">Manage and track your travel plans</p>
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">My Trips</h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Manage and track your travel plans</p>
         </div>
         <button 
           onClick={() => navigate('/')}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
         >
           Plan New Trip
         </button>

@@ -211,7 +211,7 @@ const LoginPage: React.FC = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className={`w-full pl-12 pr-4 py-3 border-2 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 ${
+                    className={`w-full pl-12 pr-4 py-2.5 border-2 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 placeholder:text-sm focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 ${
                       errors.email ? 'border-red-300 dark:border-red-600' : 'border-gray-200 dark:border-gray-600'
                     }`}
                     placeholder="Enter your email"
@@ -235,7 +235,7 @@ const LoginPage: React.FC = () => {
                     name="password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    className={`w-full pl-12 pr-12 py-3 border-2 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 ${
+                    className={`w-full pl-12 pr-12 py-2.5 border-2 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 placeholder:text-sm focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 ${
                       errors.password ? 'border-red-300 dark:border-red-600' : 'border-gray-200 dark:border-gray-600'
                     }`}
                     placeholder="Enter your password"
@@ -259,8 +259,8 @@ const LoginPage: React.FC = () => {
               <ModernButton
                 type="submit"
                 variant="solid"
-                size="lg"
-                className="w-full"
+                size="md"
+                className="w-full text-sm"
                 disabled={isLoading}
               >
                 {isLoading ? (

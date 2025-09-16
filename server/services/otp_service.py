@@ -24,7 +24,7 @@ class OTPService:
     SMTP_SERVER = "smtp-relay.brevo.com"
     SMTP_PORT = 587
     SMTP_LOGIN = "9675c1001@smtp-brevo.com"
-    SMTP_PASSWORD = os.getenv("BREVO_SMTP_PASSWORD", "your_smtp_password_here")
+    SMTP_PASSWORD = os.getenv("BREVO_SMTP_PASSWORD")
     
     @staticmethod
     def generate_otp() -> str:

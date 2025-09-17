@@ -86,9 +86,9 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group">
+    <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group border border-gray-100">
       {/* Cover Image */}
-      <div className="relative h-48 overflow-hidden">
+      <div className="relative h-40 overflow-hidden">
         {itinerary.cover_image ? (
           <img 
             src={itinerary.cover_image} 
@@ -97,12 +97,12 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 flex items-center justify-center">
-            <MapPin className="h-16 w-16 text-white opacity-80" />
+            <MapPin className="h-12 w-12 text-white opacity-80" />
           </div>
         )}
         
         {/* Status Badge */}
-        <div className="absolute top-3 left-3">
+        <div className="absolute top-2 left-2">
           <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(itinerary.status)}`}>
             {itinerary.status}
           </span>
@@ -111,13 +111,13 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
         {/* Favorite Button */}
         <button
           onClick={() => onToggleFavorite(itinerary.id)}
-          className={`absolute top-3 right-3 p-2 rounded-full transition-colors ${
+          className={`absolute top-2 right-2 p-1.5 rounded-full transition-colors ${
             itinerary.is_favorite 
               ? 'bg-red-500 text-white' 
               : 'bg-white bg-opacity-80 text-gray-600 hover:bg-red-500 hover:text-white'
           }`}
         >
-          <Heart className={`h-4 w-4 ${itinerary.is_favorite ? 'fill-current' : ''}`} />
+          <Heart className={`h-3.5 w-3.5 ${itinerary.is_favorite ? 'fill-current' : ''}`} />
         </button>
 
         {/* Overlay Gradient */}
@@ -125,68 +125,68 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
       </div>
 
       {/* Content */}
-      <div className="p-6">
+      <div className="p-4">
         {/* Title and Location */}
-        <div className="mb-3">
-          <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 mb-1">
+        <div className="mb-2">
+          <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 mb-1">
             {itinerary.title}
           </h3>
-          <div className="flex items-center text-gray-600 text-sm">
-            <MapPin className="h-4 w-4 mr-1" />
+          <div className="flex items-center text-gray-600 text-xs">
+            <MapPin className="h-3 w-3 mr-1" />
             <span>{itinerary.destination}, {itinerary.country}</span>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="flex items-center space-x-4 text-sm text-gray-500 mb-4">
+        <div className="flex items-center space-x-3 text-xs text-gray-500 mb-3">
           <div className="flex items-center space-x-1">
-            <CalendarDays className="h-4 w-4" />
+            <CalendarDays className="h-3 w-3" />
             <span>{itinerary.duration_days} days</span>
           </div>
           {itinerary.total_estimated_cost && (
             <div className="flex items-center space-x-1">
-              <DollarSign className="h-4 w-4" />
+              <DollarSign className="h-3 w-3" />
               <span>${itinerary.total_estimated_cost.toLocaleString()}</span>
             </div>
           )}
           <div className="flex items-center space-x-1">
-            <Eye className="h-4 w-4" />
+            <Eye className="h-3 w-3" />
             <span>{itinerary.views_count}</span>
           </div>
         </div>
 
         {/* Travel Styles */}
-        <div className="flex flex-wrap gap-1 mb-4">
-          {itinerary.travel_style.slice(0, 3).map((style) => (
+        <div className="flex flex-wrap gap-1 mb-3">
+          {itinerary.travel_style.slice(0, 2).map((style) => (
             <span 
               key={style} 
-              className={`px-2 py-1 text-xs font-medium rounded-full ${getTravelStyleColor(style)}`}
+              className={`px-1.5 py-0.5 text-xs font-medium rounded-full ${getTravelStyleColor(style)}`}
             >
               {style}
             </span>
           ))}
-          {itinerary.travel_style.length > 3 && (
-            <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
-              +{itinerary.travel_style.length - 3}
+          {itinerary.travel_style.length > 2 && (
+            <span className="px-1.5 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+              +{itinerary.travel_style.length - 2}
             </span>
           )}
         </div>
 
         {/* Interests */}
         {itinerary.interests.length > 0 && (
-          <div className="mb-4">
+          <div className="mb-3">
             <div className="flex flex-wrap gap-1">
-              {itinerary.interests.slice(0, 4).map((interest) => (
+              {itinerary.interests.slice(0, 3).map((interest) => (
                 <span 
                   key={interest} 
-                  className="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded-full"
+                  className="px-1.5 py-0.5 text-xs bg-blue-50 text-blue-700 rounded-full"
                 >
                   {interest}
                 </span>
               ))}
-              {itinerary.interests.length > 4 && (
-                <span className="px-2 py-1 text-xs bg-gray-50 text-gray-600 rounded-full">
-                  +{itinerary.interests.length - 4}
+              {itinerary.interests.length > 3 && (
+                <span className="px-1.5 py-0.5 text-xs bg-gray-50 text-gray-600 rounded-full">
+                  +{itinerary.interests.length - 3}
                 </span>
               )}
             </div>
@@ -194,32 +194,32 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
         )}
 
         {/* Actions */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          <div className="flex items-center space-x-4 text-sm text-gray-500">
+        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+          <div className="flex items-center space-x-3 text-xs text-gray-500">
             <div className="flex items-center space-x-1">
-              <Heart className="h-4 w-4" />
+              <Heart className="h-3 w-3" />
               <span>{itinerary.likes_count}</span>
             </div>
             <div className="flex items-center space-x-1">
-              <Clock className="h-4 w-4" />
+              <Clock className="h-3 w-3" />
               <span>{new Date(itinerary.created_at).toLocaleDateString()}</span>
             </div>
           </div>
           
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1">
             {onView && (
               <button
                 onClick={() => onView(itinerary.id)}
-                className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors"
                 title="View itinerary"
               >
-                <Eye className="h-4 w-4" />
+                <Eye className="h-3.5 w-3.5" />
               </button>
             )}
             <button
               onClick={() => onEdit(itinerary.id)}
               disabled={editingItineraryId === itinerary.id}
-              className={`p-2 rounded-lg transition-colors ${
+              className={`p-1.5 rounded-md transition-colors ${
                 editingItineraryId === itinerary.id
                   ? 'text-gray-300 cursor-not-allowed'
                   : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'
@@ -227,45 +227,45 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
               title={editingItineraryId === itinerary.id ? "Loading..." : "Edit itinerary"}
             >
               {editingItineraryId === itinerary.id ? (
-                <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
               ) : (
-                <Edit3 className="h-4 w-4" />
+                <Edit3 className="h-3.5 w-3.5" />
               )}
             </button>
             <button
               onClick={() => onShare(itinerary.id)}
-              className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+              className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors"
               title="Share itinerary"
             >
-              <Share2 className="h-4 w-4" />
+              <Share2 className="h-3.5 w-3.5" />
             </button>
             
             {/* Collaboration buttons */}
             {isOwner && onInviteCollaborator && (
               <button
                 onClick={() => onInviteCollaborator(itinerary)}
-                className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors"
                 title="Invite collaborator"
               >
-                <UserPlus className="h-4 w-4" />
+                <UserPlus className="h-3.5 w-3.5" />
               </button>
             )}
             
             {isCollaborative && onShowCollaborators && (
               <button
                 onClick={() => onShowCollaborators(itinerary.id)}
-                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
                 title="View collaborators"
               >
-                <Users className="h-4 w-4" />
+                <Users className="h-3.5 w-3.5" />
               </button>
             )}
             <button
               onClick={() => onDelete(itinerary.id)}
-              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
               title="Delete itinerary"
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>

@@ -10,7 +10,7 @@ import {
   Download,
   Printer
 } from 'lucide-react';
-import { savedItineraryAPI } from '../services/api';
+import { savedItineraryAPI } from '../services/cachedApi';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ModernCard from '../components/ui/ModernCard';
 

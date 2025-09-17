@@ -73,7 +73,7 @@ const ForgotPasswordPopup: React.FC<ForgotPasswordPopupProps> = ({
       // Call the real forgot password API
       await forgotPassword(email);
       
-      setSuccess('Password reset instructions sent to your email!');
+      setSuccess('Password reset instructions sent to your email! Check your inbox and follow the link to reset your password.');
       
     } catch (err: any) {
       console.error('Forgot password error:', err);
@@ -112,15 +112,15 @@ const ForgotPasswordPopup: React.FC<ForgotPasswordPopupProps> = ({
             <ModernCard variant="glass" padding="xl" shadow="glow" className="backdrop-blur-xl">
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-4">
                   <img 
                     src={logoImage} 
                     alt="SafarBot Logo" 
-                    className="w-10 h-10 object-contain"
+                    className="w-16 h-16 object-contain drop-shadow-lg"
                   />
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Forgot Password?</h2>
-                    <p className="text-gray-600 text-sm">Enter your email to reset your password</p>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Forgot Password?</h2>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm">Enter your email to reset your password</p>
                   </div>
                 </div>
                 <button
@@ -180,7 +180,7 @@ const ForgotPasswordPopup: React.FC<ForgotPasswordPopupProps> = ({
                       value={email}
                       onChange={handleInputChange}
                       placeholder="Enter your email address"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500 transition-all duration-200"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500 placeholder:text-sm transition-all duration-200"
                       required
                     />
                   </div>
@@ -191,8 +191,8 @@ const ForgotPasswordPopup: React.FC<ForgotPasswordPopupProps> = ({
                   type="submit"
                   loading={isSubmitting}
                   icon={isSubmitting ? Loader2 : Mail}
-                  className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  size="lg"
+                  className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  size="md"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? 'Sending...' : 'Send Reset Instructions'}
@@ -203,7 +203,7 @@ const ForgotPasswordPopup: React.FC<ForgotPasswordPopupProps> = ({
               <div className="mt-6 text-center">
                 <button
                   onClick={onSwitchToLogin}
-                  className="inline-flex items-center justify-center w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200"
+                  className="inline-flex items-center justify-center w-full px-4 py-2.5 border border-gray-300 text-gray-700 text-sm rounded-xl hover:bg-gray-50 transition-all duration-200"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back to Sign In

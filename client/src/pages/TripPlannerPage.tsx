@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import CustomDatePicker from '../components/ui/CustomDatePicker';
 import ModernButton from '../components/ui/ModernButton';
+import Dropdown, { DropdownOption } from '../components/ui/Dropdown';
 import { useAuth } from '../contexts/AuthContext';
 import AuthModal from '../components/AuthModal';
 
@@ -52,6 +53,47 @@ const TripPlannerPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // Dropdown options
+  const daysOptions: DropdownOption[] = [
+    { value: 3, label: '3 days', icon: <Clock className="w-4 h-4" /> },
+    { value: 5, label: '5 days', icon: <Clock className="w-4 h-4" /> },
+    { value: 7, label: '7 days', icon: <Clock className="w-4 h-4" /> },
+    { value: 10, label: '10 days', icon: <Clock className="w-4 h-4" /> },
+    { value: 14, label: '14 days', icon: <Clock className="w-4 h-4" /> },
+    { value: 21, label: '21 days', icon: <Clock className="w-4 h-4" /> },
+  ];
+
+  const budgetOptions: DropdownOption[] = [
+    { value: 'low', label: 'Budget ($500 - $1,500)', icon: <DollarSign className="w-4 h-4" />, description: 'Hostels, budget hotels' },
+    { value: 'medium', label: 'Mid-range ($1,500 - $3,500)', icon: <DollarSign className="w-4 h-4" />, description: '3-4 star hotels' },
+    { value: 'high', label: 'Luxury ($3,500+)', icon: <DollarSign className="w-4 h-4" />, description: '5-star hotels, premium experiences' },
+  ];
+
+  const travelWithOptions: DropdownOption[] = [
+    { value: 'solo', label: 'Solo Traveler', icon: <Users className="w-4 h-4" /> },
+    { value: 'couple', label: 'Couple', icon: <Heart className="w-4 h-4" /> },
+    { value: 'family', label: 'Family', icon: <Users className="w-4 h-4" /> },
+  ];
+
+  const tripPaceOptions: DropdownOption[] = [
+    { value: 'relaxed', label: 'Relaxed & Leisurely', icon: <Clock className="w-4 h-4" />, description: 'Take it slow, enjoy the moment' },
+    { value: 'balanced', label: 'Balanced', icon: <Clock className="w-4 h-4" />, description: 'Mix of activities and relaxation' },
+    { value: 'packed', label: 'Packed & Adventurous', icon: <Clock className="w-4 h-4" />, description: 'Maximum activities, fast-paced' },
+  ];
+
+  const flightClassOptions: DropdownOption[] = [
+    { value: 'economy', label: 'Economy', icon: <Plane className="w-4 h-4" /> },
+    { value: 'premium', label: 'Premium Economy', icon: <Plane className="w-4 h-4" /> },
+    { value: 'business', label: 'Business Class', icon: <Plane className="w-4 h-4" /> },
+    { value: 'first', label: 'First Class', icon: <Plane className="w-4 h-4" /> },
+  ];
+
+  const hotelRatingOptions: DropdownOption[] = [
+    { value: 3, label: '3-star (Budget)', icon: <Hotel className="w-4 h-4" />, description: 'Comfortable, basic amenities' },
+    { value: 4, label: '4-star (Mid-range)', icon: <Hotel className="w-4 h-4" />, description: 'Quality service, good facilities' },
+    { value: 5, label: '5-star (Luxury)', icon: <Hotel className="w-4 h-4" />, description: 'Premium service, luxury amenities' },
+  ];
 
   // Prefill from query params if provided
   const query = useMemo(() => new URLSearchParams(window.location.search), []);
@@ -278,25 +320,19 @@ const TripPlannerPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
+      <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12 overflow-visible">
         {/* Header Section */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full text-sm font-medium mb-6">
-            <Sparkles className="w-4 h-4" />
-            AI-Powered Trip Planning
-          </div>
-          
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 dark:from-white dark:via-blue-200 dark:to-purple-200 bg-clip-text text-transparent mb-6">
-            Plan Your Dream Trip
+        <div className="text-center mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-3">
+            Plan Your Trip
           </h1>
-          
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            Tell us your preferences and let our AI create a personalized itinerary that matches your style, budget, and interests.
+          <p className="text-base text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            Tell us your preferences and let AI create a personalized itinerary.
           </p>
 
           {/* Progress indicator */}
-          <div className="mt-8 max-w-md mx-auto">
+          <div className="mt-6 max-w-md mx-auto">
             <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
               <span>Form Progress</span>
               <span>{formProgress}%</span>
@@ -312,7 +348,7 @@ const TripPlannerPage: React.FC = () => {
 
         {/* Pre-filled info display */}
         {(destination || startDate) && (
-          <div className="mb-8 p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 dark:border-gray-700/50">
+          <div className="mb-8 p-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-visible">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-green-500" />
               Pre-filled Information
@@ -334,19 +370,19 @@ const TripPlannerPage: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-10">
+        <form onSubmit={handleSubmit} className="space-y-6 overflow-visible">
           {/* Basic Information Section */}
-          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl p-8 border border-gray-200/60 dark:border-gray-700/60 shadow-xl shadow-gray-200/30 dark:shadow-gray-900/30 hover:shadow-2xl hover:shadow-gray-200/40 dark:hover:shadow-gray-900/40 transition-all duration-300">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 overflow-visible">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <Globe className="w-6 h-6 text-blue-600" />
               Basic Information
             </h2>
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Destination field hidden if prefilled */}
               {!destination && (
-                <div className="space-y-3">
-                  <label className="block text-lg font-semibold text-gray-900 dark:text-white">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-900 dark:text-white">
                     Where do you want to go?
                   </label>
                   <div className="relative">
@@ -356,7 +392,7 @@ const TripPlannerPage: React.FC = () => {
                       value={destination}
                       onChange={e => setDestination(e.target.value)}
                       placeholder="e.g., Paris, Tokyo, New York"
-                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-600 transition-all duration-200"
+                      className="w-full pl-12 pr-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all duration-200 text-sm"
                     />
                   </div>
                 </div>
@@ -364,9 +400,9 @@ const TripPlannerPage: React.FC = () => {
 
               {/* Start Date field hidden if prefilled */}
               {!startDate && (
-                <div className="space-y-3">
+                <div className="space-y-2">
 
-                  <label className="block text-lg font-semibold text-gray-900 dark:text-white">
+                  <label className="block text-sm font-medium text-gray-900 dark:text-white">
                     When do you want to start?
                   </label>  
                   
@@ -383,96 +419,81 @@ const TripPlannerPage: React.FC = () => {
                 </div>
               )}
 
-              <div className="space-y-3">
-                <label className="block text-lg font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-900 dark:text-white">
                   How many days?
                 </label>
-                <div className="relative">
-                  <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <select
-                    value={days}
-                    onChange={e => setDays(Number(e.target.value))}
-                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-4 focus:ring-blue-500/20 focus:border-blue-600 transition-all duration-200 appearance-none"
-                  >
-                    <option value={3}>3 days</option>
-                    <option value={5}>5 days</option>
-                    <option value={7}>7 days</option>
-                    <option value={10}>10 days</option>
-                    <option value={14}>14 days</option>
-                    <option value={21}>21 days</option>
-                  </select>
-                </div>
+                <Dropdown
+                  options={daysOptions}
+                  value={days}
+                  onChange={(value) => setDays(value as number)}
+                  placeholder="Select duration"
+                  size="md"
+                  variant="outline"
+                  className="w-full"
+                />
               </div>
 
-              <div className="space-y-3">
-                <label className="block text-lg font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-900 dark:text-white">
                   What's your budget?
                 </label>
-                <div className="relative">
-                  <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <select
-                    value={budget}
-                    onChange={e => setBudget(e.target.value as BudgetTier)}
-                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-4 focus:ring-blue-500/20 focus:border-blue-600 transition-all duration-200 appearance-none"
-                  >
-                    <option value="low">Budget ($500 - $1,500)</option>
-                    <option value="medium">Mid-range ($1,500 - $5,000)</option>
-                    <option value="high">Luxury ($5,000+)</option>
-                  </select>
-                </div>
+                <Dropdown
+                  options={budgetOptions}
+                  value={budget}
+                  onChange={(value) => setBudget(value as BudgetTier)}
+                  placeholder="Select budget range"
+                  size="md"
+                  variant="outline"
+                  className="w-full"
+                />
               </div>
             </div>
           </div>
 
           {/* Travel Preferences Section */}
-          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl p-8 border border-gray-200/60 dark:border-gray-700/60 shadow-xl shadow-gray-200/30 dark:shadow-gray-900/30 hover:shadow-2xl hover:shadow-gray-200/40 dark:hover:shadow-gray-900/40 transition-all duration-300">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 overflow-visible">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <Users className="w-6 h-6 text-purple-600" />
               Travel Preferences
             </h2>
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-3">
-                <label className="block text-lg font-semibold text-gray-900 dark:text-white">
+                <label className="block text-sm font-medium text-gray-900 dark:text-white">
                   Who are you traveling with?
                 </label>
-                <div className="relative">
-                  <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <select
-                    value={travelWith}
-                    onChange={e => setTravelWith(e.target.value as TravelWith)}
-                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-4 focus:ring-purple-500/20 focus:border-purple-600 transition-all duration-200 appearance-none"
-                  >
-                    <option value="solo">Solo Traveler</option>
-                    <option value="couple">Couple</option>
-                    <option value="family">Family</option>
-                  </select>
-                </div>
+                <Dropdown
+                  options={travelWithOptions}
+                  value={travelWith}
+                  onChange={(value) => setTravelWith(value as TravelWith)}
+                  placeholder="Select travel companions"
+                  size="md"
+                  variant="outline"
+                  className="w-full"
+                />
               </div>
 
               <div className="space-y-3">
-                <label className="block text-lg font-semibold text-gray-900 dark:text-white">
+                <label className="block text-sm font-medium text-gray-900 dark:text-white">
                   What's your trip pace?
                 </label>
-                <div className="relative">
-                  <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <select
-                    value={tripPace}
-                    onChange={e => setTripPace(e.target.value as any)}
-                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-4 focus:ring-purple-500/20 focus:border-purple-600 transition-all duration-200 appearance-none"
-                  >
-                    <option value="relaxed">Relaxed & Leisurely</option>
-                    <option value="balanced">Balanced</option>
-                    <option value="packed">Packed & Active</option>
-                  </select>
-                </div>
+                <Dropdown
+                  options={tripPaceOptions}
+                  value={tripPace}
+                  onChange={(value) => setTripPace(value as any)}
+                  placeholder="Select trip pace"
+                  size="md"
+                  variant="outline"
+                  className="w-full"
+                />
               </div>
             </div>
           </div>
 
           {/* Interests Section */}
-          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl p-8 border border-gray-200/60 dark:border-gray-700/60 shadow-xl shadow-gray-200/30 dark:shadow-gray-900/30 hover:shadow-2xl hover:shadow-gray-200/40 dark:hover:shadow-gray-900/40 transition-all duration-300">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 overflow-visible">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <Heart className="w-6 h-6 text-red-600" />
               What interests you?
             </h2>
@@ -506,15 +527,15 @@ const TripPlannerPage: React.FC = () => {
           </div>
 
           {/* Travel Details Section */}
-          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl p-8 border border-gray-200/60 dark:border-gray-700/60 shadow-xl shadow-gray-200/30 dark:shadow-gray-900/30 hover:shadow-2xl hover:shadow-gray-200/40 dark:hover:shadow-gray-900/40 transition-all duration-300">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 overflow-visible">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <Plane className="w-6 h-6 text-green-600" />
               Travel Details
             </h2>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-3">
-                <label className="block text-lg font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-900 dark:text-white">
                   Departure city
                 </label>
                 <div className="relative">
@@ -524,50 +545,43 @@ const TripPlannerPage: React.FC = () => {
                     value={departureCity}
                     onChange={e => setDepartureCity(e.target.value)}
                     placeholder="e.g., London, New York"
-                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-4 focus:ring-green-500/20 focus:border-green-600 transition-all duration-200"
+                    className="w-full pl-12 pr-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-green-500/20 focus:border-green-600 transition-all duration-200 text-sm"
                   />
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <label className="block text-lg font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-900 dark:text-white">
                   Flight class preference
                 </label>
-                <div className="relative">
-                  <Plane className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <select
-                    value={flightClass}
-                    onChange={e => setFlightClass(e.target.value as FlightClass)}
-                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-4 focus:ring-green-500/20 focus:border-green-600 transition-all duration-200 appearance-none"
-                  >
-                    <option value="economy">Economy</option>
-                    <option value="premium">Premium Economy</option>
-                    <option value="business">Business</option>
-                    <option value="first">First Class</option>
-                  </select>
-                </div>
+                <Dropdown
+                  options={flightClassOptions}
+                  value={flightClass}
+                  onChange={(value) => setFlightClass(value as FlightClass)}
+                  placeholder="Select flight class"
+                  size="md"
+                  variant="outline"
+                  className="w-full"
+                />
               </div>
 
-              <div className="space-y-3">
-                <label className="block text-lg font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-900 dark:text-white">
                   Hotel rating preference
                 </label>
-                <div className="relative">
-                  <Hotel className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <select
-                    value={hotelRating}
-                    onChange={e => setHotelRating(Number(e.target.value) as 3 | 4 | 5)}
-                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-4 focus:ring-green-500/20 focus:border-green-600 transition-all duration-200 appearance-none"
-                  >
-                    <option value={3}>3-star (Budget)</option>
-                    <option value={4}>4-star (Mid-range)</option>
-                    <option value={5}>5-star (Luxury)</option>
-                  </select>
-                </div>
+                <Dropdown
+                  options={hotelRatingOptions}
+                  value={hotelRating}
+                  onChange={(value) => setHotelRating(value as 3 | 4 | 5)}
+                  placeholder="Select hotel rating"
+                  size="md"
+                  variant="outline"
+                  className="w-full"
+                />
               </div>
 
-              <div className="space-y-3">
-                <label className="block text-lg font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-900 dark:text-white">
                   Email (optional)
                 </label>
                 <div className="relative">
@@ -577,7 +591,7 @@ const TripPlannerPage: React.FC = () => {
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     placeholder="you@domain.com"
-                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-4 focus:ring-green-500/20 focus:border-green-600 transition-all duration-200"
+                    className="w-full pl-12 pr-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-green-500/20 focus:border-green-600 transition-all duration-200 text-sm"
                   />
                 </div>
               </div>
@@ -585,8 +599,8 @@ const TripPlannerPage: React.FC = () => {
           </div>
 
           {/* Dietary Preferences Section */}
-          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl p-8 border border-gray-200/60 dark:border-gray-700/60 shadow-xl shadow-gray-200/30 dark:shadow-gray-900/30 hover:shadow-2xl hover:shadow-gray-200/40 dark:hover:shadow-gray-900/40 transition-all duration-300">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 overflow-visible">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <Utensils className="w-6 h-6 text-orange-600" />
               Dietary Preferences
             </h2>
@@ -647,23 +661,23 @@ const TripPlannerPage: React.FC = () => {
           )}
 
           {/* Submit Section */}
-          <div className="text-center pt-8">
+          <div className="text-center pt-6">
             <ModernButton 
-              size="lg" 
+              size="md" 
               variant="solid" 
               type="submit" 
-              className="px-12 py-4 text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+              className="px-8 py-3 text-base font-semibold"
               disabled={!destination || !startDate || isSubmitting}
             >
               {isSubmitting ? (
                 <div className="flex items-center gap-3">
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Crafting Your Journey...
+                  Generating Itinerary...
                 </div>
               ) : (
                 <div className="flex items-center gap-3">
                   <Sparkles className="w-5 h-5" />
-                  Craft My Perfect Journey
+                  Let AI Plan My Trip
                   <ArrowRight className="w-5 h-5" />
                 </div>
               )}

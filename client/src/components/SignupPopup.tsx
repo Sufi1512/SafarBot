@@ -295,15 +295,15 @@ const SignupPopup: React.FC<SignupPopupProps> = ({
             <ModernCard variant="glass" padding="xl" shadow="glow" className="backdrop-blur-xl">
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-4">
                   <img 
                     src={logoImage} 
                     alt="SafarBot Logo" 
-                    className="w-10 h-10 object-contain"
+                    className="w-16 h-16 object-contain drop-shadow-lg"
                   />
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
-                    <p className="text-gray-600 text-sm">Join SafarBot and start your journey</p>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Create Account</h2>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm">Join SafarBot and start your journey</p>
                   </div>
                 </div>
                 <button
@@ -364,8 +364,8 @@ const SignupPopup: React.FC<SignupPopupProps> = ({
                         value={formData.firstName}
                         onChange={handleInputChange}
                         placeholder="First name"
-                        className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500 transition-all duration-200 ${
-                          errors.firstName ? 'border-red-300' : 'border-gray-300'
+                        className={`w-full pl-10 pr-4 py-2.5 border-2 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 bg-white text-gray-900 placeholder-gray-500 placeholder:text-sm transition-all duration-200 ${
+                          errors.firstName ? 'border-red-300' : 'border-gray-200 hover:border-gray-300'
                         }`}
                         required
                       />
@@ -393,8 +393,8 @@ const SignupPopup: React.FC<SignupPopupProps> = ({
                         value={formData.lastName}
                         onChange={handleInputChange}
                         placeholder="Last name"
-                        className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500 transition-all duration-200 ${
-                          errors.lastName ? 'border-red-300' : 'border-gray-300'
+                        className={`w-full pl-10 pr-4 py-2.5 border-2 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 bg-white text-gray-900 placeholder-gray-500 placeholder:text-sm transition-all duration-200 ${
+                          errors.lastName ? 'border-red-300' : 'border-gray-200 hover:border-gray-300'
                         }`}
                         required
                       />
@@ -425,8 +425,8 @@ const SignupPopup: React.FC<SignupPopupProps> = ({
                       value={formData.email}
                       onChange={handleInputChange}
                       placeholder="Enter your email"
-                      className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500 transition-all duration-200 ${
-                        errors.email ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full pl-10 pr-4 py-2.5 border-2 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 bg-white text-gray-900 placeholder-gray-500 placeholder:text-sm transition-all duration-200 ${
+                        errors.email ? 'border-red-300' : 'border-gray-200 hover:border-gray-300'
                       }`}
                       required
                     />
@@ -456,8 +456,8 @@ const SignupPopup: React.FC<SignupPopupProps> = ({
                       value={formData.password}
                       onChange={handleInputChange}
                       placeholder="Create a password"
-                      className={`w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500 transition-all duration-200 ${
-                        errors.password ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full pl-10 pr-12 py-2.5 border-2 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 bg-white text-gray-900 placeholder-gray-500 placeholder:text-sm transition-all duration-200 ${
+                        errors.password ? 'border-red-300' : 'border-gray-200 hover:border-gray-300'
                       }`}
                       required
                     />
@@ -519,8 +519,8 @@ const SignupPopup: React.FC<SignupPopupProps> = ({
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
                       placeholder="Confirm your password"
-                      className={`w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500 transition-all duration-200 ${
-                        errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full pl-10 pr-12 py-2.5 border-2 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 bg-white text-gray-900 placeholder-gray-500 placeholder:text-sm transition-all duration-200 ${
+                        errors.confirmPassword ? 'border-red-300' : 'border-gray-200 hover:border-gray-300'
                       }`}
                       required
                     />
@@ -591,8 +591,8 @@ const SignupPopup: React.FC<SignupPopupProps> = ({
                   type="submit"
                   loading={isSubmitting}
                   icon={isSubmitting ? Loader2 : UserPlus}
-                  className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
-                  size="lg"
+                  className="w-full disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  size="md"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? 'Creating Account...' : 'Create Account'}
@@ -615,8 +615,9 @@ const SignupPopup: React.FC<SignupPopupProps> = ({
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <ModernButton
                   variant="bordered"
+                  size="md"
                   onClick={handleGoogleSignup}
-                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
+                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 text-sm"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -628,8 +629,9 @@ const SignupPopup: React.FC<SignupPopupProps> = ({
                 </ModernButton>
                 <ModernButton
                   variant="bordered"
+                  size="md"
                   onClick={handleFacebookSignup}
-                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
+                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 text-sm"
                 >
                   <svg className="w-4 h-4" fill="#1877F2" viewBox="0 0 24 24">
                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>

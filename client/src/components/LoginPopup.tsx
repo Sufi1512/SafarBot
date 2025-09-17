@@ -11,7 +11,7 @@ import {
   Loader2,
   X
 } from 'lucide-react';
-import ModernButton from './ui/ModernButton';
+import Button from './ui/Button';
 import ModernCard from './ui/ModernCard';
 import { useAuth } from '../contexts/AuthContext';
 import logoImage from '../asset/images/logo.png';
@@ -201,15 +201,15 @@ const LoginPopup: React.FC<LoginPopupProps> = ({
             <ModernCard variant="glass" padding="xl" shadow="glow" className="backdrop-blur-xl">
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-4">
                   <img 
                     src={logoImage} 
                     alt="SafarBot Logo" 
-                    className="w-10 h-10 object-contain"
+                    className="w-16 h-16 object-contain drop-shadow-lg"
                   />
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Welcome Back</h2>
-                    <p className="text-gray-600 text-sm">Sign in to your account</p>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Welcome Back</h2>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm">Sign in to your account</p>
                   </div>
                 </div>
                 <button
@@ -269,7 +269,7 @@ const LoginPopup: React.FC<LoginPopupProps> = ({
                       value={formData.email}
                       onChange={handleInputChange}
                       placeholder="Enter your email"
-                      className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500 transition-all duration-200 ${
+                      className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500 placeholder:text-sm transition-all duration-200 ${
                         errors.email ? 'border-red-300' : 'border-gray-300'
                       }`}
                       required
@@ -300,7 +300,7 @@ const LoginPopup: React.FC<LoginPopupProps> = ({
                       value={formData.password}
                       onChange={handleInputChange}
                       placeholder="Enter your password"
-                      className={`w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500 transition-all duration-200 ${
+                      className={`w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500 placeholder:text-sm transition-all duration-200 ${
                         errors.password ? 'border-red-300' : 'border-gray-300'
                       }`}
                       required
@@ -347,16 +347,16 @@ const LoginPopup: React.FC<LoginPopupProps> = ({
                 </div>
 
                 {/* Submit Button */}
-                <ModernButton
+                <Button
                   type="submit"
                   loading={isSubmitting}
                   icon={isSubmitting ? Loader2 : User}
-                  className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
-                  size="lg"
+                  className="w-full disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  size="md"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'Signing In & Loading Dashboard...' : 'Sign In'}
-                </ModernButton>
+                  {isSubmitting ? 'Signing In...' : 'Sign In'}
+                </Button>
               </form>
 
               {/* Divider */}
@@ -373,10 +373,11 @@ const LoginPopup: React.FC<LoginPopupProps> = ({
 
               {/* Social Login Buttons */}
               <div className="mt-4 grid grid-cols-2 gap-3">
-                <ModernButton
-                  variant="bordered"
+                <Button
+                  variant="outline"
+                  size="md"
                   onClick={handleGoogleLogin}
-                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
+                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 text-sm"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -385,17 +386,18 @@ const LoginPopup: React.FC<LoginPopupProps> = ({
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                   </svg>
                   <span className="ml-2">Google</span>
-                </ModernButton>
-                <ModernButton
-                  variant="bordered"
+                </Button>
+                <Button
+                  variant="outline"
+                  size="md"
                   onClick={handleFacebookLogin}
-                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
+                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 text-sm"
                 >
                   <svg className="w-4 h-4" fill="#1877F2" viewBox="0 0 24 24">
                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                   </svg>
                   <span className="ml-2">Facebook</span>
-                </ModernButton>
+                </Button>
               </div>
 
               {/* Sign Up Link */}

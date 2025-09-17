@@ -205,7 +205,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
           setIsOpen(!isOpen);
         }}
         className={`
-          relative w-full px-4 py-3 text-left border-2 rounded-2xl transition-all duration-300 group
+          relative w-full px-4 py-2.5 text-left border-2 rounded-xl transition-all duration-300 group
           ${isOpen 
             ? 'border-cyan-500 ring-4 ring-cyan-500/20 shadow-lg' 
             : 'border-gray-200 dark:border-gray-600 hover:border-cyan-400 dark:hover:border-cyan-500'

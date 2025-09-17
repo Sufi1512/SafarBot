@@ -3,8 +3,9 @@ import { motion } from 'framer-motion';
 // import { useNavigate } from 'react-router-dom';
 import CustomDatePicker from '../components/ui/CustomDatePicker';
 import ModernButton from '../components/ui/ModernButton';
+import Dropdown, { DropdownOption } from '../components/ui/Dropdown';
 import bgVideo2 from '../asset/videos/bg-video2.mp4';
-import { MapPin, Calendar, Users, DollarSign, Cloud, Sun, Wind, Eye, Thermometer } from 'lucide-react';
+import { MapPin, Users } from 'lucide-react';
 import {
   StarIcon,
   ArrowRightIcon,
@@ -37,29 +38,14 @@ const HomePage: React.FC = () => {
     travelers: 1,
   });
 
-  // Mock weather data - in real app, this would come from an API
-  const weatherData = {
-    location: 'Mumbai, IN',
-    temperature: 27,
-    feelsLike: 27,
-    condition: 'Overcast Clouds',
-    humidity: 80,
-    wind: 3.69,
-    pressure: 1007,
-    visibility: 10,
-    icon: 'cloud'
-  };
+  // Travelers dropdown options
+  const travelersOptions: DropdownOption[] = Array.from({ length: 10 }, (_, i) => ({
+    value: i + 1,
+    label: `${i + 1} ${i === 0 ? 'Traveler' : 'Travelers'}`,
+    icon: <Users className="w-4 h-4" />,
+  }));
 
-  // Calculate journey overview data
-  const journeyOverview = {
-    totalDays: searchForm.startDate && searchForm.endDate 
-      ? Math.ceil((searchForm.endDate.getTime() - searchForm.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
-      : 5,
-    estimatedBudget: searchForm.travelers * 300, // $300 per person per day
-    plannedDays: searchForm.startDate && searchForm.endDate 
-      ? Math.ceil((searchForm.endDate.getTime() - searchForm.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
-      : 5
-  };
+
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -260,45 +246,45 @@ const HomePage: React.FC = () => {
             transition={{ duration: 0.8, delay: 0.8 }}
             className="max-w-4xl mx-auto"
           >
-            <div className="relative bg-white/95 dark:bg-gray-800/95 backdrop-blur-2xl rounded-2xl overflow-hidden shadow-xl border border-white/50 dark:border-gray-700/50 p-6 lg:p-8">
+            <div className="relative bg-white/95 dark:bg-gray-800/95 backdrop-blur-2xl rounded-2xl overflow-hidden shadow-xl border border-white/50 dark:border-gray-700/50 p-4 lg:p-6">
               {/* Card Background Pattern */}
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-50/30 via-blue-50/30 to-purple-50/30 dark:from-cyan-900/10 dark:via-blue-900/10 dark:to-purple-900/10" />
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-400/5 to-blue-500/5 rounded-full blur-2xl" />
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-400/5 to-pink-500/5 rounded-full blur-2xl" />
               
               <div className="relative z-10">
-                <div className="text-center mb-6">
+                <div className="text-center mb-4">
                   <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.5, delay: 1 }}
-                    className="inline-flex items-center space-x-2 bg-primary-600 text-white px-3 py-1.5 rounded-full text-sm font-medium mb-4"
+                    className="inline-flex items-center space-x-2 bg-primary-600 text-white px-3 py-1.5 rounded-full text-sm font-medium mb-3"
                   >
                     <FireIcon className="w-4 h-4" />
                     <span>Hunt for Deals</span>
                   </motion.div>
-                  <h2 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-3">
+                  <h2 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-2">
                     Where will your story begin?
                   </h2>
-                  <p className="text-lg text-gray-600 dark:text-gray-300 max-w-xl mx-auto">
+                  <p className="text-base text-gray-600 dark:text-gray-300 max-w-xl mx-auto">
                     Tell us your dream destination and we'll craft the perfect journey
                   </p>
                 </div>
 
-                <div className="space-y-4 mb-6">
+                <div className="space-y-3 mb-4">
                   {/* Destination Input - Full Width */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                       🌍 <span>Where would you like to go?</span>
                     </label>
                     <div className="relative group">
-                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-cyan-500 group-hover:text-blue-500 transition-colors z-10" />
+                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-cyan-500 group-hover:text-blue-500 transition-colors z-10" />
                       <input
                         type="text"
                         placeholder="Enter your dream destination..."
                         value={searchForm.destination}
                         onChange={(e) => setSearchForm(prev => ({ ...prev, destination: e.target.value }))}
-                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-4 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-base font-medium hover:border-cyan-400 shadow-sm hover:shadow-md"
+                        className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-4 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-sm font-medium hover:border-cyan-400 shadow-sm hover:shadow-md"
                       />
                       <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                     </div>
@@ -335,22 +321,15 @@ const HomePage: React.FC = () => {
                       <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                         👥 <span>Travelers</span>
                       </label>
-                      <div className="relative group">
-                        <select
-                          value={searchForm.travelers}
-                          onChange={(e) => setSearchForm(prev => ({ ...prev, travelers: parseInt(e.target.value) }))}
-                          className="w-full px-3 py-2.5 pr-10 border-2 border-gray-200 dark:border-gray-600 rounded-2xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-4 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-base font-medium appearance-none hover:border-cyan-400 shadow-sm hover:shadow-md cursor-pointer"
-                          aria-label="Select number of travelers"
-                        >
-                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
-                            <option key={num} value={num} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                              {num} {num === 1 ? 'Traveler' : 'Travelers'}
-                            </option>
-                          ))}
-                        </select>
-                        {/* Removed custom arrow to avoid duplicate caret; rely on native select indicator */}
-                        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                      </div>
+                      <Dropdown
+                        options={travelersOptions}
+                        value={searchForm.travelers}
+                        onChange={(value) => setSearchForm(prev => ({ ...prev, travelers: value as number }))}
+                        placeholder="Select travelers"
+                        size="lg"
+                        variant="outline"
+                        className="w-full"
+                      />
                     </div>
                   </div>
                 </div>
@@ -365,7 +344,7 @@ const HomePage: React.FC = () => {
                       onClick={handleSearch}
                       size="lg"
                       variant="solid"
-                      className="px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transform transition-all duration-300 inline-flex items-center justify-center whitespace-nowrap"
+                      className="px-6 py-2.5 text-sm font-semibold shadow-lg hover:shadow-xl transform transition-all duration-300 inline-flex items-center justify-center whitespace-nowrap"
                     >
                       <svg className="w-4 h-4 mr-2 flex-shrink-0 align-middle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z" />
@@ -373,7 +352,7 @@ const HomePage: React.FC = () => {
                       <span>✨ Craft My Dream Trip</span>
                     </ModernButton>
                   </motion.div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                     ✨ Over 10,000 destinations • Best price guarantee • Instant booking
                   </p>
                 </div>
@@ -383,175 +362,6 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Journey Overview & Weather Section */}
-      <section className="py-16 bg-gradient-to-b from-gray-50 to-white dark:from-gray-800 dark:to-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
-            {/* Journey Overview */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-              className="space-y-6"
-            >
-              <div className="text-center lg:text-left">
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                  Journey Overview
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300">
-                  Your trip details at a glance
-                </p>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Total Days */}
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-2xl p-6 text-center border border-blue-200/50 dark:border-blue-700/50"
-                >
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3">
-                    <Calendar className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="text-2xl font-bold text-blue-700 dark:text-blue-300 mb-1">
-                    {journeyOverview.totalDays}
-                  </div>
-                  <div className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                    Total Days
-                  </div>
-                </motion.div>
-
-                {/* Estimated Budget */}
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-2xl p-6 text-center border border-green-200/50 dark:border-green-700/50"
-                >
-                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mx-auto mb-3">
-                    <DollarSign className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="text-2xl font-bold text-green-700 dark:text-green-300 mb-1">
-                    ${journeyOverview.estimatedBudget}
-                  </div>
-                  <div className="text-sm font-medium text-green-600 dark:text-green-400">
-                    Estimated Budget
-                  </div>
-                </motion.div>
-
-                {/* Planned Days */}
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 rounded-2xl p-6 text-center border border-purple-200/50 dark:border-purple-700/50"
-                >
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-3">
-                    <Users className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="text-2xl font-bold text-purple-700 dark:text-purple-300 mb-1">
-                    {journeyOverview.plannedDays}
-                  </div>
-                  <div className="text-sm font-medium text-purple-600 dark:text-purple-400">
-                    Planned Days
-                  </div>
-                </motion.div>
-              </div>
-            </motion.div>
-
-            {/* Current Weather */}
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-              className="space-y-6"
-            >
-              <div className="text-center lg:text-left">
-                <div className="flex items-center justify-center lg:justify-start space-x-2 mb-2">
-                  <div className="w-6 h-6 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                    <Sun className="w-4 h-4 text-white" />
-                  </div>
-                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                    Current Weather
-                  </h2>
-                </div>
-                <p className="text-gray-600 dark:text-gray-300">
-                  Stay informed about your destination
-                </p>
-              </div>
-
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {weatherData.location}
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Current weather
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-4xl font-bold text-orange-500 mb-1">
-                      {weatherData.temperature}°C
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Feels like {weatherData.feelsLike}°C
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-2">
-                    <Cloud className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-                    <span className="text-gray-700 dark:text-gray-300 font-medium">
-                      {weatherData.condition}
-                    </span>
-                  </div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    {weatherData.humidity}% humidity
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  <div className="text-center">
-                    <Wind className="w-4 h-4 text-gray-500 dark:text-gray-400 mx-auto mb-1" />
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Wind</div>
-                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {weatherData.wind} m/s
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <Eye className="w-4 h-4 text-gray-500 dark:text-gray-400 mx-auto mb-1" />
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Pressure</div>
-                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {weatherData.pressure} hPa
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <Thermometer className="w-4 h-4 text-gray-500 dark:text-gray-400 mx-auto mb-1" />
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Visibility</div>
-                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {weatherData.visibility} km
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-xl p-3 border border-blue-200/50 dark:border-blue-700/50">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-5 h-5 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                      <Sun className="w-3 h-3 text-white" />
-                    </div>
-                    <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                      Travel Tip: Pack summer clothing and sun protection
-                    </span>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
 
       {/* Features Section with Enhanced UI */}
       <section className="py-20 bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
@@ -697,13 +507,13 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-20 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600">
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
               Trusted by Travelers Worldwide
             </h2>
-            <p className="text-lg text-cyan-100 max-w-2xl mx-auto">
+            <p className="text-lg text-gray-900 max-w-2xl mx-auto">
               Join millions of happy travelers who have discovered their perfect journey with SafarBot
             </p>
           </div>
@@ -721,12 +531,12 @@ const HomePage: React.FC = () => {
                   whileHover={{ scale: 1.1, rotate: 5 }}
                   className={`w-16 h-16 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center mx-auto mb-4 shadow-2xl group-hover:shadow-3xl transition-all duration-300`}
                 >
-                  <stat.icon className="w-8 h-8 text-white" />
+                  <stat.icon className="w-8 h-8 text-gray-900" />
                 </motion.div>
-                <div className="text-3xl lg:text-4xl font-bold text-white mb-1">
+                <div className="text-3xl lg:text-4xl font-bold text-gray-900 mb-1">
                   {stat.number}
                 </div>
-                <div className="text-sm text-cyan-100 font-medium">
+                <div className="text-sm text-gray-900 font-medium">
                   {stat.label}
                 </div>
               </motion.div>
@@ -736,7 +546,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
+      <section className="py-15 bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}

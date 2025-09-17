@@ -321,5 +321,299 @@ If you have any questions, please contact our support team.
         """
         return text.strip()
 
+    async def send_password_reset_email(
+        self, 
+        to_email: str, 
+        reset_token: str, 
+        user_name: str
+    ) -> bool:
+        """Send password reset email"""
+        try:
+            # Create reset URL
+            reset_url = f"{self.app_url}/reset-password?token={reset_token}"
+            
+            # Create email content
+            subject = "Reset Your SafarBot Password"
+            
+            html_content = self._create_password_reset_html(
+                user_name=user_name,
+                reset_url=reset_url
+            )
+            
+            text_content = self._create_password_reset_text(
+                user_name=user_name,
+                reset_url=reset_url
+            )
+            
+            # Create message
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = subject
+            msg['From'] = self.from_email
+            msg['To'] = to_email
+            
+            # Add both plain text and HTML versions
+            text_part = MIMEText(text_content, 'plain')
+            html_part = MIMEText(html_content, 'html')
+            
+            msg.attach(text_part)
+            msg.attach(html_part)
+            
+            # Send email
+            if self.is_configured:
+                # Connect to SMTP server
+                server = smtplib.SMTP(self.smtp_server, self.smtp_port)
+                server.starttls()  # Enable TLS encryption
+                server.login(self.smtp_username, self.smtp_password)
+                
+                # Send email
+                text = msg.as_string()
+                server.sendmail(msg['From'], to_email, text)
+                server.quit()
+                
+                logger.info(f"✅ Password reset email sent successfully to {to_email}")
+                return True
+            else:
+                logger.warning("SMTP credentials not configured, email not sent")
+                # For development/testing, log the email content instead
+                logger.info(f"EMAIL CONTENT (not sent):")
+                logger.info(f"To: {to_email}")
+                logger.info(f"Subject: {subject}")
+                logger.info(f"Reset URL: {reset_url}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Failed to send password reset email to {to_email}: {str(e)}")
+            return False
+
+    def _create_password_reset_html(
+        self, 
+        user_name: str, 
+        reset_url: str
+    ) -> str:
+        """Create HTML content for password reset email"""
+        html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Reset Your Password</title>
+            <style>
+                body {{
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                    max-width: 600px;
+                    margin: 0 auto;
+                    padding: 20px;
+                    background-color: #f8fafc;
+                }}
+                .container {{
+                    background: white;
+                    border-radius: 12px;
+                    padding: 40px;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                }}
+                .header {{
+                    text-align: center;
+                    margin-bottom: 30px;
+                }}
+                .logo {{
+                    width: 60px;
+                    height: 60px;
+                    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+                    border-radius: 12px;
+                    margin: 0 auto 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-size: 24px;
+                    font-weight: bold;
+                }}
+                .title {{
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: #1f2937;
+                    margin-bottom: 10px;
+                }}
+                .subtitle {{
+                    color: #6b7280;
+                    font-size: 16px;
+                }}
+                .content {{
+                    margin-bottom: 30px;
+                }}
+                .greeting {{
+                    font-size: 18px;
+                    margin-bottom: 20px;
+                    color: #374151;
+                }}
+                .message {{
+                    margin-bottom: 30px;
+                    color: #4b5563;
+                    line-height: 1.7;
+                }}
+                .cta-button {{
+                    display: inline-block;
+                    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+                    color: white;
+                    text-decoration: none;
+                    padding: 16px 32px;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    font-size: 16px;
+                    text-align: center;
+                    margin: 20px 0;
+                    transition: transform 0.2s;
+                    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+                }}
+                .cta-button:hover {{
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 8px rgba(59, 130, 246, 0.4);
+                }}
+                .backup-link {{
+                    background: #f3f4f6;
+                    border-radius: 8px;
+                    padding: 20px;
+                    margin: 20px 0;
+                    border-left: 4px solid #3b82f6;
+                }}
+                .backup-link-title {{
+                    font-weight: 600;
+                    color: #374151;
+                    margin-bottom: 10px;
+                }}
+                .backup-url {{
+                    word-break: break-all;
+                    color: #3b82f6;
+                    font-family: monospace;
+                    font-size: 14px;
+                    background: white;
+                    padding: 10px;
+                    border-radius: 4px;
+                    border: 1px solid #e5e7eb;
+                }}
+                .security-note {{
+                    background: #fef2f2;
+                    border: 1px solid #fecaca;
+                    border-radius: 8px;
+                    padding: 15px;
+                    margin: 20px 0;
+                    color: #991b1b;
+                    font-size: 14px;
+                }}
+                .footer {{
+                    text-align: center;
+                    margin-top: 40px;
+                    padding-top: 20px;
+                    border-top: 1px solid #e5e7eb;
+                    color: #6b7280;
+                    font-size: 14px;
+                }}
+                .help-section {{
+                    background: #f8fafc;
+                    border-radius: 8px;
+                    padding: 20px;
+                    margin: 20px 0;
+                }}
+                .help-title {{
+                    font-weight: 600;
+                    color: #374151;
+                    margin-bottom: 10px;
+                }}
+                .help-list {{
+                    margin: 0;
+                    padding-left: 20px;
+                }}
+                .help-list li {{
+                    margin-bottom: 5px;
+                    color: #4b5563;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <div class="logo">SB</div>
+                    <div class="title">Reset Your Password</div>
+                    <div class="subtitle">SafarBot - Your AI Travel Planning Assistant</div>
+                </div>
+                
+                <div class="content">
+                    <div class="greeting">Hello {user_name}!</div>
+                    
+                    <div class="message">
+                        <p>We received a request to reset your password for your SafarBot account. If you made this request, click the button below to create a new password:</p>
+                    </div>
+                    
+                    <div style="text-align: center;">
+                        <a href="{reset_url}" class="cta-button">Reset My Password</a>
+                    </div>
+                    
+                    <div class="backup-link">
+                        <div class="backup-link-title">Button not working? Copy and paste this link:</div>
+                        <div class="backup-url">{reset_url}</div>
+                    </div>
+                    
+                    <div class="security-note">
+                        <strong>Security Note:</strong> This password reset link is valid for 1 hour and can only be used once. If you didn't request this password reset, you can safely ignore this email. Your password will not be changed.
+                    </div>
+                    
+                    <div class="help-section">
+                        <div class="help-title">Need help?</div>
+                        <ul class="help-list">
+                            <li>Make sure your new password is at least 8 characters long</li>
+                            <li>Use a combination of letters, numbers, and special characters</li>
+                            <li>Don't share your password with anyone</li>
+                            <li>Contact support if you continue to have issues</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="footer">
+                    <p>This email was sent by SafarBot - Your AI Travel Planning Assistant</p>
+                    <p>If you have any questions, please contact our support team.</p>
+                    <p style="font-size: 12px; color: #9ca3af;">
+                        This is an automated message. Please do not reply to this email.
+                    </p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        return html
+
+    def _create_password_reset_text(
+        self, 
+        user_name: str, 
+        reset_url: str
+    ) -> str:
+        """Create plain text content for password reset email"""
+        text = f"""
+Reset Your SafarBot Password
+
+Hello {user_name}!
+
+We received a request to reset your password for your SafarBot account. If you made this request, click the link below to create a new password:
+
+{reset_url}
+
+SECURITY NOTE: This password reset link is valid for 1 hour and can only be used once. If you didn't request this password reset, you can safely ignore this email. Your password will not be changed.
+
+NEED HELP?
+- Make sure your new password is at least 8 characters long
+- Use a combination of letters, numbers, and special characters
+- Don't share your password with anyone
+- Contact support if you continue to have issues
+
+---
+This email was sent by SafarBot - Your AI Travel Planning Assistant
+If you have any questions, please contact our support team.
+
+This is an automated message. Please do not reply to this email.
+        """
+        return text.strip()
+
 # Global email service instance
 email_service = EmailService()

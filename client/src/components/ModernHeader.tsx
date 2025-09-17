@@ -3,8 +3,10 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useToast } from '../contexts/ToastContext';
 import ModernButton from './ui/ModernButton';
 import AuthModal from './AuthModal';
+import ConfirmModal from './ui/ConfirmModal';
 import logoImage from '../asset/images/logo.png';
 import {
   Bars3Icon,
@@ -29,8 +31,12 @@ const ModernHeader: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [hasNewNotifications, setHasNewNotifications] = useState(true);
   const { isAuthenticated, user, logout } = useAuth();
   const { isDarkMode, toggleDarkMode } = useTheme();
+  const { showSuccess } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -42,6 +48,24 @@ const ModernHeader: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Handle click outside to close notifications
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (showNotifications && !target.closest('[data-notifications]')) {
+        setShowNotifications(false);
+      }
+    };
+
+    if (showNotifications) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifications]);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -62,7 +86,34 @@ const ModernHeader: React.FC = () => {
   const handleAuthSuccess = () => {
     // Handle successful authentication
     console.log('Authentication successful');
+    showSuccess(
+      'Welcome back! 🎉',
+      `You've successfully logged in to your account.`
+    );
     // Close modal after successful login - no automatic redirect
+  };
+
+  const handleLogoutClick = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const handleNotificationClick = () => {
+    setShowNotifications(!showNotifications);
+    if (hasNewNotifications) {
+      setHasNewNotifications(false);
+    }
+  };
+
+  const handleLogoutConfirm = async () => {
+    try {
+      await logout();
+      showSuccess(
+        'Logged out successfully! 👋',
+        'You have been logged out of your account.'
+      );
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   const navItems = [
@@ -84,7 +135,7 @@ const ModernHeader: React.FC = () => {
     { name: 'Dashboard', icon: UserCircleIcon, href: '/dashboard' },
     { name: 'Profile', icon: UserCircleIcon, href: '/profile' },
     { name: 'Settings', icon: Cog6ToothIcon, href: '/settings' },
-    { name: 'Sign Out', icon: PowerIcon, action: logout },
+    { name: 'Sign Out', icon: PowerIcon, action: handleLogoutClick },
   ];
 
   return (
@@ -158,10 +209,77 @@ const ModernHeader: React.FC = () => {
               </button>
 
             {/* Notifications */}
-              <button className="relative p-2 rounded-xl text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200">
-                <BellIcon className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-              </button>
+              <div className="relative" data-notifications>
+                <button 
+                  onClick={handleNotificationClick}
+                  className={`relative p-2 rounded-xl transition-all duration-200 ${
+                    showNotifications 
+                      ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20' 
+                      : 'text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  <BellIcon className="w-5 h-5" />
+                  {hasNewNotifications && (
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                  )}
+                </button>
+
+              {/* Notifications Dropdown */}
+              <AnimatePresence>
+                {showNotifications && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute top-full right-4 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50"
+                  >
+                    <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      <div className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                        <div className="flex items-start space-x-3">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                              Welcome to SafarBot! 🎉
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              Start planning your next adventure with AI-powered travel recommendations.
+                            </p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                              Just now
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                        <div className="flex items-start space-x-3">
+                          <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                              New features available
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              Check out our latest travel planning tools and collaboration features.
+                            </p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                              2 hours ago
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
+                      <button className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">
+                        View all notifications
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              </div>
 
               {/* Auth Buttons / Profile Menu */}
             {!isAuthenticated ? (
@@ -326,6 +444,18 @@ const ModernHeader: React.FC = () => {
         defaultMode={authMode}
         onLoginSuccess={handleAuthSuccess}
         onSignupSuccess={handleAuthSuccess}
+      />
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={handleLogoutConfirm}
+        title="Sign Out"
+        message="Are you sure you want to sign out? You'll need to log in again to access your account."
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        type="warning"
       />
     </>
    );

@@ -1852,6 +1852,12 @@ export const savedItineraryAPI = {
 
 // Collaboration API
 export const collaborationAPI = {
+  // Public: get invitation info by token (no auth required)
+  getInvitationInfo: async (invitationToken: string): Promise<any> => {
+    const response = await api.get(`/collaboration/invitation/${invitationToken}/info`);
+    return response.data;
+  },
+
   // Invite a collaborator to an itinerary
   inviteCollaborator: async (data: {
     itinerary_id: string;

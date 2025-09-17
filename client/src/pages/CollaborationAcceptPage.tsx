@@ -54,16 +54,8 @@ const CollaborationAcceptPage: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      // Use the public endpoint to get invitation info
-      const response = await fetch(`https://safarbot-backend.onrender.com/api/v1/collaboration/invitation/${invitationToken}/info`);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to load invitation');
-      }
-      
-      const result = await response.json();
+      // Use API client base URL (handles localhost/prod automatically)
+      const result = await collaborationAPI.getInvitationInfo(invitationToken!);
       setInvitation(result.data);
     } catch (err: any) {
       console.error('Error loading invitation:', err);

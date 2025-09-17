@@ -159,7 +159,7 @@ const CreateBlogPage: React.FC = () => {
                   <div className="space-y-6">
                     <div>
                       <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                        {blogPost.title || 'Untitled Blog Post'}
+                        {blogPost.title || 'No title specified'}
                       </h2>
                       <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
                         <div className="flex items-center space-x-1">

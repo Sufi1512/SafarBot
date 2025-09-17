@@ -8,7 +8,6 @@ import {
   List,
   Search,
   Plus,
-  RefreshCw,
   Filter,
   X,
   Bookmark
@@ -54,7 +53,7 @@ const SavedPage: React.FC = () => {
   const [itineraries, setItineraries] = useState<SavedItinerary[]>([]);
   const [filteredItineraries, setFilteredItineraries] = useState<SavedItinerary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
@@ -185,9 +184,7 @@ const SavedPage: React.FC = () => {
     }
   };
 
-  const handleRefresh = () => {
-    loadItineraries(currentPage, true);
-  };
+  // Removed unused handleRefresh function
 
   const handleToggleFavorite = async (itineraryId: string) => {
     try {

@@ -5,7 +5,7 @@ import CustomDatePicker from '../components/ui/CustomDatePicker';
 import ModernButton from '../components/ui/ModernButton';
 import Dropdown, { DropdownOption } from '../components/ui/Dropdown';
 import bgVideo2 from '../asset/videos/bg-video2.mp4';
-import { MapPin, Calendar, Users, DollarSign } from 'lucide-react';
+import { MapPin, Users } from 'lucide-react';
 import {
   StarIcon,
   ArrowRightIcon,
@@ -46,16 +46,6 @@ const HomePage: React.FC = () => {
   }));
 
 
-  // Calculate journey overview data
-  const journeyOverview = {
-    totalDays: searchForm.startDate && searchForm.endDate 
-      ? Math.ceil((searchForm.endDate.getTime() - searchForm.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
-      : 5,
-    estimatedBudget: searchForm.travelers * 300, // $300 per person per day
-    plannedDays: searchForm.startDate && searchForm.endDate 
-      ? Math.ceil((searchForm.endDate.getTime() - searchForm.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
-      : 5
-  };
 
   const handleSearch = () => {
     const params = new URLSearchParams();

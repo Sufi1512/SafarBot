@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { 
   User, 
   Lock, 
@@ -30,19 +31,16 @@ interface FormErrors {
 interface LoginPopupProps {
   isOpen: boolean;
   onClose: () => void;
-  onSwitchToSignup: () => void;
-  onSwitchToForgotPassword: () => void;
   onLoginSuccess: () => void;
 }
 
 const LoginPopup: React.FC<LoginPopupProps> = ({ 
   isOpen, 
   onClose, 
-  onSwitchToSignup, 
-  onSwitchToForgotPassword,
   onLoginSuccess 
 }) => {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<LoginForm>({
     email: '',
     password: ''
@@ -205,7 +203,7 @@ const LoginPopup: React.FC<LoginPopupProps> = ({
                   <img 
                     src={logoImage} 
                     alt="SafarBot Logo" 
-                    className="w-16 h-16 object-contain drop-shadow-lg"
+                    className="w-20 h-20 object-contain"
                   />
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Welcome Back</h2>
@@ -339,7 +337,10 @@ const LoginPopup: React.FC<LoginPopupProps> = ({
                   </div>
                   <button
                     type="button"
-                    onClick={onSwitchToForgotPassword}
+                    onClick={() => {
+                      onClose();
+                      navigate('/forgot-password');
+                    }}
                     className="text-sm text-primary-600 hover:text-primary-500 font-medium transition-colors"
                   >
                     Forgot password?
@@ -405,7 +406,10 @@ const LoginPopup: React.FC<LoginPopupProps> = ({
                 <p className="text-sm text-gray-600">
                   Don't have an account?{' '}
                   <button
-                    onClick={onSwitchToSignup}
+                    onClick={() => {
+                      onClose();
+                      navigate('/signup');
+                    }}
                     className="font-medium text-primary-600 hover:text-primary-500 transition-colors"
                   >
                     Sign up here

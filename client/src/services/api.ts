@@ -1899,10 +1899,82 @@ export const collaborationAPI = {
     return response.data;
   },
 
+  // Update collaborator role
+  updateCollaboratorRole: async (itineraryId: string, userId: string, role: 'viewer' | 'editor' | 'admin'): Promise<any> => {
+    const response = await api.put(`/collaboration/itinerary/${itineraryId}/collaborator/${userId}/role`, { role });
+    return response.data;
+  },
+
   // Get user's collaborations
   getMyCollaborations: async (): Promise<any> => {
     const response = await api.get('/collaboration/my-collaborations');
     return response.data;
+  },
+
+  // Resend an invitation
+  resendInvitation: async (data: {
+    invitation_id: string;
+    itinerary_id?: string;
+    email?: string;
+    message?: string;
+  }): Promise<any> => {
+    const response = await api.post('/collaboration/resend-invitation', data);
+    return response.data;
+  }
+};
+
+// Notifications API
+export const notificationsAPI = {
+  // Get all notifications for the user
+  getNotifications: async (limit: number = 20, offset: number = 0): Promise<any> => {
+    try {
+      const response = await api.get('/dashboard/notifications', {
+        params: { limit, offset }
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to load notifications');
+    }
+  },
+
+  // Mark a notification as read
+  markAsRead: async (notificationId: string): Promise<any> => {
+    try {
+      const response = await api.put(`/notifications/${notificationId}/read`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to mark notification as read');
+    }
+  },
+
+  // Mark all notifications as read
+  markAllAsRead: async (): Promise<any> => {
+    try {
+      const response = await api.put('/notifications/read-all');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to mark all notifications as read');
+    }
+  },
+
+  // Get notification count
+  getNotificationCount: async (): Promise<{ unread_count: number }> => {
+    try {
+      const response = await api.get('/notifications/count');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to get notification count');
+    }
+  },
+
+  // Delete a notification
+  deleteNotification: async (notificationId: string): Promise<any> => {
+    try {
+      const response = await api.delete(`/notifications/${notificationId}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to delete notification');
+    }
   }
 };
 

@@ -136,28 +136,60 @@ class SavedItineraryService:
                 raise Exception("Database connection not available")
             
             # Build query for owned itineraries
+            print(f"DEBUG: Building owned query for user_id: {user_id}")
+            print(f"DEBUG: user_id type: {type(user_id)}")
             owned_query = {"user_id": user_id}
+            print(f"DEBUG: owned_query: {owned_query}")
             if status:
                 owned_query["status"] = status
             if is_favorite is not None:
                 owned_query["is_favorite"] = is_favorite
             
             # Get owned itineraries
+            print(f"DEBUG: Executing owned query: {owned_query}")
             owned_cursor = collection.find(owned_query).sort("updated_at", -1)
             owned_itineraries = await owned_cursor.to_list(length=None)
+            print(f"DEBUG: Found {len(owned_itineraries)} owned itineraries")
+            for i, itinerary in enumerate(owned_itineraries):
+                print(f"DEBUG: Owned itinerary {i+1}: {itinerary.get('_id')} - {itinerary.get('title')} - user_id: {itinerary.get('user_id')}")
             
             # Get collaborative itineraries where user is a collaborator
-            collaborative_query = {
-                "collaborators": user_id,
-                "user_id": {"$ne": user_id}  # Exclude owned itineraries
-            }
-            if status:
-                collaborative_query["status"] = status
-            if is_favorite is not None:
-                collaborative_query["is_favorite"] = is_favorite
+            # First, find itinerary IDs where user is a collaborator
+            collaborators_collection = get_collection("itinerary_collaborators")
+            if collaborators_collection is None:
+                raise Exception("Database connection not available")
             
-            collaborative_cursor = collection.find(collaborative_query).sort("updated_at", -1)
-            collaborative_itineraries = await collaborative_cursor.to_list(length=None)
+            # Get itinerary IDs where user is a collaborator
+            print(f"DEBUG: Looking for collaborators with user_id: {user_id}")
+            collaborator_cursor = collaborators_collection.find({
+                "user_id": PyObjectId(user_id)
+            })
+            collaborator_itinerary_ids = []
+            collaborator_count = 0
+            async for collaborator in collaborator_cursor:
+                collaborator_count += 1
+                print(f"DEBUG: Found collaborator {collaborator_count}: {collaborator}")
+                collaborator_itinerary_ids.append(collaborator["itinerary_id"])
+            
+            print(f"DEBUG: Found {collaborator_count} collaborators for user {user_id}")
+            print(f"DEBUG: Collaborator itinerary IDs: {collaborator_itinerary_ids}")
+            
+            # Get collaborative itineraries
+            collaborative_itineraries = []
+            if collaborator_itinerary_ids:
+                # Convert itinerary IDs to PyObjectId for the query
+                itinerary_object_ids = [PyObjectId(itinerary_id) for itinerary_id in collaborator_itinerary_ids]
+                collaborative_query = {
+                    "_id": {"$in": itinerary_object_ids},
+                    "user_id": {"$ne": user_id}  # Exclude owned itineraries
+                }
+                if status:
+                    collaborative_query["status"] = status
+                if is_favorite is not None:
+                    collaborative_query["is_favorite"] = is_favorite
+                
+                collaborative_cursor = collection.find(collaborative_query).sort("updated_at", -1)
+                collaborative_itineraries = await collaborative_cursor.to_list(length=None)
             
             # Combine and sort all itineraries
             all_itineraries = owned_itineraries + collaborative_itineraries
@@ -171,6 +203,23 @@ class SavedItineraryService:
                 itinerary["_id"] = str(itinerary["_id"])
                 itinerary["user_id"] = str(itinerary["user_id"])
                 
+                # Determine if this itinerary is collaborative
+                is_owner = str(itinerary["user_id"]) == user_id
+                
+                # Check if this itinerary has collaborators by querying the itinerary_collaborators collection
+                has_collaborators = False
+                if is_owner:
+                    # For owned itineraries, check if there are any collaborators
+                    collaborator_count = await collaborators_collection.count_documents({
+                        "itinerary_id": PyObjectId(itinerary["_id"])
+                    })
+                    has_collaborators = collaborator_count > 0
+                else:
+                    # For collaborative itineraries, we know they have collaborators (the current user)
+                    has_collaborators = True
+                
+                is_collaborative = itinerary.get("is_collaborative", False) or has_collaborators
+                
                 # Ensure all required fields for ItinerarySummary are present
                 itinerary["id"] = str(itinerary["_id"])
                 itinerary["description"] = itinerary.get("description")
@@ -178,6 +227,7 @@ class SavedItineraryService:
                 itinerary["views_count"] = itinerary.get("views_count", 0)
                 itinerary["likes_count"] = itinerary.get("likes_count", 0)
                 itinerary["is_favorite"] = itinerary.get("is_favorite", False)
+                itinerary["is_collaborative"] = is_collaborative
                 itinerary["status"] = itinerary.get("status", "draft")
                 itinerary["tags"] = itinerary.get("tags", [])
                 itinerary["travel_style"] = itinerary.get("travel_style", [])

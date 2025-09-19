@@ -72,19 +72,19 @@ const CollaborationAcceptPage: React.FC = () => {
       setIsProcessing(true);
       setAction('accept');
       
-      await collaborationAPI.acceptInvitation(invitationToken);
+      const response = await collaborationAPI.acceptInvitation(invitationToken);
       
       setSuccess(true);
       
-      // Redirect to the itinerary after a short delay
+      // Redirect to the collaborator's new itinerary ID after a short delay
       setTimeout(() => {
-        navigate(`/saved-itinerary/${invitation.itinerary.id}`);
+        const newItineraryId = response.data?.itinerary_id || invitation.itinerary.id;
+        navigate(`/saved-itinerary/${newItineraryId}`);
       }, 2000);
       
     } catch (err: any) {
       console.error('Error accepting invitation:', err);
       setError(err.message || 'Failed to accept invitation');
-    } finally {
       setIsProcessing(false);
       setAction(null);
     }
@@ -109,7 +109,6 @@ const CollaborationAcceptPage: React.FC = () => {
     } catch (err: any) {
       console.error('Error declining invitation:', err);
       setError(err.message || 'Failed to decline invitation');
-    } finally {
       setIsProcessing(false);
       setAction(null);
     }
@@ -153,8 +152,8 @@ const CollaborationAcceptPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">Loading invitation...</p>
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600 mx-auto mb-3" />
+          <p className="text-sm text-gray-600 dark:text-gray-400">Loading invitation...</p>
         </div>
       </div>
     );
@@ -163,15 +162,16 @@ const CollaborationAcceptPage: React.FC = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
-        <ModernCard className="p-8 max-w-md w-full text-center">
-          <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+        <ModernCard className="p-6 max-w-sm w-full text-center">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
             Invalid Invitation
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{error}</p>
           <ModernButton
             onClick={() => navigate('/dashboard')}
             variant="solid"
+            size="md"
           >
             Go to Dashboard
           </ModernButton>
@@ -183,18 +183,18 @@ const CollaborationAcceptPage: React.FC = () => {
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
-        <ModernCard className="p-8 max-w-md w-full text-center">
-          <Check className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+        <ModernCard className="p-6 max-w-sm w-full text-center">
+          <Check className="w-12 h-12 text-green-500 mx-auto mb-3" />
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
             {action === 'accept' ? 'Invitation Accepted!' : 'Invitation Declined'}
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
             {action === 'accept' 
               ? 'You are now a collaborator on this itinerary. Redirecting...'
               : 'You have declined the collaboration invitation. Redirecting...'
             }
           </p>
-          <Loader2 className="w-6 h-6 animate-spin text-blue-600 mx-auto" />
+          <Loader2 className="w-5 h-5 animate-spin text-blue-600 mx-auto" />
         </ModernCard>
       </div>
     );
@@ -210,69 +210,69 @@ const CollaborationAcceptPage: React.FC = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="w-full max-w-2xl"
+        className="w-full max-w-lg"
       >
-        <ModernCard className="p-8 shadow-2xl border-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm">
+        <ModernCard className="p-6 shadow-xl border-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm">
           {/* Header */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <motion.div
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg"
+              className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
             >
-              <Users className="w-10 h-10 text-white" />
+              <Users className="w-8 h-8 text-white" />
             </motion.div>
             
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               Collaboration Invitation
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               You've been invited to collaborate on a travel itinerary
             </p>
           </div>
 
           {/* Invitation Details */}
-          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 mb-8">
-            <div className="flex items-start space-x-4">
+          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 mb-6">
+            <div className="flex items-start space-x-3">
               {/* Itinerary Image */}
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
                 {invitation.itinerary.cover_image ? (
                   <img 
                     src={invitation.itinerary.cover_image} 
                     alt={invitation.itinerary.title}
-                    className="w-full h-full object-cover rounded-xl"
+                    className="w-full h-full object-cover rounded-lg"
                   />
                 ) : (
-                  <MapPin className="w-10 h-10 text-white" />
+                  <MapPin className="w-8 h-8 text-white" />
                 )}
               </div>
 
               {/* Details */}
               <div className="flex-1">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                   {invitation.itinerary.title}
                 </h3>
                 
-                <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                <div className="space-y-1.5 text-xs text-gray-600 dark:text-gray-400">
                   <div className="flex items-center space-x-2">
-                    <MapPin className="w-4 h-4" />
+                    <MapPin className="w-3 h-3" />
                     <span>{invitation.itinerary.destination}</span>
                   </div>
                   
                   <div className="flex items-center space-x-2">
-                    <Users className="w-4 h-4" />
+                    <Users className="w-3 h-3" />
                     <span>Invited by <strong>{invitation.owner_email}</strong></span>
                   </div>
                   
                   <div className="flex items-center space-x-2">
-                    <Calendar className="w-4 h-4" />
+                    <Calendar className="w-3 h-3" />
                     <span>Expires {formatDate(invitation.invitation.expires_at)}</span>
                   </div>
                 </div>
                 
-                <div className="mt-3">
-                  <span className={`inline-flex items-center space-x-2 px-3 py-1 text-sm font-medium rounded-full ${getRoleColor(invitation.invitation.role)}`}>
+                <div className="mt-2">
+                  <span className={`inline-flex items-center space-x-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${getRoleColor(invitation.invitation.role)}`}>
                     {getRoleIcon(invitation.invitation.role)}
                     <span className="capitalize">{invitation.invitation.role}</span>
                   </span>
@@ -281,11 +281,11 @@ const CollaborationAcceptPage: React.FC = () => {
             </div>
             
             {invitation.invitation.message && (
-              <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
-                <p className="text-sm text-blue-800 dark:text-blue-200">
+              <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+                <p className="text-xs text-blue-800 dark:text-blue-200">
                   <strong>Personal Message:</strong>
                 </p>
-                <p className="text-sm text-blue-700 dark:text-blue-300 mt-1 italic">
+                <p className="text-xs text-blue-700 dark:text-blue-300 mt-1 italic">
                   "{invitation.invitation.message}"
                 </p>
               </div>
@@ -293,41 +293,41 @@ const CollaborationAcceptPage: React.FC = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <ModernButton
               onClick={handleDecline}
               variant="bordered"
-              size="lg"
+              size="md"
               disabled={isProcessing}
               className="flex items-center justify-center space-x-2 text-red-600 border-red-200 hover:bg-red-50"
             >
               {isProcessing && action === 'decline' ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               )}
-              <span>Decline</span>
+              <span className="text-sm">Decline</span>
             </ModernButton>
             
             <ModernButton
               onClick={handleAccept}
               variant="solid"
-              size="lg"
+              size="md"
               disabled={isProcessing}
               className="flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700"
             >
               {isProcessing && action === 'accept' ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <Check className="w-5 h-5" />
+                <Check className="w-4 h-4" />
               )}
-              <span>Accept Invitation</span>
+              <span className="text-sm">Accept Invitation</span>
             </ModernButton>
           </div>
 
           {/* Security Note */}
-          <div className="mt-8 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
-            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+          <div className="mt-6 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+            <p className="text-xs text-yellow-800 dark:text-yellow-200">
               <strong>Security Note:</strong> This invitation is unique to you and will expire in 7 days. 
               If you didn't expect this invitation, you can safely decline it.
             </p>

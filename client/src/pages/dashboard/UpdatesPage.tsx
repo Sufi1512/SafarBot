@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Check, AlertCircle, Info, CheckCircle, Clock, Plane, Hotel, Car, MapPin, DollarSign, Calendar } from 'lucide-react';
-import { dashboardAPI } from '../../services/api';
+import { useNavigate } from 'react-router-dom';
+import { Bell, Check, AlertCircle, Info, CheckCircle, Clock, Plane, Hotel, Car, MapPin, DollarSign, Calendar, Users, Shield, Loader2 } from 'lucide-react';
+import { notificationsAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface Update {
   id: string;
-  type: 'booking' | 'price' | 'weather' | 'reminder' | 'promotion' | 'system';
+  type: 'booking' | 'price' | 'weather' | 'reminder' | 'promotion' | 'system' | 'collaboration' | 'invitation' | 'role_update';
   title: string;
   message: string;
   timestamp: string;
@@ -20,11 +21,16 @@ interface Update {
     name: string;
     id: string;
   };
+  data?: Record<string, any>;
 }
 
 const UpdatesPage: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
-  const [filter, setFilter] = useState<'all' | 'unread' | 'booking' | 'price' | 'weather' | 'reminder'>('all');
+  const navigate = useNavigate();
+  const [filter, setFilter] = useState<'all' | 'unread' | 'booking' | 'price' | 'weather' | 'reminder' | 'collaboration'>('all');
+  const [updates, setUpdates] = useState<Update[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Load updates data
   useEffect(() => {
@@ -35,30 +41,47 @@ const UpdatesPage: React.FC = () => {
 
   const loadUpdatesData = async () => {
     try {
-      // Load dashboard data which includes notifications
-      await dashboardAPI.getDashboardData();
+      setIsLoading(true);
+      setError(null);
       
-      // TODO: Process notifications into updates format
-      // const updates = dashboardData.notifications.map(notification => ({
-      //   id: notification.id,
-      //   type: notification.type,
-      //   title: notification.title,
-      //   message: notification.message,
-      //   timestamp: notification.created_at,
-      //   isRead: notification.is_read,
-      //   priority: 'medium'
-      // }));
+      const response = await notificationsAPI.getNotifications(50, 0);
+      console.log('Notifications API Response:', response);
+      const notifications = response || [];
+      console.log('Notifications array:', notifications);
       
+      // Transform notifications into updates format
+      const transformedUpdates: Update[] = notifications.map((notification: any) => ({
+        id: notification.id,
+        type: mapNotificationType(notification.type),
+        title: notification.title,
+        message: notification.message,
+        timestamp: formatTimestamp(notification.created_at),
+        isRead: notification.is_read,
+        priority: getPriorityFromType(notification.type),
+        action: notification.action_url ? {
+          label: getActionLabel(notification.type),
+          url: notification.action_url
+        } : undefined,
+        data: notification.data
+      }));
+      
+      setUpdates(transformedUpdates);
     } catch (err: any) {
       console.error('Error loading updates data:', err);
+      setError(err.message || 'Failed to load notifications');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleMarkAsRead = async (updateId: string) => {
     try {
-      // TODO: Call API to mark update as read
-      // await dashboardAPI.markNotificationAsRead(updateId);
-      console.log('Marked update as read:', updateId);
+      await notificationsAPI.markAsRead(updateId);
+      
+      // Update local state
+      setUpdates(prev => prev.map(update => 
+        update.id === updateId ? { ...update, isRead: true } : update
+      ));
     } catch (err: any) {
       console.error('Error marking update as read:', err);
     }
@@ -66,111 +89,87 @@ const UpdatesPage: React.FC = () => {
 
   const handleMarkAllAsRead = async () => {
     try {
-      // TODO: Call API to mark all updates as read
-      // await dashboardAPI.markAllNotificationsAsRead();
-      console.log('Marked all updates as read');
+      await notificationsAPI.markAllAsRead();
+      
+      // Update local state
+      setUpdates(prev => prev.map(update => ({ ...update, isRead: true })));
     } catch (err: any) {
       console.error('Error marking all updates as read:', err);
     }
   };
 
-
-  const updates: Update[] = [
-    {
-      id: '1',
-      type: 'booking',
-      title: 'Flight Confirmed',
-      message: 'Your flight to Paris on March 15th has been confirmed. Check-in opens 24 hours before departure.',
-      timestamp: '2 hours ago',
-      isRead: false,
-      priority: 'high',
-      action: {
-        label: 'View Booking',
-        url: '/bookings/123'
-      },
-      relatedItem: {
-        type: 'flight',
-        name: 'Paris Flight',
-        id: '123'
+  const handleActionClick = (update: Update) => {
+    if (update.action?.url) {
+      // Mark as read when action is clicked
+      if (!update.isRead) {
+        handleMarkAsRead(update.id);
       }
-    },
-    {
-      id: '2',
-      type: 'price',
-      title: 'Price Drop Alert',
-      message: 'The hotel you saved in Tokyo has dropped by $50 per night. Book now to save!',
-      timestamp: '4 hours ago',
-      isRead: false,
-      priority: 'medium',
-      action: {
-        label: 'View Hotel',
-        url: '/hotels/tokyo-123'
-      },
-      relatedItem: {
-        type: 'hotel',
-        name: 'Park Hyatt Tokyo',
-        id: '456'
-      }
-    },
-    {
-      id: '3',
-      type: 'weather',
-      title: 'Weather Update',
-      message: 'Heavy rain expected in Bali during your stay. Consider packing rain gear.',
-      timestamp: '6 hours ago',
-      isRead: true,
-      priority: 'medium',
-      relatedItem: {
-        type: 'trip',
-        name: 'Bali Trip',
-        id: '789'
-      }
-    },
-    {
-      id: '4',
-      type: 'reminder',
-      title: 'Check-in Reminder',
-      message: 'Don\'t forget to check in for your flight to Tokyo. Check-in opens in 2 hours.',
-      timestamp: '1 day ago',
-      isRead: true,
-      priority: 'high',
-      action: {
-        label: 'Check In',
-        url: '/checkin/456'
-      },
-      relatedItem: {
-        type: 'flight',
-        name: 'Tokyo Flight',
-        id: '456'
-      }
-    },
-    {
-      id: '5',
-      type: 'promotion',
-      title: 'Special Offer',
-      message: 'Get 20% off your next hotel booking with code SAVE20. Valid until March 31st.',
-      timestamp: '2 days ago',
-      isRead: true,
-      priority: 'low',
-      action: {
-        label: 'Use Code',
-        url: '/hotels?promo=SAVE20'
-      }
-    },
-    {
-      id: '6',
-      type: 'system',
-      title: 'App Update Available',
-      message: 'A new version of the app is available with improved features and bug fixes.',
-      timestamp: '3 days ago',
-      isRead: true,
-      priority: 'low',
-      action: {
-        label: 'Update Now',
-        url: '/settings/update'
-      }
+      
+      // Navigate to the action URL
+      navigate(update.action.url);
     }
-  ];
+  };
+
+  // Helper functions
+  const mapNotificationType = (type: string): Update['type'] => {
+    const typeMap: Record<string, Update['type']> = {
+      'price_alert': 'price',
+      'booking_confirmation': 'booking',
+      'booking_reminder': 'reminder',
+      'system_update': 'system',
+      'promotional': 'promotion',
+      'invitation_received': 'invitation',
+      'invitation_accepted': 'collaboration',
+      'invitation_declined': 'collaboration',
+      'collaborator_added': 'collaboration',
+      'collaborator_removed': 'collaboration',
+      'role_updated': 'role_update',
+      'itinerary_updated': 'collaboration',
+      'itinerary_shared': 'collaboration'
+    };
+    return typeMap[type] || 'system';
+  };
+
+  const getPriorityFromType = (type: string): 'low' | 'medium' | 'high' => {
+    const highPriority = ['booking_confirmation', 'invitation_received', 'role_updated'];
+    const mediumPriority = ['price_alert', 'booking_reminder', 'collaborator_added', 'collaborator_removed'];
+    
+    if (highPriority.includes(type)) return 'high';
+    if (mediumPriority.includes(type)) return 'medium';
+    return 'low';
+  };
+
+  const getActionLabel = (type: string): string => {
+    const actionMap: Record<string, string> = {
+      'invitation_received': 'View Invitation',
+      'booking_confirmation': 'View Booking',
+      'price_alert': 'View Deal',
+      'role_updated': 'View Itinerary',
+      'collaborator_added': 'View Collaboration',
+      'itinerary_updated': 'View Itinerary'
+    };
+    return actionMap[type] || 'View Details';
+  };
+
+  const formatTimestamp = (timestamp: string): string => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+    
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -180,6 +179,9 @@ const UpdatesPage: React.FC = () => {
       case 'reminder': return <Clock className="h-5 w-5 text-orange-600" />;
       case 'promotion': return <Bell className="h-5 w-5 text-purple-600" />;
       case 'system': return <Info className="h-5 w-5 text-gray-600" />;
+      case 'collaboration': return <Users className="h-5 w-5 text-indigo-600" />;
+      case 'invitation': return <Users className="h-5 w-5 text-blue-600" />;
+      case 'role_update': return <Shield className="h-5 w-5 text-purple-600" />;
       default: return <Bell className="h-5 w-5 text-gray-600" />;
     }
   };
@@ -206,6 +208,7 @@ const UpdatesPage: React.FC = () => {
   const filteredUpdates = updates.filter(update => {
     if (filter === 'all') return true;
     if (filter === 'unread') return !update.isRead;
+    if (filter === 'collaboration') return ['collaboration', 'invitation', 'role_update'].includes(update.type);
     return update.type === filter;
   });
 
@@ -238,14 +241,15 @@ const UpdatesPage: React.FC = () => {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+      <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg overflow-x-auto">
         {[
           { id: 'all', label: 'All Updates', count: updates.length },
           { id: 'unread', label: 'Unread', count: unreadCount },
           { id: 'booking', label: 'Bookings', count: updates.filter(u => u.type === 'booking').length },
           { id: 'price', label: 'Price Alerts', count: updates.filter(u => u.type === 'price').length },
           { id: 'weather', label: 'Weather', count: updates.filter(u => u.type === 'weather').length },
-          { id: 'reminder', label: 'Reminders', count: updates.filter(u => u.type === 'reminder').length }
+          { id: 'reminder', label: 'Reminders', count: updates.filter(u => u.type === 'reminder').length },
+          { id: 'collaboration', label: 'Collaboration', count: updates.filter(u => ['collaboration', 'invitation', 'role_update'].includes(u.type)).length }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -263,7 +267,31 @@ const UpdatesPage: React.FC = () => {
 
       {/* Updates List */}
       <div className="space-y-3">
-        {filteredUpdates.map((update) => (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+            <span className="ml-2 text-gray-600 dark:text-gray-400">Loading notifications...</span>
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center py-12">
+            <AlertCircle className="w-6 h-6 text-red-600" />
+            <span className="ml-2 text-red-600">{error}</span>
+          </div>
+        ) : filteredUpdates.length === 0 ? (
+          <div className="text-center py-12">
+            <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              No updates found
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              {filter === 'unread' 
+                ? "You're all caught up! No unread updates."
+                : `No ${filter} updates at the moment.`
+              }
+            </p>
+          </div>
+        ) : (
+          filteredUpdates.map((update) => (
           <div
             key={update.id}
             className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 border-l-4 ${getPriorityColor(update.priority)} ${
@@ -316,7 +344,10 @@ const UpdatesPage: React.FC = () => {
                   </div>
                   {update.action && (
                     <div className="mt-3">
-                      <button className="px-3 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                      <button 
+                        onClick={() => handleActionClick(update)}
+                        className="px-3 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                      >
                         {update.action.label}
                       </button>
                     </div>
@@ -325,24 +356,9 @@ const UpdatesPage: React.FC = () => {
               </div>
             </div>
           </div>
-        ))}
+        ))
+        )}
       </div>
-
-      {/* Empty State */}
-      {filteredUpdates.length === 0 && (
-        <div className="text-center py-12">
-          <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            No updates found
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400">
-            {filter === 'unread' 
-              ? "You're all caught up! No unread updates."
-              : `No ${filter} updates at the moment.`
-            }
-          </p>
-        </div>
-      )}
 
       {/* Load More */}
       {filteredUpdates.length > 0 && (

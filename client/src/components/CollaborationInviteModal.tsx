@@ -22,6 +22,7 @@ interface CollaborationInviteModalProps {
   itineraryId: string;
   itineraryTitle: string;
   onInviteSent: () => void;
+  onRefreshCollaborators?: () => void; // Callback to refresh collaborators data
 }
 
 interface InviteForm {
@@ -35,7 +36,8 @@ const CollaborationInviteModal: React.FC<CollaborationInviteModalProps> = ({
   onClose,
   itineraryId,
   itineraryTitle,
-  onInviteSent
+  onInviteSent,
+  onRefreshCollaborators
 }) => {
   const [formData, setFormData] = useState<InviteForm>({
     email: '',
@@ -95,9 +97,13 @@ const CollaborationInviteModal: React.FC<CollaborationInviteModalProps> = ({
       });
 
       setSuccess(true);
-      onInviteSent();
       
-      // Reset form after success
+      // Refresh collaborators data in background
+      if (onRefreshCollaborators) {
+        onRefreshCollaborators();
+      }
+      
+      // Reset form after success and call onInviteSent after showing success message
       setTimeout(() => {
         setFormData({
           email: '',
@@ -105,12 +111,28 @@ const CollaborationInviteModal: React.FC<CollaborationInviteModalProps> = ({
           message: ''
         });
         setSuccess(false);
+        onInviteSent(); // Call this after showing success message
         onClose();
       }, 2000);
 
     } catch (err: any) {
       console.error('Error sending invitation:', err);
-      setError(err.message || 'Failed to send invitation. Please try again.');
+      
+      // Extract error message from API response
+      let errorMessage = 'Failed to send invitation. Please try again.';
+      
+      if (err.response?.data?.detail) {
+        // FastAPI error format: {"detail": "error message"}
+        errorMessage = err.response.data.detail;
+      } else if (err.response?.data?.message) {
+        // Alternative error format: {"message": "error message"}
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        // Generic error message
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -149,14 +171,14 @@ const CollaborationInviteModal: React.FC<CollaborationInviteModalProps> = ({
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                   <UserPlus className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                     Invite Collaborator
                   </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 truncate max-w-48">
                     {itineraryTitle}
                   </p>
                 </div>
@@ -172,14 +194,21 @@ const CollaborationInviteModal: React.FC<CollaborationInviteModalProps> = ({
             {/* Success Message */}
             {success && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-xl flex items-center space-x-3"
+                initial={{ opacity: 0, scale: 0.8, y: -10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                className="mb-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-700 rounded-xl flex items-center space-x-3 shadow-lg"
               >
-                <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
-                <span className="text-green-700 dark:text-green-300 font-medium">
-                  Invitation sent successfully!
-                </span>
+                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <span className="text-green-800 dark:text-green-200 font-semibold text-base block">
+                    Invitation sent successfully!
+                  </span>
+                  <span className="text-green-600 dark:text-green-400 text-sm">
+                    The collaborator will receive an email invitation.
+                  </span>
+                </div>
               </motion.div>
             )}
 
@@ -188,10 +217,10 @@ const CollaborationInviteModal: React.FC<CollaborationInviteModalProps> = ({
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl flex items-center space-x-3"
+                className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg flex items-center space-x-3"
               >
                 <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
-                <span className="text-red-700 dark:text-red-300 font-medium">
+                <span className="text-red-700 dark:text-red-300 font-medium text-sm">
                   {error}
                 </span>
               </motion.div>
@@ -199,20 +228,20 @@ const CollaborationInviteModal: React.FC<CollaborationInviteModalProps> = ({
 
             {/* Form */}
             {!success && (
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Email Field */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     Email Address
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
                       type="email"
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300"
+                      className="w-full pl-10 pr-3 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
                       placeholder="Enter email address"
                       disabled={isLoading}
                       required
@@ -225,13 +254,13 @@ const CollaborationInviteModal: React.FC<CollaborationInviteModalProps> = ({
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
                     Permission Level
                   </label>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {roleOptions.map((option) => {
                       const IconComponent = option.icon;
                       return (
                         <label
                           key={option.value}
-                          className={`flex items-center space-x-3 p-3 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+                          className={`flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-all duration-200 ${
                             formData.role === option.value
                               ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                               : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
@@ -246,12 +275,12 @@ const CollaborationInviteModal: React.FC<CollaborationInviteModalProps> = ({
                             className="sr-only"
                             disabled={isLoading}
                           />
-                          <IconComponent className={`w-5 h-5 ${option.color}`} />
+                          <IconComponent className={`w-4 h-4 ${option.color}`} />
                           <div className="flex-1">
-                            <div className="font-medium text-gray-900 dark:text-white">
+                            <div className="font-medium text-sm text-gray-900 dark:text-white">
                               {option.label}
                             </div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                            <div className="text-xs text-gray-600 dark:text-gray-400">
                               {option.description}
                             </div>
                           </div>
@@ -271,8 +300,8 @@ const CollaborationInviteModal: React.FC<CollaborationInviteModalProps> = ({
                     value={formData.message}
                     onChange={handleInputChange}
                     rows={3}
-                    className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 resize-none"
-                    placeholder="Add a personal message to your invitation..."
+                    className="w-full px-3 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 resize-none"
+                    placeholder="Add a personal message..."
                     disabled={isLoading}
                   />
                 </div>
@@ -281,14 +310,14 @@ const CollaborationInviteModal: React.FC<CollaborationInviteModalProps> = ({
                 <ModernButton
                   type="submit"
                   variant="solid"
-                  size="lg"
-                  className="w-full"
+                  size="sm"
+                  className="w-full py-2"
                   disabled={isLoading}
                 >
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Sending Invitation...
+                      Sending...
                     </>
                   ) : (
                     <>

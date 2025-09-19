@@ -15,6 +15,7 @@ from routers.saved_itinerary import router as saved_itinerary
 from routers.weather import router as weather_router
 from routers.ip_tracking import router as ip_tracking_router
 from routers.collaboration import router as collaboration_router
+from routers.notifications import router as notifications_router
 from config import settings
 from database import Database
 
@@ -133,6 +134,7 @@ app.include_router(restaurants_router, prefix="/api/v1", tags=["restaurants"])
 app.include_router(weather_router, prefix="/api/v1", tags=["weather"])
 app.include_router(ip_tracking_router, prefix="/api/v1", tags=["ip-tracking"])
 app.include_router(collaboration_router, prefix="/api/v1", tags=["collaboration"])
+app.include_router(notifications_router, prefix="/api/v1", tags=["notifications"])
 
 @app.get("/health")
 async def health_check():

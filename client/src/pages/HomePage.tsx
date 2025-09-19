@@ -21,6 +21,7 @@ import {
   ShieldCheckIcon,
   UserGroupIcon,
 } from '@heroicons/react/24/outline';
+import { CircularTestimonials } from '../components/ui/circular-testimonials';
 
 interface SearchForm {
   destination: string;
@@ -130,6 +131,78 @@ const HomePage: React.FC = () => {
       badge: 'Luxury',
       badgeColor: 'bg-purple-500'
     },
+    {
+      name: 'Paris, France',
+      image: 'https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=600&h=400&fit=crop',
+      price: 'From $1,099',
+      rating: 4.8,
+      description: 'City of lights & romance',
+      badge: 'Classic',
+      badgeColor: 'bg-blue-500'
+    },
+    {
+      name: 'New York, USA',
+      image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=600&h=400&fit=crop',
+      price: 'From $1,399',
+      rating: 4.6,
+      description: 'The city that never sleeps',
+      badge: 'Epic',
+      badgeColor: 'bg-indigo-500'
+    },
+    {
+      name: 'Dubai, UAE',
+      image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=600&h=400&fit=crop',
+      price: 'From $1,599',
+      rating: 4.7,
+      description: 'Futuristic skyline & luxury',
+      badge: 'Premium',
+      badgeColor: 'bg-amber-500'
+    },
+    {
+      name: 'Sydney, Australia',
+      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop',
+      price: 'From $1,799',
+      rating: 4.8,
+      description: 'Harbor views & vibrant culture',
+      badge: 'Adventure',
+      badgeColor: 'bg-emerald-500'
+    },
+    {
+      name: 'Rome, Italy',
+      image: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=600&h=400&fit=crop',
+      price: 'From $999',
+      rating: 4.9,
+      description: 'Ancient history & delicious cuisine',
+      badge: 'Heritage',
+      badgeColor: 'bg-rose-500'
+    },
+    {
+      name: 'Thailand',
+      image: 'https://images.unsplash.com/photo-1528181304800-259b08848526?w=600&h=400&fit=crop',
+      price: 'From $699',
+      rating: 4.7,
+      description: 'Golden temples & tropical beaches',
+      badge: 'Budget',
+      badgeColor: 'bg-yellow-500'
+    },
+    {
+      name: 'Switzerland',
+      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop',
+      price: 'From $1,899',
+      rating: 4.8,
+      description: 'Alpine beauty & pristine lakes',
+      badge: 'Nature',
+      badgeColor: 'bg-cyan-500'
+    },
+    {
+      name: 'Iceland',
+      image: 'https://images.unsplash.com/photo-1539650116574-75c0c6d73c6e?w=600&h=400&fit=crop',
+      price: 'From $1,499',
+      rating: 4.9,
+      description: 'Northern lights & volcanic landscapes',
+      badge: 'Unique',
+      badgeColor: 'bg-teal-500'
+    },
   ];
 
   const stats = [
@@ -139,31 +212,38 @@ const HomePage: React.FC = () => {
     { number: '4.9★', label: 'Average Rating', icon: StarIcon, color: 'from-yellow-500 to-orange-500' },
   ];
 
-  const testimonials = [
+  // Enhanced testimonials data for AnimatedTestimonials component with reliable images
+  const animatedTestimonials = [
     {
-      name: 'Sarah Johnson',
-      role: 'Travel Enthusiast',
-      content: 'SafarBot made planning my dream vacation effortless. The AI recommendations were spot-on and saved me hours!',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b5bc?w=100&h=100&fit=crop&crop=face',
-      rating: 5,
-      location: 'New York, USA'
+      quote: "SafarBot completely revolutionized how I plan my travels. The AI-powered recommendations are incredibly accurate and saved me weeks of research. The collaborative features let my family contribute to our itinerary seamlessly.",
+      name: "Sarah Chen",
+      designation: "Travel Blogger & Adventure Enthusiast",
+      src: "https://images.unsplash.com/photo-1494790108755-2616b612b5bc?w=400&h=400&fit=crop&crop=face&auto=format"
     },
     {
-      name: 'Michael Chen',
-      role: 'Business Traveler',
-      content: 'Best travel platform I\'ve used. Amazing deals and the booking process is incredibly smooth and intuitive.',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-      rating: 5,
-      location: 'Singapore'
+      quote: "As a business traveler, I need efficiency and reliability. SafarBot delivers both with its smart booking system and real-time updates. The integration with my calendar is a game-changer for managing my busy schedule.",
+      name: "Michael Rodriguez",
+      designation: "Corporate Travel Manager at TechFlow",
+      src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face&auto=format"
     },
     {
-      name: 'Emma Davis',
-      role: 'Family Traveler',
-      content: 'Perfect for family trips! The support team helped us every step of the way. Highly recommended for families.',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
-      rating: 5,
-      location: 'London, UK'
+      quote: "Planning our family vacation to Europe was overwhelming until we found SafarBot. The collaborative features let everyone contribute ideas, and the AI created the perfect itinerary for our multi-generational trip. Pure magic!",
+      name: "Emily Watson",
+      designation: "Family Travel Coordinator",
+      src: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face&auto=format"
     },
+    {
+      quote: "The weather integration and local insights feature helped me discover hidden gems I never would have found otherwise. SafarBot doesn't just plan trips; it creates unforgettable experiences tailored to your interests.",
+      name: "James Kim",
+      designation: "Photography Traveler",
+      src: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face&auto=format"
+    },
+    {
+      quote: "From budget backpacking to luxury getaways, SafarBot adapts to any travel style. The price comparison feature saved me hundreds on flights and hotels. It's like having a personal travel agent available 24/7.",
+      name: "Lisa Thompson",
+      designation: "Solo Traveler & Budget Expert",
+      src: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face&auto=format"
+    }
   ];
 
   return (
@@ -420,8 +500,73 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Popular Destinations Section */}
-      <section className="py-20 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-20 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <motion.div
+          className="absolute top-10 left-10 opacity-20"
+          animate={{
+            x: [0, 50, 0],
+            y: [0, -20, 0],
+            rotate: [0, 180, 360],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: 'easeInOut'
+          }}
+        >
+          <div className="text-4xl">🌍</div>
+        </motion.div>
+        
+        <motion.div
+          className="absolute top-20 right-20 opacity-20"
+          animate={{
+            x: [0, -30, 0],
+            y: [0, 30, 0],
+            rotate: [360, 180, 0],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: 'easeInOut'
+          }}
+        >
+          <div className="text-3xl">✈️</div>
+        </motion.div>
+        
+        <motion.div
+          className="absolute bottom-20 left-20 opacity-20"
+          animate={{
+            x: [0, 40, 0],
+            y: [0, -40, 0],
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: 'easeInOut'
+          }}
+        >
+          <div className="text-3xl">🏖️</div>
+        </motion.div>
+        
+        <motion.div
+          className="absolute bottom-10 right-10 opacity-20"
+          animate={{
+            x: [0, -50, 0],
+            y: [0, 20, 0],
+            rotate: [0, -180, -360],
+          }}
+          transition={{
+            duration: 12,
+            repeat: Infinity,
+            ease: 'easeInOut'
+          }}
+        >
+          <div className="text-4xl">🗺️</div>
+        </motion.div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -429,79 +574,234 @@ const HomePage: React.FC = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 text-purple-700 dark:text-purple-300 px-4 py-2 rounded-full text-sm font-medium mb-6">
-              <FireIcon className="w-4 h-4" />
-              <span>🌟 Discover Paradise</span>
-            </div>
-            <h2 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-6">
-              Where Dreams Come True
-            </h2>
+            <motion.div 
+              className="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 text-purple-700 dark:text-purple-300 px-4 py-2 rounded-full text-sm font-medium mb-6"
+              whileHover={{ scale: 1.05 }}
+              animate={{
+                boxShadow: [
+                  '0 4px 15px rgba(147, 51, 234, 0.2)',
+                  '0 8px 25px rgba(147, 51, 234, 0.4)',
+                  '0 4px 15px rgba(147, 51, 234, 0.2)'
+                ]
+              }}
+              transition={{
+                boxShadow: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
+              }}
+            >
+              <motion.div
+                animate={{
+                  rotate: [0, 360],
+                  scale: [1, 1.2, 1],
+                }}
+                transition={{
+                  rotate: { duration: 3, repeat: Infinity, ease: 'linear' },
+                  scale: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }
+                }}
+              >
+                <FireIcon className="w-4 h-4" />
+              </motion.div>
+              <motion.span
+                animate={{
+                  backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: 'linear'
+                }}
+                style={{
+                  backgroundImage: 'linear-gradient(90deg, #7c3aed, #ec4899, #f59e0b, #7c3aed)',
+                  backgroundSize: '200% 100%',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                🌟 Discover Paradise
+              </motion.span>
+            </motion.div>
+            <motion.h2 
+              className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+            >
+              <motion.span
+                className="inline-block"
+                animate={{
+                  backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: 'linear'
+                }}
+                style={{
+                  backgroundImage: 'linear-gradient(90deg, #1f2937, #3b82f6, #8b5cf6, #ec4899, #f59e0b, #1f2937)',
+                  backgroundSize: '300% 100%',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                Where Dreams Come True
+              </motion.span>
+              <motion.div
+                className="absolute -top-2 -right-2"
+                animate={{
+                  rotate: [0, 360],
+                  scale: [1, 1.2, 1],
+                }}
+                transition={{
+                  rotate: { duration: 4, repeat: Infinity, ease: 'linear' },
+                  scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
+                }}
+              >
+                <motion.div
+                  animate={{
+                    y: [0, -10, 0],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: 'easeInOut'
+                  }}
+                  className="text-2xl"
+                >
+                  ✨
+                </motion.div>
+              </motion.div>
+              <motion.div
+                className="absolute -bottom-1 -left-1"
+                animate={{
+                  x: [0, 10, 0],
+                  rotate: [0, 10, 0],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: 'easeInOut'
+                }}
+              >
+                <motion.div
+                  animate={{
+                    scale: [1, 1.3, 1],
+                  }}
+                  transition={{
+                    duration: 2.5,
+                    repeat: Infinity,
+                    ease: 'easeInOut'
+                  }}
+                  className="text-xl"
+                >
+                  🌟
+                </motion.div>
+              </motion.div>
+            </motion.h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
               Explore the world's most breathtaking destinations, handpicked by our travel experts
               and loved by thousands of adventurous travelers like you.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {destinations.map((destination, destIndex) => (
-              <motion.div
-                key={destination.name}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: destIndex * 0.1 }}
-                viewport={{ once: true }}
-                className="group cursor-pointer"
-              >
+          {/* Smooth Marquee Container */}
+          <div className="relative overflow-hidden">
+            <motion.div
+              className="flex space-x-6"
+              animate={{
+                x: [0, -100 * destinations.length]
+              }}
+              transition={{
+                x: {
+                  repeat: Infinity,
+                  repeatType: "loop",
+                  duration: destinations.length * 8,
+                  ease: "linear",
+                },
+              }}
+            >
+              {[...destinations, ...destinations, ...destinations].map((destination, index) => (
                 <motion.div
+                  key={`${destination.name}-${index}`}
+                  className="flex-shrink-0 w-80 group cursor-pointer"
                   whileHover={{ y: -8, scale: 1.02 }}
-                  className="relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50"
                 >
-                  <div className="relative h-48 overflow-hidden">
-                    <img
-                      src={destination.image}
-                      alt={destination.name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                    
-                    {/* Badge */}
-                    <div className={`absolute top-3 left-3 ${destination.badgeColor} text-white rounded-full px-2 py-1 text-xs font-bold shadow-lg`}>
-                      {destination.badge}
+                  <motion.div
+                    className="relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50"
+                    whileHover={{ 
+                      boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                      borderColor: "rgba(34, 211, 238, 0.3)"
+                    }}
+                  >
+                    <div className="relative h-48 overflow-hidden">
+                      <img
+                        src={destination.image}
+                        alt={destination.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                      
+                      {/* Badge */}
+                      <motion.div 
+                        className={`absolute top-3 left-3 ${destination.badgeColor} text-white rounded-full px-2 py-1 text-xs font-bold shadow-lg`}
+                        whileHover={{ scale: 1.1 }}
+                      >
+                        {destination.badge}
+                      </motion.div>
+
+                      {/* Rating */}
+                      <div className="absolute top-3 right-3 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-full px-2 py-1 flex items-center space-x-1 shadow-lg">
+                        <StarIcon className="w-3 h-3 text-yellow-500 fill-current" />
+                        <span className="text-xs font-bold text-gray-900 dark:text-white">
+                          {destination.rating}
+                        </span>
+                      </div>
+
+                      {/* Price */}
+                      <motion.div 
+                        className="absolute bottom-3 right-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full px-3 py-1 font-bold text-sm shadow-lg"
+                        whileHover={{ scale: 1.05 }}
+                      >
+                        {destination.price}
+                      </motion.div>
                     </div>
 
-                    {/* Rating */}
-                    <div className="absolute top-3 right-3 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-full px-2 py-1 flex items-center space-x-1 shadow-lg">
-                      <StarIcon className="w-3 h-3 text-yellow-500 fill-current" />
-                      <span className="text-xs font-bold text-gray-900 dark:text-white">
-                        {destination.rating}
-                      </span>
+                    <div className="p-4">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-cyan-600 transition-colors">
+                        {destination.name}
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-300 mb-4 text-sm">
+                        {destination.description}
+                      </p>
+                      <motion.button 
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="flex items-center space-x-2 text-cyan-600 dark:text-cyan-400 hover:text-blue-600 dark:hover:text-blue-400 font-bold text-sm transition-colors group"
+                      >
+                        <motion.span
+                          animate={{
+                            rotate: [0, 10, -10, 0]
+                          }}
+                          transition={{
+                            duration: 3,
+                            repeat: Infinity,
+                            ease: 'easeInOut'
+                          }}
+                        >
+                          🌍
+                        </motion.span>
+                        <span>Take Me There</span>
+                        <ArrowRightIcon className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </motion.button>
                     </div>
-
-                    {/* Price */}
-                    <div className="absolute bottom-3 right-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full px-3 py-1 font-bold text-sm shadow-lg">
-                      {destination.price}
-                    </div>
-                  </div>
-
-                  <div className="p-4">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-cyan-600 transition-colors">
-                      {destination.name}
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4 text-sm">
-                      {destination.description}
-                    </p>
-                    <motion.button 
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="flex items-center space-x-2 text-cyan-600 dark:text-cyan-400 hover:text-blue-600 dark:hover:text-blue-400 font-bold text-sm transition-colors group"
-                    >
-                      <span>🌍 Take Me There</span>
-                      <ArrowRightIcon className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </motion.button>
-                  </div>
+                  </motion.div>
                 </motion.div>
-              </motion.div>
-            ))}
+              ))}
+            </motion.div>
+
+            {/* Gradient Overlays for smooth edges */}
+            <div className="absolute top-0 left-0 w-20 h-full bg-gradient-to-r from-white dark:from-gray-900 to-transparent pointer-events-none z-10" />
+            <div className="absolute top-0 right-0 w-20 h-full bg-gradient-to-l from-white dark:from-gray-900 to-transparent pointer-events-none z-10" />
           </div>
         </div>
       </section>
@@ -545,8 +845,8 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-15 bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
+      {/* Enhanced Testimonials Section */}
+      <section className="py-20 bg-gradient-to-b from-white via-gray-50 to-blue-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -555,62 +855,44 @@ const HomePage: React.FC = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-700 dark:text-green-300 px-4 py-2 rounded-full text-sm font-medium mb-6">
-              <UserGroupIcon className="w-4 h-4" />
-              <span>Happy Travelers</span>
+            <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 text-blue-700 dark:text-blue-300 px-6 py-3 rounded-full text-sm font-medium mb-6 shadow-lg">
+              <UserGroupIcon className="w-5 h-5" />
+              <span>Trusted by Travelers Worldwide</span>
             </div>
-            <h2 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-6">
+            <h2 className="text-4xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 dark:from-white dark:via-blue-200 dark:to-indigo-200 bg-clip-text text-transparent mb-6">
               Stories from Our Community
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto leading-relaxed">
               Discover why thousands of travelers trust SafarBot to create their perfect adventures
-              and make memories that last a lifetime.
+              and make memories that last a lifetime. From solo backpackers to family vacationers.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((testimonial, testIndex) => (
-              <motion.div
-                key={testimonial.name}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: testIndex * 0.2 }}
-                viewport={{ once: true }}
-              >
-                <motion.div
-                  whileHover={{ y: -5, scale: 1.02 }}
-                  className="bg-white dark:bg-gray-800 rounded-2xl p-6 h-full shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50"
-                >
-                  <div className="flex items-center space-x-3 mb-4">
-                    <img
-                      src={testimonial.avatar}
-                      alt={testimonial.name}
-                      className="w-12 h-12 rounded-full object-cover ring-4 ring-cyan-100 dark:ring-cyan-900"
-                    />
-                    <div>
-                      <h4 className="text-lg font-bold text-gray-900 dark:text-white">
-                        {testimonial.name}
-                      </h4>
-                      <p className="text-cyan-600 dark:text-cyan-400 font-medium text-sm">
-                        {testimonial.role}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {testimonial.location}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm mb-4">
-                    "{testimonial.content}"
-                  </p>
-                  <div className="flex items-center">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <StarIcon key={i} className="w-4 h-4 text-yellow-400 fill-current" />
-                    ))}
-                  </div>
-                </motion.div>
-              </motion.div>
-            ))}
-          </div>
+          {/* Circular Testimonials Component */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.3 }}
+            viewport={{ once: true }}
+          >
+            <CircularTestimonials 
+              testimonials={animatedTestimonials} 
+              autoplay={true}
+              colors={{
+                name: "#1f2937",
+                designation: "#6b7280", 
+                testimony: "#4b5563",
+                arrowBackground: "#1f2937",
+                arrowForeground: "#ffffff",
+                arrowHoverBackground: "#3b82f6"
+              }}
+              fontSizes={{
+                name: "1.875rem",
+                designation: "1rem",
+                quote: "1.25rem"
+              }}
+            />
+          </motion.div>
         </div>
       </section>
 

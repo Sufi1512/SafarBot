@@ -150,9 +150,9 @@ const LoginPage: React.FC = () => {
                 initial={{ scale: 0.8 }}
                 animate={{ scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
-                className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg"
+                className="w-24 h-24 mx-auto mb-2 flex items-center justify-center"
               >
-                <img src={logoImage} alt="SafarBot" className="w-10 h-10" />
+                <img src={logoImage} alt="SafarBot" className="w-24 h-24 object-contain" />
               </motion.div>
               
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">

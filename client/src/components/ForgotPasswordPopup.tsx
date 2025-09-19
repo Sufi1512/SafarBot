@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { 
   Mail, 
   AlertTriangle,
@@ -16,17 +17,14 @@ import logoImage from '../asset/images/logo.png';
 interface ForgotPasswordPopupProps {
   isOpen: boolean;
   onClose: () => void;
-  onSwitchToLogin: () => void;
-  onSwitchToSignup: () => void;
 }
 
 const ForgotPasswordPopup: React.FC<ForgotPasswordPopupProps> = ({ 
   isOpen, 
-  onClose, 
-  onSwitchToLogin,
-  onSwitchToSignup 
+  onClose
 }) => {
   const { forgotPassword } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -116,7 +114,7 @@ const ForgotPasswordPopup: React.FC<ForgotPasswordPopupProps> = ({
                   <img 
                     src={logoImage} 
                     alt="SafarBot Logo" 
-                    className="w-16 h-16 object-contain drop-shadow-lg"
+                    className="w-20 h-20 object-contain"
                   />
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Forgot Password?</h2>
@@ -202,7 +200,10 @@ const ForgotPasswordPopup: React.FC<ForgotPasswordPopupProps> = ({
               {/* Back to Login */}
               <div className="mt-6 text-center">
                 <button
-                  onClick={onSwitchToLogin}
+                  onClick={() => {
+                    onClose();
+                    navigate('/login');
+                  }}
                   className="inline-flex items-center justify-center w-full px-4 py-2.5 border border-gray-300 text-gray-700 text-sm rounded-xl hover:bg-gray-50 transition-all duration-200"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
@@ -215,7 +216,10 @@ const ForgotPasswordPopup: React.FC<ForgotPasswordPopupProps> = ({
                 <p className="text-sm text-gray-600">
                   Don't have an account?{' '}
                   <button
-                    onClick={onSwitchToSignup}
+                    onClick={() => {
+                      onClose();
+                      navigate('/signup');
+                    }}
                     className="text-primary-600 hover:text-primary-500 underline transition-colors"
                   >
                     Sign up here

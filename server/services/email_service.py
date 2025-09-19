@@ -142,17 +142,44 @@ class EmailService:
                     margin-bottom: 30px;
                 }}
                 .logo {{
-                    width: 60px;
-                    height: 60px;
-                    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-                    border-radius: 12px;
+                    width: 80px;
+                    height: 80px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    border-radius: 20px;
                     margin: 0 auto 20px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     color: white;
-                    font-size: 24px;
+                    font-size: 28px;
                     font-weight: bold;
+                    position: relative;
+                    overflow: hidden;
+                    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+                }}
+                .logo::before {{
+                    content: '';
+                    position: absolute;
+                    top: -10px;
+                    left: -10px;
+                    width: 40px;
+                    height: 40px;
+                    background: rgba(255, 255, 255, 0.2);
+                    border-radius: 50%;
+                }}
+                .logo::after {{
+                    content: '';
+                    position: absolute;
+                    bottom: -5px;
+                    right: -5px;
+                    width: 30px;
+                    height: 30px;
+                    background: rgba(255, 255, 255, 0.15);
+                    border-radius: 50%;
+                }}
+                .logo-icon {{
+                    z-index: 1;
+                    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
                 }}
                 .title {{
                     font-size: 24px;
@@ -238,7 +265,7 @@ class EmailService:
         <body>
             <div class="container">
                 <div class="header">
-                    <div class="logo">SB</div>
+                    <div class="logo"><div class="logo-icon">✈️</div></div>
                     <div class="title">You're Invited to Collaborate!</div>
                     <div class="subtitle">Join {owner_name} in planning an amazing trip</div>
                 </div>
@@ -419,17 +446,44 @@ If you have any questions, please contact our support team.
                     margin-bottom: 30px;
                 }}
                 .logo {{
-                    width: 60px;
-                    height: 60px;
-                    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-                    border-radius: 12px;
+                    width: 80px;
+                    height: 80px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    border-radius: 20px;
                     margin: 0 auto 20px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     color: white;
-                    font-size: 24px;
+                    font-size: 28px;
                     font-weight: bold;
+                    position: relative;
+                    overflow: hidden;
+                    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+                }}
+                .logo::before {{
+                    content: '';
+                    position: absolute;
+                    top: -10px;
+                    left: -10px;
+                    width: 40px;
+                    height: 40px;
+                    background: rgba(255, 255, 255, 0.2);
+                    border-radius: 50%;
+                }}
+                .logo::after {{
+                    content: '';
+                    position: absolute;
+                    bottom: -5px;
+                    right: -5px;
+                    width: 30px;
+                    height: 30px;
+                    background: rgba(255, 255, 255, 0.15);
+                    border-radius: 50%;
+                }}
+                .logo-icon {{
+                    z-index: 1;
+                    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
                 }}
                 .title {{
                     font-size: 24px;
@@ -535,7 +589,7 @@ If you have any questions, please contact our support team.
         <body>
             <div class="container">
                 <div class="header">
-                    <div class="logo">SB</div>
+                    <div class="logo"><div class="logo-icon">✈️</div></div>
                     <div class="title">Reset Your Password</div>
                     <div class="subtitle">SafarBot - Your AI Travel Planning Assistant</div>
                 </div>

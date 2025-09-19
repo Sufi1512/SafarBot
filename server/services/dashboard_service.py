@@ -256,12 +256,14 @@ class DashboardService:
         """Get recent notifications for the user."""
         try:
             collection = get_collection(DashboardService.NOTIFICATIONS_COLLECTION)
+            print(f"DEBUG: Getting notifications for user_id: {user_id}")
             
             cursor = collection.find({
                 "user_id": ObjectId(user_id)
             }).sort("created_at", -1).limit(limit)
             
             notifications = await cursor.to_list(length=limit)
+            print(f"DEBUG: Found {len(notifications)} notifications for user {user_id}")
             
             return [
                 {
@@ -272,7 +274,7 @@ class DashboardService:
                     "title": notification.get("title"),
                     "message": notification.get("message"),
                     "data": notification.get("data", {}),
-                    "is_read": notification.get("status") == "read",
+                    "is_read": notification.get("status") == "read" or notification.get("status") == "READ",
                     "created_at": notification.get("created_at").isoformat() if notification.get("created_at") else None,
                     "read_at": notification.get("read_at").isoformat() if notification.get("read_at") else None,
                     "action_url": notification.get("action_url")

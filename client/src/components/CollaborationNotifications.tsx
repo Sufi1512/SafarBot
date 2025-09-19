@@ -60,7 +60,7 @@ const CollaborationNotifications: React.FC<CollaborationNotificationsProps> = ({
       setInvitations(response.data.invitations || []);
     } catch (err: any) {
       console.error('Error loading invitations:', err);
-      setError(err.message || 'Failed to load invitations');
+      setError(err.userMessage || err.message || 'Failed to load invitations');
     } finally {
       setIsLoading(false);
     }
@@ -76,17 +76,18 @@ const CollaborationNotifications: React.FC<CollaborationNotificationsProps> = ({
     try {
       setProcessingInvitations(prev => new Set(prev).add(invitation.invitation_id));
       
-      await collaborationAPI.acceptInvitation(invitation.invitation_token);
+      const response = await collaborationAPI.acceptInvitation(invitation.invitation_token);
       
       // Remove from local state
       setInvitations(prev => prev.filter(inv => inv.invitation_id !== invitation.invitation_id));
       
-      // Notify parent component
-      onInvitationAccepted(invitation.itinerary.id);
+      // Notify parent component with the new itinerary ID
+      const newItineraryId = response.data?.itinerary_id || invitation.itinerary.id;
+      onInvitationAccepted(newItineraryId);
       
     } catch (err: any) {
       console.error('Error accepting invitation:', err);
-      alert(err.message || 'Failed to accept invitation');
+      alert(err.userMessage || err.message || 'Failed to accept invitation');
     } finally {
       setProcessingInvitations(prev => {
         const newSet = new Set(prev);
@@ -107,7 +108,7 @@ const CollaborationNotifications: React.FC<CollaborationNotificationsProps> = ({
       
     } catch (err: any) {
       console.error('Error declining invitation:', err);
-      alert(err.message || 'Failed to decline invitation');
+      alert(err.userMessage || err.message || 'Failed to decline invitation');
     } finally {
       setProcessingInvitations(prev => {
         const newSet = new Set(prev);

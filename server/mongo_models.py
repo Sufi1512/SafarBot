@@ -333,6 +333,7 @@ class NotificationType(str, Enum):
     INVITATION_DECLINED = "invitation_declined"
     COLLABORATOR_ADDED = "collaborator_added"
     COLLABORATOR_REMOVED = "collaborator_removed"
+    ROLE_UPDATED = "role_updated"
     ITINERARY_UPDATED = "itinerary_updated"
     ITINERARY_SHARED = "itinerary_shared"
 

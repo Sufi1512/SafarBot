@@ -54,22 +54,17 @@ const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   const switchToSignup = () => setMode('signup');
-  const switchToLogin = () => setMode('login');
-  const switchToForgotPassword = () => setMode('forgot-password');
 
   return (
     <>
       <LoginPopup
         isOpen={isOpen && mode === 'login'}
         onClose={onClose}
-        onSwitchToSignup={switchToSignup}
-        onSwitchToForgotPassword={switchToForgotPassword}
         onLoginSuccess={handleLoginSuccess}
       />
       <SignupPopup
         isOpen={isOpen && mode === 'signup'}
         onClose={onClose}
-        onSwitchToLogin={switchToLogin}
         onSignupSuccess={handleSignupSuccess}
       />
       <OTPVerificationModal
@@ -82,8 +77,6 @@ const AuthModal: React.FC<AuthModalProps> = ({
       <ForgotPasswordPopup
         isOpen={isOpen && mode === 'forgot-password'}
         onClose={onClose}
-        onSwitchToLogin={switchToLogin}
-        onSwitchToSignup={switchToSignup}
       />
     </>
   );

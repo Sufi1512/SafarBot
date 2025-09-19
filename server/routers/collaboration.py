@@ -17,7 +17,22 @@ from mongo_models import (
 )
 from routers.auth import get_current_user
 from models import APIResponse, InviteCollaboratorRequest, AcceptInvitationRequest, CollaboratorRole
+from pydantic import BaseModel
 from services.email_service import email_service
+
+class ResendInvitationRequest(BaseModel):
+    invitation_id: str
+    message: Optional[str] = None
+    itinerary_id: Optional[str] = None  # Optional for backward compatibility
+    email: Optional[str] = None  # Optional for backward compatibility
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "invitation_id": "507f1f77bcf86cd799439011",
+                "message": "Resending invitation for the project"
+            }
+        }
 
 router = APIRouter(prefix="/collaboration", tags=["collaboration"])
 security = HTTPBearer()
@@ -77,9 +92,18 @@ async def invite_collaborator(
         })
         
         if existing_invitation:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invitation already sent to this email"
+            # Return existing invitation info instead of error
+            return APIResponse(
+                success=False,
+                message="Invitation already sent to this email",
+                data={
+                    "invitation_id": str(existing_invitation["_id"]),
+                    "invited_email": existing_invitation["invited_email"],
+                    "role": existing_invitation["role"],
+                    "invited_at": existing_invitation["invited_at"].isoformat(),
+                    "expires_at": existing_invitation["expires_at"].isoformat(),
+                    "can_resend": True
+                }
             )
         
         # Check if user is already a collaborator
@@ -128,7 +152,7 @@ async def invite_collaborator(
                     "owner_name": f"{current_user.first_name} {current_user.last_name}",
                     "role": role.value
                 },
-                action_url=f"/collaboration/invitation/{invitation.invitation_token}"
+                action_url=f"/collaboration/accept/{invitation.invitation_token}"
             )
             await db.notifications.insert_one(notification.model_dump(by_alias=True))
         
@@ -163,6 +187,111 @@ async def invite_collaborator(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to send invitation: {str(e)}"
+        )
+
+@router.post("/resend-invitation", response_model=APIResponse)
+async def resend_invitation(
+    request: ResendInvitationRequest,
+    current_user: dict = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Resend an existing invitation"""
+    try:
+        print(f"DEBUG: Resend invitation request - invitation_id: {request.invitation_id}, itinerary_id: {request.itinerary_id}, email: {request.email}, message: {request.message}")
+        
+        # Validate invitation_id format
+        try:
+            invitation_object_id = PyObjectId(request.invitation_id)
+            print(f"DEBUG: Valid ObjectId created: {invitation_object_id}")
+        except Exception as e:
+            print(f"DEBUG: Invalid ObjectId format: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid invitation ID format"
+            )
+        
+        # Find the existing invitation
+        invitation = await db.itinerary_invitations.find_one({
+            "_id": invitation_object_id,
+            "owner_id": PyObjectId(current_user.id)  # Ensure user owns the invitation
+        })
+        
+        if not invitation:
+            print(f"DEBUG: Invitation not found for ID: {invitation_object_id}, owner: {current_user.id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Invitation not found or you don't have permission to resend it"
+            )
+        
+        print(f"DEBUG: Found invitation: {invitation}")
+        
+        # Check if invitation is still pending
+        if invitation["status"] != InvitationStatus.PENDING:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot resend invitation that has been accepted or declined"
+            )
+        
+        # Update invitation with new token and expiry
+        new_token = str(uuid.uuid4())
+        new_expires_at = datetime.utcnow() + timedelta(days=7)
+        
+        await db.itinerary_invitations.update_one(
+            {"_id": invitation_object_id},
+            {
+                "$set": {
+                    "invitation_token": new_token,
+                    "expires_at": new_expires_at,
+                    "invited_at": datetime.utcnow(),  # Update invitation time
+                    "message": request.message or invitation.get("message", ""),
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        # Get itinerary details
+        itinerary = await db.saved_itineraries.find_one({
+            "_id": invitation["itinerary_id"]
+        })
+        
+        if not itinerary:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Itinerary not found"
+            )
+        
+        # Send email invitation
+        try:
+            await email_service.send_invitation_email(
+                to_email=invitation["invited_email"],
+                invitation_token=new_token,
+                itinerary_title=itinerary['title'],
+                owner_name=f"{current_user.first_name} {current_user.last_name}",
+                role=invitation["role"].value if hasattr(invitation["role"], 'value') else invitation["role"],
+                message=request.message or invitation.get("message", "")
+            )
+        except Exception as email_error:
+            # Log email error but don't fail the resend
+            print(f"Failed to resend invitation email: {email_error}")
+            # Continue with the resend even if email fails
+        
+        return APIResponse(
+            success=True,
+            message="Invitation resent successfully",
+            data={
+                "invitation_id": str(invitation["_id"]),
+                "invitation_token": new_token,
+                "expires_at": new_expires_at.isoformat(),
+                "invited_email": invitation["invited_email"]
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to resend invitation: {str(e)}"
         )
 
 @router.get("/invitations", response_model=APIResponse)
@@ -416,11 +545,22 @@ async def accept_invitation(
         )
         await db.notifications.insert_one(notification.model_dump(by_alias=True))
         
+        # Return the collaborator's itinerary ID if it was created, otherwise the original
+        collaborator_itinerary_id = None
+        if original_itinerary:
+            # Get the collaborator's itinerary ID from the collaborator record
+            collaborator_record = await db.itinerary_collaborators.find_one({
+                "itinerary_id": invitation["itinerary_id"],
+                "user_id": PyObjectId(current_user.id)
+            })
+            if collaborator_record and collaborator_record.get("collaborator_itinerary_id"):
+                collaborator_itinerary_id = str(collaborator_record["collaborator_itinerary_id"])
+        
         return APIResponse(
             success=True,
             message="Invitation accepted successfully",
             data={
-                "itinerary_id": str(invitation["itinerary_id"]),
+                "itinerary_id": collaborator_itinerary_id or str(invitation["itinerary_id"]),
                 "role": invitation["role"]
             }
         )
@@ -499,56 +639,253 @@ async def get_itinerary_collaborators(
 ):
     """Get all collaborators for an itinerary"""
     try:
+        # Validate itinerary ID format
+        try:
+            PyObjectId(itinerary_id)
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid itinerary ID format"
+            )
+        
         # Check if user has access to this itinerary
         itinerary = await db.saved_itineraries.find_one({
-            "_id": PyObjectId(itinerary_id),
-            "$or": [
-                {"user_id": PyObjectId(current_user.id)},  # Owner
-                {"collaborators": PyObjectId(current_user.id)}  # Collaborator
-            ]
+            "_id": PyObjectId(itinerary_id)
         })
         
         if not itinerary:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Itinerary not found or access denied"
+                detail="Itinerary not found"
             )
         
-        # Get collaborators
+        print(f"Itinerary found: {itinerary.get('_id')}")
+        print(f"Itinerary user_id: {itinerary.get('user_id')}")
+        print(f"Itinerary user_id type: {type(itinerary.get('user_id'))}")
+        
+        # Check if user is owner
+        is_owner = str(itinerary.get("user_id")) == str(current_user.id)
+        
+        # Check if user is a collaborator
+        is_collaborator = False
+        if not is_owner:
+            collaborator = await db.itinerary_collaborators.find_one({
+                "itinerary_id": PyObjectId(itinerary_id),
+                "user_id": PyObjectId(current_user.id)
+            })
+            is_collaborator = collaborator is not None
+        
+        if not is_owner and not is_collaborator:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied"
+            )
+        
+        # Get collaborators (accepted invitations)
         collaborators = []
         cursor = db.itinerary_collaborators.find({
             "itinerary_id": PyObjectId(itinerary_id)
         })
         
         async for collaborator in cursor:
-            user = await db.users.find_one({"_id": collaborator["user_id"]})
+            # Try to find user in users collection first
+            user = await db.users.find_one({"_id": collaborator.get("user_id")})
+            
+            # If not found in users, try user_fields collection
+            if not user:
+                user = await db.user_fields.find_one({"_id": collaborator.get("user_id")})
+            
             if user:
                 collaborators.append({
                     "user_id": str(user["_id"]),
-                    "name": f"{user['first_name']} {user['last_name']}",
-                    "email": user["email"],
-                    "role": collaborator["role"],
-                    "joined_at": collaborator["joined_at"].isoformat(),
-                    "last_activity": collaborator.get("last_activity").isoformat() if collaborator.get("last_activity") else None
+                    "name": f"{user.get('first_name', '')} {user.get('last_name', '')}".strip(),
+                    "email": user.get("email", ""),
+                    "role": collaborator.get("role", "viewer"),
+                    "status": "accepted",
+                    "joined_at": collaborator.get("joined_at", datetime.utcnow()).isoformat() if hasattr(collaborator.get("joined_at", datetime.utcnow()), 'isoformat') else datetime.utcnow().isoformat(),
+                    "last_activity": collaborator.get("last_activity").isoformat() if collaborator.get("last_activity") and hasattr(collaborator.get("last_activity"), 'isoformat') else None
+                })
+        
+        # Get invitations (pending, rejected, etc.)
+        invitations = []
+        invitation_cursor = db.itinerary_invitations.find({
+            "itinerary_id": PyObjectId(itinerary_id)
+        })
+        
+        async for invitation in invitation_cursor:
+            # Skip if this invitation was accepted (user is already in collaborators)
+            if invitation.get("status") == "accepted":
+                continue
+                
+            invitations.append({
+                "invitation_id": str(invitation.get("_id")),
+                "email": invitation.get("invited_email", ""),
+                "role": invitation.get("role", "viewer"),
+                "status": invitation.get("status", "pending"),
+                "invited_at": invitation.get("created_at", datetime.utcnow()).isoformat() if hasattr(invitation.get("created_at", datetime.utcnow()), 'isoformat') else datetime.utcnow().isoformat(),
+                "expires_at": invitation.get("expires_at", datetime.utcnow()).isoformat() if hasattr(invitation.get("expires_at", datetime.utcnow()), 'isoformat') else None,
+                "message": invitation.get("message", ""),
+                "accepted_at": invitation.get("accepted_at", "").isoformat() if invitation.get("accepted_at") and hasattr(invitation.get("accepted_at"), 'isoformat') else None,
+                "declined_at": invitation.get("declined_at", "").isoformat() if invitation.get("declined_at") and hasattr(invitation.get("declined_at"), 'isoformat') else None
                 })
         
         # Add owner info
-        owner = await db.users.find_one({"_id": itinerary["user_id"]})
-        owner_info = {
-            "user_id": str(owner["_id"]),
-            "name": f"{owner['first_name']} {owner['last_name']}",
-            "email": owner["email"],
-            "role": "owner",
-            "joined_at": itinerary["created_at"].isoformat(),
-            "last_activity": None
-        }
+        owner_id = itinerary.get("user_id")
+        print(f"Looking for owner with ID: {owner_id}")
+        print(f"Owner ID type: {type(owner_id)}")
+        
+        # Try multiple ways to find the owner
+        owner = None
+        
+        # Method 1: Check if current user is the owner by looking at invitations
+        if not owner:
+            try:
+                # Check if current user is the owner by looking at invitations for this itinerary
+                invitation = await db.itinerary_invitations.find_one({
+                    "itinerary_id": PyObjectId(itinerary_id),
+                    "owner_id": PyObjectId(current_user.id)
+                })
+                
+                if invitation:
+                    print(f"Found owner via invitation: {invitation.get('owner_id')}")
+                    # Try to find the user in the users collection first
+                    owner = await db.users.find_one({"_id": PyObjectId(current_user.id)})
+                    print(f"Owner found in users collection: {owner is not None}")
+                    
+                    # If not found in users, try user_fields collection
+                    if not owner:
+                        print("Checking user_fields collection...")
+                        owner = await db.user_fields.find_one({"_id": PyObjectId(current_user.id)})
+                        print(f"Owner found in user_fields collection: {owner is not None}")
+                    
+                    # If still not found, create a basic owner info
+                    if not owner:
+                        print("User not found in any collection, creating basic owner info")
+                        owner = {
+                            "_id": PyObjectId(current_user.id),
+                            "first_name": "User",
+                            "last_name": "Unknown",
+                            "email": "user@example.com"
+                        }
+                    
+                    # Update the itinerary with the correct user_id
+                    if not owner_id:
+                        print("Updating itinerary with correct user_id from invitation...")
+                        await db.saved_itineraries.update_one(
+                            {"_id": PyObjectId(itinerary_id)},
+                            {"$set": {"user_id": PyObjectId(current_user.id)}}
+                        )
+                        print("Itinerary updated with user_id from invitation")
+            except Exception as e:
+                print(f"Error checking invitations: {e}")
+        
+        # Method 2: Direct ObjectId lookup in users collection
+        if not owner and owner_id:
+            try:
+                owner = await db.users.find_one({"_id": PyObjectId(owner_id)})
+                print(f"Owner found in users with PyObjectId: {owner is not None}")
+            except:
+                pass
+        
+        # Method 3: Direct ObjectId lookup in user_fields collection
+        if not owner and owner_id:
+            try:
+                owner = await db.user_fields.find_one({"_id": PyObjectId(owner_id)})
+                print(f"Owner found in user_fields with PyObjectId: {owner is not None}")
+            except:
+                pass
+        
+        # Method 4: String ID lookup in users collection
+        if not owner and owner_id:
+            try:
+                owner = await db.users.find_one({"_id": str(owner_id)})
+                print(f"Owner found in users with string ID: {owner is not None}")
+            except:
+                pass
+        
+        # Method 5: String ID lookup in user_fields collection
+        if not owner and owner_id:
+            try:
+                owner = await db.user_fields.find_one({"_id": str(owner_id)})
+                print(f"Owner found in user_fields with string ID: {owner is not None}")
+            except:
+                pass
+        
+        # Method 6: Try to find by the current user ID in users collection
+        if not owner:
+            try:
+                owner = await db.users.find_one({"_id": PyObjectId(current_user.id)})
+                print(f"Owner found in users with current user ID: {owner is not None}")
+            except:
+                pass
+        
+        # Method 7: Try to find by the current user ID in user_fields collection
+        if not owner:
+            try:
+                owner = await db.user_fields.find_one({"_id": PyObjectId(current_user.id)})
+                print(f"Owner found in user_fields with current user ID: {owner is not None}")
+            except:
+                pass
+            
+        if not owner:
+            # If owner not found, try to get current user info as fallback
+            print(f"Warning: Owner not found for user_id: {owner_id}")
+            try:
+                # Try users collection first
+                current_user_info = await db.users.find_one({"_id": PyObjectId(current_user.id)})
+                if not current_user_info:
+                    # Try user_fields collection
+                    print("Checking user_fields collection for current user...")
+                    current_user_info = await db.user_fields.find_one({"_id": PyObjectId(current_user.id)})
+                    print(f"Current user found in user_fields: {current_user_info is not None}")
+                
+                if current_user_info:
+                    owner_info = {
+                        "user_id": str(current_user_info["_id"]),
+                        "name": f"{current_user_info.get('first_name', '')} {current_user_info.get('last_name', '')}".strip(),
+                        "email": current_user_info.get("email", ""),
+                        "role": "owner",
+                        "joined_at": itinerary.get("created_at", datetime.utcnow()).isoformat() if hasattr(itinerary.get("created_at", datetime.utcnow()), 'isoformat') else datetime.utcnow().isoformat(),
+                        "last_activity": None
+                    }
+                else:
+                    # User not found in any collection, create basic info
+                    print("Current user not found in any collection, creating basic owner info")
+                    owner_info = {
+                        "user_id": str(current_user.id),
+                        "name": "Current User",
+                        "email": "user@example.com",
+                        "role": "owner",
+                        "joined_at": itinerary.get("created_at", datetime.utcnow()).isoformat() if hasattr(itinerary.get("created_at", datetime.utcnow()), 'isoformat') else datetime.utcnow().isoformat(),
+                        "last_activity": None
+                    }
+            except Exception as e:
+                print(f"Error getting current user info: {e}")
+                owner_info = {
+                    "user_id": str(owner_id) if owner_id else str(current_user.id),
+                    "name": "Unknown User",
+                    "email": "unknown@example.com",
+                    "role": "owner",
+                    "joined_at": datetime.utcnow().isoformat(),
+                    "last_activity": None
+                }
+        else:
+            owner_info = {
+                "user_id": str(owner["_id"]),
+                "name": f"{owner.get('first_name', '')} {owner.get('last_name', '')}".strip(),
+                "email": owner.get("email", ""),
+                "role": "owner",
+                "joined_at": itinerary.get("created_at", datetime.utcnow()).isoformat() if hasattr(itinerary.get("created_at", datetime.utcnow()), 'isoformat') else datetime.utcnow().isoformat(),
+                "last_activity": None
+            }
         
         return APIResponse(
             success=True,
             message="Collaborators retrieved successfully",
             data={
                 "owner": owner_info,
-                "collaborators": collaborators
+                "collaborators": collaborators,
+                "invitations": invitations
             }
         )
         
@@ -567,22 +904,64 @@ async def remove_collaborator(
     current_user: dict = Depends(get_current_user),
     db = Depends(get_database)
 ):
-    """Remove a collaborator from an itinerary (owner only)"""
+    """Remove a collaborator from an itinerary (owner and admin only)"""
     try:
-        # Check if current user is owner
+        print(f"DEBUG: Remove collaborator request - itinerary_id: {itinerary_id}, user_id: {user_id}, current_user_id: {current_user.id}")
+        print(f"DEBUG: Current user details: {current_user}")
+        
+        # Validate ObjectIds
+        try:
+            itinerary_object_id = PyObjectId(itinerary_id)
+            user_object_id = PyObjectId(user_id)
+            current_user_object_id = PyObjectId(current_user.id)
+            print(f"DEBUG: ObjectIds created successfully")
+        except Exception as e:
+            print(f"DEBUG: ObjectId validation error: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid ID format"
+            )
+        
+        # Check if itinerary exists
         itinerary = await db.saved_itineraries.find_one({
-            "_id": PyObjectId(itinerary_id),
-            "user_id": PyObjectId(current_user.id)
+            "_id": itinerary_object_id
         })
+        
+        print(f"DEBUG: Found itinerary: {itinerary is not None}")
+        if itinerary:
+            print(f"DEBUG: Itinerary title: {itinerary.get('title', 'No title')}")
+            print(f"DEBUG: Itinerary owner: {itinerary.get('user_id')}")
         
         if not itinerary:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Itinerary not found or you don't have permission"
+                detail="Itinerary not found"
+            )
+        
+        # Check permissions: user must be owner or admin
+        is_owner = str(itinerary.get("user_id")) == str(current_user.id)
+        is_admin = False
+        
+        if not is_owner:
+            # Check if current user is an admin collaborator
+            collaborator = await db.itinerary_collaborators.find_one({
+                "itinerary_id": itinerary_object_id,
+                "user_id": current_user_object_id,
+                "role": "admin"
+            })
+            is_admin = collaborator is not None
+        
+        print(f"DEBUG: User is owner: {is_owner}")
+        print(f"DEBUG: User is admin: {is_admin}")
+        
+        if not is_owner and not is_admin:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only owners and admins can remove collaborators"
             )
         
         # Check if trying to remove owner
-        if user_id == str(current_user.id):
+        if user_id == str(itinerary.get("user_id")):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot remove the owner"
@@ -590,8 +969,8 @@ async def remove_collaborator(
         
         # Remove collaborator
         result = await db.itinerary_collaborators.delete_one({
-            "itinerary_id": PyObjectId(itinerary_id),
-            "user_id": PyObjectId(user_id)
+            "itinerary_id": itinerary_object_id,
+            "user_id": user_object_id
         })
         
         if result.deleted_count == 0:
@@ -602,16 +981,16 @@ async def remove_collaborator(
         
         # Remove from itinerary collaborators list
         await db.saved_itineraries.update_one(
-            {"_id": PyObjectId(itinerary_id)},
+            {"_id": itinerary_object_id},
             {
-                "$pull": {"collaborators": PyObjectId(user_id)},
+                "$pull": {"collaborators": user_object_id},
                 "$set": {"updated_at": datetime.utcnow()}
             }
         )
         
         # Create notification for removed user
         notification = NotificationDocument(
-            user_id=PyObjectId(user_id),
+            user_id=user_object_id,
             type=NotificationType.COLLABORATOR_REMOVED,
             title="Removed from Collaboration",
             message=f"You have been removed from the collaboration on '{itinerary['title']}'",
@@ -633,6 +1012,90 @@ async def remove_collaborator(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to remove collaborator: {str(e)}"
+        )
+
+@router.put("/itinerary/{itinerary_id}/collaborator/{user_id}/role", response_model=APIResponse)
+async def update_collaborator_role(
+    itinerary_id: str,
+    user_id: str,
+    role_data: dict,
+    current_user: dict = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Update a collaborator's role (owner only)"""
+    try:
+        # Check if current user is owner
+        itinerary = await db.saved_itineraries.find_one({
+            "_id": PyObjectId(itinerary_id),
+            "user_id": PyObjectId(current_user.id)
+        })
+        
+        if not itinerary:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Itinerary not found or you don't have permission"
+            )
+        
+        # Check if trying to update owner's role
+        if user_id == str(current_user.id):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot update owner's role"
+            )
+        
+        # Validate role
+        new_role = role_data.get("role")
+        if new_role not in ["viewer", "editor", "admin"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid role. Must be 'viewer', 'editor', or 'admin'"
+            )
+        
+        # Update collaborator role
+        result = await db.itinerary_collaborators.update_one(
+            {
+                "itinerary_id": PyObjectId(itinerary_id),
+                "user_id": PyObjectId(user_id)
+            },
+            {
+                "$set": {
+                    "role": new_role,
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Collaborator not found"
+            )
+        
+        # Create notification for the collaborator whose role was updated
+        notification = NotificationDocument(
+            user_id=PyObjectId(user_id),
+            type=NotificationType.ROLE_UPDATED,
+            title="Role Updated",
+            message=f"Your role in '{itinerary['title']}' has been updated to {new_role}",
+            data={
+                "itinerary_id": str(itinerary_id),
+                "new_role": new_role,
+                "owner_name": f"{current_user.first_name} {current_user.last_name}"
+            }
+        )
+        await db.notifications.insert_one(notification.model_dump(by_alias=True))
+        
+        return APIResponse(
+            success=True,
+            message="Collaborator role updated successfully"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update collaborator role: {str(e)}"
         )
 
 @router.get("/my-collaborations", response_model=APIResponse)

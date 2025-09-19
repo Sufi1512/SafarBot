@@ -36,6 +36,7 @@ interface SavedItinerary {
   interests: string[];
   total_estimated_cost?: number;
   is_favorite: boolean;
+  is_collaborative?: boolean;
   tags: string[];
   cover_image?: string;
   status: string;
@@ -76,6 +77,7 @@ const SavedPage: React.FC = () => {
   const [collaborationNotificationsOpen, setCollaborationNotificationsOpen] = useState(false);
   const [selectedItineraryForCollaboration, setSelectedItineraryForCollaboration] = useState<SavedItinerary | null>(null);
   const [showCollaborators, setShowCollaborators] = useState<string | null>(null);
+  const [collaboratorsRefreshTrigger, setCollaboratorsRefreshTrigger] = useState(0);
 
   // Dropdown options
   const statusOptions: DropdownOption[] = [
@@ -325,6 +327,11 @@ const SavedPage: React.FC = () => {
   const handleInvitationAccepted = (_itineraryId: string) => {
     // Refresh the itineraries to show the new collaboration
     loadItineraries(currentPage);
+  };
+
+  const handleRefreshCollaborators = () => {
+    // Trigger refresh of collaborators list
+    setCollaboratorsRefreshTrigger(prev => prev + 1);
   };
 
   const handleViewItinerary = (itineraryId: string) => {
@@ -753,7 +760,7 @@ const SavedPage: React.FC = () => {
                     viewMode={viewMode}
                     editingItineraryId={editingItineraryId}
                     isOwner={true}
-                    isCollaborative={false}
+                    isCollaborative={itinerary.is_collaborative || false}
                   />
                 </motion.div>
               ))}
@@ -818,7 +825,9 @@ const SavedPage: React.FC = () => {
         <div className="mt-8">
           <CollaboratorsList
             itineraryId={showCollaborators}
+            itineraryTitle={itineraries.find(i => i.id === showCollaborators)?.title}
             isOwner={true}
+            refreshTrigger={collaboratorsRefreshTrigger}
             onInviteClick={() => {
               const itinerary = itineraries.find(i => i.id === showCollaborators);
               if (itinerary) {
@@ -907,6 +916,7 @@ const SavedPage: React.FC = () => {
           itineraryId={selectedItineraryForCollaboration.id}
           itineraryTitle={selectedItineraryForCollaboration.title}
           onInviteSent={handleInvitationSent}
+          onRefreshCollaborators={handleRefreshCollaborators}
         />
       )}
 

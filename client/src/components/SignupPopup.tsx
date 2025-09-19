@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { 
   User, 
   Lock, 
@@ -44,17 +45,16 @@ interface PasswordStrength {
 interface SignupPopupProps {
   isOpen: boolean;
   onClose: () => void;
-  onSwitchToLogin: () => void;
   onSignupSuccess: (email?: string) => void;
 }
 
 const SignupPopup: React.FC<SignupPopupProps> = ({ 
   isOpen, 
   onClose, 
-  onSwitchToLogin, 
   onSignupSuccess 
 }) => {
   const { signup } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<SignupForm>({
     firstName: '',
     lastName: '',
@@ -299,7 +299,7 @@ const SignupPopup: React.FC<SignupPopupProps> = ({
                   <img 
                     src={logoImage} 
                     alt="SafarBot Logo" 
-                    className="w-16 h-16 object-contain drop-shadow-lg"
+                    className="w-20 h-20 object-contain"
                   />
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Create Account</h2>
@@ -645,7 +645,10 @@ const SignupPopup: React.FC<SignupPopupProps> = ({
                 <p className="text-sm text-gray-600">
                   Already have an account?{' '}
                   <button
-                    onClick={onSwitchToLogin}
+                    onClick={() => {
+                      onClose();
+                      navigate('/login');
+                    }}
                     className="font-medium text-primary-600 hover:text-primary-500 transition-colors"
                   >
                     Sign in here

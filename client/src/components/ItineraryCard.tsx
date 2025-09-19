@@ -193,6 +193,19 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
           </div>
         )}
 
+        {/* Collaboration Status */}
+        {isCollaborative && onShowCollaborators && (
+          <div className="mb-3">
+            <button
+              onClick={() => onShowCollaborators(itinerary.id)}
+              className="flex items-center space-x-2 px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg transition-colors text-xs font-medium"
+            >
+              <Users className="h-4 w-4" />
+              <span>View Collaborators</span>
+            </button>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex items-center justify-between pt-3 border-t border-gray-100">
           <div className="flex items-center space-x-3 text-xs text-gray-500">

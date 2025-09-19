@@ -239,7 +239,9 @@ async def get_notifications(
 ):
     """Get recent notifications for the user."""
     try:
+        print(f"DEBUG: Dashboard notifications endpoint called for user: {current_user.id}")
         notifications = await DashboardService._get_notifications(str(current_user.id), limit)
+        print(f"DEBUG: Dashboard service returned {len(notifications)} notifications")
         return [NotificationSummary(**notification) for notification in notifications]
         
     except Exception as e:

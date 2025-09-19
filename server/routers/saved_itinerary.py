@@ -102,6 +102,7 @@ class UpdateItineraryRequest(BaseModel):
 
 class ItinerarySummary(BaseModel):
     id: str
+    user_id: str
     title: str
     description: Optional[str]
     destination: str
@@ -113,6 +114,7 @@ class ItinerarySummary(BaseModel):
     interests: List[str]
     total_estimated_cost: Optional[float]
     is_favorite: bool
+    is_collaborative: Optional[bool] = False
     tags: List[str]
     cover_image: Optional[str]
     status: str

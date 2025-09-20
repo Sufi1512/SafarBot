@@ -401,7 +401,7 @@ class TravelPreferences(BaseModel):
     travel_style: List[str] = Field(default_factory=list)  # adventure, luxury, family, business
     dietary_restrictions: List[str] = Field(default_factory=list)
     accessibility_needs: List[str] = Field(default_factory=list)
-    language_preferences: List[str] = Field(default_factory=["en"])
+    language_preferences: List[str] = Field(default_factory=lambda: ["en"])
     currency_preference: str = "USD"
     timezone: str = "UTC"
 

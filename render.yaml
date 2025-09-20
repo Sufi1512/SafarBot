@@ -3,7 +3,7 @@ services:
     name: safarbot-backend
     env: python
     plan: free
-    buildCommand: pip install --only-binary=all -r server/requirements.txt
+    buildCommand: pip install --only-binary=all --no-build-isolation --no-deps -r server/requirements.txt && pip install --only-binary=all -r server/requirements.txt
     startCommand: cd server && uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION

@@ -3,11 +3,11 @@ services:
     name: safarbot-backend
     env: python
     plan: free
-    buildCommand: pip install -r server/requirements.txt
+    buildCommand: pip install --only-binary :all: -r server/requirements.txt
     startCommand: cd server && uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.0
+        value: 3.13.4
       - key: GOOGLE_API_KEY
         sync: false
       - key: SERP_API_KEY
@@ -24,3 +24,5 @@ services:
         sync: false
       - key: ENVIRONMENT
         value: production
+      - key: CARGO_HOME
+        value: /tmp/cargo

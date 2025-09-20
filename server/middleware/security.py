@@ -4,7 +4,7 @@ Handles security headers, rate limiting, and request validation
 """
 
 from fastapi import Request, HTTPException
-from fastapi.responses import Response
+from fastapi.responses import Response, JSONResponse
 import time
 from typing import Dict, Optional
 import logging
@@ -23,7 +23,7 @@ class SecurityMiddleware:
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
-        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
         
@@ -32,20 +32,50 @@ class SecurityMiddleware:
     @staticmethod
     async def validate_request_size(request: Request, call_next):
         """Validate request size to prevent large payload attacks"""
-        content_length = request.headers.get("content-length")
-        
-        if content_length:
-            size = int(content_length)
-            max_size = 10 * 1024 * 1024  # 10MB limit
+        try:
+            content_length = request.headers.get("content-length")
             
-            if size > max_size:
-                logger.warning(f"Request too large: {size} bytes from {request.client.host}")
-                raise HTTPException(
-                    status_code=413,
-                    detail="Request payload too large. Maximum size is 10MB."
-                )
-        
-        return await call_next(request)
+            if content_length:
+                try:
+                    size = int(content_length)
+                    max_size = 10 * 1024 * 1024  # 10MB limit
+                    
+                    if size > max_size:
+                        logger.warning(f"Request too large: {size} bytes from {request.client.host}")
+                        return JSONResponse(
+                            status_code=413,
+                            content={
+                                "error": True,
+                                "message": "Request payload too large. Maximum size is 10MB.",
+                                "status_code": 413,
+                                "path": request.url.path
+                            }
+                        )
+                except ValueError:
+                    # Invalid content-length header
+                    logger.warning(f"Invalid content-length header from {request.client.host}")
+                    return JSONResponse(
+                        status_code=400,
+                        content={
+                            "error": True,
+                            "message": "Invalid content-length header",
+                            "status_code": 400,
+                            "path": request.url.path
+                        }
+                    )
+            
+            return await call_next(request)
+        except Exception as e:
+            logger.error(f"Error in request size validation: {str(e)}")
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": "Request validation failed",
+                    "status_code": 400,
+                    "path": request.url.path
+                }
+            )
     
     @staticmethod
     async def block_suspicious_requests(request: Request, call_next):

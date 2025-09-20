@@ -33,13 +33,17 @@ class ChatService:
             if not self.model:
                 return "I apologize, but the AI service is not properly configured. Please check the API configuration."
             
-            # Create a travel-focused prompt
+            # Create a travel-focused prompt with sanitized input
+            # Sanitize template injection attempts
+            sanitized_message = message.replace("{", "{{").replace("}", "}}").replace("$", "$$")
+            sanitized_context = str(context or 'No specific context provided').replace("{", "{{").replace("}", "}}").replace("$", "$$")
+            
             travel_prompt = f"""
             You are a helpful AI travel assistant. Please provide helpful travel advice and recommendations.
             
-            User message: {message}
+            User message: {sanitized_message}
             
-            Context: {context or 'No specific context provided'}
+            Context: {sanitized_context}
             
             Please provide a helpful, informative response about travel planning, destinations, or travel-related questions.
             """

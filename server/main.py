@@ -88,13 +88,10 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000", 
         "http://localhost:5173",
-        "https://*.vercel.app",
-        "https://*.vercel.com",
         "https://safarbot.vercel.app",
         "https://safarbot-git-main-sufi1512.vercel.app",
         "https://safarbot-sufi1512.vercel.app",
-        "https://safarbot-frontend.vercel.app",
-        "*"  # Allow all origins for development
+        "https://safarbot-frontend.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],

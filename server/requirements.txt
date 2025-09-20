@@ -1,44 +1,37 @@
-# Core FastAPI and Web Framework
+# Core FastAPI Framework
 fastapi==0.115.6
 uvicorn[standard]==0.32.1
+
+# Data Validation & Models  
 pydantic==2.9.2
 pydantic-settings==2.6.1
 
-# HTTP and API Requests
+# HTTP Requests
 requests==2.32.5
-httpx==0.28.1
 
-# Database
+# Database - MongoDB
 motor==3.6.0
-pymongo==4.10.1
-bson==0.5.10
+pymongo==4.9.0
 
-# Authentication and Security
+# Authentication & Security
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 python-multipart==0.0.12
 
-# Environment and Configuration
+# Environment Configuration
 python-dotenv==1.0.1
-
-# Email Services
-smtplib2==0.2.1
 
 # Google AI Services
 google-generativeai==0.8.3
 
-# LangChain (if using AI workflows)
-langchain-core==0.3.15
-langchain-google-genai==2.0.4
+# Search Engine Results (SERP API)
+google-search-results==2.4.2
 
-# Data Processing (minimal)
+# LangChain (AI Workflows)
+langchain-core==0.3.15
+
+# Date Utilities
 python-dateutil==2.9.0.post0
 
-# Logging and Monitoring
-structlog==24.4.0
-
-# CORS and Middleware
-fastapi-cors==0.0.6
-
-# Additional utilities
+# Type Hints
 typing-extensions==4.15.0

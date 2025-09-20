@@ -1,0 +1,136 @@
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           SAFARBOT MCP COMPLETE WORKFLOW                        │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   USER INPUT    │    │  CLAUDE DESKTOP │    │   MCP CLIENT    │    │   MCP SERVER    │
+│                 │    │                 │    │                 │    │                 │
+│ "Plan a 5-day   │───▶│ 1. Receives     │───▶│ 2. Calls        │───▶│ 3. Validates    │
+│  trip to Tokyo  │    │    request      │    │    generate_    │    │    input        │
+│  for 2 people   │    │ 2. Identifies   │    │    itinerary    │    │ 4. Routes to    │
+│  with $3000     │    │    intent       │    │    tool         │    │    backend      │
+│  budget"        │    │ 3. Prepares     │    │                │    │                 │
+│                 │    │    parameters   │    │                │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                                           │
+                                                                           ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   RESPONSE      │    │  CLAUDE DESKTOP │    │   MCP CLIENT    │    │   MCP SERVER    │
+│                 │    │                 │    │                 │    │                 │
+│ "Here's your    │◀───│ 6. Formats &    │◀───│ 5. Receives     │◀───│ 4. Returns      │
+│  Tokyo          │    │    presents     │    │    structured   │    │    JSON         │
+│  itinerary..."  │    │    response     │    │    data         │    │    response     │
+│                 │    │                 │    │                 │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              SAFARBOT BACKEND LAYER                            │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ UNIFIED ITIN.   │    │   PLACE SERVICE │    │ WEATHER SERVICE │    │   AI SERVICES   │
+│ SERVICE         │    │                 │    │                 │    │                 │
+│                 │    │                 │    │                 │    │                 │
+│ • Orchestrates  │───▶│ • Google Maps   │───▶│ • OpenWeather   │───▶│ • Google Gemini │
+│   generation    │    │ • Place data    │    │ • Forecasts     │    │ • LangChain     │
+│ • AI prompts    │    │ • Coordinates   │    │ • Conditions    │    │ • Itinerary AI  │
+│ • Data merge    │    │ • Reviews       │    │ • Alerts        │    │ • Content gen   │
+│                 │    │                 │    │                 │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
+           │
+           ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              EXTERNAL APIs LAYER                               │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   GOOGLE MAPS   │    │   OPENWEATHER   │    │    SERP API     │    │    MONGODB      │
+│      API        │    │      API        │    │                 │    │                 │
+│                 │    │                 │    │                 │    │                 │
+│ • Places        │    │ • Weather       │    │ • Flight        │    │ • User data     │
+│ • Reviews       │    │ • Forecasts     │    │   search        │    │ • Preferences   │
+│ • Photos        │    │ • Alerts        │    │ • Hotel         │    │ • History       │
+│ • Ratings       │    │ • Historical    │    │   booking       │    │ • Analytics     │
+│                 │    │                 │    │ • Real-time     │    │                 │
+│                 │    │                 │    │   data          │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              DATA PROCESSING FLOW                              │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   INPUT         │    │   AI            │    │   DATA          │    │   OUTPUT        │
+│   VALIDATION    │    │   GENERATION    │    │   AGGREGATION   │    │   FORMATTING    │
+│                 │    │                 │    │                 │    │                 │
+│ • Check params  │───▶│ • Gemini        │───▶│ • Combine       │───▶│ • JSON          │
+│ • Validate      │    │   prompts       │    │   all data      │    │   structure     │
+│   dates         │    │ • Generate      │    │ • Apply         │    │ • MCP format    │
+│ • Sanitize      │    │   content       │    │   preferences   │    │ • Error         │
+│   input         │    │ • LangChain     │    │ • Optimize      │    │   handling      │
+│                 │    │   workflows     │    │   schedule      │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              RESPONSE STRUCTURE                                │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+{
+  "status": "success",
+  "itinerary": {
+    "destination": "Tokyo, Japan",
+    "duration": "5 days",
+    "travelers": 2,
+    "budget": 3000,
+    "daily_plans": [
+      {
+        "day": 1,
+        "date": "2024-06-01",
+        "activities": [...],
+        "meals": [...],
+        "accommodation": {...},
+        "transportation": {...},
+        "budget_used": 200
+      }
+    ],
+    "accommodations": [...],
+    "restaurants": [...],
+    "attractions": [...],
+    "weather": [...],
+    "transportation": [...]
+  },
+  "additional_places": {...},
+  "summary": {
+    "total_cost": 2850,
+    "budget_remaining": 150,
+    "highlights": [...],
+    "recommendations": [...]
+  },
+  "generated_at": "2024-01-20T10:30:00Z"
+}
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              PERFORMANCE TARGETS                               │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   MCP SERVER    │    │ SAFARBOT BACKEND│    │  EXTERNAL APIs  │    │  TOTAL E2E     │
+│                 │    │                 │    │                 │    │                 │
+│   < 100ms       │    │   < 2 seconds   │    │  < 1 second     │    │   < 5 seconds   │
+│                 │    │                 │    │     each        │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              SECURITY LAYERS                                   │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   INPUT         │    │   AUTHENTICATION│    │   RATE          │    │   ERROR         │
+│   VALIDATION    │    │                 │    │   LIMITING      │    │   HANDLING      │
+│                 │    │                 │    │                 │    │                 │
+│ • Sanitize      │    │ • JWT tokens    │    │ • Per IP        │    │ • Graceful      │
+│   user input    │    │ • API keys      │    │ • Per endpoint  │    │   degradation   │
+│ • Type checking │    │ • Secure        │    │ • Abuse         │    │ • User-friendly │
+│ • Format        │    │   storage       │    │   prevention    │    │   messages      │
+│   validation    │    │                 │    │                 │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘

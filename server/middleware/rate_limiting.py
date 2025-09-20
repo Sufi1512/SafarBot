@@ -20,10 +20,10 @@ class RateLimiter:
         self.requests: Dict[str, deque] = defaultdict(deque)
             # Rate limits (requests per time window) - Relaxed for testing
         self.limits = {
-            "default": {"requests": 1000, "window": 3600},  # 1000 requests per hour
-            "auth": {"requests": 100, "window": 300},       # 100 auth attempts per 5 minutes
-            "chat": {"requests": 200, "window": 3600},      # 200 chat requests per hour
-            "search": {"requests": 500, "window": 3600},    # 500 searches per hour
+            "default": {"requests": 100, "window": 3600},   # 100 requests per hour
+            "auth": {"requests": 10, "window": 300},        # 10 auth attempts per 5 minutes
+            "chat": {"requests": 50, "window": 3600},       # 50 chat requests per hour
+            "search": {"requests": 100, "window": 3600},    # 100 searches per hour
         }
     
     def is_allowed(self, client_ip: str, endpoint_type: str = "default") -> bool:
@@ -88,9 +88,15 @@ class RateLimitingMiddleware:
         path = request.url.path
         endpoint_type = RateLimitingMiddleware.get_endpoint_type(path)
         
-        # Skip rate limiting for health checks
+        # Skip rate limiting for health checks but still add headers
         if path in ["/health", "/", "/docs", "/openapi.json"]:
-            return await call_next(request)
+            response = await call_next(request)
+            # Add rate limit headers even for health checks
+            remaining = rate_limiter.get_remaining_requests(client_ip, endpoint_type)
+            response.headers["X-RateLimit-Limit"] = str(rate_limiter.limits[endpoint_type]["requests"])
+            response.headers["X-RateLimit-Remaining"] = str(remaining)
+            response.headers["X-RateLimit-Reset"] = str(int(time.time() + rate_limiter.limits[endpoint_type]["window"]))
+            return response
         
         # Check rate limit
         if not rate_limiter.is_allowed(client_ip, endpoint_type):

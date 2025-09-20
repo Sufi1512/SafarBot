@@ -57,4 +57,19 @@ class Settings(BaseSettings):
         if not self.brevo_api_key:
             self.brevo_api_key = os.getenv("BREVO_API_KEY")
 
+
+    def validate_required_env_vars(self):
+        """Validate that all required environment variables are set"""
+        required_vars = [
+            "GOOGLE_API_KEY",
+            "SERP_API_KEY", 
+            "OPEN_WEATHER_API_KEY",
+            "BREVO_API_KEY",
+            "MONGODB_URL"
+        ]
+        missing = [var for var in required_vars if not os.getenv(var)]
+        if missing:
+            raise ValueError(f"Missing required environment variables: {missing}")
+        return True
+
 settings = Settings() 

@@ -12,7 +12,7 @@ from database import get_collection, USERS_COLLECTION
 from mongo_models import User
 
 router = APIRouter()
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 # Pydantic models for request/response
 class UserSignupRequest(BaseModel):
@@ -71,6 +71,13 @@ class ResendOTPRequest(BaseModel):
 
 # Dependency to get current user
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authorization header required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
     token = credentials.credentials
     payload = AuthService.verify_token(token)
     

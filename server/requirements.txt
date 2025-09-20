@@ -3,7 +3,7 @@ fastapi==0.115.6
 uvicorn[standard]==0.32.1
 
 # Data Validation & Models  
-pydantic==2.9.2
+pydantic[email]==2.9.2
 pydantic-settings==2.6.1
 
 # HTTP Requests

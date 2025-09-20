@@ -19,8 +19,6 @@ interface DashboardStatsProps {
     flight_bookings: number;
     hotel_bookings: number;
     upcoming_trips: number;
-    loyalty_points: number;
-    loyalty_tier: string;
   };
   itineraryStats: {
     total_itineraries: number;
@@ -58,8 +56,6 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ userStats, itinerarySta
       changeType: 'positive' as const
     },
     {
-      title: 'Loyalty Points',
-      value: userStats.loyalty_points,
       icon: Star,
       color: 'yellow',
       change: '+150',

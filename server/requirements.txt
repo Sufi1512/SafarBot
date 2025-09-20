@@ -1,10 +1,10 @@
 # Core FastAPI Framework
-fastapi==0.115.6
-uvicorn[standard]==0.32.1
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
 
 # Data Validation & Models  
-pydantic[email]==2.9.2
-pydantic-settings==2.6.1
+pydantic[email]==2.5.0
+pydantic-settings==2.1.0
 
 # HTTP Requests
 requests==2.32.5
@@ -35,3 +35,7 @@ python-dateutil==2.9.0.post0
 
 # Type Hints
 typing-extensions==4.15.0
+
+# Firebase Authentication
+firebase-admin==6.5.0
+google-auth==2.40.3

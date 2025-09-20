@@ -16,6 +16,7 @@ from routers.weather import router as weather_router
 from routers.ip_tracking import router as ip_tracking_router
 from routers.collaboration import router as collaboration_router
 from routers.notifications import router as notifications_router
+from routers.google_auth import router as google_auth_router
 from config import settings
 from database import Database
 
@@ -120,6 +121,7 @@ async def shutdown_db_client():
 
 # Include routers
 app.include_router(auth, prefix="/api/v1/auth", tags=["authentication"])
+app.include_router(google_auth_router, prefix="/api/v1/google", tags=["google-auth"])
 app.include_router(dashboard, prefix="/api/v1/dashboard", tags=["dashboard"])
 app.include_router(saved_itinerary, prefix="/api/v1/saved-itinerary", tags=["saved-itineraries"])
 app.include_router(flights, prefix="/api/v1", tags=["flights"])

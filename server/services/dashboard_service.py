@@ -136,14 +136,9 @@ class DashboardService:
                 "status": {"$in": ["pending", "confirmed"]}
             })
             
-            # Get loyalty points (placeholder - implement based on your loyalty system)
-            loyalty_points = stats.get("total_spent", 0) * 10  # 10 points per dollar spent
-            
             return {
                 **stats,
-                "upcoming_trips": upcoming_count,
-                "loyalty_points": int(loyalty_points),
-                "loyalty_tier": DashboardService._get_loyalty_tier(loyalty_points)
+                "upcoming_trips": upcoming_count
             }
             
         except Exception as e:
@@ -346,17 +341,6 @@ class DashboardService:
             return booking.hotel_details.get("city", "Unknown")
         return "Unknown"
     
-    @staticmethod
-    def _get_loyalty_tier(points: int) -> str:
-        """Determine loyalty tier based on points."""
-        if points >= 50000:
-            return "platinum"
-        elif points >= 25000:
-            return "gold"
-        elif points >= 10000:
-            return "silver"
-        else:
-            return "bronze"
     
     @staticmethod
     async def get_user_preferences(user_id: str) -> Optional[Dict[str, Any]]:
@@ -395,8 +379,9 @@ class DashboardService:
                     "theme_preference": "system",
                     "language": "en",
                     "region": "US",
-                    "created_at": datetime.utcnow(),
-                    "updated_at": datetime.utcnow()
+                    "created_at": datetime.now(),
+                    "updated_at": datetime.now(),
+                    "last_login": datetime.now()
                 }
                 
                 result = await collection.insert_one(default_prefs)

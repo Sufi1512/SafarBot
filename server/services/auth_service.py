@@ -41,9 +41,9 @@ class AuthService:
         """Create JWT access token."""
         to_encode = data.copy()
         if expires_delta:
-            expire = datetime.utcnow() + expires_delta
+            expire = datetime.now() + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            expire = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         
         to_encode.update({"exp": expire, "type": "access"})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
@@ -53,7 +53,7 @@ class AuthService:
     def create_refresh_token(data: dict) -> str:
         """Create JWT refresh token."""
         to_encode = data.copy()
-        expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        expire = datetime.now() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         to_encode.update({"exp": expire, "type": "refresh"})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
@@ -84,7 +84,7 @@ class AuthService:
         user_dict = user_data.dict()
         user_dict["hashed_password"] = AuthService.get_password_hash(user_data.password)
         user_dict["email_verification_token"] = str(uuid.uuid4())
-        user_dict["email_verification_expires"] = datetime.utcnow() + timedelta(hours=24)
+        user_dict["email_verification_expires"] = datetime.now() + timedelta(hours=24)
         
         # Remove plain password
         del user_dict["password"]
@@ -121,7 +121,7 @@ class AuthService:
             {
                 "$set": {
                     "login_attempts": 0,
-                    "last_login": datetime.utcnow()
+                    "last_login": datetime.now()
                 }
             }
         )
@@ -152,7 +152,7 @@ class AuthService:
         
         # Remove None values
         update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
-        update_dict["updated_at"] = datetime.utcnow()
+        update_dict["updated_at"] = datetime.now()
         
         result = await collection.update_one(
             {"_id": ObjectId(user_id)},
@@ -181,7 +181,7 @@ class AuthService:
             {
                 "$set": {
                     "hashed_password": new_hash,
-                    "updated_at": datetime.utcnow()
+                    "updated_at": datetime.now()
                 }
             }
         )
@@ -210,7 +210,7 @@ class AuthService:
             return None
         
         reset_token = str(uuid.uuid4())
-        reset_expires = datetime.utcnow() + timedelta(hours=1)
+        reset_expires = datetime.now() + timedelta(hours=1)
         
         await collection.update_one(
             {"_id": user_doc["_id"]},
@@ -218,7 +218,7 @@ class AuthService:
                 "$set": {
                     "reset_password_token": reset_token,
                     "reset_password_expires": reset_expires,
-                    "updated_at": datetime.utcnow()
+                    "updated_at": datetime.now()
                 }
             }
         )
@@ -232,7 +232,7 @@ class AuthService:
         
         user_doc = await collection.find_one({
             "reset_password_token": token,
-            "reset_password_expires": {"$gt": datetime.utcnow()}
+            "reset_password_expires": {"$gt": datetime.now()}
         })
         
         if not user_doc:
@@ -246,7 +246,7 @@ class AuthService:
                     "hashed_password": new_hash,
                     "reset_password_token": None,
                     "reset_password_expires": None,
-                    "updated_at": datetime.utcnow()
+                    "updated_at": datetime.now()
                 }
             }
         )
@@ -260,7 +260,7 @@ class AuthService:
         
         user_doc = await collection.find_one({
             "email_verification_token": token,
-            "email_verification_expires": {"$gt": datetime.utcnow()}
+            "email_verification_expires": {"$gt": datetime.now()}
         })
         
         if not user_doc:
@@ -274,7 +274,7 @@ class AuthService:
                     "status": UserStatus.ACTIVE,
                     "email_verification_token": None,
                     "email_verification_expires": None,
-                    "updated_at": datetime.utcnow()
+                    "updated_at": datetime.now()
                 }
             }
         )
@@ -303,7 +303,7 @@ class AuthService:
             return False
         
         verification_token = str(uuid.uuid4())
-        verification_expires = datetime.utcnow() + timedelta(hours=24)
+        verification_expires = datetime.now() + timedelta(hours=24)
         
         result = await collection.update_one(
             {"_id": user_doc["_id"]},
@@ -311,7 +311,7 @@ class AuthService:
                 "$set": {
                     "email_verification_token": verification_token,
                     "email_verification_expires": verification_expires,
-                    "updated_at": datetime.utcnow()
+                    "updated_at": datetime.now()
                 }
             }
         )

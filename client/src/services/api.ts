@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 
 // Base URL for API - Render backend for production, localhost for development
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (
+const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || (
   import.meta.env.PROD 
     ? 'https://safarbot-backend.onrender.com/api/v1' 
     : 'http://localhost:8000/api/v1'
@@ -1194,8 +1194,6 @@ export const dashboardAPI = {
       flight_bookings: number;
       hotel_bookings: number;
       upcoming_trips: number;
-      loyalty_points: number;
-      loyalty_tier: string;
     };
     recent_bookings: Array<{
       id: string;
@@ -1295,8 +1293,6 @@ export const dashboardAPI = {
     flight_bookings: number;
     hotel_bookings: number;
     upcoming_trips: number;
-    loyalty_points: number;
-    loyalty_tier: string;
   }> => {
     try {
       const response = await api.get('/dashboard/stats');

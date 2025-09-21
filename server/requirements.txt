@@ -27,22 +27,22 @@ httpx==0.28.1
 requests==2.32.5
 aiofiles==23.2.1
 
-# Data Processing
-pydantic==2.5.2
-pydantic-settings==2.1.0
-numpy==2.2.6
-orjson==3.11.1
+# Data Processing - let pip resolve compatible versions
+pydantic>=2.5.2,<3.0.0
+pydantic-settings>=2.1.0
+numpy>=2.0.0
+orjson>=3.0.0
 
-# LangChain & AI
-langchain==0.3.27
-langchain-core==0.3.15
-langchain-google-genai==0.0.1
-langchain-text-splitters==0.3.9
-langgraph==0.6.7
-langgraph-checkpoint==2.1.1
-langgraph-prebuilt==0.6.4
-langgraph-sdk==0.2.6
-langsmith==0.1.147
+# LangChain & AI - let pip resolve compatible versions
+langchain>=0.3.27
+langchain-core>=0.3.72
+langchain-google-genai>=0.0.1
+langchain-text-splitters>=0.3.9
+langgraph>=0.6.7
+langgraph-checkpoint>=2.1.1
+langgraph-prebuilt>=0.6.4
+langgraph-sdk>=0.2.6
+langsmith>=0.1.147
 
 # Search & Scraping
 google-search-results==2.4.2
@@ -55,3 +55,6 @@ tenacity==8.5.0
 rich==14.1.0
 typer==0.16.0
 coloredlogs==15.0.1
+
+# ChromaDB (optional - can be removed if not needed)
+# chromadb>=1.0.0

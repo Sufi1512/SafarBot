@@ -15,11 +15,11 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Copy requirements first for better caching
-COPY server/requirements_frozen.txt .
+COPY server/requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements_frozen.txt
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY server/ .

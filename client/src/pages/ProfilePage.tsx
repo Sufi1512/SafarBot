@@ -14,8 +14,6 @@ import {
   Globe,
   Lock,
   CreditCard,
-  Star,
-  Award,
   TrendingUp
 } from 'lucide-react';
 

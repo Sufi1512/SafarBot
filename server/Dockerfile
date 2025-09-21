@@ -19,10 +19,16 @@ COPY server/requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir email-validator && \
+    pip list | grep -i email
 
 # Copy application code
 COPY server/ .
+
+# Test email-validator installation
+COPY test_email_validator.py .
+RUN python test_email_validator.py
 
 # Create logs directory
 RUN mkdir -p logs

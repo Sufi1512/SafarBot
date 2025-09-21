@@ -1,65 +1,65 @@
 # Core FastAPI dependencies
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-python-multipart==0.0.12
-python-dotenv==1.0.1
+fastapi
+uvicorn[standard]
+python-multipart
+python-dotenv
 
 # Database
-motor==3.6.0
-pymongo==4.9
+motor
+pymongo
 
 # Authentication & Security
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-bcrypt==4.3.0
-PyJWT==2.10.1
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt
+PyJWT
 
 # Google Services
-google-auth==2.40.3
-google-auth-oauthlib==1.2.0
-google-auth-httplib2==0.2.0
-google-api-python-client==2.182.0
-google-generativeai==0.8.3
-firebase-admin==6.5.0
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
+google-generativeai
+firebase-admin
 
 # HTTP & API
-httpx==0.28.1
-requests==2.32.5
-aiofiles==23.2.1
+httpx
+requests
+aiofiles
 
-# Data Processing - let pip resolve compatible versions
-pydantic[email]>=2.5.2,<3.0.0
-pydantic-settings>=2.1.0
-email-validator>=2.0.0
-numpy>=2.0.0
-orjson>=3.0.0
+# Data Processing
+pydantic[email]
+pydantic-settings
+email-validator
+numpy
+orjson
 
-# LangChain & AI - let pip resolve compatible versions
-langchain>=0.3.27
-langchain-core>=0.3.72
-langchain-google-genai>=0.0.1
-langchain-text-splitters>=0.3.9
-langgraph>=0.6.7
-langgraph-checkpoint>=2.1.1
-langgraph-prebuilt>=0.6.4
-langgraph-sdk>=0.2.6
-langsmith>=0.1.147
+# LangChain & AI
+langchain
+langchain-core
+langchain-google-genai
+langchain-text-splitters
+langgraph
+langgraph-checkpoint
+langgraph-prebuilt
+langgraph-sdk
+langsmith
 
 # Search & Scraping
-google-search-results==2.4.2
+google-search-results
 
 # Email
-sib-api-v3-sdk==7.6.0
+sib-api-v3-sdk
 
 # Utilities
-tenacity==8.5.0
-rich==14.1.0
-typer==0.16.0
-coloredlogs==15.0.1
+tenacity
+rich
+typer
+coloredlogs
 
-# Additional dependencies that might be needed
-python-dateutil>=2.8.0
-pytz>=2023.3
+# Additional dependencies
+python-dateutil
+pytz
 
 # ChromaDB (optional - can be removed if not needed)
-# chromadb>=1.0.0
+# chromadb

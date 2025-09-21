@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: safarbot-backend
+    env: docker
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    plan: starter
+    region: oregon
+    envVars:
+      - key: MONGODB_URL
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 30
+      - key: REFRESH_TOKEN_EXPIRE_DAYS
+        value: 7
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        value: safar-bot
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_CLIENT_ID
+        sync: false
+      - key: SERP_API_KEY
+        sync: false
+      - key: LANGSMITH_API_KEY
+        sync: false
+      - key: CHROMA_PERSIST_DIRECTORY
+        value: ./chroma_db
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SMTP_PASSWORD
+        sync: false
+      - key: FRONTEND_URL
+        value: https://safarbot.vercel.app
+    healthCheckPath: /health
+    autoDeploy: true

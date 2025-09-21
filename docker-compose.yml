@@ -1,0 +1,79 @@
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: safarbot-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: safarbot
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
+    networks:
+      - safarbot-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: safarbot-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URL=mongodb://admin:password123@mongodb:27017/safarbot?authSource=admin
+      - SECRET_KEY=your-super-secret-jwt-key-change-in-production
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - REFRESH_TOKEN_EXPIRE_DAYS=7
+      - GOOGLE_API_KEY=your-google-api-key
+      - FIREBASE_PROJECT_ID=safar-bot
+      - FIREBASE_PRIVATE_KEY=your-firebase-private-key
+      - FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@safar-bot.iam.gserviceaccount.com
+      - FIREBASE_CLIENT_ID=117732099857172305-xxxxx
+      - SERP_API_KEY=your-serp-api-key
+      - LANGSMITH_API_KEY=your-langsmith-api-key
+      - CHROMA_PERSIST_DIRECTORY=./chroma_db
+      - BREVO_API_KEY=your-brevo-api-key
+      - BREVO_SMTP_PASSWORD=your-brevo-smtp-password
+      - FRONTEND_URL=http://localhost:3000
+    depends_on:
+      - mongodb
+    volumes:
+      - ./server/logs:/app/logs
+    networks:
+      - safarbot-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend (if you want to run it in Docker too)
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: safarbot-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - REACT_APP_GOOGLE_MAPS_API_KEY=your-google-maps-api-key
+    depends_on:
+      - backend
+    networks:
+      - safarbot-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  safarbot-network:
+    driver: bridge

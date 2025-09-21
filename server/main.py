@@ -92,7 +92,8 @@ app.add_middleware(
         "https://safarbot.vercel.app",
         "https://safarbot-git-main-sufi1512.vercel.app",
         "https://safarbot-sufi1512.vercel.app",
-        "https://safarbot-frontend.vercel.app"
+        "https://safarbot-frontend.vercel.app",
+        "https://safarbot.netlify.app"
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],

@@ -718,11 +718,11 @@ const ResultsPage: React.FC = () => {
                 <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300 group-hover:text-gray-800 dark:group-hover:text-white" />
               </button>
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center">
                   <MapPin className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                     {enhancedResponse?.itinerary.destination || itineraryData.destination} Itinerary
                   </h1>
                   <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -760,7 +760,7 @@ const ResultsPage: React.FC = () => {
             <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-100 dark:bg-blue-900/20 rounded-full mb-8">
               <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent"></div>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
               Crafting Your Perfect Journey
             </h3>
             <p className="text-gray-600 dark:text-gray-400 max-w-lg mx-auto text-lg">
@@ -807,7 +807,7 @@ const ResultsPage: React.FC = () => {
                     generateRealItinerary(itineraryData);
                   }
                 }}
-                className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+                className="px-8 py-4 bg-primary-500 hover:bg-primary-600 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
               >
                 Try Again
               </button>
@@ -844,21 +844,21 @@ const ResultsPage: React.FC = () => {
             <div className="flex items-center justify-center space-x-3 mb-8">
               <button
                 onClick={() => navigate('/itinerary', { state: { itineraryData: enhancedResponse } })}
-                className="flex items-center space-x-2 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm transition-colors"
+                className="flex items-center space-x-2 px-6 py-3 bg-secondary-500 hover:bg-secondary-600 text-white rounded-xl text-sm transition-colors font-medium"
               >
                 <span>📅</span>
                 <span>View Timeline</span>
               </button>
               <button
                 onClick={() => navigate('/itinerary-generation', { state: { itineraryData: enhancedResponse } })}
-                className="flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm transition-colors"
+                className="flex items-center space-x-2 px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-sm transition-colors font-medium"
               >
                 <span>💾</span>
                 <span>Save Itinerary</span>
               </button>
               <button
                 onClick={() => navigate('/edit-itinerary', { state: { itineraryData: enhancedResponse } })}
-                className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm transition-colors"
+                className="flex items-center space-x-2 px-6 py-3 bg-success-500 hover:bg-success-600 text-white rounded-xl text-sm transition-colors font-medium"
               >
                 <span>✏️</span>
                 <span>Edit Itinerary</span>

@@ -268,11 +268,11 @@ const EditItineraryPage: React.FC = () => {
 
   const getEventColor = (type: string) => {
     switch (type) {
-      case 'activity': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'meal': return 'bg-green-100 text-green-800 border-green-200';
-      case 'transport': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'checkin': return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'checkout': return 'bg-red-100 text-red-800 border-red-200';
+      case 'activity': return 'bg-primary-100 text-primary-800 border-primary-200';
+      case 'meal': return 'bg-success-100 text-success-800 border-success-200';
+      case 'transport': return 'bg-warning-100 text-warning-800 border-warning-200';
+      case 'checkin': return 'bg-secondary-100 text-secondary-800 border-secondary-200';
+      case 'checkout': return 'bg-error-100 text-error-800 border-error-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
@@ -500,7 +500,7 @@ const EditItineraryPage: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-400 mb-6">{error || 'No itinerary data found'}</p>
           <button
             onClick={() => navigate('/')}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="bg-primary-500 text-white px-6 py-3 rounded-xl hover:bg-primary-600 transition-colors font-medium"
           >
             Go Back Home
           </button>
@@ -535,20 +535,20 @@ const EditItineraryPage: React.FC = () => {
               <div className="flex items-center space-x-3">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ${
                   editMode === 'saved' 
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600' 
-                    : 'bg-gradient-to-r from-green-500 to-green-600'
+                    ? 'bg-primary-500' 
+                    : 'bg-success-500'
                 }`}>
                   <Edit3 className="w-7 h-7 text-white" />
                 </div>
                 <div>
                   <div className="flex items-center space-x-2 mb-1">
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                       {editMode === 'saved' ? 'Edit' : 'Customize'} {itineraryData.itinerary?.destination || itineraryData.destination} Itinerary
                     </h1>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       editMode === 'saved' 
-                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' 
-                        : 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                        ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300' 
+                        : 'bg-success-100 text-success-700 dark:bg-success-900 dark:text-success-300'
                     }`}>
                       {editMode === 'saved' ? 'Saved' : 'Building'}
                     </span>
@@ -564,7 +564,7 @@ const EditItineraryPage: React.FC = () => {
                     </span>
                     {editMode === 'saved' && (
                       <span className="flex items-center space-x-1">
-                        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                        <span className="w-2 h-2 bg-success-500 rounded-full"></span>
                         <span>Saved</span>
                       </span>
                     )}
@@ -580,8 +580,8 @@ const EditItineraryPage: React.FC = () => {
                 variant="solid"
                 className={`flex items-center space-x-2 px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200 ${
                   editMode === 'saved'
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
-                    : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
+                    ? 'bg-primary-500 hover:bg-primary-600'
+                    : 'bg-success-500 hover:bg-success-600'
                 }`}
                 disabled={isSaving}
               >
@@ -606,11 +606,11 @@ const EditItineraryPage: React.FC = () => {
       <div className="w-full px-4 sm:px-6 lg:px-8 pt-4">
         <div className={`inline-flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium ${
           editMode === 'saved'
-            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300'
-            : 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300'
+            ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'
+            : 'bg-success-100 text-success-700 dark:bg-success-900/20 dark:text-success-300'
         }`}>
           <div className={`w-2 h-2 rounded-full ${
-            editMode === 'saved' ? 'bg-blue-500' : 'bg-green-500'
+            editMode === 'saved' ? 'bg-primary-500' : 'bg-success-500'
           }`}></div>
           <span>
             {editMode === 'saved' 
@@ -628,17 +628,17 @@ const EditItineraryPage: React.FC = () => {
             <Card className="p-6 shadow-lg border-0 bg-white dark:bg-gray-800">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-                    <MapPin className="w-5 h-5 text-blue-600" />
+                  <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center">
+                    <MapPin className="w-5 h-5 text-primary-600" />
                   </div>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                     Current Itinerary
                   </h2>
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => setShowAddPlaceModal(true)}
-                    className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center space-x-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                    className="px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-xl transition-all duration-200 flex items-center space-x-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 font-medium"
                   >
                     <Plus className="w-4 h-4" />
                     <span className="font-medium">Add Place</span>
@@ -647,9 +647,9 @@ const EditItineraryPage: React.FC = () => {
               </div>
               
               {/* Add visual indicator for where places can be added */}
-              <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-800">
-                <div className="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+              <div className="mb-4 p-3 bg-primary-50 dark:bg-primary-900/10 rounded-lg border border-primary-200 dark:border-primary-800">
+                <div className="flex items-center space-x-2 text-primary-700 dark:text-primary-300">
+                  <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
                   <span className="text-sm font-medium">Click on any event to replace it, or use "Add Place" to insert new places</span>
                 </div>
               </div>
@@ -657,7 +657,7 @@ const EditItineraryPage: React.FC = () => {
               {/* Enhanced Day Navigation */}
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Select Day to Edit</h3>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Select Day to Edit</h3>
                   <span className="text-sm text-gray-500 dark:text-gray-400">
                     {daySchedules.length} days total
                   </span>
@@ -669,7 +669,7 @@ const EditItineraryPage: React.FC = () => {
                       onClick={() => setSelectedDay(day.day)}
                       className={`px-6 py-4 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 border-2 min-w-[120px] ${
                         selectedDay === day.day
-                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-600 shadow-lg transform scale-105'
+                          ? 'bg-primary-500 text-white border-primary-600 shadow-lg transform scale-105'
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 border-transparent hover:border-gray-300 dark:hover:border-gray-500 hover:shadow-md'
                       }`}
                     >
@@ -703,7 +703,7 @@ const EditItineraryPage: React.FC = () => {
               {currentDay && (
                 <div className="space-y-4">
                   <div className="mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                       Day {currentDay.day}: {currentDay.theme}
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -723,7 +723,7 @@ const EditItineraryPage: React.FC = () => {
                           <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg shadow-md ${getEventColor(event.type)} border-2 border-white dark:border-gray-800 group-hover:scale-110 transition-transform duration-300`}>
                             {getEventIcon(event.type)}
                           </div>
-                          <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                          <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
                             {index + 1}
                           </div>
                         </div>
@@ -749,7 +749,7 @@ const EditItineraryPage: React.FC = () => {
                                     e.stopPropagation();
                                     handleReplaceEvent(event);
                                   }}
-                                  className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200"
+                                  className="p-2 text-primary-500 hover:text-primary-600 hover:bg-primary-100 dark:hover:bg-primary-900/20 rounded-lg transition-all duration-200"
                                   title="Replace this place"
                                 >
                                   <Replace className="w-4 h-4" />
@@ -759,7 +759,7 @@ const EditItineraryPage: React.FC = () => {
                                     e.stopPropagation();
                                     handleRemoveEvent(daySchedules.findIndex(day => day.day === selectedDay), index);
                                   }}
-                                  className="p-2 text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
+                                  className="p-2 text-error-500 hover:text-error-600 hover:bg-error-100 dark:hover:bg-error-900/20 rounded-lg transition-all duration-200"
                                   title="Remove this place"
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -788,17 +788,17 @@ const EditItineraryPage: React.FC = () => {
                               </div>
                             )}
                             {event.cost && event.cost !== '0' && (
-                              <div className="flex items-center space-x-1 bg-green-100 dark:bg-green-900/20 px-2 py-1 rounded-full">
-                                <DollarSign className="w-3 h-3 text-green-600" />
-                                <span className="text-xs text-green-600 dark:text-green-400">{event.cost}</span>
+                              <div className="flex items-center space-x-1 bg-success-100 dark:bg-success-900/20 px-2 py-1 rounded-full">
+                                <DollarSign className="w-3 h-3 text-success-600" />
+                                <span className="text-xs text-success-600 dark:text-success-400">{event.cost}</span>
                               </div>
                             )}
                           </div>
                         </div>
                         
                         {/* Hover indicator */}
-                        <div className="absolute inset-0 rounded-xl border-2 border-dashed border-blue-300 dark:border-blue-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                          <div className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                        <div className="absolute inset-0 rounded-xl border-2 border-dashed border-primary-300 dark:border-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                          <div className="absolute top-2 right-2 bg-primary-500 text-white text-xs px-2 py-1 rounded-full">
                             Click to replace
                           </div>
                         </div>
@@ -808,8 +808,8 @@ const EditItineraryPage: React.FC = () => {
                     {/* Add place button at the end */}
                     <div className="mt-6 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 transition-colors cursor-pointer group"
                          onClick={() => setShowAddPlaceModal(true)}>
-                      <div className="flex items-center justify-center space-x-3 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400">
-                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center group-hover:bg-blue-100 dark:group-hover:bg-blue-900/20 transition-colors">
+                      <div className="flex items-center justify-center space-x-3 text-gray-500 dark:text-gray-400 group-hover:text-primary-500 dark:group-hover:text-primary-400">
+                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center group-hover:bg-primary-100 dark:group-hover:bg-primary-900/20 transition-colors">
                           <Plus className="w-5 h-5" />
                         </div>
                         <span className="font-medium">Add a new place to this day</span>
@@ -962,8 +962,8 @@ const EditItineraryPage: React.FC = () => {
       {showSaveConfirmation && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md mx-4 text-center">
-            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+            <div className="w-16 h-16 bg-success-100 dark:bg-success-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-success-600 dark:text-success-400" />
             </div>
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               {editMode === 'saved' ? 'Itinerary Updated!' : 'Itinerary Saved!'}
@@ -975,7 +975,7 @@ const EditItineraryPage: React.FC = () => {
               }
             </p>
             <div className="flex items-center justify-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-              <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+              <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
               <span>Redirecting to your trips...</span>
             </div>
           </div>

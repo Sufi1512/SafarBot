@@ -1,16 +1,26 @@
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
-import Button from './Button';
+import UnifiedButton from './UnifiedButton';
 import { cn } from '../../utils/cn';
 
-// Backward-compatible wrapper around the unified Button.
-// Maps legacy ModernButton variants/sizes to the new Button API
-// so existing usages stay visually consistent.
+/**
+ * ModernButton - Enhanced wrapper around UnifiedButton
+ * 
+ * This component provides backward compatibility while leveraging the new
+ * UnifiedButton component with design system colors.
+ * 
+ * Legacy variants are mapped to the new design system variants:
+ * - solid → primary
+ * - bordered → outline  
+ * - secondary → secondary
+ * - ghost → ghost
+ * - glass → secondary
+ */
 
 interface ModernButtonProps {
   children: React.ReactNode;
-  variant?: 'solid' | 'bordered' | 'secondary' | 'ghost' | 'glass';
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  variant?: 'solid' | 'bordered' | 'secondary' | 'ghost' | 'glass' | 'success' | 'warning' | 'error' | 'info';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   icon?: LucideIcon;
   iconPosition?: 'left' | 'right';
   loading?: boolean;
@@ -19,6 +29,9 @@ interface ModernButtonProps {
   className?: string;
   onClick?: () => void;
   type?: 'button' | 'submit' | 'reset';
+  rounded?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  shadow?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
+  animation?: boolean;
 }
 
 const ModernButton: React.FC<ModernButtonProps> = ({
@@ -33,23 +46,27 @@ const ModernButton: React.FC<ModernButtonProps> = ({
   className,
   onClick,
   type = 'button',
+  rounded = 'lg',
+  shadow = 'md',
+  animation = true,
 }) => {
-  // Map legacy variants to unified Button variants
-  const mappedVariant: 'primary' | 'secondary' | 'outline' | 'ghost' | 'success' | 'warning' | 'error' =
+  // Map legacy variants to UnifiedButton variants
+  const mappedVariant = 
     variant === 'solid' ? 'primary'
     : variant === 'bordered' ? 'outline'
     : variant === 'secondary' ? 'secondary'
     : variant === 'ghost' ? 'ghost'
-    // 'glass' best approximates secondary styling across light/dark
-    : 'secondary';
-
-  // Pass-through size mapping is 1:1 with Button
-  const mappedSize = size;
+    : variant === 'glass' ? 'secondary'
+    : variant === 'success' ? 'success'
+    : variant === 'warning' ? 'warning'
+    : variant === 'error' ? 'error'
+    : variant === 'info' ? 'info'
+    : 'primary'; // fallback
 
   return (
-    <Button
+    <UnifiedButton
       variant={mappedVariant}
-      size={mappedSize}
+      size={size}
       icon={Icon}
       iconPosition={iconPosition}
       loading={loading}
@@ -58,9 +75,12 @@ const ModernButton: React.FC<ModernButtonProps> = ({
       className={cn(className)}
       onClick={onClick}
       type={type}
+      rounded={rounded}
+      shadow={shadow}
+      animation={animation}
     >
       {children}
-    </Button>
+    </UnifiedButton>
   );
 };
 

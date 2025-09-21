@@ -186,11 +186,11 @@ const ItineraryPage: React.FC = () => {
 
   const getEventColor = (type: string) => {
     switch (type) {
-      case 'activity': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'meal': return 'bg-green-100 text-green-800 border-green-200';
-      case 'transport': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'checkin': return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'checkout': return 'bg-red-100 text-red-800 border-red-200';
+      case 'activity': return 'bg-primary-100 text-primary-800 border-primary-200';
+      case 'meal': return 'bg-success-100 text-success-800 border-success-200';
+      case 'transport': return 'bg-warning-100 text-warning-800 border-warning-200';
+      case 'checkin': return 'bg-secondary-100 text-secondary-800 border-secondary-200';
+      case 'checkout': return 'bg-error-100 text-error-800 border-error-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
@@ -252,7 +252,7 @@ const ItineraryPage: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-400 mb-6">{error || 'No itinerary data found'}</p>
           <button
             onClick={() => navigate('/')}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="bg-primary-500 text-white px-6 py-3 rounded-xl hover:bg-primary-600 transition-colors font-medium"
           >
             Go Back Home
           </button>
@@ -285,11 +285,11 @@ const ItineraryPage: React.FC = () => {
                 <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300 group-hover:text-gray-800 dark:group-hover:text-white" />
               </button>
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center">
                   <MapPin className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                     {itineraryData.itinerary.destination} Itinerary
                   </h1>
                   <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -303,7 +303,7 @@ const ItineraryPage: React.FC = () => {
             <div className="flex items-center space-x-6 text-sm text-gray-600 dark:text-gray-300">
               <button
                 onClick={() => navigate('/')}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                className="bg-primary-500 text-white px-6 py-3 rounded-xl hover:bg-primary-600 transition-colors flex items-center space-x-2 font-medium"
               >
                 <span>🔍</span>
                 <span>New Search</span>
@@ -332,7 +332,7 @@ const ItineraryPage: React.FC = () => {
           {/* Day Navigation */}
           <div className="lg:col-span-1">
             <Card className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Daily Schedule</h3>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Daily Schedule</h3>
               <div className="space-y-2">
                 {daySchedules.map((day) => (
                   <button
@@ -340,7 +340,7 @@ const ItineraryPage: React.FC = () => {
                     onClick={() => setSelectedDay(day.day)}
                     className={`w-full text-left p-3 rounded-lg transition-colors ${
                       selectedDay === day.day
-                        ? 'bg-blue-100 text-blue-900 border border-blue-200'
+                        ? 'bg-primary-100 text-primary-900 border border-primary-200'
                         : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
                     }`}
                   >
@@ -420,7 +420,7 @@ const ItineraryPage: React.FC = () => {
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                             {event.title}
                           </h3>
                           <div className="flex items-center space-x-2">

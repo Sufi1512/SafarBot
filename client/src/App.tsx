@@ -35,13 +35,18 @@ import CollaborationAcceptPage from './pages/CollaborationAcceptPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ServerErrorPage from './pages/ServerErrorPage';
 import OfflinePage from './pages/OfflinePage';
+import ButtonTestPage from './pages/ButtonTestPage';
+import ColorRecommendationPage from './pages/ColorRecommendationPage';
+import CustomColorRecommendationPage from './pages/CustomColorRecommendationPage';
+import SafarBotColorShowcasePage from './pages/SafarBotColorShowcasePage';
+import IntegratedColorShowcasePage from './pages/IntegratedColorShowcasePage';
 
 
 // Component to conditionally render ModernHeader
 const ConditionalHeader: React.FC = () => {
   const location = useLocation();
   
-  // Hide ModernHeader on ResultsPage, ItineraryPage, ItineraryGenerationPage, EditItineraryPage, Create pages, Public Itinerary, OTP Test, and Error pages
+  // Hide ModernHeader on ResultsPage, ItineraryPage, ItineraryGenerationPage, EditItineraryPage, Create pages, Public Itinerary, OTP Test, Button Test, and Error pages
   const hideHeader = location.pathname === '/results' || 
                      location.pathname === '/itinerary' || 
                      location.pathname.startsWith('/itinerary/') ||
@@ -53,6 +58,11 @@ const ConditionalHeader: React.FC = () => {
                      location.pathname === '/create-guide' ||
                      location.pathname.startsWith('/public/itinerary/') ||
                      location.pathname === '/otp-test' ||
+                     location.pathname === '/button-test' ||
+                     location.pathname === '/color-recommendations' ||
+                     location.pathname === '/custom-colors' ||
+                     location.pathname === '/safarbot-colors' ||
+                     location.pathname === '/integrated-colors' ||
                      location.pathname === '/404' ||
                      location.pathname === '/500' ||
                      location.pathname === '/offline' ||
@@ -65,12 +75,17 @@ const ConditionalHeader: React.FC = () => {
 const ConditionalFooter: React.FC = () => {
   const location = useLocation();
   
-  // Don't render Footer on dashboard page, create pages, OTP test, and error pages (they have their own footer)
+  // Don't render Footer on dashboard page, create pages, OTP test, button test, and error pages (they have their own footer)
   if (location.pathname === '/dashboard' || 
       location.pathname === '/create-blog' ||
       location.pathname === '/create-album' ||
       location.pathname === '/create-guide' ||
       location.pathname === '/otp-test' ||
+      location.pathname === '/button-test' ||
+      location.pathname === '/color-recommendations' ||
+      location.pathname === '/custom-colors' ||
+      location.pathname === '/safarbot-colors' ||
+      location.pathname === '/integrated-colors' ||
       location.pathname === '/404' ||
       location.pathname === '/500' ||
       location.pathname === '/offline' ||
@@ -146,6 +161,13 @@ function App() {
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                   <Route path="/reset-password" element={<ResetPasswordPage />} />
                   <Route path="/collaboration/accept/:invitationToken" element={<CollaborationAcceptPage />} />
+                  
+                  {/* Development/Test Pages */}
+                  <Route path="/button-test" element={<ButtonTestPage />} />
+                  <Route path="/color-recommendations" element={<ColorRecommendationPage />} />
+                  <Route path="/custom-colors" element={<CustomColorRecommendationPage />} />
+                  <Route path="/safarbot-colors" element={<SafarBotColorShowcasePage />} />
+                  <Route path="/integrated-colors" element={<IntegratedColorShowcasePage />} />
                   
                   {/* Error Pages */}
                   <Route path="/404" element={<NotFoundPage />} />

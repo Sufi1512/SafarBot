@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 // import { useNavigate } from 'react-router-dom';
 import CustomDatePicker from '../components/ui/CustomDatePicker';
-import ModernButton from '../components/ui/ModernButton';
+import UnifiedButton from '../components/ui/UnifiedButton';
 import Dropdown, { DropdownOption } from '../components/ui/Dropdown';
 import bgVideo2 from '../asset/videos/bg-video2.mp4';
 import { MapPin, Users } from 'lucide-react';
@@ -102,7 +102,7 @@ const HomePage: React.FC = () => {
       rating: 4.8,
       description: 'Tropical paradise with stunning beaches',
       badge: 'Popular',
-      badgeColor: 'bg-red-500'
+      badgeColor: 'bg-error-500'
     },
     {
       name: 'Santorini, Greece',
@@ -111,7 +111,7 @@ const HomePage: React.FC = () => {
       rating: 4.9,
       description: 'Iconic white buildings & sunsets',
       badge: 'Trending',
-      badgeColor: 'bg-green-500'
+      badgeColor: 'bg-success-500'
     },
     {
       name: 'Tokyo, Japan',
@@ -120,7 +120,7 @@ const HomePage: React.FC = () => {
       rating: 4.7,
       description: 'Modern metropolis meets tradition',
       badge: 'Hot Deal',
-      badgeColor: 'bg-orange-500'
+      badgeColor: 'bg-warning-500'
     },
     {
       name: 'Maldives',
@@ -129,7 +129,7 @@ const HomePage: React.FC = () => {
       rating: 4.9,
       description: 'Crystal waters & luxury resorts',
       badge: 'Luxury',
-      badgeColor: 'bg-purple-500'
+      badgeColor: 'bg-accent-500'
     },
     {
       name: 'Paris, France',
@@ -138,7 +138,7 @@ const HomePage: React.FC = () => {
       rating: 4.8,
       description: 'City of lights & romance',
       badge: 'Classic',
-      badgeColor: 'bg-blue-500'
+      badgeColor: 'bg-primary-500'
     },
     {
       name: 'New York, USA',
@@ -147,7 +147,7 @@ const HomePage: React.FC = () => {
       rating: 4.6,
       description: 'The city that never sleeps',
       badge: 'Epic',
-      badgeColor: 'bg-indigo-500'
+      badgeColor: 'bg-accent-500'
     },
     {
       name: 'Dubai, UAE',
@@ -156,7 +156,7 @@ const HomePage: React.FC = () => {
       rating: 4.7,
       description: 'Futuristic skyline & luxury',
       badge: 'Premium',
-      badgeColor: 'bg-amber-500'
+      badgeColor: 'bg-warning-500'
     },
     {
       name: 'Sydney, Australia',
@@ -165,7 +165,7 @@ const HomePage: React.FC = () => {
       rating: 4.8,
       description: 'Harbor views & vibrant culture',
       badge: 'Adventure',
-      badgeColor: 'bg-emerald-500'
+      badgeColor: 'bg-success-500'
     },
     {
       name: 'Rome, Italy',
@@ -174,7 +174,7 @@ const HomePage: React.FC = () => {
       rating: 4.9,
       description: 'Ancient history & delicious cuisine',
       badge: 'Heritage',
-      badgeColor: 'bg-rose-500'
+      badgeColor: 'bg-error-500'
     },
     {
       name: 'Thailand',
@@ -183,7 +183,7 @@ const HomePage: React.FC = () => {
       rating: 4.7,
       description: 'Golden temples & tropical beaches',
       badge: 'Budget',
-      badgeColor: 'bg-yellow-500'
+      badgeColor: 'bg-warning-500'
     },
     {
       name: 'Switzerland',
@@ -192,7 +192,7 @@ const HomePage: React.FC = () => {
       rating: 4.8,
       description: 'Alpine beauty & pristine lakes',
       badge: 'Nature',
-      badgeColor: 'bg-cyan-500'
+      badgeColor: 'bg-primary-500'
     },
     {
       name: 'Iceland',
@@ -201,15 +201,15 @@ const HomePage: React.FC = () => {
       rating: 4.9,
       description: 'Northern lights & volcanic landscapes',
       badge: 'Unique',
-      badgeColor: 'bg-teal-500'
+      badgeColor: 'bg-primary-500'
     },
   ];
 
   const stats = [
-    { number: '50K+', label: 'Happy Travelers', icon: HeartIcon, color: 'from-pink-500 to-rose-500' },
-    { number: '200+', label: 'Destinations', icon: GlobeAltIcon, color: 'from-blue-500 to-indigo-500' },
-    { number: '24/7', label: 'Customer Support', icon: ClockIcon, color: 'from-green-500 to-emerald-500' },
-    { number: '4.9★', label: 'Average Rating', icon: StarIcon, color: 'from-yellow-500 to-orange-500' },
+    { number: '50K+', label: 'Happy Travelers', icon: HeartIcon, color: 'from-accent-500 to-accent-600' },
+    { number: '200+', label: 'Destinations', icon: GlobeAltIcon, color: 'from-primary-500 to-primary-600' },
+    { number: '24/7', label: 'Customer Support', icon: ClockIcon, color: 'from-success-500 to-success-600' },
+    { number: '4.9★', label: 'Average Rating', icon: StarIcon, color: 'from-warning-500 to-warning-600' },
   ];
 
   // Enhanced testimonials data for AnimatedTestimonials component with reliable images
@@ -420,17 +420,16 @@ const HomePage: React.FC = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <ModernButton
+                    <UnifiedButton
                       onClick={handleSearch}
                       size="lg"
-                      variant="solid"
-                      className="px-6 py-2.5 text-sm font-semibold shadow-lg hover:shadow-xl transform transition-all duration-300 inline-flex items-center justify-center whitespace-nowrap"
+                      variant="primary"
+                      shadow="lg"
+                      className="font-semibold"
+                      disabled={!searchForm.destination || !searchForm.startDate || !searchForm.endDate || !searchForm.travelers}
                     >
-                      <svg className="w-4 h-4 mr-2 flex-shrink-0 align-middle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z" />
-                      </svg>
-                      <span>✨ Craft My Dream Trip</span>
-                    </ModernButton>
+                      ✨ Craft My Dream Trip
+                    </UnifiedButton>
                   </motion.div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                     ✨ Over 10,000 destinations • Best price guarantee • Instant booking

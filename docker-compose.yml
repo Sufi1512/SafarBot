@@ -19,7 +19,7 @@ services:
   # Backend API
   backend:
     build:
-      context: ./server
+      context: .
       dockerfile: Dockerfile
     container_name: safarbot-backend
     restart: unless-stopped
@@ -57,8 +57,8 @@ services:
   # Frontend (if you want to run it in Docker too)
   frontend:
     build:
-      context: ./client
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: client/Dockerfile
     container_name: safarbot-frontend
     restart: unless-stopped
     ports:

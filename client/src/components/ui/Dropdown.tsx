@@ -175,17 +175,20 @@ const Dropdown: React.FC<DropdownProps> = ({
         onKeyDown={handleKeyDown}
         disabled={disabled}
         className={`
-          w-full flex items-center justify-between rounded-xl border-2 transition-all duration-200
+          relative w-full flex items-center justify-between rounded-xl border-2 transition-all duration-200 group
           ${sizeClasses[size]}
           ${variantClasses[variant]}
-          ${error ? 'border-red-500 focus:ring-red-500' : 'focus:ring-cyan-500 focus:border-cyan-500'}
+          ${error 
+            ? 'border-red-500 focus:ring-red-500' 
+            : `${!isOpen ? 'focus:ring-cyan-500 focus:border-cyan-500' : 'focus:ring-0 focus:border-cyan-500'}`}
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-cyan-400 dark:hover:border-cyan-500'}
-          ${isOpen ? 'ring-4 ring-cyan-500/20 border-cyan-500 shadow-lg' : 'shadow-sm hover:shadow-md'}
+          ${isOpen ? 'ring-2 ring-cyan-500/20 border-cyan-500 shadow-lg' : 'shadow-sm hover:shadow-md'}
           bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm
         `}
         whileHover={!disabled ? { scale: 1.01 } : {}}
         whileTap={!disabled ? { scale: 0.99 } : {}}
       >
+        <div className="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
         <div className="flex items-center gap-2 flex-1 min-w-0">
           {selectedOption?.icon && (
             <span className="flex-shrink-0 text-gray-500 dark:text-gray-400">

@@ -284,7 +284,7 @@ const HomePage: React.FC = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 leading-tight"
+              className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight"
             >
             
               <span className="gradient-text-with-shimmer" style={{ animationDelay: '0.5s' }}>
@@ -297,7 +297,7 @@ const HomePage: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-lg text-gray-700 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed mb-6 font-light"
+              className="text-base sm:text-lg text-gray-900 dark:text-gray-500 max-w-2xl mx-auto leading-relaxed mb-6 font-light"
             >
               <motion.span
                 initial={{ opacity: 0, x: -20 }}
@@ -343,10 +343,10 @@ const HomePage: React.FC = () => {
                     <FireIcon className="w-4 h-4" />
                     <span>Hunt for Deals</span>
                   </motion.div>
-                  <h2 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-2">
+                  <h2 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-2">
                     Where will your story begin?
                   </h2>
-                  <p className="text-base text-gray-600 dark:text-gray-300 max-w-xl mx-auto">
+                  <p className="text-sm text-gray-600 dark:text-gray-300 max-w-xl mx-auto">
                     Tell us your dream destination and we'll craft the perfect journey
                   </p>
                 </div>
@@ -422,14 +422,12 @@ const HomePage: React.FC = () => {
                   >
                     <ModernButton
                       onClick={handleSearch}
-                      size="lg"
+                      size="md"
                       variant="solid"
-                      className="px-6 py-2.5 text-sm font-semibold shadow-lg hover:shadow-xl transform transition-all duration-300 inline-flex items-center justify-center whitespace-nowrap"
+                      className="px-4 py-2 text-sm font-semibold shadow-md hover:shadow-lg transform transition-all duration-300 inline-flex items-center justify-center whitespace-nowrap"
                     >
-                      <svg className="w-4 h-4 mr-2 flex-shrink-0 align-middle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z" />
-                      </svg>
-                      <span>✨ Craft My Dream Trip</span>
+
+                      <span> Craft My Dream Trip ✨</span>
                     </ModernButton>
                   </motion.div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
@@ -457,10 +455,10 @@ const HomePage: React.FC = () => {
               <TrophyIcon className="w-4 h-4" />
               <span>Why Choose SafarBot</span>
             </div>
-            <h2 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-6">
+            <h2 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-6">
               Travel Smarter, Not Harder
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
               Experience the future of travel planning with our cutting-edge AI technology
               and personalized recommendations that save you time and money.
             </p>
@@ -621,7 +619,7 @@ const HomePage: React.FC = () => {
               </motion.span>
             </motion.div>
             <motion.h2 
-              className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-6"
+              className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
@@ -698,7 +696,7 @@ const HomePage: React.FC = () => {
                 </motion.div>
               </motion.div>
             </motion.h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
               Explore the world's most breathtaking destinations, handpicked by our travel experts
               and loved by thousands of adventurous travelers like you.
             </p>
@@ -707,7 +705,7 @@ const HomePage: React.FC = () => {
           {/* Smooth Marquee Container */}
           <div className="relative overflow-hidden">
             <motion.div
-              className="flex space-x-6"
+              className="flex space-x-6 pl-40 pr-40"
               animate={{
                 x: [0, -100 * destinations.length]
               }}
@@ -715,7 +713,7 @@ const HomePage: React.FC = () => {
                 x: {
                   repeat: Infinity,
                   repeatType: "loop",
-                  duration: destinations.length * 8,
+                  duration: destinations.length * 6,
                   ease: "linear",
                 },
               }}
@@ -799,9 +797,7 @@ const HomePage: React.FC = () => {
               ))}
             </motion.div>
 
-            {/* Gradient Overlays for smooth edges */}
-            <div className="absolute top-0 left-0 w-20 h-full bg-gradient-to-r from-white dark:from-gray-900 to-transparent pointer-events-none z-10" />
-            <div className="absolute top-0 right-0 w-20 h-full bg-gradient-to-l from-white dark:from-gray-900 to-transparent pointer-events-none z-10" />
+            {/* Edge overlays removed to avoid end blur */}
           </div>
         </div>
       </section>
@@ -846,7 +842,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Enhanced Testimonials Section */}
-      <section className="py-20 bg-gradient-to-b from-white via-gray-50 to-blue-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800">
+      <section className="py-20 bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -855,11 +851,11 @@ const HomePage: React.FC = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 text-blue-700 dark:text-blue-300 px-6 py-3 rounded-full text-sm font-medium mb-6 shadow-lg">
+            <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 text-blue-700 dark:text-blue-300 px-4 py-2 rounded-full text-xs font-medium mb-6 shadow-lg">
               <UserGroupIcon className="w-5 h-5" />
               <span>Trusted by Travelers Worldwide</span>
             </div>
-            <h2 className="text-4xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 dark:from-white dark:via-blue-200 dark:to-indigo-200 bg-clip-text text-transparent mb-6">
+            <h2 className="text-3xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 dark:from-white dark:via-blue-200 dark:to-indigo-200 bg-clip-text text-transparent mb-6">
               Stories from Our Community
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto leading-relaxed">

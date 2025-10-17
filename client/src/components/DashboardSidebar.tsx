@@ -60,7 +60,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
-    { id: 'chats', label: 'Chats', icon: MessageCircle, notification: 1 },
+    { id: 'chats', label: 'Collaboration', icon: MessageCircle, tooltip: 'Collaborate on itineraries with chat' },
     { id: 'explore', label: 'Explore', icon: Search },
     { id: 'saved', label: 'Saved', icon: Heart },
     { id: 'trips', label: 'Trips', icon: Briefcase },

@@ -4,8 +4,9 @@ import { motion } from 'framer-motion';
 import CustomDatePicker from '../components/ui/CustomDatePicker';
 import ModernButton from '../components/ui/ModernButton';
 import Dropdown, { DropdownOption } from '../components/ui/Dropdown';
+import PlacesAutocomplete from '../components/PlacesAutocomplete';
 import bgVideo2 from '../asset/videos/bg-video2.mp4';
-import { MapPin, Users } from 'lucide-react';
+import { Users } from 'lucide-react';
 import {
   StarIcon,
   ArrowRightIcon,
@@ -357,17 +358,13 @@ const HomePage: React.FC = () => {
                     <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                       🌍 <span>Where would you like to go?</span>
                     </label>
-                    <div className="relative group">
-                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-cyan-500 group-hover:text-blue-500 transition-colors z-10" />
-                      <input
-                        type="text"
-                        placeholder="Enter your dream destination..."
-                        value={searchForm.destination}
-                        onChange={(e) => setSearchForm(prev => ({ ...prev, destination: e.target.value }))}
-                        className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-4 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-sm font-medium hover:border-cyan-400 shadow-sm hover:shadow-md"
-                      />
-                      <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                    </div>
+                    <PlacesAutocomplete
+                      value={searchForm.destination}
+                      onChange={(value) => setSearchForm(prev => ({ ...prev, destination: value }))}
+                      placeholder="Enter your dream destination..."
+                      className="w-full"
+                      icon={<span className="text-lg">🌍</span>}
+                    />
                   </div>
 
                   {/* Date and Guests Row */}

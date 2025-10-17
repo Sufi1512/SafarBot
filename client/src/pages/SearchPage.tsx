@@ -16,6 +16,7 @@ import {
 import ModernButton from '../components/ui/ModernButton';
 import ModernCard from '../components/ui/ModernCard';
 import ModernInput from '../components/ui/ModernInput';
+import PlacesAutocomplete from '../components/PlacesAutocomplete';
 import DatePicker from '../components/ui/DatePicker';
 
 interface SearchResult {
@@ -255,12 +256,12 @@ const SearchPage: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Destination
                   </label>
-                  <ModernInput
-                    placeholder="Where do you want to go?"
+                  <PlacesAutocomplete
                     value={searchQuery}
                     onChange={setSearchQuery}
-                    icon={MapPin}
-                    variant="glass"
+                    placeholder="Where do you want to go?"
+                    icon={<MapPin className="w-4 h-4" />}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   />
                 </div>
 

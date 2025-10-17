@@ -704,7 +704,7 @@ const ResultsPage: React.FC = () => {
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 w-full">
         <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-6">
+          <div className="flex items-center justify-between py-3">
             {/* Left side - Back button and Logo/Name */}
             <div className="flex items-center space-x-4">
               <button
@@ -812,54 +812,7 @@ const ResultsPage: React.FC = () => {
           </div>
         ) : (
           <>
-            {/* Tabs - Only show when not loading and no error */}
-            <div className="mb-8">
-              <div className="flex space-x-1 bg-white dark:bg-gray-800 p-1 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                {[
-                  { id: 'itinerary', label: 'Itinerary', icon: '🗓️' },
-                  { id: 'additional', label: 'Explore More', icon: '✨' },
-                  { id: 'map', label: 'Map View', icon: '🗺️' }
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
-                    className={`flex-1 flex items-center justify-center px-3 py-2 rounded-lg font-medium transition-all duration-300 text-xs ${
-                      activeTab === tab.id
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
-                    }`}
-                  >
-                    <span className="mr-1.5 text-sm">{tab.icon}</span>
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-            </div>
 
-            {/* Action Buttons - Simple and Small */}
-            <div className="flex items-center justify-center space-x-3 mb-8">
-              <button
-                onClick={() => navigate('/itinerary', { state: { itineraryData: enhancedResponse } })}
-                className="flex items-center space-x-2 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm transition-colors"
-              >
-                <span>📅</span>
-                <span>View Timeline</span>
-              </button>
-              <button
-                onClick={() => navigate('/itinerary-generation', { state: { itineraryData: enhancedResponse } })}
-                className="flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm transition-colors"
-              >
-                <span>💾</span>
-                <span>Save Itinerary</span>
-              </button>
-              <button
-                onClick={() => navigate('/edit-itinerary', { state: { itineraryData: enhancedResponse } })}
-                className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm transition-colors"
-              >
-                <span>✏️</span>
-                <span>Edit Itinerary</span>
-              </button>
-            </div>
 
             {/* Split Layout: Itinerary (2/3) and Map (1/3) */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full">
@@ -941,6 +894,30 @@ const ResultsPage: React.FC = () => {
                   )}
                 </div>
               )}
+
+              {/* Tabs - Only show when not loading and no error */}
+              <div className="mb-8">
+                <div className="flex space-x-1 bg-white dark:bg-gray-800 p-1 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                  {[
+                    { id: 'itinerary', label: 'Itinerary', icon: '🗓️' },
+                    { id: 'additional', label: 'Explore More', icon: '✨' },
+                    { id: 'map', label: 'Map View', icon: '🗺️' }
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as any)}
+                      className={`flex-1 flex items-center justify-center px-3 py-2 rounded-lg font-medium transition-all duration-300 text-xs ${
+                        activeTab === tab.id
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <span className="mr-1.5 text-sm">{tab.icon}</span>
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               {activeTab === 'itinerary' && (
                 <>
@@ -1177,17 +1154,66 @@ const ResultsPage: React.FC = () => {
                            <h4 className="font-medium text-gray-900 dark:text-white mb-4">Daily Breakdown</h4>
                            <div className="space-y-3">
                              {dailyPlans.map((plan) => {
+                               // Calculate activity costs from metadata
                                const activityCost = plan.activities.reduce((sum, activity) => {
-                                 const cost = typeof activity.cost === 'string' ? parseFloat(activity.cost) || 0 : (activity.cost || 0);
+                                 let cost = 0;
+                                 
+                                 // First try to get cost from activity.estimated_cost
+                                 if (activity.estimated_cost) {
+                                   const estimatedCost = typeof activity.estimated_cost === 'string' ? 
+                                     parseFloat(activity.estimated_cost.replace(/[^0-9.-]/g, '')) || 0 : 
+                                     (activity.estimated_cost || 0);
+                                   cost = estimatedCost;
+                                 }
+                                 
+                                 // If no cost in activity, try to get from place_details metadata
+                                 if (cost === 0 && enhancedResponse?.place_details?.[activity.place_id]) {
+                                   const placeDetails = enhancedResponse.place_details[activity.place_id];
+                                   if (placeDetails.price) {
+                                     // Parse price range like "$10-20" or "$25"
+                                     const priceMatch = placeDetails.price.match(/\$(\d+(?:\.\d+)?)/);
+                                     if (priceMatch) {
+                                       cost = parseFloat(priceMatch[1]);
+                                     }
+                                   }
+                                 }
+                                 
                                  return sum + cost;
                                }, 0);
                                
-                               const transportCost = plan.transport?.reduce((sum, transport) => {
-                                 const cost = typeof transport.cost === 'string' ? parseFloat(transport.cost) || 0 : (transport.cost || 0);
+                               // Calculate meal costs from metadata
+                               const mealCost = plan.meals.reduce((sum, meal) => {
+                                 let cost = 0;
+                                 
+                                 // Parse price_range like "$20-30" or "$15"
+                                 if (meal.price_range) {
+                                   const priceMatch = meal.price_range.match(/\$(\d+(?:\.\d+)?)/);
+                                   if (priceMatch) {
+                                     cost = parseFloat(priceMatch[1]);
+                                   }
+                                 }
+                                 
+                                 // If no cost in meal, try to get from place_details metadata
+                                 if (cost === 0 && enhancedResponse?.place_details?.[meal.place_id]) {
+                                   const placeDetails = enhancedResponse.place_details[meal.place_id];
+                                   if (placeDetails.price) {
+                                     const priceMatch = placeDetails.price.match(/\$(\d+(?:\.\d+)?)/);
+                                     if (priceMatch) {
+                                       cost = parseFloat(priceMatch[1]);
+                                     }
+                                   }
+                                 }
+                                 
+                                 return sum + cost;
+                               }, 0);
+                               
+                               // Calculate transport costs
+                               const transportCost = plan.transportation?.reduce((sum, transport) => {
+                                 const cost = typeof transport.cost === 'string' ? parseFloat(transport.cost.replace(/[^0-9.-]/g, '')) || 0 : (transport.cost || 0);
                                  return sum + cost;
                                }, 0) || 0;
                                
-                               const dayCost = activityCost + transportCost;
+                               const dayCost = activityCost + mealCost + transportCost;
                                
                                return (
                                  <div key={plan.day} className="flex justify-between text-sm">
@@ -1202,24 +1228,98 @@ const ResultsPage: React.FC = () => {
                            <h4 className="font-medium text-gray-900 dark:text-white mb-4">Total Estimated Cost</h4>
                            <div className="text-3xl font-bold text-green-600 dark:text-green-400">
                              ${dailyPlans.reduce((total, plan) => {
+                               // Calculate activity costs from metadata
                                const activityCost = plan.activities.reduce((sum, activity) => {
-                                 const cost = typeof activity.cost === 'string' ? parseFloat(activity.cost) || 0 : (activity.cost || 0);
+                                 let cost = 0;
+                                 
+                                 // First try to get cost from activity.estimated_cost
+                                 if (activity.estimated_cost) {
+                                   const estimatedCost = typeof activity.estimated_cost === 'string' ? 
+                                     parseFloat(activity.estimated_cost.replace(/[^0-9.-]/g, '')) || 0 : 
+                                     (activity.estimated_cost || 0);
+                                   cost = estimatedCost;
+                                 }
+                                 
+                                 // If no cost in activity, try to get from place_details metadata
+                                 if (cost === 0 && enhancedResponse?.place_details?.[activity.place_id]) {
+                                   const placeDetails = enhancedResponse.place_details[activity.place_id];
+                                   if (placeDetails.price) {
+                                     // Parse price range like "$10-20" or "$25"
+                                     const priceMatch = placeDetails.price.match(/\$(\d+(?:\.\d+)?)/);
+                                     if (priceMatch) {
+                                       cost = parseFloat(priceMatch[1]);
+                                     }
+                                   }
+                                 }
+                                 
                                  return sum + cost;
                                }, 0);
                                
-                               const transportCost = plan.transport?.reduce((sum, transport) => {
-                                 const cost = typeof transport.cost === 'string' ? parseFloat(transport.cost) || 0 : (transport.cost || 0);
+                               // Calculate meal costs from metadata
+                               const mealCost = plan.meals.reduce((sum, meal) => {
+                                 let cost = 0;
+                                 
+                                 // Parse price_range like "$20-30" or "$15"
+                                 if (meal.price_range) {
+                                   const priceMatch = meal.price_range.match(/\$(\d+(?:\.\d+)?)/);
+                                   if (priceMatch) {
+                                     cost = parseFloat(priceMatch[1]);
+                                   }
+                                 }
+                                 
+                                 // If no cost in meal, try to get from place_details metadata
+                                 if (cost === 0 && enhancedResponse?.place_details?.[meal.place_id]) {
+                                   const placeDetails = enhancedResponse.place_details[meal.place_id];
+                                   if (placeDetails.price) {
+                                     const priceMatch = placeDetails.price.match(/\$(\d+(?:\.\d+)?)/);
+                                     if (priceMatch) {
+                                       cost = parseFloat(priceMatch[1]);
+                                     }
+                                   }
+                                 }
+                                 
+                                 return sum + cost;
+                               }, 0);
+                               
+                               // Calculate transport costs
+                               const transportCost = plan.transportation?.reduce((sum, transport) => {
+                                 const cost = typeof transport.cost === 'string' ? parseFloat(transport.cost.replace(/[^0-9.-]/g, '')) || 0 : (transport.cost || 0);
                                  return sum + cost;
                                }, 0) || 0;
                                
-                               return total + activityCost + transportCost;
+                               return total + activityCost + mealCost + transportCost;
                              }, 0).toFixed(0)}
                            </div>
-                           <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Activities & transportation (excluding accommodation & meals)</p>
+                           <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Activities, meals & transportation (excluding accommodation)</p>
                          </div>
                        </div>
                      </div>
                    )}
+
+                  {/* Action Buttons - Simple and Small */}
+                  <div className="flex items-center justify-center space-x-3 mt-8">
+                    <button
+                      onClick={() => navigate('/itinerary', { state: { itineraryData: enhancedResponse } })}
+                      className="flex items-center space-x-2 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm transition-colors"
+                    >
+                      <span>📅</span>
+                      <span>View Timeline</span>
+                    </button>
+                    <button
+                      onClick={() => navigate('/itinerary-generation', { state: { itineraryData: enhancedResponse } })}
+                      className="flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm transition-colors"
+                    >
+                      <span>💾</span>
+                      <span>Save Itinerary</span>
+                    </button>
+                    <button
+                      onClick={() => navigate('/edit-itinerary', { state: { itineraryData: enhancedResponse } })}
+                      className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm transition-colors"
+                    >
+                      <span>✏️</span>
+                      <span>Edit Itinerary</span>
+                    </button>
+                  </div>
                 </>
               )}
 

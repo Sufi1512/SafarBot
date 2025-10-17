@@ -80,8 +80,8 @@ const AdditionalPlaces: React.FC<AdditionalPlacesProps> = ({
     const placeRating = place.rating;
     const placeAddress = place.address || place.location || 'Location not specified';
     const placeCategory = place.category;
-    // Photo detection for AdditionalPlace
-    const placeThumbnail = place.thumbnail || place.serpapi_thumbnail;
+    // Photo detection for AdditionalPlace - prioritize high-res image
+    const placeThumbnail = place.high_res_image || place.thumbnail || place.serpapi_thumbnail;
     
     // Debug photo sources in development
     if (process.env.NODE_ENV === 'development' && !placeThumbnail) {
@@ -116,7 +116,7 @@ const AdditionalPlaces: React.FC<AdditionalPlacesProps> = ({
               <img
                 src={placeThumbnail}
                 alt={placeTitle}
-                className="w-full h-full object-cover transition-opacity duration-300"
+                className="w-full h-full object-cover transition-all duration-300 hover:scale-105"
                 onError={(e) => {
                   console.log('Image failed to load:', placeThumbnail);
                   (e.target as HTMLImageElement).style.display = 'none';
@@ -126,6 +126,8 @@ const AdditionalPlaces: React.FC<AdditionalPlacesProps> = ({
                   (e.target as HTMLImageElement).style.opacity = '1';
                 }}
                 style={{ opacity: 0 }}
+                loading="eager"
+                decoding="async"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
             </div>

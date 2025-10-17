@@ -41,7 +41,7 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
       hours: isPlaceDetails(place) ? place.hours : place.hours,
       description: place.description,
       category: place.category,
-      thumbnail: isPlaceDetails(place) ? (place.thumbnail || place.serpapi_thumbnail) : undefined,
+      thumbnail: isPlaceDetails(place) ? (place.high_res_image || place.thumbnail || place.serpapi_thumbnail) : undefined,
       reviews: isPlaceDetails(place) ? place.reviews : undefined,
       price: isPlaceDetails(place) ? place.price : place.price_range,
       cuisine: !isPlaceDetails(place) ? place.cuisine : undefined,
@@ -169,7 +169,7 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
           <img
             src={metadata.thumbnail}
             alt={metadata.title}
-            className="w-full h-full object-cover transition-opacity duration-300"
+            className="w-full h-full object-cover transition-all duration-300 hover:scale-105"
             onError={(e) => {
               console.log('Image failed to load:', metadata.thumbnail);
               (e.target as HTMLImageElement).style.display = 'none';
@@ -179,6 +179,8 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
               (e.target as HTMLImageElement).style.opacity = '1';
             }}
             style={{ opacity: 0 }}
+            loading="eager"
+            decoding="async"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
         </div>

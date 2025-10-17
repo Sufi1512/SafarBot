@@ -1,44 +1,54 @@
 # Core FastAPI and Web Framework
-fastapi==0.115.6
-uvicorn[standard]==0.32.1
-pydantic==2.9.2
-pydantic-settings==2.6.1
+FastAPI
+uvicorn[standard]
+pydantic
+pydantic-settings
 
 # HTTP and API Requests
-requests==2.32.5
-httpx==0.28.1
+requests
+httpx
 
 # Database
-motor==3.6.0
-pymongo==4.10.1
-bson==0.5.10
+motor
+pymongo
+bson
 
 # Authentication and Security
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-python-multipart==0.0.12
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
 
 # Environment and Configuration
 python-dotenv==1.0.1
 
 # Email Services
-smtplib2==0.2.1
+secure-smtplib  
 
 # Google AI Services
-google-generativeai==0.8.3
+google-generativeai>=0.8.0
 
 # LangChain (if using AI workflows)
-langchain-core==0.3.15
-langchain-google-genai==2.0.4
+langchain-core
+langchain-google-genai
 
 # Data Processing (minimal)
-python-dateutil==2.9.0.post0
+python-dateutil
 
 # Logging and Monitoring
-structlog==24.4.0
+structlog
 
 # CORS and Middleware
-fastapi-cors==0.0.6
+fastapi-cors
+
+# Redis for caching and real-time features
+redis
+redis-om
+
+# WebSocket suppor
+python-socketio
+
+# OpenAI GPT-4
+openai
 
 # Additional utilities
-typing-extensions==4.15.0
+typing-extensions

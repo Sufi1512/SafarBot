@@ -1,7 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { queryClient } from './lib/queryClient';
 import ModernHeader from './components/ModernHeader';
 import Footer from './components/Footer';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -24,6 +27,7 @@ import PackagesPage from './pages/PackagesPage';
 import CreateBlogPage from './pages/CreateBlogPage';
 import CreateAlbumPage from './pages/CreateAlbumPage';
 import CreateGuidePage from './pages/CreateGuidePage';
+import { ChatPage } from './pages/ChatPage';
 import PublicItineraryPage from './pages/PublicItineraryPage';
 import ItineraryRedirectPage from './pages/ItineraryRedirectPage';
 import SavedItineraryViewPage from './pages/SavedItineraryViewPage';
@@ -84,10 +88,11 @@ const ConditionalFooter: React.FC = () => {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider>
-        <AuthProvider>
-          <ToastProvider>
-            <Router>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <AuthProvider>
+            <ToastProvider>
+              <Router>
             <div className="min-h-screen w-full bg-secondary-50 dark:bg-dark-bg text-secondary-900 dark:text-dark-text">
               <ConditionalHeader />
               <main className="mt-0 pt-0 w-full">
@@ -146,6 +151,11 @@ function App() {
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                   <Route path="/reset-password" element={<ResetPasswordPage />} />
                   <Route path="/collaboration/accept/:invitationToken" element={<CollaborationAcceptPage />} />
+                  <Route path="/chat" element={
+                    <ProtectedRoute>
+                      <ChatPage />
+                    </ProtectedRoute>
+                  } />
                   
                   {/* Error Pages */}
                   <Route path="/404" element={<NotFoundPage />} />
@@ -162,6 +172,9 @@ function App() {
           </ToastProvider>
         </AuthProvider>
       </ThemeProvider>
+      {/* React Query DevTools - only in development */}
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
     </ErrorBoundary>
   );
 }

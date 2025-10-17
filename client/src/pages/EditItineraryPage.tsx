@@ -10,6 +10,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import ModernHeader from '../components/ModernHeader';
 import PlaceDetailsModal from '../components/PlaceDetailsModal';
 import AdditionalPlaces from '../components/AdditionalPlaces';
+import { CollaborationChat } from '../components/CollaborationChat';
 
 interface TimelineEvent {
   time: string;
@@ -523,7 +524,7 @@ const EditItineraryPage: React.FC = () => {
       {/* Enhanced Header */}
       <header className="bg-white dark:bg-gray-800 shadow-lg border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 w-full backdrop-blur-sm bg-white/95 dark:bg-gray-800/95">
         <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-6">
+          <div className="flex items-center justify-between py-3">
             {/* Left side - Back button and Logo/Name */}
             <div className="flex items-center space-x-4">
               <button
@@ -980,6 +981,11 @@ const EditItineraryPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Collaboration Chat */}
+      {itineraryData?.id && (
+        <CollaborationChat itineraryId={itineraryData.id} />
       )}
     </div>
   );

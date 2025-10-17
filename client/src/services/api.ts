@@ -408,6 +408,7 @@ export interface PlaceDetails {
   user_review?: string;
   thumbnail?: string;
   serpapi_thumbnail?: string;
+  high_res_image?: string;
   category: string;
   prefetched?: boolean;
   description?: string;
@@ -427,6 +428,7 @@ export interface AdditionalPlace {
   website?: string;
   thumbnail?: string;
   serpapi_thumbnail?: string;
+  high_res_image?: string;
   gps_coordinates?: {  // SERP API uses 'gps_coordinates'
     latitude: number;
     longitude: number;

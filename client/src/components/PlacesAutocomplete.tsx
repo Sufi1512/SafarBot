@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
-import { MapPin } from 'lucide-react';
 
 // Add custom styles for Google Places Autocomplete
 const addCustomStyles = () => {
@@ -63,17 +62,19 @@ const addCustomStyles = () => {
     }
     
     .pac-logo {
-      padding: 8px 16px;
+      padding: 8px 20px 8px 16px;
       border-top: 1px solid #f3f4f6;
       background-color: #f9fafb;
       font-size: 11px;
       color: #6b7280;
       text-align: right;
+      margin-right: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
-    .pac-logo:after {
-      content: "Powered by Google";
-    }
+ 
     
     .dark .pac-container {
       background-color: #1f2937;
@@ -106,6 +107,11 @@ const addCustomStyles = () => {
       background-color: #111827;
       border-top-color: #374151;
       color: #9ca3af;
+      padding: 8px 20px 8px 16px;
+      margin-right: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   `;
   document.head.appendChild(style);

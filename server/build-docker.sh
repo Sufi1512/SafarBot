@@ -17,3 +17,5 @@ echo "   docker run -p 8000:8000 -e REDIS_URL=redis://localhost:6379 safarbot-ba
 echo ""
 echo "📖 For development with docker-compose:"
 echo "   docker-compose up safarbot-backend"
+
+

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Star, MapPin, Clock, DollarSign, Phone, Globe, Utensils, Hotel } from 'lucide-react';
 import { PlaceDetails, AdditionalPlace } from '../services/api';
+import OptimizedImage from './OptimizedImage';
 
 interface EnhancedHoverPopupProps {
   place: PlaceDetails | AdditionalPlace | null;
@@ -59,30 +60,36 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
   useEffect(() => {
     if (!position) return;
 
-    // For initial positioning, we can't use popupRef.current yet
-    // So we'll use estimated dimensions and adjust later
-    const estimatedWidth = 400; // Estimated popup width
-    const estimatedHeight = 300; // Estimated popup height
+    const estimatedWidth = 400;
+    const estimatedHeight = 300;
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
+    const padding = 20;
     
     let x = position.x;
     let y = position.y;
 
-    // Adjust horizontal position if popup would go off-screen
-    if (x + estimatedWidth > viewportWidth - 20) {
-      x = position.x - estimatedWidth - 20;
+    // Horizontal positioning - prefer right side, fallback to left
+    if (x + estimatedWidth > viewportWidth - padding) {
+      x = position.x - estimatedWidth - 15; // Position to the left with gap
+    }
+    
+    // Ensure popup doesn't go off the left edge
+    if (x < padding) {
+      x = padding;
     }
 
-    // Adjust vertical position if popup would go off-screen
-    if (y + estimatedHeight > viewportHeight - 20) {
-      y = viewportHeight - estimatedHeight - 20;
+    // Vertical positioning - center on element, adjust if needed
+    y = position.y - (estimatedHeight / 2);
+    
+    // Adjust if popup would go off-screen vertically
+    if (y + estimatedHeight > viewportHeight - padding) {
+      y = viewportHeight - estimatedHeight - padding;
     }
-    if (y < 20) {
-      y = 20;
+    if (y < padding) {
+      y = padding;
     }
 
-    console.log('Setting adjusted position:', { x, y, originalPosition: position });
     setAdjustedPosition({ x, y });
   }, [position]);
 
@@ -157,45 +164,30 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
       }`}
       style={{
         left: adjustedPosition.x,
-        top: adjustedPosition.y,
-        transform: 'translateY(-50%)'
+        top: adjustedPosition.y
       }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      {/* Image Section with loading state */}
+      {/* Image Section with optimized loading */}
       {metadata.thumbnail ? (
         <div className="w-full h-40 bg-gray-200 dark:bg-gray-700 overflow-hidden relative">
-          <img
-            src={metadata.thumbnail}
+          <OptimizedImage
+            src={metadata.thumbnail || ''}
             alt={metadata.title}
-            className="w-full h-full object-cover transition-all duration-300 hover:scale-105"
-            onError={(e) => {
-              console.log('Image failed to load:', metadata.thumbnail);
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-            onLoad={(e) => {
-              console.log('Image loaded successfully:', metadata.thumbnail);
-              (e.target as HTMLImageElement).style.opacity = '1';
-            }}
-            style={{ opacity: 0 }}
+            className="w-full h-full"
+            quality="medium"
             loading="eager"
-            decoding="async"
+            fallbackSrc="/api/placeholder/400/300"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
         </div>
       ) : (
-        // Debug info when no thumbnail
-        process.env.NODE_ENV === 'development' && (
-          <div className="w-full h-40 bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-gray-500 text-sm">
-            <div className="text-center">
-              <div>📷 No Photo Available</div>
-              <div className="text-xs mt-1">
-                Place type: {isPlaceDetails(place) ? 'PlaceDetails' : 'AdditionalPlace'}
-              </div>
-            </div>
+        <div className="w-full h-40 bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-gray-500 text-sm">
+          <div className="text-center">
+            <div>📷 No Photo Available</div>
           </div>
-        )
+        </div>
       )}
 
       {/* Content */}

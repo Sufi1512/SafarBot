@@ -300,10 +300,24 @@ const ItineraryPage: React.FC = () => {
             </div>
             
             {/* Right side - Trip details */}
-            <div className="flex items-center space-x-6 text-sm text-gray-600 dark:text-gray-300">
+            <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
+              <button
+                onClick={() => navigate('/results', { state: { injectedEnhancedResponse: itineraryData } })}
+                className="bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-1.5 text-xs"
+              >
+                <span>📅</span>
+                <span>View Itinerary</span>
+              </button>
+              <button
+                onClick={() => navigate('/edit-itinerary', { state: { itineraryData } })}
+                className="bg-orange-600 text-white px-3 py-1.5 rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-1.5 text-xs"
+              >
+                <span>✏️</span>
+                <span>Edit</span>
+              </button>
               <button
                 onClick={() => navigate('/')}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-1.5 text-xs"
               >
                 <span>🔍</span>
                 <span>New Search</span>

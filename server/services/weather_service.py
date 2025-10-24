@@ -7,6 +7,7 @@ import logging
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 from config import settings
+from utils.location_utils import parse_location_for_weather
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ class WeatherService:
         Get current weather for a city
         
         Args:
-            city: City name
+            city: City name (can be full formatted address like "Vasco Da Gama, Goa, India")
             country_code: Optional country code (e.g., 'US', 'GB')
             
         Returns:
@@ -31,9 +32,14 @@ class WeatherService:
         if not self.api_key:
             logger.warning("OpenWeatherMap API key not configured")
             return {"error": "OpenWeatherMap API key not configured"}
+        
+        # Parse the city name if it's a full formatted address
+        parsed_city, parsed_country_code = parse_location_for_weather(city)
+        final_city = parsed_city if parsed_city != city else city
+        final_country_code = parsed_country_code if parsed_country_code else country_code
             
         try:
-            location = f"{city},{country_code}" if country_code else city
+            location = f"{final_city},{final_country_code}" if final_country_code else final_city
             url = f"{self.base_url}/weather"
             params = {
                 "q": location,
@@ -85,7 +91,7 @@ class WeatherService:
         Get weather forecast for a city
         
         Args:
-            city: City name
+            city: City name (can be full formatted address like "Vasco Da Gama, Goa, India")
             country_code: Optional country code
             days: Number of days to forecast (1-5)
             
@@ -95,9 +101,14 @@ class WeatherService:
         if not self.api_key:
             logger.warning("OpenWeatherMap API key not configured")
             return {"error": "OpenWeatherMap API key not configured"}
+        
+        # Parse the city name if it's a full formatted address
+        parsed_city, parsed_country_code = parse_location_for_weather(city)
+        final_city = parsed_city if parsed_city != city else city
+        final_country_code = parsed_country_code if parsed_country_code else country_code
             
         try:
-            location = f"{city},{country_code}" if country_code else city
+            location = f"{final_city},{final_country_code}" if final_country_code else final_city
             url = f"{self.base_url}/forecast"
             params = {
                 "q": location,

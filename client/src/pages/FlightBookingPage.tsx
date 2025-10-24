@@ -20,6 +20,7 @@ import {
 import { flightAPI, Flight, FlightSearchRequest, AirportSuggestion } from '../services/api';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
+import AirportAutocomplete from '../components/AirportAutocomplete';
 import bgVideo2 from '../asset/videos/flight-bg.mp4';
 
 const FlightBookingPage: React.FC = () => {
@@ -46,10 +47,7 @@ const FlightBookingPage: React.FC = () => {
     maxStops: 2,
     airlines: [] as string[]
   });
-  const [fromSuggestions, setFromSuggestions] = useState<AirportSuggestion[]>([]);
-  const [toSuggestions, setToSuggestions] = useState<AirportSuggestion[]>([]);
-  const [showFromSuggestions, setShowFromSuggestions] = useState(false);
-  const [showToSuggestions, setShowToSuggestions] = useState(false);
+  // Removed hardcoded airport suggestions - now using Google Places API
 
   // Load popular flights on component mount
   useEffect(() => {
@@ -65,47 +63,13 @@ const FlightBookingPage: React.FC = () => {
     loadPopularFlights();
   }, []);
 
-  // Airport suggestions functions
-  const handleFromInputChange = async (value: string) => {
-    setSearchForm(prev => ({ ...prev, from: value }));
-    if (value.length >= 2) {
-      try {
-        const suggestions = await flightAPI.getAirportSuggestions(value);
-        setFromSuggestions(suggestions);
-        setShowFromSuggestions(true);
-      } catch (error) {
-        console.error('Error getting airport suggestions:', error);
-      }
-    } else {
-      setFromSuggestions([]);
-      setShowFromSuggestions(false);
-    }
-  };
-
-  const handleToInputChange = async (value: string) => {
-    setSearchForm(prev => ({ ...prev, to: value }));
-    if (value.length >= 2) {
-      try {
-        const suggestions = await flightAPI.getAirportSuggestions(value);
-        setToSuggestions(suggestions);
-        setShowToSuggestions(true);
-      } catch (error) {
-        console.error('Error getting airport suggestions:', error);
-      }
-    } else {
-      setToSuggestions([]);
-      setShowToSuggestions(false);
-    }
-  };
-
-  const selectFromAirport = (airport: AirportSuggestion) => {
+  // Airport selection handlers using Google Places API
+  const handleFromAirportSelect = (airport: AirportSuggestion) => {
     setSearchForm(prev => ({ ...prev, from: airport.code }));
-    setShowFromSuggestions(false);
   };
 
-  const selectToAirport = (airport: AirportSuggestion) => {
+  const handleToAirportSelect = (airport: AirportSuggestion) => {
     setSearchForm(prev => ({ ...prev, to: airport.code }));
-    setShowToSuggestions(false);
   };
 
   const handleTripTypeChange = (tripType: string) => {
@@ -340,76 +304,32 @@ const FlightBookingPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                 {/* From */}
                 <div className="relative">
-                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-cyan-500" />
-                        <span>From</span>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-cyan-500" />
+                    <span>From</span>
                   </label>
-                      <div className="relative group">
-                  <input
-                    type="text"
+                  <AirportAutocomplete
                     value={searchForm.from}
-                    onChange={(e) => handleFromInputChange(e.target.value)}
-                    onFocus={() => searchForm.from.length >= 2 && setShowFromSuggestions(true)}
-                    onBlur={() => setTimeout(() => setShowFromSuggestions(false), 200)}
-                          placeholder="Departure city"
-                          className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/95 dark:bg-gray-700/95 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500 transition-all duration-300 text-sm font-medium hover:border-cyan-400 shadow-sm hover:shadow-md"
+                    onChange={(value) => setSearchForm(prev => ({ ...prev, from: value }))}
+                    onAirportSelect={handleFromAirportSelect}
+                    placeholder="Departure airport"
                     required
                   />
-                        <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-cyan-500 group-hover:text-blue-500 transition-colors z-10" />
-                        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                      </div>
-                  {showFromSuggestions && fromSuggestions.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-dark-card border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg max-h-60 overflow-y-auto">
-                      {fromSuggestions.map((airport, index) => (
-                        <div
-                          key={index}
-                          className="px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
-                          onClick={() => selectFromAirport(airport)}
-                        >
-                          <div className="font-medium text-gray-900 dark:text-white">{airport.code}</div>
-                          <div className="text-sm text-gray-600 dark:text-gray-300">{airport.name}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">{airport.city}, {airport.country}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
                 {/* To */}
                 <div className="relative">
-                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-cyan-500" />
-                        <span>To</span>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-cyan-500" />
+                    <span>To</span>
                   </label>
-                      <div className="relative group">
-                  <input
-                    type="text"
+                  <AirportAutocomplete
                     value={searchForm.to}
-                    onChange={(e) => handleToInputChange(e.target.value)}
-                    onFocus={() => searchForm.to.length >= 2 && setShowToSuggestions(true)}
-                    onBlur={() => setTimeout(() => setShowToSuggestions(false), 200)}
-                    placeholder="Destination city"
-                          className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-sm font-medium hover:border-cyan-400 shadow-sm hover:shadow-md"
+                    onChange={(value) => setSearchForm(prev => ({ ...prev, to: value }))}
+                    onAirportSelect={handleToAirportSelect}
+                    placeholder="Destination airport"
                     required
                   />
-                        <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-cyan-500 group-hover:text-blue-500 transition-colors z-10" />
-                        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                      </div>
-                  {showToSuggestions && toSuggestions.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-dark-card border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg max-h-60 overflow-y-auto">
-                      {toSuggestions.map((airport, index) => (
-                        <div
-                          key={index}
-                          className="px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
-                          onClick={() => selectToAirport(airport)}
-                        >
-                          <div className="font-medium text-gray-900 dark:text-white">{airport.code}</div>
-                          <div className="text-sm text-gray-600 dark:text-gray-300">{airport.name}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">{airport.city}, {airport.country}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
 

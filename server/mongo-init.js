@@ -49,3 +49,5 @@ print("✅ SafarBot database initialized successfully!");
 print("📊 Collections created: users, saved_itineraries, collaboration_rooms, notifications, bookings, weather_cache");
 print("🔍 Indexes created for optimal performance");
 print("👤 Default admin user created: admin@safarbot.com");
+
+

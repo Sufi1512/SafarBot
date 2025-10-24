@@ -374,7 +374,7 @@ const SavedPage: React.FC = () => {
           <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={() => loadItineraries()}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm"
           >
             Try Again
           </button>

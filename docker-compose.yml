@@ -96,3 +96,5 @@ volumes:
 networks:
   safarbot-network:
     driver: bridge
+
+

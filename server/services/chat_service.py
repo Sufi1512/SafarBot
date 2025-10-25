@@ -2,24 +2,15 @@ import asyncio
 from typing import Dict, Any, Optional
 import logging
 from config import settings
-import google.generativeai as genai
+from services.openai_service import openai_service
 
 logger = logging.getLogger(__name__)
 
 class ChatService:
     def __init__(self):
-        # Initialize Google Gemini API
-        if settings.google_api_key:
-            try:
-                genai.configure(api_key=settings.google_api_key)
-                self.model = genai.GenerativeModel('gemini-2.5-flash')
-                logger.info("Google Gemini API initialized")
-            except Exception as e:
-                logger.warning(f"Failed to initialize Google Gemini API: {str(e)}")
-                self.model = None
-        else:
-            logger.warning("No Google API key provided")
-            self.model = None
+        # Use OpenAI service instead of Gemini
+        self.ai_service = openai_service
+        logger.info("Chat service initialized with OpenAI GPT-4")
         
     async def get_response(
         self,
@@ -27,29 +18,11 @@ class ChatService:
         context: Optional[Dict[str, Any]] = None
     ) -> str:
         """
-        Get AI response for user message
+        Get AI response for user message using OpenAI GPT-4
         """
         try:
-            if not self.model:
-                return "I apologize, but the AI service is not properly configured. Please check the API configuration."
-            
-            # Create a travel-focused prompt with sanitized input
-            # Sanitize template injection attempts
-            sanitized_message = message.replace("{", "{{").replace("}", "}}").replace("$", "$$")
-            sanitized_context = str(context or 'No specific context provided').replace("{", "{{").replace("}", "}}").replace("$", "$$")
-            
-            travel_prompt = f"""
-            You are a helpful AI travel assistant. Please provide helpful travel advice and recommendations.
-            
-            User message: {sanitized_message}
-            
-            Context: {sanitized_context}
-            
-            Please provide a helpful, informative response about travel planning, destinations, or travel-related questions.
-            """
-            
-            response = self.model.generate_content(travel_prompt)
-            return response.text
+            # Use OpenAI service for better responses
+            return await self.ai_service.get_response(message, context)
             
         except Exception as e:
             logger.error(f"Error in chat service: {str(e)}")
@@ -61,26 +34,11 @@ class ChatService:
         question: str
     ) -> str:
         """
-        Get specific travel advice for a destination
+        Get specific travel advice for a destination using OpenAI GPT-4
         """
         try:
-            if not self.model:
-                return "I apologize, but the AI service is not properly configured. Please check the API configuration."
-            
-            advice_prompt = f"""
-            Please provide specific travel advice for {destination}.
-            
-            Question: {question}
-            
-            Please include:
-            - Practical tips for visiting {destination}
-            - Recommendations based on the question
-            - Safety considerations
-            - Best times to visit
-            """
-            
-            response = self.model.generate_content(advice_prompt)
-            return response.text
+            # Use OpenAI service for specialized travel advice
+            return await self.ai_service.get_travel_advice(destination, question)
             
         except Exception as e:
             logger.error(f"Error getting travel advice: {str(e)}")

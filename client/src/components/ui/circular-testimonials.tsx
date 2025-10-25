@@ -190,7 +190,7 @@ export const CircularTestimonials = ({
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 md:px-8 lg:px-12 py-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-24">
         {/* Images */}
         <div className="relative w-full h-96 perspective-1000" ref={imageContainerRef}>
           {testimonials.map((testimonial, index) => (
@@ -221,7 +221,7 @@ export const CircularTestimonials = ({
           ))}
         </div>
         {/* Content */}
-        <div className="flex flex-col justify-between">
+        <div className="flex flex-col justify-between md:pl-8 lg:pl-12">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeIndex}
@@ -237,7 +237,7 @@ export const CircularTestimonials = ({
               <p className="text-gray-600 dark:text-gray-400 mb-8" style={{ fontSize: fontSizeDesignation }}>
                 {activeTestimonial.designation}
               </p>
-              <motion.p className="text-gray-700 dark:text-gray-300 leading-relaxed" style={{ fontSize: fontSizeQuote }}>
+              <motion.p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-6 md:mb-8" style={{ fontSize: fontSizeQuote }}>
                 {activeTestimonial.quote.split(" ").map((word, i) => (
                   <motion.span
                     key={i}
@@ -264,7 +264,7 @@ export const CircularTestimonials = ({
               </motion.p>
             </motion.div>
           </AnimatePresence>
-          <div className="flex gap-6 pt-12 md:pt-0">
+          <div className="flex gap-6 mt-6 md:mt-8 lg:mt-10">
             <button
               className="w-11 h-11 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110"
               onClick={handlePrev}

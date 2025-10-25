@@ -7,8 +7,14 @@ class Settings(BaseSettings):
     api_v1_prefix: str = "/api/v1"
     project_name: str = "SafarBot"
     
-    # Google Gemini API
+    # Google Gemini API (legacy)
     google_api_key: Optional[str] = None
+    
+    # OpenAI API (primary AI service)
+    openai_api_key: Optional[str] = None
+    
+    # Redis Configuration
+    redis_url: Optional[str] = None
     
     # Google SERP API (for flight search)
     serp_api_key: Optional[str] = None
@@ -48,6 +54,10 @@ class Settings(BaseSettings):
         # Fallback to environment variable if not set
         if not self.google_api_key:
             self.google_api_key = os.getenv("GOOGLE_API_KEY")
+        if not self.openai_api_key:
+            self.openai_api_key = os.getenv("OPENAI_API_KEY")
+        if not self.redis_url:
+            self.redis_url = os.getenv("REDIS_URL")
         if not self.serp_api_key:
             self.serp_api_key = os.getenv("SERP_API_KEY")
         if not self.open_weather_api_key:
@@ -61,12 +71,13 @@ class Settings(BaseSettings):
     def validate_required_env_vars(self):
         """Validate that all required environment variables are set"""
         required_vars = [
-            "GOOGLE_API_KEY",
+            "OPENAI_API_KEY",  # Primary AI service
             "SERP_API_KEY", 
             "OPEN_WEATHER_API_KEY",
             "BREVO_API_KEY",
             "MONGODB_URL"
         ]
+        # Optional: REDIS_URL, GOOGLE_API_KEY (legacy)
         missing = [var for var in required_vars if not os.getenv(var)]
         if missing:
             raise ValueError(f"Missing required environment variables: {missing}")

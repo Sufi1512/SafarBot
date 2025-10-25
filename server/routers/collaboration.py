@@ -13,7 +13,10 @@ from mongo_models import (
     InvitationStatus,
     NotificationType,
     NotificationStatus,
-    PyObjectId
+    PyObjectId,
+    CollaborationRoomDocument,
+    ChatMessageDocument,
+    RoomInvitationDocument
 )
 from routers.auth import get_current_user
 from models import APIResponse, InviteCollaboratorRequest, AcceptInvitationRequest, CollaboratorRole
@@ -1144,4 +1147,269 @@ async def get_my_collaborations(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get collaborations: {str(e)}"
+        )
+
+# ============ COLLABORATION ROOM ENDPOINTS ============
+
+class CreateRoomRequest(BaseModel):
+    itinerary_id: str
+    room_name: Optional[str] = None
+
+class RoomStatusResponse(BaseModel):
+    exists: bool
+    room_id: Optional[str] = None
+    can_join: bool = False
+    is_member: bool = False
+    room_name: Optional[str] = None
+    member_count: int = 0
+
+@router.get("/room/status/{itinerary_id}", response_model=APIResponse)
+async def get_room_status(
+    itinerary_id: str,
+    current_user: dict = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Get collaboration room status for an itinerary"""
+    try:
+        user_id = PyObjectId(current_user["user_id"])
+        itinerary_obj_id = PyObjectId(itinerary_id)
+        
+        # Check if user has access to the itinerary
+        itinerary = await db.saved_itineraries.find_one({
+            "_id": itinerary_obj_id,
+            "$or": [
+                {"user_id": user_id},  # Owner
+                {"collaborators": user_id}  # Collaborator
+            ]
+        })
+        
+        if not itinerary:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Itinerary not found or access denied"
+            )
+        
+        # Check if room exists
+        room = await db.collaboration_rooms.find_one({"itinerary_id": itinerary_obj_id})
+        
+        if not room:
+            return APIResponse(
+                success=True,
+                message="No room exists for this itinerary",
+                data=RoomStatusResponse(
+                    exists=False,
+                    can_join=False,
+                    is_member=False
+                )
+            )
+        
+        # Check if user can join
+        can_join = (
+            user_id == room["created_by"] or 
+            user_id in room.get("invited_users", []) or
+            user_id == itinerary["user_id"]  # Itinerary owner
+        )
+        
+        is_member = user_id in room.get("joined_users", [])
+        member_count = len(room.get("joined_users", []))
+        
+        return APIResponse(
+            success=True,
+            message="Room status retrieved",
+            data=RoomStatusResponse(
+                exists=True,
+                room_id=room["room_id"],
+                can_join=can_join,
+                is_member=is_member,
+                room_name=room["room_name"],
+                member_count=member_count
+            )
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get room status: {str(e)}"
+        )
+
+@router.post("/room/create", response_model=APIResponse)
+async def create_collaboration_room(
+    request: CreateRoomRequest,
+    current_user: dict = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Create a collaboration room for an itinerary"""
+    try:
+        user_id = PyObjectId(current_user["user_id"])
+        itinerary_obj_id = PyObjectId(request.itinerary_id)
+        
+        # Verify user owns the itinerary or is a collaborator
+        itinerary = await db.saved_itineraries.find_one({
+            "_id": itinerary_obj_id,
+            "$or": [
+                {"user_id": user_id},  # Owner
+                {"collaborators": user_id}  # Collaborator
+            ]
+        })
+        
+        if not itinerary:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Itinerary not found or access denied"
+            )
+        
+        # Check if room already exists
+        existing_room = await db.collaboration_rooms.find_one({"itinerary_id": itinerary_obj_id})
+        if existing_room:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Room already exists for this itinerary"
+            )
+        
+        # Create room
+        room_name = request.room_name or f"{itinerary['title']} - Collaboration"
+        
+        room_data = CollaborationRoomDocument(
+            itinerary_id=itinerary_obj_id,
+            created_by=user_id,
+            room_name=room_name,
+            invited_users=[user_id],  # Creator is automatically invited
+            joined_users=[user_id]   # Creator automatically joins
+        )
+        
+        # Add all existing collaborators to invited list
+        if "collaborators" in itinerary:
+            room_data.invited_users.extend(itinerary["collaborators"])
+        
+        result = await db.collaboration_rooms.insert_one(room_data.model_dump(by_alias=True))
+        
+        return APIResponse(
+            success=True,
+            message="Collaboration room created successfully",
+            data={
+                "room_id": room_data.room_id,
+                "room_name": room_data.room_name,
+                "itinerary_id": request.itinerary_id
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create room: {str(e)}"
+        )
+
+@router.post("/room/{room_id}/join", response_model=APIResponse)
+async def join_room(
+    room_id: str,
+    current_user: dict = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Join a collaboration room"""
+    try:
+        user_id = PyObjectId(current_user["user_id"])
+        
+        # Find the room
+        room = await db.collaboration_rooms.find_one({"room_id": room_id})
+        if not room:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Room not found"
+            )
+        
+        # Check if user is invited
+        if user_id not in room.get("invited_users", []):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not invited to this room"
+            )
+        
+        # Check if already joined
+        if user_id in room.get("joined_users", []):
+            return APIResponse(
+                success=True,
+                message="Already a member of this room",
+                data={"room_id": room_id}
+            )
+        
+        # Add user to joined_users
+        await db.collaboration_rooms.update_one(
+            {"room_id": room_id},
+            {
+                "$addToSet": {"joined_users": user_id},
+                "$set": {"last_activity": datetime.utcnow()}
+            }
+        )
+        
+        return APIResponse(
+            success=True,
+            message="Successfully joined the room",
+            data={"room_id": room_id}
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to join room: {str(e)}"
+        )
+
+@router.get("/room/{room_id}/info", response_model=APIResponse)
+async def get_room_info(
+    room_id: str,
+    current_user: dict = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Get room information"""
+    try:
+        user_id = PyObjectId(current_user["user_id"])
+        
+        room = await db.collaboration_rooms.find_one({"room_id": room_id})
+        if not room:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Room not found"
+            )
+        
+        # Check access
+        if user_id not in room.get("invited_users", []):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied"
+            )
+        
+        # Get member details
+        members = []
+        for member_id in room.get("joined_users", []):
+            user_doc = await db.users.find_one({"_id": member_id})
+            if user_doc:
+                members.append({
+                    "user_id": str(member_id),
+                    "name": user_doc.get("name", "Unknown"),
+                    "email": user_doc.get("email", "")
+                })
+        
+        return APIResponse(
+            success=True,
+            message="Room info retrieved",
+            data={
+                "room_id": room_id,
+                "room_name": room["room_name"],
+                "created_by": str(room["created_by"]),
+                "created_at": room["created_at"].isoformat(),
+                "member_count": len(room.get("joined_users", [])),
+                "members": members,
+                "is_active": room.get("is_active", True)
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get room info: {str(e)}"
         )

@@ -509,6 +509,58 @@ class ItineraryCollaboratorDocument(MongoBaseModel):
     permissions: Dict[str, bool] = Field(default_factory=dict)  # Custom permissions
     collaborator_itinerary_id: Optional[PyObjectId] = None  # ID of collaborator's copy of the itinerary
 
+# Collaboration Room Models for Chat
+class CollaborationRoomDocument(MongoBaseModel):
+    """Model for itinerary-specific chat rooms"""
+    room_id: str = Field(default_factory=lambda: f"room_{str(uuid.uuid4())[:8]}")
+    itinerary_id: PyObjectId  # Associated saved itinerary
+    created_by: PyObjectId   # User who created the room
+    room_name: str
+    description: Optional[str] = None
+    is_active: bool = True
+    
+    # Access control - only invited users can join
+    invited_users: List[PyObjectId] = Field(default_factory=list)  # Users who can join
+    joined_users: List[PyObjectId] = Field(default_factory=list)   # Users currently in room
+    
+    # Room metadata
+    last_activity: datetime = Field(default_factory=datetime.utcnow)
+    message_count: int = 0
+    
+    # Room settings
+    max_users: int = 20
+    is_public: bool = False  # Private by default, only invited users
+
+class ChatMessageDocument(MongoBaseModel):
+    """Model for chat messages within rooms"""
+    room_id: str
+    user_id: PyObjectId
+    user_name: str
+    message: str
+    message_type: str = "text"  # text, image, file, system
+    
+    # Message metadata
+    sent_at: datetime = Field(default_factory=datetime.utcnow)
+    edited_at: Optional[datetime] = None
+    is_deleted: bool = False
+    
+    # Reply support
+    reply_to: Optional[PyObjectId] = None  # Message ID being replied to
+
+class RoomInvitationDocument(MongoBaseModel):
+    """Model for room invitations"""
+    room_id: str
+    inviter_id: PyObjectId
+    invitee_email: EmailStr
+    invitee_id: Optional[PyObjectId] = None  # Set when user accepts
+    
+    invitation_token: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    expires_at: datetime = Field(default_factory=lambda: datetime.utcnow() + timedelta(days=7))
+    status: str = "pending"  # pending, accepted, expired, declined
+    
+    sent_at: datetime = Field(default_factory=datetime.utcnow)
+    responded_at: Optional[datetime] = None
+
 # Enhanced Notification Types for Collaboration
 class CollaborationNotificationType(str, Enum):
     INVITATION_RECEIVED = "invitation_received"

@@ -216,9 +216,6 @@ const PlaceDetailsModal: React.FC<PlaceDetailsModalProps> = ({
         {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex justify-between items-center">
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            {place.place_id && (
-              <span>ID: {place.place_id}</span>
-            )}
           </div>
           <div className="flex gap-3">
             {showAddButton && onAddToItinerary && (

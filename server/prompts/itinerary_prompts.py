@@ -11,13 +11,15 @@ CRITICAL REQUIREMENTS - MUST FOLLOW EXACTLY:
 2. Generate EXACTLY {total_days} daily plans (Day 1, Day 2, etc.)
 3. Day 1 MUST start with hotel check-in/arrival as the FIRST activity
 4. Include 2-3 activities per day minimum (after check-in on Day 1)
-5. Include 2-3 meals per day minimum  
-6. Include transportation between all locations
-7. Provide EXACTLY 10-12 travel tips (NOT 2, NOT 5, EXACTLY 10-12)
-8. Use unique place_ids for all locations
-9. Include realistic costs in USD
-10. Consider weather: {weather_info}
-11. Respect dietary preferences: {dietary_preferences}
+5. Include 2-3 meals per day minimum
+6. CRITICAL: Day 1 MUST include dinner (meal_type: "dinner") after arrival
+7. CRITICAL: Last day MUST include dinner (meal_type: "dinner") before departure  
+8. Include transportation between all locations
+9. Provide EXACTLY 10-12 travel tips (NOT 2, NOT 5, EXACTLY 10-12)
+10. Use unique place_ids for all locations
+11. Include realistic costs in USD
+12. Consider weather: {weather_info}
+13. Respect dietary preferences: {dietary_preferences}
 
 FAILURE TO PROVIDE 10-12 TRAVEL TIPS WILL RESULT IN INVALID RESPONSE
 

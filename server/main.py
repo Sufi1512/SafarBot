@@ -89,6 +89,9 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000", 
         "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+        "null",  # Allow local file:// origins for testing
         "https://safarbot.vercel.app",
         "https://safarbot-git-main-sufi1512.vercel.app",
         "https://safarbot-sufi1512.vercel.app",
@@ -101,10 +104,10 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-# Database events
+# Database and Redis events
 @app.on_event("startup")
 async def startup_db_client():
-    """Connect to MongoDB on startup."""
+    """Connect to MongoDB and Redis on startup."""
     try:
         await Database.connect_db()
         print("✅ Database connection established")
@@ -113,12 +116,38 @@ async def startup_db_client():
         print("⚠️  Application will start without database connection")
         # Don't raise the exception to allow the app to start
         # This is important for deployment when MongoDB might not be available
+    
+    # Initialize Redis connection
+    try:
+        from services.redis_service import redis_service
+        await redis_service.connect()
+        print("✅ Redis connection established")
+    except Exception as e:
+        print(f"❌ Redis connection failed: {e}")
+        print("⚠️  Application will continue with limited caching")
+    
+    # Initialize WebSocket service
+    try:
+        from services.websocket_service import websocket_service
+        await websocket_service.initialize()
+        print("✅ WebSocket service initialized")
+    except Exception as e:
+        print(f"❌ WebSocket initialization failed: {e}")
+        print("⚠️  Real-time features will be limited")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
     """Close MongoDB connection on shutdown."""
     await Database.close_db()
     print("✅ Database connection closed")
+    
+    # Close Redis connection
+    try:
+        from services.redis_service import redis_service
+        await redis_service.disconnect()
+        print("✅ Redis connection closed")
+    except Exception as e:
+        print(f"⚠️  Redis disconnect warning: {e}")
 
 # Include routers
 app.include_router(auth, prefix="/api/v1/auth", tags=["authentication"])
@@ -135,6 +164,24 @@ app.include_router(weather_router, prefix="/api/v1", tags=["weather"])
 app.include_router(ip_tracking_router, prefix="/api/v1", tags=["ip-tracking"])
 app.include_router(collaboration_router, prefix="/api/v1", tags=["collaboration"])
 app.include_router(notifications_router, prefix="/api/v1", tags=["notifications"])
+
+# Mount WebSocket app (Socket.IO - temporarily disabled)
+# from services.websocket_service import socketio_app
+# app.mount("/socket.io", socketio_app)
+
+# Chat Collaboration WebSocket endpoints
+from fastapi import WebSocket
+from services.chat_collaboration_service import chat_service
+
+@app.websocket("/chat/{user_id}")
+async def chat_websocket_endpoint(websocket: WebSocket, user_id: str, user_name: str = None):
+    """Chat collaboration WebSocket endpoint for authenticated users"""
+    await chat_service.handle_websocket(websocket, user_id, user_name)
+
+@app.websocket("/chat/{user_id}/{user_name}")
+async def chat_websocket_with_name(websocket: WebSocket, user_id: str, user_name: str):
+    """Chat collaboration WebSocket endpoint with user name"""
+    await chat_service.handle_websocket(websocket, user_id, user_name)
 
 @app.get("/health")
 async def health_check():
@@ -155,6 +202,48 @@ async def health_check():
         "database": db_status,
         "version": "1.0.0"
     }
+
+@app.get("/socket.io/")
+async def socket_io_blocked():
+    """Block Socket.IO requests completely"""
+    from fastapi import Response
+    # Return a response that makes Socket.IO clients stop retrying
+    return Response(
+        content="Socket.IO service discontinued. Use native WebSocket at ws://localhost:8000/ws/",
+        status_code=410,  # 410 Gone - service permanently discontinued
+        headers={
+            "Connection": "close",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+    )
+
+@app.get("/redis-status")
+async def redis_status():
+    """Redis status and configuration endpoint."""
+    try:
+        from services.redis_service import redis_service
+        
+        # Test Redis connection
+        is_healthy = await redis_service.health_check()
+        cache_stats = await redis_service.get_cache_stats()
+        
+        return {
+            "redis_configured": True,
+            "redis_healthy": is_healthy,
+            "redis_stats": cache_stats,
+            "fallback_active": not is_healthy,
+            "message": "Redis working" if is_healthy else "Using in-memory fallback"
+        }
+    except Exception as e:
+        return {
+            "redis_configured": False,
+            "redis_healthy": False,
+            "error": str(e),
+            "fallback_active": True,
+            "message": "Redis service not available, using fallback"
+        }
 
 @app.get("/")
 async def root():

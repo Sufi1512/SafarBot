@@ -104,6 +104,27 @@ export const WeatherCard: React.FC<WeatherCardProps> = ({
             </div>
           </div>
         </div>
+        
+        {/* Weather Details Row */}
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-200">
+          <div className="flex items-center space-x-3 text-xs text-gray-600">
+            <div className="flex items-center space-x-1">
+              <span className="font-medium">Wind:</span>
+              <span>{weatherData.current.wind_speed} m/s</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className="font-medium">Pressure:</span>
+              <span>{weatherData.current.pressure} hPa</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className="font-medium">Visibility:</span>
+              <span>{weatherData.current.visibility} km</span>
+            </div>
+          </div>
+          <div className="text-xs text-gray-500">
+            <span className="font-medium">Feels like:</span> {Math.round(weatherData.current.feels_like)}°C
+          </div>
+        </div>
       </Card>
     );
   }

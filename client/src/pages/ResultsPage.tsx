@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Calendar, DollarSign, Clock, Star, AlertCircle, Hotel, Utensils } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import { itineraryAPI, EnhancedItineraryResponse, PlaceDetails, AdditionalPlace } from '../services/api';
 import api from '../services/api';
 import GoogleMaps from '../components/GoogleMaps';
@@ -10,6 +11,7 @@ import EnhancedHoverPopup from '../components/EnhancedHoverPopup';
 import WeatherCard from '../components/WeatherCard';
 import { WeatherDisplay } from '../components/WeatherDisplay';
 import ModernHeader from '../components/ModernHeader';
+import { parseLocationForWeather } from '../utils/locationUtils';
 
 // Import Location interface from GoogleMaps component
 interface Location {
@@ -92,6 +94,7 @@ interface ItineraryData {
 const ResultsPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const [itineraryData, setItineraryData] = useState<ItineraryData | null>(null);
   
   // Enhanced API Response State
@@ -113,6 +116,7 @@ const ResultsPage: React.FC = () => {
   } | null>(null);
   const [tips, setTips] = useState<string[]>([]);
   const hasGeneratedRef = useRef(false);
+  const isInitializedRef = useRef(false);
 
   // Place Details Modal State
   const [selectedPlace, setSelectedPlace] = useState<PlaceDetails | AdditionalPlace | null>(null);
@@ -125,13 +129,14 @@ const ResultsPage: React.FC = () => {
   const [isHoverPopupVisible, setIsHoverPopupVisible] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
+  
 
   // Legacy hover state for backward compatibility
   const [hoveredItem, setHoveredItem] = useState<Activity | Hotel | Restaurant | null>(null);
   const [hoveredItemType, setHoveredItemType] = useState<'activity' | 'hotel' | 'restaurant' | null>(null);
 
-  // Enhanced helper function for hover events with place details
-  const handlePlaceHover = (
+  // Enhanced helper function for hover events with place details - memoized
+  const handlePlaceHover = useCallback((
     e: React.MouseEvent,
     place: PlaceDetails | AdditionalPlace,
     type: 'activity' | 'hotel' | 'restaurant' | 'attraction'
@@ -165,16 +170,16 @@ const ResultsPage: React.FC = () => {
     setHoveredPlace(place);
     setHoveredPlaceType(type);
     setIsHoverPopupVisible(true);
-  };
+  }, []); // Empty dependency array since it only uses refs and setters
 
-  const handlePlaceHoverLeave = () => {
+  const handlePlaceHoverLeave = useCallback(() => {
     hoverTimeoutRef.current = setTimeout(() => {
       setHoveredPlace(null);
       setHoveredPlaceType(null);
       setHoverPosition(null);
       setIsHoverPopupVisible(false);
     }, 150); // Reduced delay for more responsive feel
-  };
+  }, []); // Empty dependency array since it only uses refs and setters
 
   // Legacy helper function for hover events (for backward compatibility)
   const handleMouseEnter = (e: React.MouseEvent, item: Activity | Hotel | Restaurant, type: 'activity' | 'hotel' | 'restaurant') => {
@@ -194,6 +199,7 @@ const ResultsPage: React.FC = () => {
       setHoverPosition(null);
     }, 300);
   };
+
 
   // SERP image cache state removed since SERP API functionality was removed
 
@@ -215,8 +221,8 @@ const ResultsPage: React.FC = () => {
     // TODO: Implement actual itinerary addition logic
   };
 
-  // Enhanced location extraction with place details
-  const extractLocations = () => {
+  // Enhanced location extraction with place details - memoized to prevent unnecessary recalculations
+  const extractLocations = useMemo(() => {
     const locations: Location[] = [];
     
     console.log('Enhanced extractLocations called with:', {
@@ -414,15 +420,35 @@ const ResultsPage: React.FC = () => {
     console.log('Total locations extracted:', locations.length);
     console.log('Locations:', locations);
     return locations;
-  };
+  }, [enhancedResponse, allPlaceDetails, dailyPlans, hotels]); // Memoize based on dependencies
 
   useEffect(() => {
     console.log('useEffect triggered:', { 
       hasState: !!location.state, 
       hasGenerated: hasGeneratedRef.current,
       isLoading,
+      isInitialized: isInitializedRef.current,
       locationState: location.state
     });
+    
+    // Check authentication first
+    if (!isAuthenticated || !user) {
+      console.log('User not authenticated, redirecting to login...');
+      setError('Please log in to access your itinerary results.');
+      navigate('/login', { 
+        state: { 
+          from: '/results',
+          message: 'Please log in to access your itinerary results.' 
+        } 
+      });
+      return;
+    }
+    
+    // Prevent multiple initializations
+    if (isInitializedRef.current) {
+      console.log('Component already initialized, skipping...');
+      return;
+    }
     
     // If no location state, redirect to home
     if (!location.state) {
@@ -442,6 +468,9 @@ const ResultsPage: React.FC = () => {
       console.log('Itinerary already generated, skipping...');
       return;
     }
+    
+    // Mark as initialized to prevent re-runs
+    isInitializedRef.current = true;
 
     // Support injecting a ready enhanced itinerary via navigation state
     const injected = (location.state as any)?.injectedEnhancedResponse as EnhancedItineraryResponse | undefined;
@@ -472,7 +501,7 @@ const ResultsPage: React.FC = () => {
     console.log('Starting itinerary generation...');
     setItineraryData(location.state as any);
     generateRealItinerary(location.state as any);
-  }, [location.state, navigate]);
+  }, []); // Empty dependency array to run only once on mount
   
   // Separate useEffect for cleanup when location state changes
   useEffect(() => {
@@ -496,6 +525,22 @@ const ResultsPage: React.FC = () => {
   const generateRealItinerary = async (data: ItineraryData) => {
     console.log('generateRealItinerary called with data:', data);
     
+    // Check if user is authenticated before generating itinerary
+    if (!isAuthenticated || !user) {
+      console.log('User not authenticated, redirecting to login...');
+      setError('Please log in to generate your itinerary.');
+      // Store the form data for after login
+      localStorage.setItem('pendingItineraryData', JSON.stringify(data));
+      // Redirect to login page
+      navigate('/login', { 
+        state: { 
+          from: '/results',
+          message: 'Please log in to generate your itinerary.' 
+        } 
+      });
+      return;
+    }
+    
     // Prevent duplicate API calls and add retry limit
     if (isLoading) {
       console.log('API call already in progress, skipping...');
@@ -507,6 +552,9 @@ const ResultsPage: React.FC = () => {
       console.log('Itinerary already generated (ref check), skipping...');
       return;
     }
+    
+    // Mark as generated immediately to prevent race conditions
+    hasGeneratedRef.current = true;
     
     console.log(`Attempt 1 of 1`);
     
@@ -692,6 +740,22 @@ const ResultsPage: React.FC = () => {
 
 
 
+  // Performance optimization: Memoize tab content to prevent unnecessary re-renders
+  const memoizedTabContent = useMemo(() => {
+    if (activeTab === 'additional' && enhancedResponse) {
+      return (
+        <AdditionalPlaces
+          additionalPlaces={enhancedResponse.additional_places}
+          onAddToItinerary={handleAddToItinerary}
+          onPlaceHover={handlePlaceHover}
+          onPlaceHoverLeave={handlePlaceHoverLeave}
+          enablePagination={true}
+        />
+      );
+    }
+    return null;
+  }, [activeTab, enhancedResponse, handleAddToItinerary, handlePlaceHover, handlePlaceHoverLeave]);
+
   if (!itineraryData) {
     return null;
   }
@@ -708,7 +772,7 @@ const ResultsPage: React.FC = () => {
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 w-full">
         <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-6">
+          <div className="flex items-center justify-between py-1.5">
             {/* Left side - Back button and Logo/Name */}
             <div className="flex items-center space-x-4">
               <button
@@ -718,9 +782,9 @@ const ResultsPage: React.FC = () => {
                 <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300 group-hover:text-gray-800 dark:group-hover:text-white" />
               </button>
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                {/* <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                   <MapPin className="w-6 h-6 text-white" />
-                </div>
+                </div> */}
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                     {enhancedResponse?.itinerary.destination || itineraryData.destination} Itinerary
@@ -745,8 +809,8 @@ const ResultsPage: React.FC = () => {
               </div>
               <div className="flex items-center">
                 <DollarSign className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Budget: ${itineraryData.budget}</span>
-                <span className="sm:hidden">${itineraryData.budget}</span>
+                <span className="hidden sm:inline">Budget: ${itineraryData.budget.toLocaleString()}</span>
+                <span className="sm:hidden">${itineraryData.budget.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -807,7 +871,7 @@ const ResultsPage: React.FC = () => {
                     generateRealItinerary(itineraryData);
                   }
                 }}
-                className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-all duration-200 shadow-md hover:shadow-lg text-sm"
               >
                 Try Again
               </button>
@@ -816,128 +880,66 @@ const ResultsPage: React.FC = () => {
           </div>
         ) : (
           <>
-            {/* Tabs - Only show when not loading and no error */}
-            <div className="mb-8">
-              <div className="flex space-x-1 bg-white dark:bg-gray-800 p-1 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                {[
-                  { id: 'itinerary', label: 'Itinerary', icon: '🗓️' },
-                  { id: 'additional', label: 'Explore More', icon: '✨' },
-                  { id: 'map', label: 'Map View', icon: '🗺️' }
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
-                    className={`flex-1 flex items-center justify-center px-3 py-2 rounded-lg font-medium transition-all duration-300 text-xs ${
-                      activeTab === tab.id
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
-                    }`}
-                  >
-                    <span className="mr-1.5 text-sm">{tab.icon}</span>
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-            </div>
 
-            {/* Action Buttons - Simple and Small */}
-            <div className="flex items-center justify-center space-x-3 mb-8">
-              <button
-                onClick={() => navigate('/itinerary', { state: { itineraryData: enhancedResponse } })}
-                className="flex items-center space-x-2 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm transition-colors"
-              >
-                <span>📅</span>
-                <span>View Timeline</span>
-              </button>
-              <button
-                onClick={() => navigate('/itinerary-generation', { state: { itineraryData: enhancedResponse } })}
-                className="flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm transition-colors"
-              >
-                <span>💾</span>
-                <span>Save Itinerary</span>
-              </button>
-              <button
-                onClick={() => navigate('/edit-itinerary', { state: { itineraryData: enhancedResponse } })}
-                className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm transition-colors"
-              >
-                <span>✏️</span>
-                <span>Edit Itinerary</span>
-              </button>
-            </div>
 
             {/* Split Layout: Itinerary (2/3) and Map (1/3) */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
               {/* Left Side - Itinerary Content (2/3) */}
-              <div className="lg:col-span-2 space-y-8 w-full">
-                {/* Itinerary Summary */}
+              <div className="lg:col-span-2 space-y-6 w-full">
+                {/* Itinerary Summary - Ultra Compact */}
                 {activeTab === 'itinerary' && itinerarySummary && (
-                <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg border border-gray-200 dark:border-gray-700 w-full">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-3 shadow-md border border-gray-200 dark:border-gray-700 w-full">
+                  <h2 className="text-base font-bold text-gray-900 dark:text-white mb-2 text-center">
                     Journey Overview
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                  <div className="grid grid-cols-3 gap-3">
                     <div className="text-center">
-                      <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                      <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center mx-auto mb-1">
+                        <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
                           {itinerarySummary.total_days}
                         </span>
                       </div>
-                      <div className="text-lg font-semibold text-gray-900 dark:text-white">Total Days</div>
+                      <div className="text-xs font-semibold text-gray-900 dark:text-white">Days</div>
                     </div>
                     <div className="text-center">
-                      <div className="w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <span className="text-xl font-bold text-green-600 dark:text-green-400">
-                          ${itinerarySummary.budget_estimate.toLocaleString()}
-                        </span>
+                      <div className="text-sm font-bold text-green-600 dark:text-green-400 mb-1">
+                        {itinerarySummary.budget_estimate.toLocaleString()}
                       </div>
-                      <div className="text-lg font-semibold text-gray-900 dark:text-white">Estimated Budget</div>
+                      <div className="text-xs font-semibold text-gray-600 dark:text-gray-400">Budget</div>
                     </div>
                     <div className="text-center">
-                      <div className="w-20 h-20 bg-purple-100 dark:bg-purple-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <span className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                      <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center mx-auto mb-1">
+                        <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
                           {dailyPlans.length}
                         </span>
                       </div>
-                      <div className="text-lg font-semibold text-gray-900 dark:text-white">Planned Days</div>
+                      <div className="text-xs font-semibold text-gray-900 dark:text-white">Planned</div>
                     </div>
-                    {weatherData && (
-                      <div className="text-center">
-                        <div className="w-20 h-20 bg-amber-100 dark:bg-amber-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                          <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                            {Math.round(weatherData.current.temperature)}°C
-                          </span>
-                        </div>
-                        <div className="text-lg font-semibold text-gray-900 dark:text-white">Current Weather</div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400 capitalize">
-                          {weatherData.current.description}
-                        </div>
-                      </div>
-                    )}
                   </div>
                   
                   {/* Weather Information */}
                   {weatherData ? (
-                    <div className="mt-8">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">
+                    <div className="mt-4">
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2 text-center">
                         🌤️ Current Weather
                       </h3>
                       <div className="max-w-2xl mx-auto">
                         <WeatherDisplay 
                           weatherData={weatherData}
-                          compact={false}
+                          compact={true}
                           className="shadow-sm"
                         />
                       </div>
                     </div>
                   ) : (
-                    <div className="mt-8">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">
+                    <div className="mt-4">
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2 text-center">
                         🌤️ Current Weather
                       </h3>
-                      <div className="max-w-md mx-auto">
+                      <div className="max-w-lg mx-auto">
                         <WeatherCard 
-                          city={itinerarySummary.destination} 
-                          compact={false}
+                          {...parseLocationForWeather(itinerarySummary.destination)}
+                          compact={true}
                           className="shadow-sm"
                         />
                       </div>
@@ -945,6 +947,30 @@ const ResultsPage: React.FC = () => {
                   )}
                 </div>
               )}
+
+              {/* Tabs - Only show when not loading and no error */}
+              <div className="mb-8">
+                <div className="flex space-x-1 bg-white dark:bg-gray-800 p-0.5 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                  {[
+                    { id: 'itinerary', label: 'Itinerary', icon: '🗓️' },
+                    { id: 'additional', label: 'Explore More', icon: '✨' },
+                    { id: 'map', label: 'Map View', icon: '🗺️' }
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as any)}
+                      className={`flex-1 flex items-center justify-center px-2 py-1.5 rounded-md font-medium transition-all duration-300 text-xs ${
+                        activeTab === tab.id
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <span className="mr-1 text-xs">{tab.icon}</span>
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               {activeTab === 'itinerary' && (
                 <>
@@ -1181,17 +1207,66 @@ const ResultsPage: React.FC = () => {
                            <h4 className="font-medium text-gray-900 dark:text-white mb-4">Daily Breakdown</h4>
                            <div className="space-y-3">
                              {dailyPlans.map((plan) => {
+                               // Calculate activity costs from metadata
                                const activityCost = plan.activities.reduce((sum, activity) => {
-                                 const cost = typeof activity.cost === 'string' ? parseFloat(activity.cost) || 0 : (activity.cost || 0);
+                                 let cost = 0;
+                                 
+                                 // First try to get cost from activity.estimated_cost
+                                 if (activity.estimated_cost) {
+                                   const estimatedCost = typeof activity.estimated_cost === 'string' ? 
+                                     parseFloat(activity.estimated_cost.replace(/[^0-9.-]/g, '')) || 0 : 
+                                     (activity.estimated_cost || 0);
+                                   cost = estimatedCost;
+                                 }
+                                 
+                                 // If no cost in activity, try to get from place_details metadata
+                                 if (cost === 0 && enhancedResponse?.place_details?.[activity.place_id]) {
+                                   const placeDetails = enhancedResponse.place_details[activity.place_id];
+                                   if (placeDetails.price) {
+                                     // Parse price range like "$10-20" or "$25"
+                                     const priceMatch = placeDetails.price.match(/\$(\d+(?:\.\d+)?)/);
+                                     if (priceMatch) {
+                                       cost = parseFloat(priceMatch[1]);
+                                     }
+                                   }
+                                 }
+                                 
                                  return sum + cost;
                                }, 0);
                                
-                               const transportCost = plan.transport?.reduce((sum, transport) => {
-                                 const cost = typeof transport.cost === 'string' ? parseFloat(transport.cost) || 0 : (transport.cost || 0);
+                               // Calculate meal costs from metadata
+                               const mealCost = plan.meals.reduce((sum, meal) => {
+                                 let cost = 0;
+                                 
+                                 // Parse price_range like "$20-30" or "$15"
+                                 if (meal.price_range) {
+                                   const priceMatch = meal.price_range.match(/\$(\d+(?:\.\d+)?)/);
+                                   if (priceMatch) {
+                                     cost = parseFloat(priceMatch[1]);
+                                   }
+                                 }
+                                 
+                                 // If no cost in meal, try to get from place_details metadata
+                                 if (cost === 0 && enhancedResponse?.place_details?.[meal.place_id]) {
+                                   const placeDetails = enhancedResponse.place_details[meal.place_id];
+                                   if (placeDetails.price) {
+                                     const priceMatch = placeDetails.price.match(/\$(\d+(?:\.\d+)?)/);
+                                     if (priceMatch) {
+                                       cost = parseFloat(priceMatch[1]);
+                                     }
+                                   }
+                                 }
+                                 
+                                 return sum + cost;
+                               }, 0);
+                               
+                               // Calculate transport costs
+                               const transportCost = plan.transportation?.reduce((sum, transport) => {
+                                 const cost = typeof transport.cost === 'string' ? parseFloat(transport.cost.replace(/[^0-9.-]/g, '')) || 0 : (transport.cost || 0);
                                  return sum + cost;
                                }, 0) || 0;
                                
-                               const dayCost = activityCost + transportCost;
+                               const dayCost = activityCost + mealCost + transportCost;
                                
                                return (
                                  <div key={plan.day} className="flex justify-between text-sm">
@@ -1206,44 +1281,115 @@ const ResultsPage: React.FC = () => {
                            <h4 className="font-medium text-gray-900 dark:text-white mb-4">Total Estimated Cost</h4>
                            <div className="text-3xl font-bold text-green-600 dark:text-green-400">
                              ${dailyPlans.reduce((total, plan) => {
+                               // Calculate activity costs from metadata
                                const activityCost = plan.activities.reduce((sum, activity) => {
-                                 const cost = typeof activity.cost === 'string' ? parseFloat(activity.cost) || 0 : (activity.cost || 0);
+                                 let cost = 0;
+                                 
+                                 // First try to get cost from activity.estimated_cost
+                                 if (activity.estimated_cost) {
+                                   const estimatedCost = typeof activity.estimated_cost === 'string' ? 
+                                     parseFloat(activity.estimated_cost.replace(/[^0-9.-]/g, '')) || 0 : 
+                                     (activity.estimated_cost || 0);
+                                   cost = estimatedCost;
+                                 }
+                                 
+                                 // If no cost in activity, try to get from place_details metadata
+                                 if (cost === 0 && enhancedResponse?.place_details?.[activity.place_id]) {
+                                   const placeDetails = enhancedResponse.place_details[activity.place_id];
+                                   if (placeDetails.price) {
+                                     // Parse price range like "$10-20" or "$25"
+                                     const priceMatch = placeDetails.price.match(/\$(\d+(?:\.\d+)?)/);
+                                     if (priceMatch) {
+                                       cost = parseFloat(priceMatch[1]);
+                                     }
+                                   }
+                                 }
+                                 
                                  return sum + cost;
                                }, 0);
                                
-                               const transportCost = plan.transport?.reduce((sum, transport) => {
-                                 const cost = typeof transport.cost === 'string' ? parseFloat(transport.cost) || 0 : (transport.cost || 0);
+                               // Calculate meal costs from metadata
+                               const mealCost = plan.meals.reduce((sum, meal) => {
+                                 let cost = 0;
+                                 
+                                 // Parse price_range like "$20-30" or "$15"
+                                 if (meal.price_range) {
+                                   const priceMatch = meal.price_range.match(/\$(\d+(?:\.\d+)?)/);
+                                   if (priceMatch) {
+                                     cost = parseFloat(priceMatch[1]);
+                                   }
+                                 }
+                                 
+                                 // If no cost in meal, try to get from place_details metadata
+                                 if (cost === 0 && enhancedResponse?.place_details?.[meal.place_id]) {
+                                   const placeDetails = enhancedResponse.place_details[meal.place_id];
+                                   if (placeDetails.price) {
+                                     const priceMatch = placeDetails.price.match(/\$(\d+(?:\.\d+)?)/);
+                                     if (priceMatch) {
+                                       cost = parseFloat(priceMatch[1]);
+                                     }
+                                   }
+                                 }
+                                 
+                                 return sum + cost;
+                               }, 0);
+                               
+                               // Calculate transport costs
+                               const transportCost = plan.transportation?.reduce((sum, transport) => {
+                                 const cost = typeof transport.cost === 'string' ? parseFloat(transport.cost.replace(/[^0-9.-]/g, '')) || 0 : (transport.cost || 0);
                                  return sum + cost;
                                }, 0) || 0;
                                
-                               return total + activityCost + transportCost;
+                               return total + activityCost + mealCost + transportCost;
                              }, 0).toFixed(0)}
                            </div>
-                           <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Activities & transportation (excluding accommodation & meals)</p>
+                           <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Activities, meals & transportation (excluding accommodation)</p>
                          </div>
                        </div>
                      </div>
                    )}
+
+                  {/* Action Buttons - Adjusted Size and Spacing */}
+                  <div className="flex items-center justify-center gap-6 mt-8">
+                    <button
+                      onClick={() => navigate('/itinerary', { state: { itineraryData: enhancedResponse } })}
+                      className="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-base font-medium transition-colors"
+                    >
+                      View Timeline
+                    </button>
+                    <button
+                      onClick={() => navigate('/itinerary-generation', { state: { itineraryData: enhancedResponse } })}
+                      className="px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-base font-medium transition-colors"
+                    >
+                      Save Itinerary
+                    </button>
+                    <button
+                      onClick={() => navigate('/edit-itinerary', { state: { itineraryData: enhancedResponse } })}
+                      className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg text-base font-medium transition-colors"
+                    >
+                      Edit Itinerary
+                    </button>
+                  </div>
                 </>
               )}
 
               {/* Additional Places Tab */}
-              {activeTab === 'additional' && enhancedResponse && (
-                                  <AdditionalPlaces
-                    additionalPlaces={enhancedResponse.additional_places}
-                    onAddToItinerary={handleAddToItinerary}
-                    onPlaceHover={handlePlaceHover}
-                    onPlaceHoverLeave={handlePlaceHoverLeave}
-                  />
-              )}
+              {memoizedTabContent}
 
               {/* Map Tab - Full width map */}
               {activeTab === 'map' && (
                 <div className="bg-white rounded-3xl shadow-lg border border-gray-200 overflow-hidden">
                   <div className="h-96 lg:h-[600px]">
                     {(() => {
-                      const locations = extractLocations();
+                      const locations = extractLocations;
                       console.log('Map tab - locations:', locations);
+                      console.log('Map tab - locations length:', locations.length);
+                      console.log('Map tab - locations details:', locations.map(loc => ({
+                        id: loc.id,
+                        name: loc.name,
+                        type: loc.type,
+                        position: loc.position
+                      })));
                       return <GoogleMaps locations={locations} />;
                     })()}
                   </div>
@@ -1255,25 +1401,32 @@ const ResultsPage: React.FC = () => {
 
               {/* Right Side - Google Maps (1/3) */}
               <div className="lg:col-span-1 w-full">
-                <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 h-[800px] sticky top-24 w-full">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-lg border border-gray-200 dark:border-gray-700 h-[600px] sticky top-4 w-full">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center">
                     🗺️ Interactive Map
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
                     Explore all locations from your itinerary
                   </p>
                   {(() => {
-                    const locations = extractLocations();
+                    const locations = extractLocations;
                     return (
                       <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                         📍 {locations.length} location{locations.length !== 1 ? 's' : ''} found
                       </div>
                     );
                   })()}
-                  <div className="h-full w-full min-h-0 flex-1" style={{ minHeight: '600px' }}>
+                  <div className="h-full w-full min-h-0 flex-1" style={{ minHeight: '500px' }}>
                     {(() => {
-                      const locations = extractLocations();
+                      const locations = extractLocations;
                       console.log('Passing locations to GoogleMaps:', locations);
+                      console.log('Locations length:', locations.length);
+                      console.log('Locations details:', locations.map(loc => ({
+                        id: loc.id,
+                        name: loc.name,
+                        type: loc.type,
+                        position: loc.position
+                      })));
                       console.log('itineraryData:', itineraryData);
                       console.log('hotels:', hotels);
                       console.log('dailyPlans:', dailyPlans);

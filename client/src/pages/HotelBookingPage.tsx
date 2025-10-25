@@ -32,6 +32,7 @@ import {
 import Button from '../components/ui/Button';
 import ModernButton from '../components/ui/ModernButton';
 import ModernCard from '../components/ui/ModernCard';
+import PlacesAutocomplete from '../components/PlacesAutocomplete';
 import CustomDatePicker from '../components/ui/CustomDatePicker';
 
 interface HotelRoom {
@@ -347,17 +348,14 @@ const HotelBookingPage: React.FC = () => {
                     <MapPin className="w-4 h-4 inline mr-2 text-accent" />
                     Destination
                   </label>
-                  <div className="relative">
-                  <input
-                    type="text"
+                  <PlacesAutocomplete
                     value={searchForm.destination}
-                    onChange={(e) => setSearchForm(prev => ({ ...prev, destination: e.target.value }))}
+                    onChange={(value) => setSearchForm(prev => ({ ...prev, destination: value }))}
                     placeholder="Where are you going?"
-                      className="w-full px-4 py-3 pl-10 border-2 border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-accent focus:border-accent bg-white dark:bg-dark-card text-gray-900 dark:text-white transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-500 text-sm"
+                    className="w-full"
+                    icon={<MapPin className="w-4 h-4" />}
                     required
                   />
-                    <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  </div>
                 </div>
 
                 {/* Expected Date */}

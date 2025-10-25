@@ -254,6 +254,9 @@ class PlaceDetails(BaseModel):
     contact: Optional[Dict[str, str]] = {}  # phone, website, etc.
     amenities: List[str] = []
     type: str  # hotel, restaurant, attraction, etc.
+    thumbnail: Optional[str] = None
+    serpapi_thumbnail: Optional[str] = None
+    high_res_image: Optional[str] = None
     
 class PlaceDetailsRequest(BaseModel):
     place_ids: List[str] = Field(..., description="List of place IDs to get details for")

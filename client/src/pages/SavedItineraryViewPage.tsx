@@ -21,6 +21,8 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import ModernCard from '../components/ui/ModernCard';
 import ModernButton from '../components/ui/ModernButton';
 import ShareModal from '../components/ShareModal';
+import { CollaborationChat } from '../components/CollaborationChat';
+import { ItineraryRoomManager } from '../components/ItineraryRoomManager';
 
 interface SavedItinerary {
   id: string;
@@ -101,6 +103,7 @@ const SavedItineraryViewPage: React.FC = () => {
     url: string;
     description: string;
   } | null>(null);
+  const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated || !user) {
@@ -345,6 +348,17 @@ const SavedItineraryViewPage: React.FC = () => {
           )}
         </ModernCard>
 
+        {/* Collaboration Room Manager */}
+        <ItineraryRoomManager
+          itineraryId={itinerary.id}
+          itineraryTitle={itinerary.title}
+          onRoomJoined={(roomId) => {
+            console.log('Joined room:', roomId);
+            setActiveRoomId(roomId);
+          }}
+          className="mb-8"
+        />
+
         {/* Daily Itinerary */}
         <div className="space-y-6">
           <h2 className="text-2xl font-bold text-gray-900">Daily Itinerary</h2>
@@ -472,6 +486,11 @@ const SavedItineraryViewPage: React.FC = () => {
           url={shareData.url}
           description={shareData.description}
         />
+      )}
+
+      {/* Collaboration Chat */}
+      {activeRoomId && (
+        <CollaborationChat itineraryId={activeRoomId} />
       )}
     </div>
   );

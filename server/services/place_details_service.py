@@ -217,7 +217,10 @@ class PlaceDetailsService:
             opening_hours=opening_hours,
             contact=contact,
             amenities=amenities,
-            type=place_type
+            type=place_type,
+            thumbnail=serp_data.get('thumbnail'),
+            serpapi_thumbnail=serp_data.get('serpapi_thumbnail'),
+            high_res_image=serp_data.get('high_res_image')
         )
     
     def _convert_price_level(self, price_str: str) -> str:

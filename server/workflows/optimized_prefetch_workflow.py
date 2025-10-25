@@ -28,7 +28,7 @@ class OptimizedPrefetchWorkflow:
             raise ValueError("Google API key is required")
         
         genai.configure(api_key=settings.google_api_key)
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.model = genai.GenerativeModel('gemini-2.5-flash')
         self.places_tool = cached_places_tool
         
         print("🚀 OPTIMIZED PREFETCH WORKFLOW - Initialized")
@@ -248,6 +248,8 @@ INSTRUCTIONS:
 9. Provide EXACTLY 10-12 travel tips (not fewer)
 10. Include 2-3 activities per day minimum (after check-in on Day 1)
 11. Include 2-3 meals per day minimum
+12. CRITICAL: Day 1 MUST include dinner (meal_type: "dinner") after arrival
+13. CRITICAL: Last day MUST include dinner (meal_type: "dinner") before departure
 
 RESPONSE FORMAT: Return ONLY valid JSON with this structure:
 {{
@@ -294,6 +296,14 @@ RESPONSE FORMAT: Return ONLY valid JSON with this structure:
           "name": "Restaurant Name",
           "cuisine": "Local",
           "price_range": "$15-25"
+        }},
+        {{
+          "time": "19:00",
+          "meal_type": "dinner",
+          "place_id": "restaurants_002",
+          "name": "Evening Restaurant",
+          "cuisine": "International",
+          "price_range": "$25-40"
         }}
       ],
       "transportation": [

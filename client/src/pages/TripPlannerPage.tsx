@@ -27,6 +27,7 @@ import {
 import CustomDatePicker from '../components/ui/CustomDatePicker';
 import ModernButton from '../components/ui/ModernButton';
 import Dropdown, { DropdownOption } from '../components/ui/Dropdown';
+import PlacesAutocomplete from '../components/PlacesAutocomplete';
 import { useAuth } from '../contexts/AuthContext';
 import AuthModal from '../components/AuthModal';
 
@@ -53,6 +54,7 @@ const TripPlannerPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isFormSubmitted, setIsFormSubmitted] = useState(false);
 
   // Dropdown options
   const daysOptions: DropdownOption[] = [
@@ -124,13 +126,20 @@ const TripPlannerPage: React.FC = () => {
     }
   }, [query]);
 
+  // Reset form submission state when component mounts
+  useEffect(() => {
+    setIsFormSubmitted(false);
+  }, []);
+
   const toggleActivity = (key: string) => {
     setActivities(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setError(null);
+    setIsFormSubmitted(true);
     
     // Check if user is authenticated
     if (!isAuthenticated) {
@@ -320,7 +329,7 @@ const TripPlannerPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
+    <div className="min-h-screen bg-white dark:bg-gray-900" onClick={(e) => e.stopPropagation()}>
       <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12 overflow-visible">
         {/* Header Section */}
         <div className="text-center mb-8">
@@ -370,7 +379,7 @@ const TripPlannerPage: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6 overflow-visible">
+        <form onSubmit={handleSubmit} className="space-y-6 overflow-visible" onClick={(e) => e.stopPropagation()}>
           {/* Basic Information Section */}
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 overflow-visible">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
@@ -385,16 +394,13 @@ const TripPlannerPage: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-900 dark:text-white">
                     Where do you want to go?
                   </label>
-                  <div className="relative">
-                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="text"
-                      value={destination}
-                      onChange={e => setDestination(e.target.value)}
-                      placeholder="e.g., Paris, Tokyo, New York"
-                      className="w-full pl-12 pr-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all duration-200 text-sm"
-                    />
-                  </div>
+                  <PlacesAutocomplete
+                    value={destination}
+                    onChange={setDestination}
+                    placeholder="e.g., Paris, Tokyo, New York"
+                    className="w-full"
+                    icon={<MapPin className="w-5 h-5" />}
+                  />
                 </div>
               )}
 
@@ -426,7 +432,9 @@ const TripPlannerPage: React.FC = () => {
                 <Dropdown
                   options={daysOptions}
                   value={days}
-                  onChange={(value) => setDays(value as number)}
+                  onChange={(value) => {
+                    setDays(value as number);
+                  }}
                   placeholder="Select duration"
                   size="md"
                   variant="outline"
@@ -441,7 +449,9 @@ const TripPlannerPage: React.FC = () => {
                 <Dropdown
                   options={budgetOptions}
                   value={budget}
-                  onChange={(value) => setBudget(value as BudgetTier)}
+                  onChange={(value) => {
+                    setBudget(value as BudgetTier);
+                  }}
                   placeholder="Select budget range"
                   size="md"
                   variant="outline"
@@ -466,7 +476,9 @@ const TripPlannerPage: React.FC = () => {
                 <Dropdown
                   options={travelWithOptions}
                   value={travelWith}
-                  onChange={(value) => setTravelWith(value as TravelWith)}
+                  onChange={(value) => {
+                    setTravelWith(value as TravelWith);
+                  }}
                   placeholder="Select travel companions"
                   size="md"
                   variant="outline"
@@ -481,7 +493,9 @@ const TripPlannerPage: React.FC = () => {
                 <Dropdown
                   options={tripPaceOptions}
                   value={tripPace}
-                  onChange={(value) => setTripPace(value as any)}
+                  onChange={(value) => {
+                    setTripPace(value as any);
+                  }}
                   placeholder="Select trip pace"
                   size="md"
                   variant="outline"
@@ -557,7 +571,9 @@ const TripPlannerPage: React.FC = () => {
                 <Dropdown
                   options={flightClassOptions}
                   value={flightClass}
-                  onChange={(value) => setFlightClass(value as FlightClass)}
+                  onChange={(value) => {
+                    setFlightClass(value as FlightClass);
+                  }}
                   placeholder="Select flight class"
                   size="md"
                   variant="outline"
@@ -572,7 +588,9 @@ const TripPlannerPage: React.FC = () => {
                 <Dropdown
                   options={hotelRatingOptions}
                   value={hotelRating}
-                  onChange={(value) => setHotelRating(value as 3 | 4 | 5)}
+                  onChange={(value) => {
+                    setHotelRating(value as 3 | 4 | 5);
+                  }}
                   placeholder="Select hotel rating"
                   size="md"
                   variant="outline"
@@ -693,10 +711,13 @@ const TripPlannerPage: React.FC = () => {
       </div>
 
       {/* Login Modal */}
-      {showLoginModal && (
+      {showLoginModal && isFormSubmitted && (
         <AuthModal
           isOpen={showLoginModal}
-          onClose={() => setShowLoginModal(false)}
+          onClose={() => {
+            setShowLoginModal(false);
+            setIsFormSubmitted(false);
+          }}
           onLoginSuccess={handleLoginSuccess}
           defaultMode="login"
         />

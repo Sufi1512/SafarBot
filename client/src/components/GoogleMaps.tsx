@@ -1,9 +1,6 @@
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api';
 
-// Keep libraries constant to avoid reloading warnings
-const LIBRARIES: ("places")[] = ['places'];
-
 interface Location {
   id: string; // this should be place_id if coming from Places API
   name: string;
@@ -40,6 +37,20 @@ const defaultCenter = {
   lng: -74.0060
 };
 
+// Calculate center from locations
+const calculateCenter = (locations: Location[]) => {
+  if (locations.length === 0) return defaultCenter;
+  
+  // Find destination or use first location as center
+  const destination = locations.find(loc => loc.type === 'destination');
+  if (destination) {
+    return destination.position;
+  }
+  
+  // Use first location as center
+  return locations[0].position;
+};
+
 const defaultZoom = 12;
 
 const GoogleMaps: React.FC<GoogleMapsProps> = ({
@@ -50,37 +61,86 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const hoverCloseTimer = useRef<NodeJS.Timeout | null>(null);
 
+
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
-    libraries: LIBRARIES
+    libraries: ['places'],
+    version: 'weekly'
   });
 
+  console.log('GoogleMaps component - isLoaded:', isLoaded, 'loadError:', loadError);
+  console.log('GoogleMaps component - locations:', locations);
+  console.log('GoogleMaps component - API key available:', !!import.meta.env.VITE_GOOGLE_MAPS_API_KEY);
+  console.log('GoogleMaps component - API key value:', import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? 'Present' : 'Missing');
+
   const fitToLocations = useCallback((map: google.maps.Map, locs: Location[]) => {
+    console.log('fitToLocations called with:', locs.length, 'locations');
+    
     const validLocations = locs.filter(
       (loc) =>
+        loc &&
+        loc.position &&
         !isNaN(loc.position.lat) &&
         !isNaN(loc.position.lng) &&
         loc.position.lat !== 0 &&
-        loc.position.lng !== 0
+        loc.position.lng !== 0 &&
+        Math.abs(loc.position.lat) <= 90 &&
+        Math.abs(loc.position.lng) <= 180
     );
+
+    console.log('Valid locations for map:', validLocations.length, validLocations);
 
     if (validLocations.length > 0) {
       const bounds = new google.maps.LatLngBounds();
-      validLocations.forEach((location) => bounds.extend(location.position));
-      map.fitBounds(bounds);
-      if (locs.length === 1) map.setZoom(14);
+      validLocations.forEach((location, index) => {
+        console.log(`Adding location ${index} to bounds:`, location.position);
+        bounds.extend(location.position);
+      });
+      
+      console.log('Bounds created, fitting to map...');
+      
+      // Add some padding to the bounds
+      map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
+      
+      // Set appropriate zoom level based on number of locations
+      setTimeout(() => {
+        if (validLocations.length === 1) {
+          map.setZoom(15);
+        } else if (validLocations.length <= 3) {
+          map.setZoom(13);
+        } else {
+          map.setZoom(12);
+        }
+        console.log('Map zoom set to:', map.getZoom());
+      }, 500);
     } else {
-      // Fall back to a sane center/zoom if no valid locations
+      console.warn('No valid locations found, using default center');
       map.setCenter(defaultCenter);
       map.setZoom(defaultZoom);
     }
-  }, []);
+  }, [defaultCenter, defaultZoom]);
+
+  // Calculate map center before using it
+  const mapCenter = calculateCenter(locations);
+  console.log('Map center calculated:', mapCenter);
+  
+  // Fallback center if calculation fails
+  const fallbackCenter = { lat: 15.3838, lng: 73.8162 }; // Vasco Da Gama, Goa
+  const finalCenter = mapCenter.lat && mapCenter.lng ? mapCenter : fallbackCenter;
+  console.log('Final map center:', finalCenter);
 
   const onLoad = useCallback((map: google.maps.Map) => {
+    console.log('GoogleMaps onLoad called with map:', map);
+    console.log('GoogleMaps onLoad - locations:', locations);
     setMap(map);
-    fitToLocations(map, locations);
-  }, [locations, fitToLocations]);
+    
+    // Simple initialization
+    map.setCenter(finalCenter);
+    map.setZoom(12);
+    
+    console.log('Map initialized with center:', finalCenter);
+  }, [finalCenter]);
 
   useEffect(() => {
     if (map) {
@@ -142,33 +202,68 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({
   };
 
   if (loadError) {
-    return <div>Google Maps failed to load</div>;
+    console.error('Google Maps load error:', loadError);
+    return <div>Error loading maps: {loadError.message}</div>;
   }
 
   if (!isLoaded) {
     return <div>Loading Maps...</div>;
   }
 
-  if (locations.length === 0) {
-    return <div>No locations available</div>;
-  }
+  console.log('GoogleMaps rendering with locations:', locations.length);
 
   return (
     <div className="relative h-full w-full min-h-0">
       <GoogleMap
         mapContainerStyle={containerStyle}
+        center={finalCenter}
+        zoom={12}
         onLoad={onLoad}
         onUnmount={onUnmount}
+        options={{
+          zoomControl: true,
+          mapTypeControl: true,
+          scaleControl: true,
+          streetViewControl: false,
+          rotateControl: false,
+          fullscreenControl: true,
+          disableDefaultUI: false,
+          gestureHandling: 'auto'
+        }}
       >
-        {locations.map((location) => (
-          <Marker
-            key={location.id}
-            position={location.position}
-            onClick={() => fetchPlaceDetails(location)}
-            onMouseOver={() => handleMarkerMouseOver(location)}
-            onMouseOut={handleMarkerMouseOut}
-          />
-        ))}
+        {locations.map((location, index) => {
+          console.log(`Rendering marker ${index}:`, {
+            id: location.id,
+            name: location.name,
+            type: location.type,
+            position: location.position,
+            hasValidPosition: !isNaN(location.position.lat) && !isNaN(location.position.lng)
+          });
+          
+          // Skip invalid positions
+          if (isNaN(location.position.lat) || isNaN(location.position.lng)) {
+            console.warn(`Skipping marker with invalid position:`, location);
+            return null;
+          }
+          
+          return (
+            <Marker
+              key={location.id || index}
+              position={location.position}
+              onClick={() => fetchPlaceDetails(location)}
+              onMouseOver={() => handleMarkerMouseOver(location)}
+              onMouseOut={handleMarkerMouseOut}
+              title={location.name}
+            />
+          );
+        })}
+        
+        {/* Test marker to ensure map is working */}
+        <Marker
+          key="test-marker"
+          position={finalCenter}
+          title="Test Marker - Map Center"
+        />
 
         {selectedLocation && (
           <InfoWindow

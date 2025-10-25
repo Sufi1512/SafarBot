@@ -205,7 +205,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
           setIsOpen(!isOpen);
         }}
         className={`
-          relative w-full px-4 py-2.5 text-left border-2 rounded-xl transition-all duration-300 group
+          relative w-full px-4 py-2.5 text-left border-2 rounded-xl transition-all duration-300 group overflow-hidden
           ${isOpen 
             ? 'border-cyan-500 ring-4 ring-cyan-500/20 shadow-lg' 
             : 'border-gray-200 dark:border-gray-600 hover:border-cyan-400 dark:hover:border-cyan-500'
@@ -214,6 +214,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
           focus:outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/20 shadow-sm hover:shadow-md
         `}
       >
+        <div className="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <CalendarDaysIcon className={`w-4 h-4 transition-colors duration-200 ${

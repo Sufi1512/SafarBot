@@ -275,7 +275,7 @@ const ItineraryPage: React.FC = () => {
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 w-full">
         <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-6">
+          <div className="flex items-center justify-between py-1.5">
             {/* Left side - Back button and Logo/Name */}
             <div className="flex items-center space-x-4">
               <button
@@ -300,10 +300,24 @@ const ItineraryPage: React.FC = () => {
             </div>
             
             {/* Right side - Trip details */}
-            <div className="flex items-center space-x-6 text-sm text-gray-600 dark:text-gray-300">
+            <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
+              <button
+                onClick={() => navigate('/results', { state: { injectedEnhancedResponse: itineraryData } })}
+                className="bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-1.5 text-xs"
+              >
+                <span>📅</span>
+                <span>View Itinerary</span>
+              </button>
+              <button
+                onClick={() => navigate('/edit-itinerary', { state: { itineraryData } })}
+                className="bg-orange-600 text-white px-3 py-1.5 rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-1.5 text-xs"
+              >
+                <span>✏️</span>
+                <span>Edit</span>
+              </button>
               <button
                 onClick={() => navigate('/')}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-1.5 text-xs"
               >
                 <span>🔍</span>
                 <span>New Search</span>

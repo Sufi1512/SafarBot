@@ -61,6 +61,31 @@ export const WeatherDisplay: React.FC<WeatherDisplayProps> = ({
             </p>
           </div>
         </div>
+        
+        {/* Weather Details Row */}
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-blue-200 dark:border-blue-700">
+          <div className="flex items-center space-x-4 text-xs text-gray-600 dark:text-gray-400">
+            <div className="flex items-center space-x-1">
+              <span className="font-medium">Humidity:</span>
+              <span>{current.humidity}%</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className="font-medium">Wind:</span>
+              <span>{current.wind_speed} m/s</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className="font-medium">Pressure:</span>
+              <span>{current.pressure} hPa</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className="font-medium">Visibility:</span>
+              <span>{current.visibility} km</span>
+            </div>
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="font-medium">Location:</span> {location.coordinates.lat.toFixed(2)}, {location.coordinates.lon.toFixed(2)}
+          </div>
+        </div>
       </div>
     );
   }

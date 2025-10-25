@@ -7,59 +7,46 @@ python-dotenv
 # Database
 motor
 pymongo
+bson
 
-# Authentication & Security
+# Authentication and Security
 python-jose[cryptography]
 passlib[bcrypt]
-bcrypt
-PyJWT
-
-# Google Services
-google-auth
-google-auth-oauthlib
-google-auth-httplib2
-google-api-python-client
-google-generativeai
-firebase-admin
+python-multipart
 
 # HTTP & API
 httpx
 requests
 aiofiles
 
-# Data Processing
-pydantic[email]
-pydantic-settings
-email-validator
-numpy
-orjson
+# Email Services
+secure-smtplib  
 
-# LangChain & AI
-langchain
+# Google AI Services
+google-generativeai>=0.8.0
+
+# LangChain (if using AI workflows)
 langchain-core
 langchain-google-genai
-langchain-text-splitters
-langgraph
-langgraph-checkpoint
-langgraph-prebuilt
-langgraph-sdk
-langsmith
 
-# Search & Scraping
-google-search-results
-
-# Email
-sib-api-v3-sdk
-
-# Utilities
-tenacity
-rich
-typer
-coloredlogs
-
-# Additional dependencies
+# Data Processing (minimal)
 python-dateutil
-pytz
 
-# ChromaDB (optional - can be removed if not needed)
-# chromadb
+# Logging and Monitoring
+structlog
+
+# CORS and Middleware
+fastapi-cors
+
+# Redis for caching and real-time features
+redis
+redis-om
+
+# WebSocket suppor
+python-socketio
+
+# OpenAI GPT-4
+openai
+
+# Additional utilities
+typing-extensions

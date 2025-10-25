@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { dashboardAPI, savedItineraryAPI } from '../services/cachedApi';
 import { useAuth } from '../contexts/AuthContext';
 import DashboardSidebar from '../components/DashboardSidebar';
@@ -103,6 +103,7 @@ interface DashboardData {
 
 const UserDashboard: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -237,6 +238,12 @@ const UserDashboard: React.FC = () => {
 
 
   const handleTabChange = (tab: string) => {
+    // Handle navigation to chat page
+    if (tab === 'chats') {
+      navigate('/chat');
+      return;
+    }
+    
     // Map 'dashboard' tab to 'overview' for consistency
     const mappedTab = tab === 'dashboard' ? 'overview' : tab;
     setActiveTab(mappedTab);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Calendar, DollarSign, Clock, Star, AlertCircle, Hotel, Utensils } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import { itineraryAPI, EnhancedItineraryResponse, PlaceDetails, AdditionalPlace } from '../services/api';
 import api from '../services/api';
 import GoogleMaps from '../components/GoogleMaps';
@@ -93,6 +94,7 @@ interface ItineraryData {
 const ResultsPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const [itineraryData, setItineraryData] = useState<ItineraryData | null>(null);
   
   // Enhanced API Response State
@@ -127,6 +129,7 @@ const ResultsPage: React.FC = () => {
   const [isHoverPopupVisible, setIsHoverPopupVisible] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
+  
 
   // Legacy hover state for backward compatibility
   const [hoveredItem, setHoveredItem] = useState<Activity | Hotel | Restaurant | null>(null);
@@ -196,6 +199,7 @@ const ResultsPage: React.FC = () => {
       setHoverPosition(null);
     }, 300);
   };
+
 
   // SERP image cache state removed since SERP API functionality was removed
 
@@ -427,6 +431,19 @@ const ResultsPage: React.FC = () => {
       locationState: location.state
     });
     
+    // Check authentication first
+    if (!isAuthenticated || !user) {
+      console.log('User not authenticated, redirecting to login...');
+      setError('Please log in to access your itinerary results.');
+      navigate('/login', { 
+        state: { 
+          from: '/results',
+          message: 'Please log in to access your itinerary results.' 
+        } 
+      });
+      return;
+    }
+    
     // Prevent multiple initializations
     if (isInitializedRef.current) {
       console.log('Component already initialized, skipping...');
@@ -507,6 +524,22 @@ const ResultsPage: React.FC = () => {
 
   const generateRealItinerary = async (data: ItineraryData) => {
     console.log('generateRealItinerary called with data:', data);
+    
+    // Check if user is authenticated before generating itinerary
+    if (!isAuthenticated || !user) {
+      console.log('User not authenticated, redirecting to login...');
+      setError('Please log in to generate your itinerary.');
+      // Store the form data for after login
+      localStorage.setItem('pendingItineraryData', JSON.stringify(data));
+      // Redirect to login page
+      navigate('/login', { 
+        state: { 
+          from: '/results',
+          message: 'Please log in to generate your itinerary.' 
+        } 
+      });
+      return;
+    }
     
     // Prevent duplicate API calls and add retry limit
     if (isLoading) {
@@ -703,6 +736,22 @@ const ResultsPage: React.FC = () => {
 
 
 
+  // Performance optimization: Memoize tab content to prevent unnecessary re-renders
+  const memoizedTabContent = useMemo(() => {
+    if (activeTab === 'additional' && enhancedResponse) {
+      return (
+        <AdditionalPlaces
+          additionalPlaces={enhancedResponse.additional_places}
+          onAddToItinerary={handleAddToItinerary}
+          onPlaceHover={handlePlaceHover}
+          onPlaceHoverLeave={handlePlaceHoverLeave}
+          enablePagination={true}
+        />
+      );
+    }
+    return null;
+  }, [activeTab, enhancedResponse, handleAddToItinerary, handlePlaceHover, handlePlaceHoverLeave]);
+
   if (!itineraryData) {
     return null;
   }
@@ -719,7 +768,7 @@ const ResultsPage: React.FC = () => {
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 w-full">
         <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-3">
+          <div className="flex items-center justify-between py-1.5">
             {/* Left side - Back button and Logo/Name */}
             <div className="flex items-center space-x-4">
               <button
@@ -729,9 +778,9 @@ const ResultsPage: React.FC = () => {
                 <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300 group-hover:text-gray-800 dark:group-hover:text-white" />
               </button>
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                {/* <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                   <MapPin className="w-6 h-6 text-white" />
-                </div>
+                </div> */}
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                     {enhancedResponse?.itinerary.destination || itineraryData.destination} Itinerary
@@ -897,7 +946,7 @@ const ResultsPage: React.FC = () => {
 
               {/* Tabs - Only show when not loading and no error */}
               <div className="mb-8">
-                <div className="flex space-x-1 bg-white dark:bg-gray-800 p-1 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="flex space-x-1 bg-white dark:bg-gray-800 p-0.5 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                   {[
                     { id: 'itinerary', label: 'Itinerary', icon: '🗓️' },
                     { id: 'additional', label: 'Explore More', icon: '✨' },
@@ -906,13 +955,13 @@ const ResultsPage: React.FC = () => {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id as any)}
-                      className={`flex-1 flex items-center justify-center px-3 py-2 rounded-lg font-medium transition-all duration-300 text-xs ${
+                      className={`flex-1 flex items-center justify-center px-2 py-1.5 rounded-md font-medium transition-all duration-300 text-xs ${
                         activeTab === tab.id
                           ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
                           : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
                       }`}
                     >
-                      <span className="mr-1.5 text-sm">{tab.icon}</span>
+                      <span className="mr-1 text-xs">{tab.icon}</span>
                       {tab.label}
                     </button>
                   ))}
@@ -1321,14 +1370,7 @@ const ResultsPage: React.FC = () => {
               )}
 
               {/* Additional Places Tab */}
-              {activeTab === 'additional' && enhancedResponse && (
-                                  <AdditionalPlaces
-                    additionalPlaces={enhancedResponse.additional_places}
-                    onAddToItinerary={handleAddToItinerary}
-                    onPlaceHover={handlePlaceHover}
-                    onPlaceHoverLeave={handlePlaceHoverLeave}
-                  />
-              )}
+              {memoizedTabContent}
 
               {/* Map Tab - Full width map */}
               {activeTab === 'map' && (

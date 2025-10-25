@@ -48,6 +48,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [dropdownId] = useState(() => `dropdown-${Math.random().toString(36).substr(2, 9)}`);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -96,6 +97,46 @@ const Dropdown: React.FC<DropdownProps> = ({
     }
   }, [isOpen, searchable]);
 
+  // Close other dropdowns when this one opens
+  useEffect(() => {
+    if (isOpen) {
+      const closeOtherDropdowns = () => {
+        const allDropdowns = document.querySelectorAll('[data-dropdown-id]');
+        allDropdowns.forEach(dropdown => {
+          if (dropdown.getAttribute('data-dropdown-id') !== dropdownId) {
+            // Trigger close event for other dropdowns
+            const event = new CustomEvent('closeDropdown', { 
+              detail: { dropdownId: dropdown.getAttribute('data-dropdown-id') }
+            });
+            dropdown.dispatchEvent(event);
+          }
+        });
+      };
+      
+      closeOtherDropdowns();
+    }
+  }, [isOpen, dropdownId]);
+
+  // Listen for close events from other dropdowns
+  useEffect(() => {
+    const handleCloseEvent = (event: CustomEvent) => {
+      if (event.detail.dropdownId === dropdownId) {
+        setIsOpen(false);
+        setSearchQuery('');
+        setHighlightedIndex(-1);
+      }
+    };
+
+    if (dropdownRef.current) {
+      dropdownRef.current.addEventListener('closeDropdown', handleCloseEvent as EventListener);
+      return () => {
+        if (dropdownRef.current) {
+          dropdownRef.current.removeEventListener('closeDropdown', handleCloseEvent as EventListener);
+        }
+      };
+    }
+  }, [dropdownId]);
+
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen) {
@@ -140,7 +181,9 @@ const Dropdown: React.FC<DropdownProps> = ({
     }
   };
 
-  const handleOptionClick = (option: DropdownOption) => {
+  const handleOptionClick = (option: DropdownOption, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (!option.disabled) {
       onChange(option.value);
       setIsOpen(false);
@@ -160,7 +203,12 @@ const Dropdown: React.FC<DropdownProps> = ({
   };
 
   return (
-    <div className={`relative ${className}`} ref={dropdownRef} style={{ zIndex: 1000 }}>
+    <div 
+      className={`relative ${className}`} 
+      ref={dropdownRef} 
+      style={{ zIndex: isOpen ? 9999 : 'auto' }}
+      data-dropdown-id={dropdownId}
+    >
       {/* Label */}
       {label && (
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -171,7 +219,11 @@ const Dropdown: React.FC<DropdownProps> = ({
       {/* Dropdown Trigger */}
       <motion.button
         type="button"
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          !disabled && setIsOpen(!isOpen);
+        }}
         onKeyDown={handleKeyDown}
         disabled={disabled}
         className={`
@@ -243,6 +295,7 @@ const Dropdown: React.FC<DropdownProps> = ({
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             className="absolute z-[99999] w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl"
+            data-dropdown-menu={dropdownId}
             style={{ maxHeight: `${maxHeight}px` }}
           >
             {/* Search Input */}
@@ -272,7 +325,7 @@ const Dropdown: React.FC<DropdownProps> = ({
                 filteredOptions.map((option, index) => (
                   <motion.button
                     key={option.value}
-                    onClick={() => handleOptionClick(option)}
+                    onClick={(e) => handleOptionClick(option, e)}
                     disabled={option.disabled}
                     className={`
                       w-full flex items-center gap-3 px-3 py-2 text-left text-sm transition-colors

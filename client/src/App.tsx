@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
@@ -69,20 +68,12 @@ const ConditionalHeader: React.FC = () => {
 const ConditionalFooter: React.FC = () => {
   const location = useLocation();
   
-  // Don't render Footer on dashboard page, create pages, OTP test, and error pages (they have their own footer)
-  if (location.pathname === '/dashboard' || 
-      location.pathname === '/create-blog' ||
-      location.pathname === '/create-album' ||
-      location.pathname === '/create-guide' ||
-      location.pathname === '/otp-test' ||
-      location.pathname === '/404' ||
-      location.pathname === '/500' ||
-      location.pathname === '/offline' ||
-      location.pathname === '/not-found') {
-    return null;
+  // Only show Footer on home page
+  if (location.pathname === '/') {
+    return <Footer />;
   }
   
-  return <Footer />;
+  return null;
 };
 
 function App() {
@@ -172,8 +163,6 @@ function App() {
           </ToastProvider>
         </AuthProvider>
       </ThemeProvider>
-      {/* React Query DevTools - only in development */}
-      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
     </ErrorBoundary>
   );

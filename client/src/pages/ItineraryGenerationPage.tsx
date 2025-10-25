@@ -49,6 +49,19 @@ const ItineraryGenerationPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
+    // Check authentication first
+    if (!isAuthenticated || !user) {
+      console.log('User not authenticated, redirecting to login...');
+      setError('Please log in to access your itinerary.');
+      navigate('/login', { 
+        state: { 
+          from: '/itinerary-generation',
+          message: 'Please log in to access your itinerary.' 
+        } 
+      });
+      return;
+    }
+    
     const state = location.state as { itineraryData?: EnhancedItineraryResponse };
     if (state?.itineraryData) {
       setItineraryData(state.itineraryData);
@@ -57,7 +70,7 @@ const ItineraryGenerationPage: React.FC = () => {
       setError('No itinerary data found');
     }
     setIsLoading(false);
-  }, [location.state]);
+  }, [location.state, isAuthenticated, user, navigate]);
 
   // Scroll detection for ModernHeader visibility
   useEffect(() => {
@@ -353,7 +366,7 @@ const ItineraryGenerationPage: React.FC = () => {
       {/* Enhanced Header with better visibility */}
       <header className="bg-white dark:bg-gray-800 shadow-lg border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 w-full backdrop-blur-sm bg-white/95 dark:bg-gray-800/95">
         <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-6">
+          <div className="flex items-center justify-between py-1.5">
             {/* Left side - Back button and Logo/Name */}
             <div className="flex items-center space-x-4">
               <button

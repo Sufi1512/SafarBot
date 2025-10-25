@@ -533,7 +533,7 @@ const EditItineraryPage: React.FC = () => {
       {/* Enhanced Header */}
       <header className="bg-white dark:bg-gray-800 shadow-lg border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 w-full backdrop-blur-sm bg-white/95 dark:bg-gray-800/95">
         <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-3">
+          <div className="flex items-center justify-between py-1.5">
             {/* Left side - Back button and Logo/Name */}
             <div className="flex items-center space-x-4">
               <button

@@ -6,12 +6,11 @@ import {
   MapPin
 } from 'lucide-react';
 import logoImage from '../asset/images/logo.png';
+import { BsFacebook, BsInstagram } from "react-icons/bs";
+import { BsTwitter } from "react-icons/bs";
+import { BsLinkedin } from "react-icons/bs";
 
-interface FooterProps {
-  disableCentering?: boolean;
-}
-
-const Footer: React.FC<FooterProps> = ({ disableCentering = false }) => {
+const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
 
   const footerLinks = {
@@ -35,17 +34,17 @@ const Footer: React.FC<FooterProps> = ({ disableCentering = false }) => {
   };
 
   const socialLinks = [
-    { name: 'Facebook', icon: '📘', href: '#' },
-    { name: 'Twitter', icon: '🐦', href: '#' },
-    { name: 'Instagram', icon: '📷', href: '#' },
-    { name: 'LinkedIn', icon: '💼', href: '#' },
+    { name: 'Facebook', icon: <BsFacebook />, href: '#' },
+    { name: 'Twitter', icon: <BsTwitter />, href: '#' },
+    { name: 'Instagram', icon: <BsInstagram />, href: '#' },
+    { name: 'LinkedIn', icon: <BsLinkedin />, href: '#' },
   ];
 
   return (
     <footer className="bg-gray-50 dark:bg-gray-900">
-      <div className={`${disableCentering ? 'w-full' : 'max-w-7xl mx-auto'} px-4 sm:px-6 lg:px-8 py-12`}>
+      <div className="w-full py-12">
         {/* Main Footer Content */}
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-8 px-4 sm:px-6 lg:px-8">
           {/* Top Row - Brand and Link Sections */}
           <div className="flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-12">
             {/* Brand Section */}
@@ -146,7 +145,7 @@ const Footer: React.FC<FooterProps> = ({ disableCentering = false }) => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-gray-200 dark:border-gray-800 mt-8 pt-8">
+        <div className="border-t border-gray-200 dark:border-gray-800 mt-8 pt-8 px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row justify-between items-center">
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 sm:mb-0">
               © {currentYear} SafarBot. All rights reserved.

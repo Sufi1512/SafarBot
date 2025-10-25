@@ -1,12 +1,8 @@
-# Core FastAPI and Web Framework
-FastAPI
+# Core FastAPI dependencies
+fastapi
 uvicorn[standard]
-pydantic
-pydantic-settings
-
-# HTTP and API Requests
-requests
-httpx
+python-multipart
+python-dotenv
 
 # Database
 motor
@@ -18,8 +14,10 @@ python-jose[cryptography]
 passlib[bcrypt]
 python-multipart
 
-# Environment and Configuration
-python-dotenv==1.0.1
+# HTTP & API
+httpx
+requests
+aiofiles
 
 # Email Services
 secure-smtplib  

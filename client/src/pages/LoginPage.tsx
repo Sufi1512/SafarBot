@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import ModernButton from '../components/ui/ModernButton';
 import ModernCard from '../components/ui/ModernCard';
+import GoogleSignIn from '../components/GoogleSignIn';
 import { useAuth } from '../contexts/AuthContext';
 import logoImage from '../asset/images/logo.png';
 
@@ -41,6 +42,17 @@ const LoginPage: React.FC = () => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  const handleGoogleLoginSuccess = () => {
+    setShowSuccess(true);
+    // Clear any stored redirect info
+    sessionStorage.removeItem('authRedirect');
+    navigate(redirectPath, { replace: true });
+  };
+
+  const handleGoogleLoginError = (error: string) => {
+    setErrors({ general: error });
+  };
 
   // Get redirect information from location state or session storage
   const redirectInfo = location.state || JSON.parse(sessionStorage.getItem('authRedirect') || '{}');
@@ -276,6 +288,23 @@ const LoginPage: React.FC = () => {
                 )}
               </ModernButton>
             </form>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300 dark:border-gray-600" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">Or continue with</span>
+              </div>
+            </div>
+
+            {/* Google Sign-In */}
+            <GoogleSignIn
+              onSuccess={handleGoogleLoginSuccess}
+              onError={handleGoogleLoginError}
+              className="w-full"
+            />
 
             {/* Footer Links */}
             <div className="mt-8 text-center space-y-4">

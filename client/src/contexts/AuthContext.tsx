@@ -4,13 +4,18 @@ import { authAPI } from '../services/cachedApi';
 interface User {
   id: string;
   email: string;
-  first_name: string;
-  last_name: string;
+  first_name?: string;
+  last_name?: string;
+  name?: string;  // Full name for backward compatibility
   phone?: string;
   is_email_verified: boolean;
+  email_verified?: boolean;  // Alternative field name from Firebase
   status: string;
   created_at: string;
   updated_at: string;
+  photo_url?: string;
+  role?: string;
+  last_login?: string;
 }
 
 interface AuthContextType {
@@ -18,6 +23,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  setUser: (user: User) => void;
   signup: (userData: {
     first_name: string;
     last_name: string;
@@ -226,6 +232,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated: !!user,
     isLoading,
     login,
+    setUser,
     signup,
     logout,
     updateProfile,

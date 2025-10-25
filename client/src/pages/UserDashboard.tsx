@@ -28,8 +28,6 @@ interface DashboardData {
     flight_bookings: number;
     hotel_bookings: number;
     upcoming_trips: number;
-    loyalty_points: number;
-    loyalty_tier: string;
   };
   recent_bookings: Array<{
     id: string;

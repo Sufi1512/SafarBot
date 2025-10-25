@@ -19,6 +19,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
 # Virtual environments
 venv/
@@ -36,31 +37,45 @@ venv.bak/
 
 # OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
 # Logs
-*.log
 logs/
+*.log
 
 # Environment files
 .env
 .env.local
-.env.development
-.env.test
-.env.production
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Database
-*.db
-*.sqlite3
+# Git
+.git/
+.gitignore
 
-# Cache
-.cache/
-.pytest_cache/
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Documentation
+README.md
+*.md
+
+# Test files
+tests/
+test_*.py
+*_test.py
 
 # Coverage
-htmlcov/
 .coverage
-.coverage.*
+htmlcov/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -68,26 +83,33 @@ htmlcov/
 # pyenv
 .python-version
 
-# Docker
-Dockerfile*
-docker-compose*
-.dockerignore
+# pipenv
+Pipfile.lock
 
-# Git
-.git/
-.gitignore
+# PEP 582
+__pypackages__/
 
-# Documentation
-*.md
-docs/
+# Celery
+celerybeat-schedule
+celerybeat.pid
 
-# Test files
-test_*.py
-*_test.py
-tests/
+# SageMath parsed files
+*.sage.py
 
-# Temporary files
-tmp/
-temp/
+# Spyder project settings
+.spyderproject
+.spyproject
 
+# Rope project settings
+.ropeproject
 
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/

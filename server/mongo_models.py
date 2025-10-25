@@ -17,8 +17,8 @@ class PyObjectId(ObjectId):
 
 class MongoBaseModel(BaseModel):
     id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
 
     model_config = {
         "populate_by_name": True,
@@ -41,10 +41,16 @@ class UserStatus(str, Enum):
 
 class User(MongoBaseModel):
     email: EmailStr
-    first_name: str
-    last_name: str
+    first_name: Optional[str] = None  # Made optional for Firebase users
+    last_name: Optional[str] = None   # Made optional for Firebase users
+    name: Optional[str] = None        # Full name for Firebase users
     phone: Optional[str] = None
-    hashed_password: str
+    hashed_password: Optional[str] = None  # Made optional for Firebase users
+    firebase_uid: Optional[str] = None     # Firebase user ID
+    photo_url: Optional[str] = None        # Firebase profile photo
+    email_verified: Optional[bool] = None  # Firebase email verification status
+    phone_number: Optional[str] = None     # Firebase phone number
+    provider_data: List[Dict[str, Any]] = Field(default_factory=list)  # Firebase provider data
     role: UserRole = UserRole.USER
     status: UserStatus = UserStatus.ACTIVE
     is_email_verified: bool = False
@@ -401,7 +407,7 @@ class TravelPreferences(BaseModel):
     travel_style: List[str] = Field(default_factory=list)  # adventure, luxury, family, business
     dietary_restrictions: List[str] = Field(default_factory=list)
     accessibility_needs: List[str] = Field(default_factory=list)
-    language_preferences: List[str] = Field(default_factory=["en"])
+    language_preferences: List[str] = Field(default_factory=lambda: ["en"])
     currency_preference: str = "USD"
     timezone: str = "UTC"
 
@@ -571,7 +577,5 @@ class EnhancedUser(User):
     analytics: Optional[PyObjectId] = None  # Reference to UserAnalyticsDocument
     last_session_id: Optional[str] = None
     is_premium: bool = False
-    loyalty_tier: str = "bronze"  # bronze, silver, gold, platinum
-    loyalty_points: int = 0
     referral_code: str = Field(default_factory=lambda: str(uuid.uuid4())[:8].upper())
     referred_by: Optional[str] = None 

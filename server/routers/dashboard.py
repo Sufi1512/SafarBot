@@ -25,8 +25,6 @@ class DashboardStatsResponse(BaseModel):
     flight_bookings: int
     hotel_bookings: int
     upcoming_trips: int
-    loyalty_points: int
-    loyalty_tier: str
 
 class BookingSummary(BaseModel):
     id: str

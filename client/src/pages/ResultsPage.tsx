@@ -578,7 +578,11 @@ const ResultsPage: React.FC = () => {
       };
 
       console.log('Sending API request:', apiRequest);
-      console.log('API base URL:', import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1');
+      console.log('API base URL:', import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || (
+        import.meta.env.PROD 
+          ? 'https://safarbot-uevw.onrender.com/api/v1' 
+          : 'http://localhost:8000/api/v1'
+      ));
 
       // Generate enhanced itinerary
       

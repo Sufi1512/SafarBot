@@ -1,100 +1,79 @@
-version: '3.8'
-
 services:
-  # SafarBot Backend API
-  safarbot-backend:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    container_name: safarbot-backend
-    ports:
-      - "8000:8000"
-    environment:
-      - REDIS_URL=redis://redis:6379
-      - MONGODB_URL=mongodb://mongodb:27017/safarbot
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - SERP_API_KEY=${SERP_API_KEY}
-      - OPEN_WEATHER_API_KEY=${OPEN_WEATHER_API_KEY}
-      - BREVO_API_KEY=${BREVO_API_KEY}
-      - SMTP_USERNAME=${SMTP_USERNAME}
-      - SMTP_PASSWORD=${SMTP_PASSWORD}
-    depends_on:
-      - redis
-      - mongodb
-    volumes:
-      - ./server:/app
-    restart: unless-stopped
-    networks:
-      - safarbot-network
-
-  # Redis for caching and real-time features
-  redis:
-    image: redis:7-alpine
-    container_name: safarbot-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    restart: unless-stopped
-    networks:
-      - safarbot-network
-    command: redis-server --appendonly yes
-
-  # MongoDB database
+  # MongoDB Database
   mongodb:
-    image: mongo:7
+    image: mongo:7.0
     container_name: safarbot-mongodb
+    restart: unless-stopped
     ports:
       - "27017:27017"
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=password123
-      - MONGO_INITDB_DATABASE=safarbot
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: safarbot
     volumes:
       - mongodb_data:/data/db
-      - ./server/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-    restart: unless-stopped
+      - ./mongo-init:/docker-entrypoint-initdb.d
     networks:
       - safarbot-network
 
-  # Redis Commander (Redis GUI)
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    container_name: safarbot-redis-commander
-    ports:
-      - "8081:8081"
-    environment:
-      - REDIS_HOSTS=local:redis:6379
-    depends_on:
-      - redis
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: safarbot-backend
     restart: unless-stopped
-    networks:
-      - safarbot-network
-
-  # Mongo Express (MongoDB GUI)
-  mongo-express:
-    image: mongo-express:latest
-    container_name: safarbot-mongo-express
     ports:
-      - "8082:8081"
+      - "8000:8000"
     environment:
-      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
-      - ME_CONFIG_MONGODB_ADMINPASSWORD=password123
-      - ME_CONFIG_MONGODB_URL=mongodb://admin:password123@mongodb:27017/
-      - ME_CONFIG_BASICAUTH_USERNAME=admin
-      - ME_CONFIG_BASICAUTH_PASSWORD=admin123
+      - MONGODB_URL=mongodb://admin:password123@mongodb:27017/safarbot?authSource=admin
+      - SECRET_KEY=your-super-secret-jwt-key-change-in-production
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - REFRESH_TOKEN_EXPIRE_DAYS=7
+      - GOOGLE_API_KEY=your-google-api-key
+      - FIREBASE_PROJECT_ID=safar-bot
+      - FIREBASE_PRIVATE_KEY=your-firebase-private-key
+      - FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@safar-bot.iam.gserviceaccount.com
+      - FIREBASE_CLIENT_ID=117732099857172305-xxxxx
+      - SERP_API_KEY=your-serp-api-key
+      - LANGSMITH_API_KEY=your-langsmith-api-key
+      - CHROMA_PERSIST_DIRECTORY=./chroma_db
+      - BREVO_API_KEY=your-brevo-api-key
+      - BREVO_SMTP_PASSWORD=your-brevo-smtp-password
+      - FRONTEND_URL=http://localhost:3000
     depends_on:
       - mongodb
+    volumes:
+      - ./server/logs:/app/logs
+    networks:
+      - safarbot-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend (if you want to run it in Docker too)
+  frontend:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    container_name: safarbot-frontend
     restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - REACT_APP_GOOGLE_MAPS_API_KEY=your-google-maps-api-key
+    depends_on:
+      - backend
     networks:
       - safarbot-network
 
 volumes:
-  redis_data:
   mongodb_data:
 
 networks:
   safarbot-network:
     driver: bridge
-
-

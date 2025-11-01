@@ -8,11 +8,11 @@ pydantic-settings
 # Database
 motor
 pymongo
+certifi
 
 # Authentication and Security
 python-jose[cryptography]
 passlib[bcrypt]
-python-multipart
 
 # HTTP & API
 httpx
@@ -26,12 +26,16 @@ email-validator
 # Google AI Services
 google-generativeai>=0.8.0
 
+# SERP API (Google Search Results)
+google-search-results
+
 # Firebase Admin SDK
 firebase-admin
 
 # LangChain (if using AI workflows)
 langchain-core
 langchain-google-genai
+langsmith
 
 # Data Processing (minimal)
 python-dateutil
@@ -50,3 +54,4 @@ openai
 
 # Additional utilities
 typing-extensions
+pydantic

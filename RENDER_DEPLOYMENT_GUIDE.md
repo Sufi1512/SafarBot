@@ -173,6 +173,34 @@ const API_URL = 'https://your-service-url.onrender.com'
 
 ## 🐛 Troubleshooting Common Issues
 
+### Issue: Render is trying to use Docker instead of Python
+
+**Error Message**: `error: failed to solve: failed to read dockerfile: open Dockerfile: no such file or directory`
+
+**Solution**: Render is auto-detecting Docker because it found `.dockerignore` files in your repository. 
+
+**First, remove the .dockerignore files from Git:**
+```bash
+git rm .dockerignore server/.dockerignore
+git commit -m "Remove .dockerignore files"
+git push
+```
+
+**Then, configure the Render service:**
+
+1. Go to your Render service dashboard
+2. Click on "Settings" tab
+3. Scroll down to "Build & Deploy"
+4. Change:
+   - **Environment**: `Python 3`
+   - **Build Command**: `pip install --no-cache-dir -r server/requirements_frozen.txt`
+   - **Start Command**: `cd server && uvicorn main:app --host 0.0.0.0 --port $PORT`
+5. **Important**: Make sure **"Docker" is NOT selected** in the "Docker" section
+6. Click "Save Changes"
+7. Manually trigger a deploy by clicking "Manual Deploy"
+
+Alternatively, if you're using `render.yaml`, make sure it's pushed to your GitHub repository and Render is set to "Auto-Deploy" from the `render.yaml` file.
+
 ### Issue: Build fails with "Rust compilation error" or "pydantic_core" issues
 
 **Solution**: This happens because some packages (like ChromaDB) require Rust. If you encounter this issue, you have several options:

@@ -9,8 +9,9 @@ import json
 import logging
 import asyncio
 from datetime import datetime
-from services.redis_service import redis_service
 from mongo_models import PyObjectId
+
+from services.cache_service import cache_service as redis_service
 
 logger = logging.getLogger(__name__)
 
@@ -100,11 +101,11 @@ class ChatCollaborationManager:
             'timestamp': datetime.now().isoformat()
         })
         
-        # Store in Redis for persistence
+        # Store in cache for persistence
         try:
             await redis_service.store_json(f"chat_room:{room_id}", self.chat_rooms[room_id])
         except Exception as e:
-            logger.error(f"Failed to store room in Redis: {e}")
+            logger.warning(f"Failed to store room in cache: {e}")
         
         logger.info(f"Chat room {room_id} created by {creator_user_id}")
         return {'success': True, 'room_id': room_id}
@@ -264,11 +265,11 @@ class ChatCollaborationManager:
         # Broadcast to all room members
         await self._broadcast_to_room(room_id, message_data)
         
-        # Store in Redis for persistence
+        # Store in cache for persistence
         try:
             await redis_service.store_json(f"chat_message:{message_data['id']}", message_data)
         except Exception as e:
-            logger.error(f"Failed to store message in Redis: {e}")
+            logger.warning(f"Failed to store message in cache: {e}")
         
         logger.info(f"Message sent in room {room_id} by {user_id}")
         return {'success': True, 'message_id': message_data['id']}

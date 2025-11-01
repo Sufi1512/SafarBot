@@ -9,7 +9,8 @@ import json
 import logging
 import asyncio
 from datetime import datetime
-from services.redis_service import redis_service
+
+from services.cache_service import cache_service as redis_service
 
 logger = logging.getLogger(__name__)
 

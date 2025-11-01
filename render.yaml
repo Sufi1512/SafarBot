@@ -41,8 +41,6 @@ services:
         sync: false
       - key: FRONTEND_URL
         value: https://safarbot.vercel.app
-      - key: REDIS_URL
-        sync: false
       - key: OPEN_WEATHER_API_KEY
         sync: false
     healthCheckPath: /health

@@ -104,10 +104,10 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-# Database and Redis events
+# Database events
 @app.on_event("startup")
 async def startup_db_client():
-    """Connect to MongoDB and Redis on startup."""
+    """Connect to MongoDB on startup."""
     try:
         await Database.connect_db()
         print("✅ Database connection established")
@@ -116,15 +116,6 @@ async def startup_db_client():
         print("⚠️  Application will start without database connection")
         # Don't raise the exception to allow the app to start
         # This is important for deployment when MongoDB might not be available
-    
-    # Initialize Redis connection
-    try:
-        from services.redis_service import redis_service
-        await redis_service.connect()
-        print("✅ Redis connection established")
-    except Exception as e:
-        print(f"❌ Redis connection failed: {e}")
-        print("⚠️  Application will continue with limited caching")
     
     # Initialize WebSocket service
     try:
@@ -140,14 +131,6 @@ async def shutdown_db_client():
     """Close MongoDB connection on shutdown."""
     await Database.close_db()
     print("✅ Database connection closed")
-    
-    # Close Redis connection
-    try:
-        from services.redis_service import redis_service
-        await redis_service.disconnect()
-        print("✅ Redis connection closed")
-    except Exception as e:
-        print(f"⚠️  Redis disconnect warning: {e}")
 
 # Include routers
 app.include_router(auth, prefix="/api/v1/auth", tags=["authentication"])
@@ -218,32 +201,6 @@ async def socket_io_blocked():
             "Expires": "0"
         }
     )
-
-@app.get("/redis-status")
-async def redis_status():
-    """Redis status and configuration endpoint."""
-    try:
-        from services.redis_service import redis_service
-        
-        # Test Redis connection
-        is_healthy = await redis_service.health_check()
-        cache_stats = await redis_service.get_cache_stats()
-        
-        return {
-            "redis_configured": True,
-            "redis_healthy": is_healthy,
-            "redis_stats": cache_stats,
-            "fallback_active": not is_healthy,
-            "message": "Redis working" if is_healthy else "Using in-memory fallback"
-        }
-    except Exception as e:
-        return {
-            "redis_configured": False,
-            "redis_healthy": False,
-            "error": str(e),
-            "fallback_active": True,
-            "message": "Redis service not available, using fallback"
-        }
 
 @app.get("/")
 async def root():

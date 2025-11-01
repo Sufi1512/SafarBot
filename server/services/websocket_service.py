@@ -9,8 +9,9 @@ import logging
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 import socketio
-from services.redis_service import redis_service
 from config import settings
+
+from services.cache_service import cache_service as redis_service
 
 logger = logging.getLogger(__name__)
 
@@ -63,17 +64,20 @@ class WebSocketService:
                     'server_time': datetime.utcnow().isoformat()
                 }, room=sid)
                 
-                # Store session in Redis
-                await redis_service.set_user_session(
-                    user_id, 
-                    {
-                        'socket_id': sid,
-                        'user_name': user_name,
-                        'status': 'online',
-                        'last_seen': datetime.utcnow().isoformat()
-                    },
-                    ttl=3600  # 1 hour
-                )
+                # Store session in cache
+                try:
+                    await redis_service.set_user_session(
+                        user_id, 
+                        {
+                            'socket_id': sid,
+                            'user_name': user_name,
+                            'status': 'online',
+                            'last_seen': datetime.utcnow().isoformat()
+                        },
+                        ttl=3600  # 1 hour
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to store session in cache: {e}")
                 
                 return True
                 
@@ -98,15 +102,18 @@ class WebSocketService:
                     # Remove from connected users
                     del self.connected_users[sid]
                     
-                    # Update Redis session
-                    await redis_service.set_user_session(
-                        user_id,
-                        {
-                            'status': 'offline',
-                            'last_seen': datetime.utcnow().isoformat()
-                        },
-                        ttl=86400  # Keep offline status for 24 hours
-                    )
+                    # Update session in cache
+                    try:
+                        await redis_service.set_user_session(
+                            user_id,
+                            {
+                                'status': 'offline',
+                                'last_seen': datetime.utcnow().isoformat()
+                            },
+                            ttl=86400  # Keep offline status for 24 hours
+                        )
+                    except Exception as e:
+                        logger.warning(f"Failed to update session in cache: {e}")
                     
                     logger.info(f"User {user_name} ({user_id}) disconnected: {sid}")
                     
@@ -188,16 +195,19 @@ class WebSocketService:
                 user_info = self.connected_users[sid]
                 room_id = f"itinerary_{itinerary_id}"
                 
-                # Store update in Redis for persistence
-                await redis_service.set_collaboration_state(
-                    itinerary_id,
-                    user_info['user_id'],
-                    {
-                        'last_update': datetime.utcnow().isoformat(),
-                        'update_type': update_type,
-                        'update_data': update_data
-                    }
-                )
+                # Store update in cache for persistence
+                try:
+                    await redis_service.set_collaboration_state(
+                        itinerary_id,
+                        user_info['user_id'],
+                        {
+                            'last_update': datetime.utcnow().isoformat(),
+                            'update_type': update_type,
+                            'update_data': update_data
+                        }
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to store collaboration state in cache: {e}")
                 
                 # Broadcast to other collaborators
                 await sio.emit('itinerary_updated', {
@@ -211,16 +221,19 @@ class WebSocketService:
                     'timestamp': datetime.utcnow().isoformat()
                 }, room=room_id, skip_sid=sid)
                 
-                # Publish to Redis for cross-server sync
-                await redis_service.publish_event(
-                    f"itinerary_updates_{itinerary_id}",
-                    {
-                        'type': update_type,
-                        'data': update_data,
-                        'user_id': user_info['user_id'],
-                        'user_name': user_info['user_name']
-                    }
-                )
+                # Publish event (stub for compatibility)
+                try:
+                    await redis_service.publish_event(
+                        f"itinerary_updates_{itinerary_id}",
+                        {
+                            'type': update_type,
+                            'data': update_data,
+                            'user_id': user_info['user_id'],
+                            'user_name': user_info['user_name']
+                        }
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to publish event: {e}")
                 
                 return {'success': True}
                 
@@ -315,21 +328,26 @@ class WebSocketService:
                     return {'success': True, 'delivered': True}
                 else:
                     # Store for later delivery
-                    await redis_service.set(
-                        "pending_notifications",
-                        f"{target_user_id}_{datetime.utcnow().timestamp()}",
-                        {
-                            'type': notification_type,
-                            'message': message,
-                            'data': notification_data,
-                            'from_user_id': sender_info['user_id'],
-                            'from_user_name': sender_info['user_name'],
-                            'created_at': datetime.utcnow().isoformat()
-                        },
-                        ttl=86400  # 24 hours
-                    )
+                    try:
+                        await redis_service.set(
+                            "pending_notifications",
+                            f"{target_user_id}_{datetime.utcnow().timestamp()}",
+                            {
+                                'type': notification_type,
+                                'message': message,
+                                'data': notification_data,
+                                'from_user_id': sender_info['user_id'],
+                                'from_user_name': sender_info['user_name'],
+                                'created_at': datetime.utcnow().isoformat()
+                            },
+                            ttl=86400  # 24 hours
+                        )
+                        stored = True
+                    except Exception as e:
+                        logger.warning(f"Failed to store notification in cache: {e}")
+                        stored = False
                     
-                    return {'success': True, 'delivered': False, 'stored': True}
+                    return {'success': True, 'delivered': False, 'stored': stored}
                 
             except Exception as e:
                 logger.error(f"Send notification error: {str(e)}")

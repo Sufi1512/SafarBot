@@ -1,26 +1,26 @@
 """
-SERP Cache Service - Redis-powered caching
-Caches SERP API responses using Redis for distributed caching
+SERP Cache Service - In-memory caching
+Caches SERP API responses using in-memory storage
 """
 
 import logging
 from typing import Dict, Any, Optional, List
-from services.redis_service import redis_service
+from services.cache_service import cache_service
 
 logger = logging.getLogger(__name__)
 
 class SerpCacheService:
-    """Redis-powered SERP cache service"""
+    """In-memory SERP cache service"""
     
     def __init__(self, cache_duration_minutes: int = 60):
         """Initialize the cache service"""
         self.cache_duration_seconds = cache_duration_minutes * 60
-        print(f"💾 SERP CACHE SERVICE - Initialized with Redis (cache for {cache_duration_minutes} minutes)")
+        print(f"💾 SERP CACHE SERVICE - Initialized with in-memory cache (cache for {cache_duration_minutes} minutes)")
     
     async def get_cached_response(self, endpoint: str, params: Dict[str, Any]) -> Optional[Any]:
         """Get cached response if available and valid"""
         try:
-            cached_data = await redis_service.get("serp_cache", endpoint, params)
+            cached_data = await cache_service.get("serp_cache", endpoint, params)
             if cached_data is not None:
                 print(f"💾 CACHE HIT: {endpoint} (saved SERP API call)")
                 return cached_data
@@ -34,7 +34,7 @@ class SerpCacheService:
     async def cache_response(self, endpoint: str, params: Dict[str, Any], response: Any) -> None:
         """Cache the SERP API response"""
         try:
-            success = await redis_service.set(
+            success = await cache_service.set(
                 "serp_cache", 
                 endpoint, 
                 response, 
@@ -49,15 +49,14 @@ class SerpCacheService:
             logger.error(f"Error caching response: {str(e)}")
     
     async def get_cache_stats(self) -> Dict[str, Any]:
-        """Get cache statistics from Redis"""
+        """Get cache statistics"""
         try:
-            redis_stats = await redis_service.get_cache_stats()
+            stats = await cache_service.get_cache_stats()
             return {
-                "type": "Redis Cache",
-                "redis_status": redis_stats.get("status", "unknown"),
-                "total_safarbot_keys": redis_stats.get("safarbot_keys", 0),
-                "memory_used": redis_stats.get("memory_used", "0B"),
-                "connected_clients": redis_stats.get("connected_clients", 0),
+                "type": "In-Memory Cache",
+                "status": stats.get("status", "active"),
+                "total_safarbot_keys": stats.get("safarbot_keys", 0),
+                "memory_used": stats.get("memory_used", "0B"),
                 "cache_duration_minutes": self.cache_duration_seconds // 60
             }
         except Exception as e:
@@ -65,14 +64,13 @@ class SerpCacheService:
             return {"type": "Redis Cache", "status": "error", "error": str(e)}
     
     async def clear_expired_cache(self) -> int:
-        """Clear expired cache entries (Redis handles this automatically)"""
-        print("ℹ️ Redis automatically handles cache expiration")
-        return 0
+        """Clear expired cache entries"""
+        return await cache_service.cleanup_expired()
     
     async def clear_all_cache(self) -> None:
         """Clear all SERP cache entries"""
         try:
-            cleared_count = await redis_service.delete_pattern("serp_cache:*")
+            cleared_count = await cache_service.delete_pattern("serp_cache:*")
             print(f"🗑️  CLEARED ALL SERP CACHE: {cleared_count} entries removed")
         except Exception as e:
             logger.error(f"Error clearing cache: {str(e)}")
@@ -88,7 +86,7 @@ class CachedPlacesSearchTool:
         from tools.places_search_tool import PlacesSearchTool
         self.original_tool = PlacesSearchTool()
         self.cache = serp_cache
-        print("🚀 CACHED PLACES SEARCH TOOL - Initialized with Redis caching")
+        print("🚀 CACHED PLACES SEARCH TOOL - Initialized with in-memory caching")
     
     async def search_hotels_cached(self, location: str, check_in: str = None, check_out: str = None,
                                   rating_min: float = 3.5, max_results: int = 5) -> List[Dict[str, Any]]:

@@ -42,7 +42,12 @@ export const ItineraryRoomManager: React.FC<ItineraryRoomManagerProps> = ({
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`http://localhost:8000/api/v1/collaboration/room/status/${itineraryId}`, {
+      const apiBaseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || (
+        import.meta.env.PROD 
+          ? 'https://safarbot-n24f.onrender.com/api/v1' 
+          : 'http://localhost:8000/api/v1'
+      );
+      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/collaboration/room/status/${itineraryId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -72,7 +77,12 @@ export const ItineraryRoomManager: React.FC<ItineraryRoomManagerProps> = ({
       setCreating(true);
       setError(null);
 
-      const response = await fetch('http://localhost:8000/api/v1/collaboration/room/create', {
+      const apiBaseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || (
+        import.meta.env.PROD 
+          ? 'https://safarbot-n24f.onrender.com/api/v1' 
+          : 'http://localhost:8000/api/v1'
+      );
+      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/collaboration/room/create`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -116,7 +126,12 @@ export const ItineraryRoomManager: React.FC<ItineraryRoomManagerProps> = ({
       setJoining(true);
       setError(null);
 
-      const response = await fetch(`http://localhost:8000/api/v1/collaboration/room/${roomStatus.room_id}/join`, {
+      const apiBaseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || (
+        import.meta.env.PROD 
+          ? 'https://safarbot-n24f.onrender.com/api/v1' 
+          : 'http://localhost:8000/api/v1'
+      );
+      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/collaboration/room/${roomStatus.room_id}/join`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

@@ -90,7 +90,9 @@ export const useChatCollaboration = (options: UseChatCollaborationOptions) => {
 
     updateState({ isConnecting: true, connectionError: null });
 
-    const wsUrl = `ws://localhost:8000/chat/${encodeURIComponent(userId)}/${encodeURIComponent(userName)}`;
+    const wsUrl = process.env.NODE_ENV === 'development'
+      ? `ws://localhost:8000/chat/${encodeURIComponent(userId)}/${encodeURIComponent(userName)}`
+      : `wss://safarbot-n24f.onrender.com/chat/${encodeURIComponent(userId)}/${encodeURIComponent(userName)}`;
     console.log('🔌 Connecting to chat:', wsUrl);
 
     try {

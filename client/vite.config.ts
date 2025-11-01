@@ -21,7 +21,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'https://safarbot-uevw.onrender.com/',
+        target: 'https://safarbot-n24f.onrender.com/',
         changeOrigin: true
       }
     }

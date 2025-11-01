@@ -59,7 +59,7 @@ export const useWebSocket = (options: WebSocketOptions = {}) => {
     try {
       const socketUrl = process.env.NODE_ENV === 'development' 
         ? 'http://localhost:8000' 
-        : window.location.origin;
+        : 'https://safarbot-n24f.onrender.com';
 
       socketRef.current = io(socketUrl, {
         auth: {

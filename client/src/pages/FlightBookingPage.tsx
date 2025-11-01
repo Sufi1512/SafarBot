@@ -49,18 +49,32 @@ const FlightBookingPage: React.FC = () => {
   });
   // Removed hardcoded airport suggestions - now using Google Places API
 
-  // Load popular flights on component mount
+  // Load popular flights on component mount with error handling
   useEffect(() => {
+    let isMounted = true;
+    
     const loadPopularFlights = async () => {
       try {
-        await flightAPI.getPopularFlights();
-        // Popular flights loaded but not used in current UI
+        if (isMounted) {
+          await flightAPI.getPopularFlights();
+          // Popular flights loaded but not used in current UI
+        }
       } catch (error) {
+        // Silently handle error - this is non-critical data
         console.error('Error loading popular flights:', error);
+        // Don't throw error to prevent page crash
       }
     };
     
-    loadPopularFlights();
+    // Small delay to ensure component is fully mounted during navigation
+    const timeoutId = setTimeout(() => {
+      loadPopularFlights();
+    }, 100);
+    
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   // Airport selection handlers using Google Places API
@@ -93,20 +107,20 @@ const FlightBookingPage: React.FC = () => {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form based on trip type
-    if (searchForm.tripType === 'round-trip' && !searchForm.returnDate) {
-      alert('Please select a return date for round-trip flights.');
-      return;
-    }
-    
-    if (!searchForm.from || !searchForm.to || !searchForm.departureDate) {
-      alert('Please fill in all required fields.');
-      return;
-    }
-    
-    setIsSearching(true);
-    
     try {
+      // Validate form based on trip type
+      if (searchForm.tripType === 'round-trip' && !searchForm.returnDate) {
+        alert('Please select a return date for round-trip flights.');
+        return;
+      }
+      
+      if (!searchForm.from || !searchForm.to || !searchForm.departureDate) {
+        alert('Please fill in all required fields.');
+        return;
+      }
+      
+      setIsSearching(true);
+      
       const searchRequest: FlightSearchRequest = {
         from_location: searchForm.from,
         to_location: searchForm.to,
@@ -117,7 +131,7 @@ const FlightBookingPage: React.FC = () => {
       };
       
       const response = await flightAPI.searchFlights(searchRequest);
-      setFlights(response.flights);
+      setFlights(response?.flights || []);
     } catch (error: any) {
       console.error('Flight search error:', error);
       // Show error message instead of fallback

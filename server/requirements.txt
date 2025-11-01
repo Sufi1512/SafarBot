@@ -19,7 +19,8 @@ requests
 aiofiles
 
 # Email Services
-secure-smtplib  
+secure-smtplib
+email-validator  
 
 # Google AI Services
 google-generativeai>=0.8.0
@@ -39,10 +40,6 @@ structlog
 
 # CORS and Middleware
 fastapi-cors
-
-# Redis for caching and real-time features
-redis
-redis-om
 
 # WebSocket suppor
 python-socketio

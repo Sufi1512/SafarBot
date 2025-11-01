@@ -6,9 +6,7 @@
 import { 
   useQuery, 
   useMutation, 
-  useQueryClient, 
-  UseQueryResult,
-  UseMutationResult 
+  useQueryClient
 } from '@tanstack/react-query';
 import { queryKeys, invalidateQueries } from '../lib/queryClient';
 import { 
@@ -66,24 +64,23 @@ export const useSavedItinerary = (itineraryId: string) => {
 };
 
 export const useCreateItinerary = () => {
-  const queryClient = useQueryClient();
-  const { addToast } = useToast();
+  const { showToast } = useToast();
 
   return useMutation({
     mutationFn: savedItineraryAPI.createItinerary,
-    onSuccess: (data) => {
+    onSuccess: () => {
       // Invalidate and refetch saved itineraries
       invalidateQueries.savedItineraries();
       invalidateQueries.dashboard();
       
-      addToast({
+      showToast({
         type: 'success',
         title: 'Itinerary Created',
         message: 'Your itinerary has been saved successfully!'
       });
     },
     onError: (error: any) => {
-      addToast({
+      showToast({
         type: 'error',
         title: 'Creation Failed',
         message: error?.response?.data?.detail || 'Failed to create itinerary'
@@ -94,7 +91,7 @@ export const useCreateItinerary = () => {
 
 export const useUpdateItinerary = () => {
   const queryClient = useQueryClient();
-  const { addToast } = useToast();
+  const { showToast } = useToast();
 
   return useMutation({
     mutationFn: ({ itineraryId, updateData }: { itineraryId: string; updateData: any }) =>
@@ -109,14 +106,14 @@ export const useUpdateItinerary = () => {
       // Invalidate list to ensure consistency
       invalidateQueries.savedItineraries();
       
-      addToast({
+      showToast({
         type: 'success',
         title: 'Itinerary Updated',
         message: 'Your changes have been saved!'
       });
     },
     onError: (error: any) => {
-      addToast({
+      showToast({
         type: 'error',
         title: 'Update Failed',
         message: error?.response?.data?.detail || 'Failed to update itinerary'
@@ -127,24 +124,24 @@ export const useUpdateItinerary = () => {
 
 export const useDeleteItinerary = () => {
   const queryClient = useQueryClient();
-  const { addToast } = useToast();
+  const { showToast } = useToast();
 
   return useMutation({
     mutationFn: savedItineraryAPI.deleteItinerary,
-    onSuccess: (data, itineraryId) => {
+    onSuccess: (_data, itineraryId) => {
       // Remove from cache
       queryClient.removeQueries({ queryKey: queryKeys.savedItinerary(itineraryId) });
       invalidateQueries.savedItineraries();
       invalidateQueries.dashboard();
       
-      addToast({
+      showToast({
         type: 'success',
         title: 'Itinerary Deleted',
         message: 'Itinerary has been removed successfully'
       });
     },
     onError: (error: any) => {
-      addToast({
+      showToast({
         type: 'error',
         title: 'Deletion Failed',
         message: error?.response?.data?.detail || 'Failed to delete itinerary'
@@ -258,21 +255,20 @@ export const useMyCollaborations = () => {
 };
 
 export const useInviteCollaborator = () => {
-  const queryClient = useQueryClient();
-  const { addToast } = useToast();
+  const { showToast } = useToast();
 
   return useMutation({
     mutationFn: collaborationAPI.inviteCollaborator,
     onSuccess: () => {
       invalidateQueries.collaboration();
-      addToast({
+      showToast({
         type: 'success',
         title: 'Invitation Sent',
         message: 'Collaboration invitation has been sent successfully!'
       });
     },
     onError: (error: any) => {
-      addToast({
+      showToast({
         type: 'error',
         title: 'Invitation Failed',
         message: error?.response?.data?.detail || 'Failed to send invitation'
@@ -282,22 +278,21 @@ export const useInviteCollaborator = () => {
 };
 
 export const useAcceptInvitation = () => {
-  const queryClient = useQueryClient();
-  const { addToast } = useToast();
+  const { showToast } = useToast();
 
   return useMutation({
     mutationFn: collaborationAPI.acceptInvitation,
     onSuccess: () => {
       invalidateQueries.collaboration();
       invalidateQueries.savedItineraries();
-      addToast({
+      showToast({
         type: 'success',
         title: 'Invitation Accepted',
         message: 'You are now collaborating on this itinerary!'
       });
     },
     onError: (error: any) => {
-      addToast({
+      showToast({
         type: 'error',
         title: 'Failed to Accept',
         message: error?.response?.data?.detail || 'Failed to accept invitation'
@@ -317,21 +312,21 @@ export const useUserProfile = () => {
 
 export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
-  const { addToast } = useToast();
+  const { showToast } = useToast();
 
   return useMutation({
     mutationFn: authAPI.updateProfile,
     onSuccess: (data) => {
       queryClient.setQueryData(queryKeys.userProfile(), data);
       invalidateQueries.user();
-      addToast({
+      showToast({
         type: 'success',
         title: 'Profile Updated',
         message: 'Your profile has been updated successfully!'
       });
     },
     onError: (error: any) => {
-      addToast({
+      showToast({
         type: 'error',
         title: 'Update Failed',
         message: error?.response?.data?.detail || 'Failed to update profile'
@@ -350,21 +345,20 @@ export const useAlerts = (params?: any) => {
 };
 
 export const useCreateAlert = () => {
-  const queryClient = useQueryClient();
-  const { addToast } = useToast();
+  const { showToast } = useToast();
 
   return useMutation({
     mutationFn: alertsAPI.createAlert,
     onSuccess: () => {
       invalidateQueries.alerts();
-      addToast({
+      showToast({
         type: 'success',
         title: 'Alert Created',
         message: 'Price alert has been set up successfully!'
       });
     },
     onError: (error: any) => {
-      addToast({
+      showToast({
         type: 'error',
         title: 'Alert Failed',
         message: error?.response?.data?.detail || 'Failed to create alert'

@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import ModernButton from '../components/ui/ModernButton';
 import ModernCard from '../components/ui/ModernCard';
-import ModernInput from '../components/ui/ModernInput';
 import PlacesAutocomplete from '../components/PlacesAutocomplete';
 import DatePicker from '../components/ui/DatePicker';
 

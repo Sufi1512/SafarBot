@@ -1210,18 +1210,19 @@ const ResultsPage: React.FC = () => {
                                // Calculate activity costs from metadata
                                const activityCost = plan.activities.reduce((sum, activity) => {
                                  let cost = 0;
+                                 const enhancedActivity = activity as any;
                                  
                                  // First try to get cost from activity.estimated_cost
-                                 if (activity.estimated_cost) {
-                                   const estimatedCost = typeof activity.estimated_cost === 'string' ? 
-                                     parseFloat(activity.estimated_cost.replace(/[^0-9.-]/g, '')) || 0 : 
-                                     (activity.estimated_cost || 0);
+                                 if (enhancedActivity.estimated_cost) {
+                                   const estimatedCost = typeof enhancedActivity.estimated_cost === 'string' ? 
+                                     parseFloat(enhancedActivity.estimated_cost.replace(/[^0-9.-]/g, '')) || 0 : 
+                                     (enhancedActivity.estimated_cost || 0);
                                    cost = estimatedCost;
                                  }
                                  
                                  // If no cost in activity, try to get from place_details metadata
-                                 if (cost === 0 && enhancedResponse?.place_details?.[activity.place_id]) {
-                                   const placeDetails = enhancedResponse.place_details[activity.place_id];
+                                 if (cost === 0 && enhancedActivity.place_id && enhancedResponse?.place_details?.[enhancedActivity.place_id]) {
+                                   const placeDetails = enhancedResponse.place_details[enhancedActivity.place_id];
                                    if (placeDetails.price) {
                                      // Parse price range like "$10-20" or "$25"
                                      const priceMatch = placeDetails.price.match(/\$(\d+(?:\.\d+)?)/);
@@ -1237,18 +1238,19 @@ const ResultsPage: React.FC = () => {
                                // Calculate meal costs from metadata
                                const mealCost = plan.meals.reduce((sum, meal) => {
                                  let cost = 0;
+                                 const enhancedMeal = meal as any;
                                  
                                  // Parse price_range like "$20-30" or "$15"
-                                 if (meal.price_range) {
-                                   const priceMatch = meal.price_range.match(/\$(\d+(?:\.\d+)?)/);
+                                 if (enhancedMeal.price_range) {
+                                   const priceMatch = enhancedMeal.price_range.match(/\$(\d+(?:\.\d+)?)/);
                                    if (priceMatch) {
                                      cost = parseFloat(priceMatch[1]);
                                    }
                                  }
                                  
                                  // If no cost in meal, try to get from place_details metadata
-                                 if (cost === 0 && enhancedResponse?.place_details?.[meal.place_id]) {
-                                   const placeDetails = enhancedResponse.place_details[meal.place_id];
+                                 if (cost === 0 && enhancedMeal.place_id && enhancedResponse?.place_details?.[enhancedMeal.place_id]) {
+                                   const placeDetails = enhancedResponse.place_details[enhancedMeal.place_id];
                                    if (placeDetails.price) {
                                      const priceMatch = placeDetails.price.match(/\$(\d+(?:\.\d+)?)/);
                                      if (priceMatch) {
@@ -1261,7 +1263,8 @@ const ResultsPage: React.FC = () => {
                                }, 0);
                                
                                // Calculate transport costs
-                               const transportCost = plan.transportation?.reduce((sum, transport) => {
+                               const enhancedPlan = plan as any;
+                               const transportCost = enhancedPlan.transportation?.reduce((sum: number, transport: any) => {
                                  const cost = typeof transport.cost === 'string' ? parseFloat(transport.cost.replace(/[^0-9.-]/g, '')) || 0 : (transport.cost || 0);
                                  return sum + cost;
                                }, 0) || 0;
@@ -1284,18 +1287,19 @@ const ResultsPage: React.FC = () => {
                                // Calculate activity costs from metadata
                                const activityCost = plan.activities.reduce((sum, activity) => {
                                  let cost = 0;
+                                 const enhancedActivity = activity as any;
                                  
                                  // First try to get cost from activity.estimated_cost
-                                 if (activity.estimated_cost) {
-                                   const estimatedCost = typeof activity.estimated_cost === 'string' ? 
-                                     parseFloat(activity.estimated_cost.replace(/[^0-9.-]/g, '')) || 0 : 
-                                     (activity.estimated_cost || 0);
+                                 if (enhancedActivity.estimated_cost) {
+                                   const estimatedCost = typeof enhancedActivity.estimated_cost === 'string' ? 
+                                     parseFloat(enhancedActivity.estimated_cost.replace(/[^0-9.-]/g, '')) || 0 : 
+                                     (enhancedActivity.estimated_cost || 0);
                                    cost = estimatedCost;
                                  }
                                  
                                  // If no cost in activity, try to get from place_details metadata
-                                 if (cost === 0 && enhancedResponse?.place_details?.[activity.place_id]) {
-                                   const placeDetails = enhancedResponse.place_details[activity.place_id];
+                                 if (cost === 0 && enhancedActivity.place_id && enhancedResponse?.place_details?.[enhancedActivity.place_id]) {
+                                   const placeDetails = enhancedResponse.place_details[enhancedActivity.place_id];
                                    if (placeDetails.price) {
                                      // Parse price range like "$10-20" or "$25"
                                      const priceMatch = placeDetails.price.match(/\$(\d+(?:\.\d+)?)/);
@@ -1311,18 +1315,19 @@ const ResultsPage: React.FC = () => {
                                // Calculate meal costs from metadata
                                const mealCost = plan.meals.reduce((sum, meal) => {
                                  let cost = 0;
+                                 const enhancedMeal = meal as any;
                                  
                                  // Parse price_range like "$20-30" or "$15"
-                                 if (meal.price_range) {
-                                   const priceMatch = meal.price_range.match(/\$(\d+(?:\.\d+)?)/);
+                                 if (enhancedMeal.price_range) {
+                                   const priceMatch = enhancedMeal.price_range.match(/\$(\d+(?:\.\d+)?)/);
                                    if (priceMatch) {
                                      cost = parseFloat(priceMatch[1]);
                                    }
                                  }
                                  
                                  // If no cost in meal, try to get from place_details metadata
-                                 if (cost === 0 && enhancedResponse?.place_details?.[meal.place_id]) {
-                                   const placeDetails = enhancedResponse.place_details[meal.place_id];
+                                 if (cost === 0 && enhancedMeal.place_id && enhancedResponse?.place_details?.[enhancedMeal.place_id]) {
+                                   const placeDetails = enhancedResponse.place_details[enhancedMeal.place_id];
                                    if (placeDetails.price) {
                                      const priceMatch = placeDetails.price.match(/\$(\d+(?:\.\d+)?)/);
                                      if (priceMatch) {
@@ -1335,7 +1340,8 @@ const ResultsPage: React.FC = () => {
                                }, 0);
                                
                                // Calculate transport costs
-                               const transportCost = plan.transportation?.reduce((sum, transport) => {
+                               const enhancedPlan = plan as any;
+                               const transportCost = enhancedPlan.transportation?.reduce((sum: number, transport: any) => {
                                  const cost = typeof transport.cost === 'string' ? parseFloat(transport.cost.replace(/[^0-9.-]/g, '')) || 0 : (transport.cost || 0);
                                  return sum + cost;
                                }, 0) || 0;

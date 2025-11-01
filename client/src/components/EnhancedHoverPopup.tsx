@@ -173,8 +173,8 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
       {metadata.thumbnail ? (
         <div className="w-full h-40 bg-gray-200 dark:bg-gray-700 overflow-hidden relative">
           <OptimizedImage
-            src={metadata.thumbnail || ''}
-            alt={metadata.title}
+            src={metadata.thumbnail ?? ''}
+            alt={metadata.title || ''}
             className="w-full h-full"
             quality="medium"
             loading="eager"

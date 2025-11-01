@@ -21,7 +21,7 @@ const RealTimeCollaboration: React.FC<RealTimeCollaborationProps> = ({
   showCollaborators = true,
   showTypingIndicators = true
 }) => {
-  const { addToast } = useToast();
+  const { showToast } = useToast();
   const [isInCollaboration, setIsInCollaboration] = useState(false);
   
   const {
@@ -30,8 +30,6 @@ const RealTimeCollaboration: React.FC<RealTimeCollaborationProps> = ({
     collaborationState,
     joinItineraryCollaboration,
     leaveItineraryCollaboration,
-    sendItineraryUpdate,
-    sendTypingIndicator,
     subscribe
   } = useWebSocket({ 
     autoConnect: enabled,
@@ -48,7 +46,7 @@ const RealTimeCollaboration: React.FC<RealTimeCollaborationProps> = ({
         setIsInCollaboration(true);
       } catch (error) {
         console.error('Failed to join collaboration:', error);
-        addToast({
+        showToast({
           type: 'error',
           title: 'Collaboration Error',
           message: 'Failed to join real-time collaboration'
@@ -65,7 +63,7 @@ const RealTimeCollaboration: React.FC<RealTimeCollaborationProps> = ({
         setIsInCollaboration(false);
       }
     };
-  }, [enabled, itineraryId, isConnected, joinItineraryCollaboration, leaveItineraryCollaboration, addToast, isInCollaboration]);
+  }, [enabled, itineraryId, isConnected, joinItineraryCollaboration, leaveItineraryCollaboration, showToast, isInCollaboration]);
 
   // Subscribe to itinerary updates
   useEffect(() => {
@@ -75,7 +73,7 @@ const RealTimeCollaboration: React.FC<RealTimeCollaborationProps> = ({
       console.log('Itinerary updated by:', data.updated_by.user_name);
       
       // Show toast notification for updates from other users
-      addToast({
+      showToast({
         type: 'info',
         title: 'Itinerary Updated',
         message: `${data.updated_by.user_name} made changes to ${data.update_type.replace('_', ' ')}`
@@ -87,7 +85,7 @@ const RealTimeCollaboration: React.FC<RealTimeCollaborationProps> = ({
     });
 
     return unsubscribe;
-  }, [enabled, subscribe, addToast]);
+  }, [enabled, subscribe, showToast]);
 
   // Subscribe to cursor movements (optional advanced feature)
   useEffect(() => {

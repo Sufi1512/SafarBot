@@ -30,18 +30,16 @@ export const ChatCollaboration: React.FC<ChatCollaborationProps> = ({
     rooms,
     connectionError,
     connect,
-    disconnect,
     createRoom,
     joinRoom,
     leaveRoom,
     sendChatMessage,
     setTyping,
-    getRooms,
     getRoomMessages,
     getRoomTypingUsers,
     getRoomMembers
   } = useChatCollaboration({
-    userId: user?.user_id || 'anonymous',
+    userId: user?.id || 'anonymous',
     userName: user?.name || user?.email || 'Anonymous User',
     autoConnect: true,
     onMessageReceived: (message) => {
@@ -280,17 +278,17 @@ export const ChatCollaboration: React.FC<ChatCollaborationProps> = ({
                   <div
                     key={message.id}
                     className={`flex ${
-                      message.user_id === (user?.user_id || 'anonymous') ? 'justify-end' : 'justify-start'
+                      message.user_id === (user?.id || 'anonymous') ? 'justify-end' : 'justify-start'
                     }`}
                   >
                     <div
                       className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg ${
-                        message.user_id === (user?.user_id || 'anonymous')
+                        message.user_id === (user?.id || 'anonymous')
                           ? 'bg-blue-500 text-white'
                           : 'bg-gray-200 text-gray-800'
                       }`}
                     >
-                      {message.user_id !== (user?.user_id || 'anonymous') && (
+                      {message.user_id !== (user?.id || 'anonymous') && (
                         <div className="text-xs font-medium mb-1 opacity-75">
                           {message.user_name}
                         </div>

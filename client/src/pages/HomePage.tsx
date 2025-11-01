@@ -14,9 +14,9 @@ import {
   PaperAirplaneIcon,
   BuildingOfficeIcon,
   CubeIcon,
-  HeartIcon,
-  GlobeAltIcon,
-  ClockIcon,
+  // HeartIcon, // Used in commented-out stats section
+  // GlobeAltIcon, // Used in commented-out stats section
+  // ClockIcon, // Used in commented-out stats section
   FireIcon,
   TrophyIcon,
   ShieldCheckIcon,
@@ -206,12 +206,13 @@ const HomePage: React.FC = () => {
     },
   ];
 
-  const stats = [
-    { number: '50K+', label: 'Happy Travelers', icon: HeartIcon, color: 'from-pink-500 to-rose-500' },
-    { number: '200+', label: 'Destinations', icon: GlobeAltIcon, color: 'from-blue-500 to-indigo-500' },
-    { number: '24/7', label: 'Customer Support', icon: ClockIcon, color: 'from-green-500 to-emerald-500' },
-    { number: '4.9★', label: 'Average Rating', icon: StarIcon, color: 'from-yellow-500 to-orange-500' },
-  ];
+  // Stats data (currently commented out in JSX)
+  // const stats = [
+  //   { number: '50K+', label: 'Happy Travelers', icon: HeartIcon, color: 'from-pink-500 to-rose-500' },
+  //   { number: '200+', label: 'Destinations', icon: GlobeAltIcon, color: 'from-blue-500 to-indigo-500' },
+  //   { number: '24/7', label: 'Customer Support', icon: ClockIcon, color: 'from-green-500 to-emerald-500' },
+  //   { number: '4.9★', label: 'Average Rating', icon: StarIcon, color: 'from-yellow-500 to-orange-500' },
+  // ];
 
   // Enhanced testimonials data for AnimatedTestimonials component with reliable images
   const animatedTestimonials = [

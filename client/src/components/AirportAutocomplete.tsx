@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
+import { useJsApiLoader } from '@react-google-maps/api';
 import { Plane } from 'lucide-react';
-import { GOOGLE_MAPS_CONFIG, LIBRARIES } from '../config/googleMapsConfig';
+import { GOOGLE_MAPS_CONFIG } from '../config/googleMapsConfig';
 
 interface AirportSuggestion {
   code: string;
@@ -33,12 +33,15 @@ const AirportAutocomplete: React.FC<AirportAutocompleteProps> = ({
   name,
   id
 }) => {
-  const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
+  // Note: autocomplete state not needed as we handle suggestions manually
   const [suggestions, setSuggestions] = useState<AirportSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { isLoaded, loadError } = useJsApiLoader(GOOGLE_MAPS_CONFIG);
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: GOOGLE_MAPS_CONFIG.googleMapsApiKey,
+    libraries: [...GOOGLE_MAPS_CONFIG.libraries] as any
+  });
 
   // Debug logging
   useEffect(() => {
@@ -46,36 +49,13 @@ const AirportAutocomplete: React.FC<AirportAutocompleteProps> = ({
     console.log('AirportAutocomplete - API Key:', import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? 'Present' : 'Missing');
   }, [isLoaded, loadError]);
 
-  const onLoad = (autocompleteInstance: google.maps.places.Autocomplete) => {
-    setAutocomplete(autocompleteInstance);
-  };
-
-  const onPlaceChanged = () => {
-    if (autocomplete !== null) {
-      const place = autocomplete.getPlace();
-      
-      if (place.formatted_address) {
-        // Extract airport information from Google Places result
-        const airportSuggestion: AirportSuggestion = {
-          code: extractAirportCode(place),
-          name: place.name || place.formatted_address,
-          city: extractCity(place),
-          country: extractCountry(place)
-        };
-        
-        onChange(airportSuggestion.code);
-        
-        if (onAirportSelect) {
-          onAirportSelect(airportSuggestion);
-        }
-      }
-    }
-  };
-
+  // Note: onPlaceChanged is not used as we handle input changes manually via handleInputChange
   // Airport data is now fetched from external API
+  // The extract functions below are kept for potential future use with Google Places Autocomplete
 
-  // Extract airport code from place result
-  const extractAirportCode = (place: google.maps.places.PlaceResult): string => {
+  // Extract airport code from place result (not currently used)
+  // @ts-expect-error - Function kept for potential future use
+  const _extractAirportCode = (place: google.maps.places.PlaceResult): string => {
     const name = place.name || '';
     const addressComponents = place.address_components || [];
     
@@ -113,24 +93,12 @@ const AirportAutocomplete: React.FC<AirportAutocompleteProps> = ({
       return addressIataMatch[1];
     }
     
-    // Fallback: Check against our airport database
-    const normalizedName = name.toLowerCase().trim();
-    if (airportDatabase[normalizedName]) {
-      return airportDatabase[normalizedName];
-    }
-    
-    // Try partial matches in the database
-    for (const [dbName, code] of Object.entries(airportDatabase)) {
-      if (normalizedName.includes(dbName) || dbName.includes(normalizedName)) {
-        return code;
-      }
-    }
-    
     // If still no IATA code found, return a placeholder that indicates it needs manual entry
     return '???';
   };
 
-  const extractCity = (place: google.maps.places.PlaceResult): string => {
+  // @ts-expect-error - Function kept for potential future use
+  const _extractCity = (place: google.maps.places.PlaceResult): string => {
     const addressComponents = place.address_components || [];
     
     for (const component of addressComponents) {
@@ -142,7 +110,8 @@ const AirportAutocomplete: React.FC<AirportAutocompleteProps> = ({
     return place.name || 'Unknown City';
   };
 
-  const extractCountry = (place: google.maps.places.PlaceResult): string => {
+  // @ts-expect-error - Function kept for potential future use
+  const _extractCountry = (place: google.maps.places.PlaceResult): string => {
     const addressComponents = place.address_components || [];
     
     for (const component of addressComponents) {

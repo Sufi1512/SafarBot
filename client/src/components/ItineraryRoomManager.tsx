@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MessageCircle, Users, Plus, ExternalLink, Copy, Check } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+// import { useAuth } from '../contexts/AuthContext'; // Currently unused but may be needed for future features
 
 interface RoomStatus {
   exists: boolean;
@@ -24,7 +24,7 @@ export const ItineraryRoomManager: React.FC<ItineraryRoomManagerProps> = ({
   onRoomJoined,
   className = ''
 }) => {
-  const { user } = useAuth();
+  // const { user } = useAuth(); // Currently unused but may be needed for future features
   const [roomStatus, setRoomStatus] = useState<RoomStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);

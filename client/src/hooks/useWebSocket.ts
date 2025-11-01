@@ -5,7 +5,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { useAuthContext } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 
 interface WebSocketOptions {
@@ -31,8 +31,8 @@ interface CollaborationState {
 
 export const useWebSocket = (options: WebSocketOptions = {}) => {
   const { autoConnect = true, enableLogging = false } = options;
-  const { user } = useAuthContext();
-  const { addToast } = useToast();
+  const { user } = useAuth();
+  const { showToast } = useToast();
   
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
@@ -112,7 +112,7 @@ export const useWebSocket = (options: WebSocketOptions = {}) => {
           }, delay);
         } else {
           setConnectionError('Failed to reconnect after multiple attempts');
-          addToast({
+          showToast({
             type: 'error',
             title: 'Connection Lost',
             message: 'Unable to reconnect to real-time services'
@@ -128,7 +128,7 @@ export const useWebSocket = (options: WebSocketOptions = {}) => {
 
       socket.on('connection_confirmed', (data) => {
         log('Connection confirmed', data);
-        addToast({
+        showToast({
           type: 'success',
           title: 'Connected',
           message: 'Real-time collaboration is active'
@@ -160,7 +160,7 @@ export const useWebSocket = (options: WebSocketOptions = {}) => {
           ]
         }));
 
-        addToast({
+        showToast({
           type: 'info',
           title: 'Collaborator Joined',
           message: `${data.user_name} joined the collaboration`
@@ -175,7 +175,7 @@ export const useWebSocket = (options: WebSocketOptions = {}) => {
           typingUsers: prev.typingUsers.filter(u => u.user_id !== data.user_id)
         }));
 
-        addToast({
+        showToast({
           type: 'info',
           title: 'Collaborator Left',
           message: `${data.user_name} left the collaboration`
@@ -198,7 +198,7 @@ export const useWebSocket = (options: WebSocketOptions = {}) => {
       // Notification events
       socket.on('notification_received', (data) => {
         log('Notification received', data);
-        addToast({
+        showToast({
           type: 'info',
           title: data.message,
           message: `From ${data.from_user.user_name}`
@@ -209,7 +209,7 @@ export const useWebSocket = (options: WebSocketOptions = {}) => {
       log('Error creating socket connection', error);
       setConnectionError('Failed to create connection');
     }
-  }, [user, log, addToast]);
+  }, [user, log, showToast]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {

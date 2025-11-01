@@ -58,7 +58,13 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
     setShowLogoutConfirm(false);
   };
 
-  const navigationItems = [
+  const navigationItems: Array<{
+    id: string;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    tooltip?: string;
+    notification?: number | string;
+  }> = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'chats', label: 'Collaboration', icon: MessageCircle, tooltip: 'Collaborate on itineraries with chat' },
     { id: 'explore', label: 'Explore', icon: Search },

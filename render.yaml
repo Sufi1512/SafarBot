@@ -1,12 +1,14 @@
 services:
   - type: web
     name: safarbot-backend
-    env: docker
-    dockerfilePath: ./Dockerfile
-    dockerContext: .
-    plan: starter
+    env: python
     region: oregon
+    plan: starter
+    buildCommand: pip install --no-cache-dir -r server/requirements_frozen.txt
+    startCommand: cd server && uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
       - key: MONGODB_URL
         sync: false
       - key: SECRET_KEY
@@ -16,6 +18,8 @@ services:
       - key: REFRESH_TOKEN_EXPIRE_DAYS
         value: 7
       - key: GOOGLE_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
         sync: false
       - key: FIREBASE_PROJECT_ID
         value: safar-bot
@@ -37,5 +41,9 @@ services:
         sync: false
       - key: FRONTEND_URL
         value: https://safarbot.vercel.app
+      - key: REDIS_URL
+        sync: false
+      - key: OPEN_WEATHER_API_KEY
+        sync: false
     healthCheckPath: /health
     autoDeploy: true

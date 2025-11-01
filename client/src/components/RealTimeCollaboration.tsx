@@ -80,8 +80,6 @@ const RealTimeCollaboration: React.FC<RealTimeCollaborationProps> = ({
       });
 
       // Here you would typically update your local state/cache
-      // For example, with React Query:
-      // queryClient.invalidateQueries(['itinerary', itineraryId]);
     });
 
     return unsubscribe;

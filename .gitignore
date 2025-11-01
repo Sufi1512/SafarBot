@@ -10,8 +10,11 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+# Python lib directories (but not client/src/lib/)
+/lib/
+/lib64/
+# Explicitly allow client/src/lib/
+!client/src/lib/
 parts/
 sdist/
 var/

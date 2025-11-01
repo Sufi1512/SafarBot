@@ -1,9 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
-import { queryClient } from './lib/queryClient';
 import ModernHeader from './components/ModernHeader';
 import Footer from './components/Footer';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -79,11 +77,10 @@ const ConditionalFooter: React.FC = () => {
 function App() {
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <AuthProvider>
-            <ToastProvider>
-              <Router>
+      <ThemeProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <Router>
             <div className="min-h-screen w-full bg-secondary-50 dark:bg-dark-bg text-secondary-900 dark:text-dark-text">
               <ConditionalHeader />
               <main className="mt-0 pt-0 w-full">
@@ -163,7 +160,6 @@ function App() {
           </ToastProvider>
         </AuthProvider>
       </ThemeProvider>
-    </QueryClientProvider>
     </ErrorBoundary>
   );
 }

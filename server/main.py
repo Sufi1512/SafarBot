@@ -117,14 +117,14 @@ async def startup_db_client():
         # Don't raise the exception to allow the app to start
         # This is important for deployment when MongoDB might not be available
     
-    # Initialize WebSocket service
-    try:
-        from services.websocket_service import websocket_service
-        await websocket_service.initialize()
-        print("✅ WebSocket service initialized")
-    except Exception as e:
-        print(f"❌ WebSocket initialization failed: {e}")
-        print("⚠️  Real-time features will be limited")
+    # Initialize WebSocket service (Socket.IO - currently disabled)
+    # try:
+    #     from services.websocket_service import websocket_service
+    #     await websocket_service.initialize()
+    #     print("✅ WebSocket service initialized")
+    # except Exception as e:
+    #     print(f"❌ WebSocket initialization failed: {e}")
+    #     print("⚠️  Real-time features will be limited")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
@@ -132,21 +132,37 @@ async def shutdown_db_client():
     await Database.close_db()
     print("✅ Database connection closed")
 
-# Include routers
-app.include_router(auth, prefix="/api/v1/auth", tags=["authentication"])
-app.include_router(google_auth_router, prefix="/api/v1/google", tags=["google-auth"])
-app.include_router(dashboard, prefix="/api/v1/dashboard", tags=["dashboard"])
-app.include_router(saved_itinerary, prefix="/api/v1/saved-itinerary", tags=["saved-itineraries"])
-app.include_router(flights, prefix="/api/v1", tags=["flights"])
-app.include_router(chat, prefix="/api/v1", tags=["chat"])
-app.include_router(itinerary, prefix="/api/v1", tags=["itinerary"])
-app.include_router(bookings_router, prefix="/api/v1", tags=["bookings"])
-app.include_router(hotels_router, prefix="/api/v1", tags=["hotels"])
-app.include_router(restaurants_router, prefix="/api/v1", tags=["restaurants"])
-app.include_router(weather_router, prefix="/api/v1", tags=["weather"])
-app.include_router(ip_tracking_router, prefix="/api/v1", tags=["ip-tracking"])
-app.include_router(collaboration_router, prefix="/api/v1", tags=["collaboration"])
-app.include_router(notifications_router, prefix="/api/v1", tags=["notifications"])
+# =============================================================================
+# ROUTER SETUP - Clean, organized endpoint structure
+# =============================================================================
+
+# Authentication & User Management
+app.include_router(auth, prefix="/auth", tags=["authentication"])
+app.include_router(google_auth_router, prefix="/google", tags=["google-auth"])
+
+# Dashboard & User Data
+app.include_router(dashboard, prefix="/dashboard", tags=["dashboard"])
+app.include_router(saved_itinerary, prefix="/itineraries", tags=["saved-itineraries"])
+
+# Travel Services
+app.include_router(flights, prefix="/flights", tags=["flights"])
+app.include_router(hotels_router, prefix="/hotels", tags=["hotels"])
+app.include_router(restaurants_router, prefix="/restaurants", tags=["restaurants"])
+app.include_router(weather_router, prefix="/weather", tags=["weather"])
+
+# Itinerary & Planning
+app.include_router(itinerary, prefix="/itinerary", tags=["itinerary"])
+app.include_router(chat, prefix="/chat", tags=["chat"])
+
+# Bookings & Payments
+app.include_router(bookings_router, prefix="/bookings", tags=["bookings"])
+
+# Collaboration & Social
+app.include_router(collaboration_router, prefix="/collaboration", tags=["collaboration"])
+app.include_router(notifications_router, prefix="/notifications", tags=["notifications"])
+
+# Admin & Monitoring
+app.include_router(ip_tracking_router, prefix="/admin/ip-tracking", tags=["admin", "ip-tracking"])
 
 # Mount WebSocket app (Socket.IO - temporarily disabled)
 # from services.websocket_service import socketio_app
@@ -217,31 +233,117 @@ async def root():
         ],
         "endpoints": {
             "health": "/health",
-            "authentication": "/api/v1/auth",
-            "dashboard": "/api/v1/dashboard",
-            "saved_itineraries": "/api/v1/saved-itinerary",
-            "search_flights": "/api/v1/flights/search",
-            "booking_options": "/api/v1/flights/booking-options/{booking_token}",
-            "popular_flights": "/api/v1/flights/popular",
-            "airport_suggestions": "/api/v1/flights/airports",
-            "chat": "/api/v1/chat",
-            "chat_history": "/api/v1/chat/history",
-            "generate_complete_itinerary": "/api/v1/generate-complete-itinerary",
-            "generate_itinerary": "/api/v1/generate-itinerary",
-            "predict_prices": "/api/v1/predict-prices",
-            "place_details": "/api/v1/places/details",
-            "serp_place_details": "/api/v1/places/serp/details",
-            "serp_place_search": "/api/v1/places/serp/search",
-            "additional_places": "/api/v1/places/additional",
-            "bookings": "/api/v1/bookings",
-            "hotels": "/api/v1/hotels",
-            "restaurants": "/api/v1/restaurants",
-            "current_weather": "/api/v1/weather/current",
-            "weather_forecast": "/api/v1/weather/forecast",
-            "weather_by_coordinates": "/api/v1/weather/coordinates",
-            "weather_for_itinerary": "/api/v1/weather/itinerary-format",
-            "ip_tracking": "/api/v1/ip-tracking",
-            "otp_verification": "/api/v1/auth/send-verification-otp"
+          "authentication": {
+                "base": "/auth",
+                "login": "/auth/login",
+                "signup": "/auth/signup",
+                "logout": "/auth/logout",
+                "me": "/auth/me",
+                "otp_verification": "/auth/send-verification-otp"
+            },
+            "dashboard": {
+                "base": "/dashboard",
+                "stats": "/dashboard/stats",
+                "bookings": "/dashboard/bookings",
+                "trips": "/dashboard/trips",
+                "itineraries": "/dashboard/itineraries"
+            },
+            "itineraries": {
+                "base": "/itineraries",
+                "list": "/itineraries",
+                "create": "/itineraries",
+                "get": "/itineraries/{itinerary_id}",
+                "update": "/itineraries/{itinerary_id}",
+                "delete": "/itineraries/{itinerary_id}"
+            },
+            "flights": {
+                "base": "/flights",
+                "search": "/flights/search",
+                "popular": "/flights/popular",
+                "airports": "/flights/airports/suggestions",
+                "booking_options": "/flights/booking-options/{booking_token}",
+                "details": "/flights/{flight_id}",
+                "book": "/flights/book"
+            },
+            "hotels": {
+                "base": "/hotels",
+                "search": "/hotels/search-hotels",
+                "popular": "/hotels/{location}/popular"
+            },
+            "restaurants": {
+                "base": "/restaurants",
+                "recommend": "/restaurants/recommend-restaurants",
+                "popular": "/restaurants/{location}/popular"
+            },
+            "itinerary": {
+                "base": "/itinerary",
+                "generate_ai": "/itinerary/generate-itinerary-ai",
+                "generate_complete": "/itinerary/generate-itinerary-complete",
+                "generate": "/itinerary/generate-itinerary",
+                "additional_places": "/itinerary/places/additional"
+            },
+            "chat": {
+                "base": "/chat",
+                "send": "/chat",
+                "history": "/chat/history",
+                "websocket": "/chat/{user_id}"
+            },
+            "bookings": {
+                "base": "/bookings",
+                "create": "/bookings/create",
+                "list": "/bookings",
+                "get": "/bookings/{booking_id}",
+                "get_by_reference": "/bookings/reference/{booking_reference}",
+                "cancel": "/bookings/{booking_id}/cancel",
+                "payment": "/bookings/{booking_id}/payment"
+            },
+            "weather": {
+                "base": "/weather",
+                "current": "/weather/current",
+                "forecast": "/weather/forecast",
+                "coordinates": "/weather/coordinates",
+                "itinerary_format": "/weather/itinerary-format"
+            },
+            "collaboration": {
+                "base": "/collaboration",
+                "invite": "/collaboration/invite",
+                "resend_invitation": "/collaboration/resend-invitation",
+                "invitations": "/collaboration/invitations",
+                "invitation_info": "/collaboration/invitation/{token}/info",
+                "accept": "/collaboration/invitation/{token}/accept",
+                "decline": "/collaboration/invitation/{token}/decline",
+                "collaborators": "/collaboration/itinerary/{itinerary_id}/collaborators",
+                "remove_collaborator": "/collaboration/itinerary/{itinerary_id}/collaborator/{user_id}",
+                "update_role": "/collaboration/itinerary/{itinerary_id}/collaborator/{user_id}/role",
+                "my_collaborations": "/collaboration/my-collaborations",
+                "room_status": "/collaboration/room/status/{itinerary_id}",
+                "room_create": "/collaboration/room/create",
+                "room_join": "/collaboration/room/{room_id}/join",
+                "room_info": "/collaboration/room/{room_id}/info"
+            },
+            "notifications": {
+                "base": "/notifications",
+                "list": "/notifications",
+                "count": "/notifications/count",
+                "mark_read": "/notifications/{notification_id}/read",
+                "mark_all_read": "/notifications/read-all",
+                "delete": "/notifications/{notification_id}"
+            },
+            "admin": {
+                "ip_tracking": {
+                    "base": "/admin/ip-tracking",
+                    "info": "/admin/ip-tracking/info",
+                    "info_by_ip": "/admin/ip-tracking/info/{ip_address}",
+                    "top": "/admin/ip-tracking/top",
+                    "blacklist": "/admin/ip-tracking/blacklist/{ip_address}",
+                    "whitelist": "/admin/ip-tracking/whitelist/{ip_address}",
+                    "suspicious": "/admin/ip-tracking/suspicious",
+                    "stats": "/admin/ip-tracking/stats"
+                }
+            },
+            "websocket": {
+                "chat": "/chat/{user_id}"
+            }
         }
     }
 

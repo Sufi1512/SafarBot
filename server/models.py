@@ -97,6 +97,12 @@ class ItineraryResponse(BaseModel):
     recommendations: Dict[str, Any]
     weather_info: Optional[Dict[str, Any]] = None
 
+
+class ItineraryDetailsRequest(BaseModel):
+    token: Optional[str] = Field(None, description="Token returned with itinerary metadata to fetch cached details")
+    place_ids: Optional[List[str]] = Field(None, description="Fallback: list of place IDs to fetch when token is unavailable")
+    include_additional: bool = Field(True, description="Whether to include cached additional places when available")
+
 class ChatResponse(BaseModel):
     response: str
     context: Optional[Dict[str, Any]] = None

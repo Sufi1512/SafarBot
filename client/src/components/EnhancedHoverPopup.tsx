@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Star, MapPin, Clock, DollarSign, Phone, Globe, Utensils, Hotel } from 'lucide-react';
 import { PlaceDetails, AdditionalPlace } from '../services/api';
 import OptimizedImage from './OptimizedImage';
@@ -23,6 +23,7 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
   const popupRef = useRef<HTMLDivElement>(null);
   const [adjustedPosition, setAdjustedPosition] = useState<{ x: number; y: number } | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [orientation, setOrientation] = useState<'left' | 'right'>('right');
 
   // Helper function to check if place is PlaceDetails type
   const isPlaceDetails = (p: PlaceDetails | AdditionalPlace): p is PlaceDetails => {
@@ -60,29 +61,28 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
   useEffect(() => {
     if (!position) return;
 
-    const estimatedWidth = 400;
-    const estimatedHeight = 300;
+    const estimatedWidth = 420;
+    const estimatedHeight = 320;
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     const padding = 20;
     
     let x = position.x;
     let y = position.y;
+    let nextOrientation: 'left' | 'right' = 'right';
 
-    // Horizontal positioning - prefer right side, fallback to left
     if (x + estimatedWidth > viewportWidth - padding) {
-      x = position.x - estimatedWidth - 15; // Position to the left with gap
+      x = position.x - estimatedWidth - 16;
+      nextOrientation = 'left';
     }
-    
-    // Ensure popup doesn't go off the left edge
+
     if (x < padding) {
       x = padding;
+      nextOrientation = 'right';
     }
 
-    // Vertical positioning - center on element, adjust if needed
     y = position.y - (estimatedHeight / 2);
-    
-    // Adjust if popup would go off-screen vertically
+
     if (y + estimatedHeight > viewportHeight - padding) {
       y = viewportHeight - estimatedHeight - padding;
     }
@@ -90,6 +90,7 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
       y = padding;
     }
 
+    setOrientation(nextOrientation);
     setAdjustedPosition({ x, y });
   }, [position]);
 
@@ -102,6 +103,48 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
       return () => clearTimeout(timer);
     }
   }, [isVisible]);
+
+  const highlightTags = useMemo(() => {
+    if (!metadata) {
+      return [] as Array<{ key: string; icon: React.ReactNode; value: string }>;
+    }
+
+    const tags: Array<{ key: string; icon: React.ReactNode; value: string }> = [];
+
+    if (metadata.price) {
+      tags.push({
+        key: 'price',
+        icon: <DollarSign className="w-3.5 h-3.5 text-emerald-500" />,
+        value: metadata.price
+      });
+    }
+
+    if (metadata.hours) {
+      tags.push({
+        key: 'hours',
+        icon: <Clock className="w-3.5 h-3.5 text-blue-500" />,
+        value: metadata.hours
+      });
+    }
+
+    if (metadata.cuisine) {
+      tags.push({
+        key: 'cuisine',
+        icon: <Utensils className="w-3.5 h-3.5 text-amber-500" />,
+        value: metadata.cuisine
+      });
+    }
+
+    if (metadata.category) {
+      tags.push({
+        key: 'category',
+        icon: <MapPin className="w-3.5 h-3.5 text-indigo-500" />,
+        value: metadata.category
+      });
+    }
+
+    return tags;
+  }, [metadata]);
 
   if (!isVisible || !place || !adjustedPosition || !metadata) return null;
 
@@ -157,7 +200,7 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
   return (
     <div
       ref={popupRef}
-      className={`fixed z-50 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 min-w-[320px] max-w-[400px] overflow-hidden transition-all duration-200 ease-out ${
+      className={`fixed z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200/70 dark:border-slate-700/60 min-w-[320px] max-w-[420px] overflow-hidden transition-all duration-200 ease-out ${
         isAnimating 
           ? 'opacity-100 scale-100 translate-y-0' 
           : 'opacity-0 scale-95 translate-y-2'
@@ -169,9 +212,15 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
+      <div
+        className={`absolute top-1/2 w-3.5 h-3.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 transform -translate-y-1/2 rotate-45 ${
+          orientation === 'left' ? 'right-[-7px]' : 'left-[-7px]'
+        }`}
+        aria-hidden="true"
+      />
       {/* Image Section with optimized loading */}
       {metadata.thumbnail ? (
-        <div className="w-full h-40 bg-gray-200 dark:bg-gray-700 overflow-hidden relative">
+        <div className="w-full h-44 bg-gray-200 dark:bg-gray-800 overflow-hidden relative">
           <OptimizedImage
             src={metadata.thumbnail ?? ''}
             alt={metadata.title || ''}
@@ -180,145 +229,127 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
             loading="eager"
             fallbackSrc="/api/placeholder/400/300"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+          <div className="absolute inset-x-4 bottom-4 flex items-end justify-between">
+            <div className="space-y-1 text-white drop-shadow-lg">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-xs font-medium uppercase tracking-wide">
+                {getTypeIcon()}
+                <span>{getTypeLabel()}</span>
+              </div>
+              <h4 className="text-lg font-semibold leading-tight max-w-[260px]">
+                {metadata.title}
+              </h4>
+            </div>
+            {metadata.rating && (
+              <div className="flex items-center gap-1 bg-black/60 px-2.5 py-1.5 rounded-full text-sm font-semibold text-white">
+                <Star className="w-4 h-4 text-amber-400 fill-current" />
+                <span>{metadata.rating}</span>
+                {metadata.reviews && (
+                  <span className="text-xs text-white/80">
+                    ({metadata.reviews})
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       ) : (
-        <div className="w-full h-40 bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-gray-500 text-sm">
-          <div className="text-center">
-            <div>📷 No Photo Available</div>
+        <div className="w-full h-44 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-400 dark:from-slate-700 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center text-gray-600 dark:text-slate-300 text-sm">
+          <div className="text-center space-y-1">
+            <div className="text-2xl">📷</div>
+            <div>No Photo Available</div>
           </div>
         </div>
       )}
 
       {/* Content */}
-      <div className="p-4 space-y-3">
-        {/* Header */}
-        <div className="flex items-start justify-between">
-          <div className="flex-1 min-w-0">
-            <h4 className="font-bold text-gray-900 dark:text-white text-lg leading-tight mb-1 truncate">
-              {metadata.title}
-            </h4>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
-                {getTypeIcon()}
-                {getTypeLabel()}
-              </span>
-            </div>
-          </div>
-          {metadata.rating && (
-            <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg flex-shrink-0">
-              <Star className="w-4 h-4 text-amber-500 fill-current" />
-              <span className="font-semibold text-gray-900 dark:text-white text-sm">
-                {metadata.rating}
-              </span>
-              {metadata.reviews && (
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  ({metadata.reviews})
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Description */}
+      <div className="p-5 space-y-4">
         {metadata.description && (
-          <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed line-clamp-3">
+          <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed line-clamp-3">
             {metadata.description}
           </p>
         )}
 
-        {/* Key Information */}
-        <div className="space-y-2">
-          {/* Location */}
+        {highlightTags.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {highlightTags.map((tag) => (
+              <span
+                key={tag.key}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100/80 dark:bg-slate-800/80 text-xs font-medium text-gray-700 dark:text-slate-200 shadow-sm"
+              >
+                {tag.icon}
+                <span className="truncate max-w-[120px]">{tag.value}</span>
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div className="space-y-3">
           {metadata.address && (
-            <div className="flex items-start gap-2">
-              <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
+            <div className="flex gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                <div className="p-1 rounded-md bg-blue-50 dark:bg-blue-900/40">
+                  <MapPin className="w-3.5 h-3.5 text-blue-600 dark:text-blue-300" />
+                </div>
+              </div>
+              <div className="flex-1 space-y-1 min-w-0">
+                <p className="text-sm text-gray-700 dark:text-gray-300 leading-snug">
                   {metadata.address}
                 </p>
                 <a
                   href={getMapUrl()}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 text-xs font-medium transition-colors"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-300"
                 >
-                  View on Maps →
+                  View on Maps
+                  <span aria-hidden>→</span>
                 </a>
               </div>
             </div>
           )}
 
-          {/* Hours */}
-          {metadata.hours && (
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                {metadata.hours}
-              </span>
-            </div>
-          )}
-
-          {/* Price */}
-          {metadata.price && (
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-green-500" />
-              <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                {metadata.price}
-              </span>
-            </div>
-          )}
-
-          {/* Cuisine (for restaurants) */}
-          {metadata.cuisine && (
-            <div className="flex items-center gap-2">
-              <Utensils className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                {metadata.cuisine}
-              </span>
-            </div>
-          )}
-
-          {/* Phone */}
           {metadata.phone && (
-            <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4 text-gray-400" />
-              <a 
-                href={`tel:${metadata.phone}`} 
-                className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+            <div className="flex items-center gap-3">
+              <div className="p-1 rounded-md bg-emerald-50 dark:bg-emerald-900/30">
+                <Phone className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-300" />
+              </div>
+              <a
+                href={`tel:${metadata.phone}`}
+                className="text-sm font-medium text-emerald-700 hover:text-emerald-800 dark:text-emerald-300"
               >
                 {metadata.phone}
               </a>
             </div>
           )}
 
-          {/* Website */}
           {metadata.website && (
-            <div className="flex items-center gap-2">
-              <Globe className="w-4 h-4 text-gray-400" />
+            <div className="flex items-center gap-3">
+              <div className="p-1 rounded-md bg-indigo-50 dark:bg-indigo-900/30">
+                <Globe className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-300" />
+              </div>
               <a
                 href={metadata.website}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:text-blue-800 truncate transition-colors"
+                className="text-sm font-medium text-indigo-600 hover:text-indigo-700 truncate max-w-[220px]"
               >
-                Visit Website →
+                Visit Website
               </a>
             </div>
           )}
         </div>
 
-        {/* Amenities (for hotels) */}
         {metadata.amenities && metadata.amenities.length > 0 && (
-          <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">
-              Amenities:
+          <div className="space-y-2">
+            <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              Amenities
             </div>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1.5">
               {metadata.amenities.slice(0, 4).map((amenity, idx) => (
-                <span 
-                  key={idx} 
-                  className="px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 text-xs rounded-full"
+                <span
+                  key={`${amenity}-${idx}`}
+                  className="px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 text-xs rounded-full"
                 >
                   {amenity}
                 </span>
@@ -332,27 +363,27 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
           </div>
         )}
 
-        {/* Operating Hours (detailed) */}
         {metadata.operatingHours && (
-          <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">
-              Operating Hours:
+          <div className="space-y-2">
+            <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              Operating Hours
             </div>
-            <div className="space-y-1">
-              {Object.entries(metadata.operatingHours).slice(0, 3).map(([day, hours]) => (
-                hours && (
-                  <div key={day} className="flex justify-between text-xs">
-                    <span className="text-gray-600 dark:text-gray-400 capitalize">{day}</span>
-                    <span className="text-gray-700 dark:text-gray-300">{hours}</span>
+            <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-300">
+              {Object.entries(metadata.operatingHours)
+                .filter(([, hours]) => Boolean(hours))
+                .slice(0, 4)
+                .map(([day, hours]) => (
+                  <div key={day} className="flex items-center justify-between gap-3 capitalize">
+                    <span className="font-medium text-gray-500 dark:text-gray-400">{day}</span>
+                    <span>{hours}</span>
                   </div>
-                )
-              ))}
-              {Object.keys(metadata.operatingHours).length > 3 && (
-                <div className="text-xs text-gray-400 text-center">
-                  +{Object.keys(metadata.operatingHours).length - 3} more days
-                </div>
-              )}
+                ))}
             </div>
+            {Object.keys(metadata.operatingHours).length > 4 && (
+              <div className="text-xs text-gray-400">
+                +{Object.keys(metadata.operatingHours).length - 4} more days
+              </div>
+            )}
           </div>
         )}
       </div>

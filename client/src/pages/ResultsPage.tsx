@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Calendar, DollarSign, Clock, Star, AlertCircle, Hotel, Utensils } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, IndianRupee, Clock, Star, AlertCircle, Hotel, Utensils } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { itineraryAPI, EnhancedItineraryResponse, PlaceDetails, AdditionalPlace } from '../services/api';
 import api from '../services/api';
@@ -12,6 +12,7 @@ import WeatherCard from '../components/WeatherCard';
 import { WeatherDisplay } from '../components/WeatherDisplay';
 import ModernHeader from '../components/ModernHeader';
 import { parseLocationForWeather } from '../utils/locationUtils';
+import { prefetchPlaceMedia } from '../utils/imagePrefetcher';
 
 // Import Location interface from GoogleMaps component
 interface Location {
@@ -45,7 +46,8 @@ interface Activity {
   description: string;
   location: string;
   duration: string;
-  cost?: number;
+  cost?: number | string;
+  costValue?: number;
   type: 'sightseeing' | 'restaurant' | 'transport' | 'hotel';
   image?: string;
 }
@@ -67,10 +69,13 @@ interface Restaurant {
   rating: number;
   priceRange?: string;
   price_range?: string;
+  priceValue?: number;
   description?: string;
   location?: string;
   image?: string;
 }
+
+const USD_TO_INR_RATE = 83;
 
 interface ItineraryData {
   destination: string;
@@ -96,6 +101,75 @@ const ResultsPage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const [itineraryData, setItineraryData] = useState<ItineraryData | null>(null);
+  const formatINR = useCallback((amount: number) => {
+    if (!amount || Number.isNaN(amount)) return '₹0';
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(Math.round(amount));
+  }, []);
+
+  const convertCostToINR = useCallback((
+    value?: string | number | null,
+  ): { display: string; numeric: number } => {
+    if (value === null || value === undefined || value === '') {
+      return { display: '', numeric: 0 };
+    }
+
+    if (typeof value === 'number' && !Number.isNaN(value)) {
+      const amountInInr = value * USD_TO_INR_RATE;
+      return { display: formatINR(amountInInr), numeric: amountInInr };
+    }
+
+    const raw = String(value).trim();
+    if (!raw) {
+      return { display: '', numeric: 0 };
+    }
+
+    if (/free/i.test(raw)) {
+      return { display: 'Free', numeric: 0 };
+    }
+
+    const alreadyINR = /₹|INR|Rs\.?/i.test(raw);
+    const digitMatches = [...raw.matchAll(/\d+(?:\.\d+)?/g)] as RegExpMatchArray[];
+
+    const leadingText = digitMatches.length > 0 ? raw.slice(0, digitMatches[0].index || 0).trim() : raw;
+    const trailingText = digitMatches.length > 0
+      ? raw.slice((digitMatches[digitMatches.length - 1].index || 0) + digitMatches[digitMatches.length - 1][0].length).trim()
+      : '';
+
+    if (alreadyINR) {
+      const numbers = digitMatches.map((match) => parseFloat(match[0])).filter((num) => !Number.isNaN(num));
+      const numeric = numbers.length ? numbers.reduce((sum, num) => sum + num, 0) / numbers.length : 0;
+      const display = raw
+        .replace(/Rs\.?/gi, '₹')
+        .replace(/INR/gi, '₹')
+        .replace(/\$/g, '₹');
+      return { display, numeric };
+    }
+
+    const numbers = digitMatches.map((match) => parseFloat(match[0])).filter((num) => !Number.isNaN(num));
+    if (!numbers.length) {
+      return { display: raw.replace(/\$/g, '₹'), numeric: 0 };
+    }
+
+    const convertedAmounts = numbers.map((num) => num * USD_TO_INR_RATE);
+    const separator = raw.toLowerCase().includes(' to ')
+      ? ' to '
+      : raw.includes('-')
+        ? ' - '
+        : numbers.length > 1
+          ? ', '
+          : '';
+
+    const formattedParts = convertedAmounts.map((amount) => formatINR(amount));
+    const displayCore = formattedParts.join(separator);
+    const display = [leadingText, displayCore, trailingText].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+    const numeric = convertedAmounts.reduce((sum, amount) => sum + amount, 0) / convertedAmounts.length;
+
+    return { display, numeric };
+  }, [formatINR]);
   
   // Enhanced API Response State
   const [enhancedResponse, setEnhancedResponse] = useState<EnhancedItineraryResponse | null>(null);
@@ -116,7 +190,49 @@ const ResultsPage: React.FC = () => {
   } | null>(null);
   const [tips, setTips] = useState<string[]>([]);
   const hasGeneratedRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const isInitializedRef = useRef(false);
+
+  const itineraryBudgetDisplay = useMemo(() => {
+    const enhancedBudget = enhancedResponse?.itinerary?.budget_estimate;
+    if (typeof enhancedBudget === 'number' && !Number.isNaN(enhancedBudget)) {
+      return formatINR(enhancedBudget);
+    }
+
+    if (itinerarySummary?.budget_estimate && !Number.isNaN(itinerarySummary.budget_estimate)) {
+      return formatINR(itinerarySummary.budget_estimate);
+    }
+
+    return 'N/A';
+  }, [enhancedResponse, itinerarySummary, formatINR]);
+
+  const userBudgetDisplay = useMemo(() => {
+    const rawBudgetValue = itineraryData?.budget as number | string | undefined;
+    if (typeof rawBudgetValue === 'number' && !Number.isNaN(rawBudgetValue)) {
+      return formatINR(rawBudgetValue);
+    }
+
+    if (typeof rawBudgetValue === 'string') {
+      const parsed = Number(rawBudgetValue.replace(/[^0-9.]/g, ''));
+      if (!Number.isNaN(parsed)) {
+        return formatINR(parsed);
+      }
+    }
+
+    return 'N/A';
+  }, [itineraryData, formatINR]);
+
+  const navbarBudgetDisplay = useMemo(() => {
+    if (isLoading) {
+      return userBudgetDisplay;
+    }
+
+    if (itineraryBudgetDisplay !== 'N/A') {
+      return itineraryBudgetDisplay;
+    }
+
+    return userBudgetDisplay;
+  }, [isLoading, itineraryBudgetDisplay, userBudgetDisplay]);
 
   // Place Details Modal State
   const [selectedPlace, setSelectedPlace] = useState<PlaceDetails | AdditionalPlace | null>(null);
@@ -203,6 +319,43 @@ const ResultsPage: React.FC = () => {
 
   // SERP image cache state removed since SERP API functionality was removed
 
+
+
+  useEffect(() => {
+    if (!enhancedResponse) {
+      return;
+    }
+
+    const placeDetailsList = Object.values(enhancedResponse.place_details || {});
+    const additionalPlacesList: AdditionalPlace[] = [];
+
+    if (enhancedResponse.additional_places) {
+      Object.values(enhancedResponse.additional_places).forEach((group) => {
+        if (Array.isArray(group)) {
+          additionalPlacesList.push(...group);
+        }
+      });
+    }
+
+    if (placeDetailsList.length === 0 && additionalPlacesList.length === 0) {
+      return;
+    }
+
+    const prefetch = async () => {
+      try {
+        const summary = await prefetchPlaceMedia({
+          placeDetails: placeDetailsList,
+          additionalPlaces: additionalPlacesList
+        });
+
+        console.debug('Prefetched hover media', summary);
+      } catch (prefetchError) {
+        console.warn('Image prefetch skipped:', prefetchError);
+      }
+    };
+
+    prefetch();
+  }, [enhancedResponse]);
 
 
   // SERP API functionality for fetching restaurants has been removed
@@ -506,10 +659,22 @@ const ResultsPage: React.FC = () => {
   // Separate useEffect for cleanup when location state changes
   useEffect(() => {
     return () => {
-      // Reset flags when component unmounts or location changes
       hasGeneratedRef.current = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
     };
   }, [location.state]);
+
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
+  }, []);
 
   // Scroll detection for ModernHeader visibility
   useEffect(() => {
@@ -553,6 +718,12 @@ const ResultsPage: React.FC = () => {
       return;
     }
     
+    // Cancel any inflight request before starting a new one
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+
     // Mark as generated immediately to prevent race conditions
     hasGeneratedRef.current = true;
     
@@ -561,6 +732,9 @@ const ResultsPage: React.FC = () => {
     console.log('Setting loading state and starting API call...');
     setIsLoading(true);
     setError(null);
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     try {
       // Use the API request data if available, otherwise prepare it
@@ -580,8 +754,8 @@ const ResultsPage: React.FC = () => {
       console.log('Sending API request:', apiRequest);
       console.log('API base URL:', import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || (
         import.meta.env.PROD 
-          ? 'https://safarbot-n24f.onrender.com/api/v1' 
-          : 'http://localhost:8000/api/v1'
+          ? 'https://safarbot-n24f.onrender.com' 
+          : 'http://localhost:8000'
       ));
 
       // Generate enhanced itinerary
@@ -598,7 +772,7 @@ const ResultsPage: React.FC = () => {
       let enhancedItineraryResponse;
       try {
         // Use the enhanced API with complete place metadata
-        enhancedItineraryResponse = await itineraryAPI.generateEnhancedItinerary(apiRequest);
+        enhancedItineraryResponse = await itineraryAPI.generateEnhancedItinerary(apiRequest, { signal: controller.signal });
         console.log('Enhanced itinerary response received:', enhancedItineraryResponse);
         console.log('Response keys:', Object.keys(enhancedItineraryResponse || {}));
         console.log('Itinerary structure:', enhancedItineraryResponse?.itinerary);
@@ -607,6 +781,12 @@ const ResultsPage: React.FC = () => {
         console.log('Metadata:', enhancedItineraryResponse?.metadata);
       } catch (apiError: any) {
         console.error('Enhanced API call failed:', apiError);
+        if (apiError?.code === 'ERR_CANCELED' || apiError?.name === 'CanceledError') {
+          console.log('Itinerary generation request cancelled');
+          hasGeneratedRef.current = false;
+          setError('Itinerary generation cancelled.');
+          return;
+        }
         
         // If it's a network/connection error, show error
         if (apiError.message?.includes('Network Error') || 
@@ -627,11 +807,26 @@ const ResultsPage: React.FC = () => {
       console.error('Error generating itinerary:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate itinerary. Please try again.';
       setError(errorMessage);
-      
+      if (errorMessage === 'Itinerary generation cancelled.') {
+        hasGeneratedRef.current = false;
+      }
     } finally {
       setIsLoading(false);
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
+      }
     }
   };
+
+  const handleCancelGeneration = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    hasGeneratedRef.current = false;
+    setIsLoading(false);
+    setError('Itinerary generation cancelled.');
+  }, []);
 
   // Helper to process an already available enhanced response (injected or from API)
   const processEnhancedItineraryResponse = (enhancedItineraryResponse: EnhancedItineraryResponse, dataFallback?: ItineraryData) => {
@@ -658,33 +853,63 @@ const ResultsPage: React.FC = () => {
       }
 
       // Process daily plans from enhanced API
-      const normalizedDailyPlans = itineraryDataInner.daily_plans.map((plan: any) => ({
-        ...plan,
-        activities: plan.activities.map((activity: any) => {
-          const placeDetails = enhancedItineraryResponse?.place_details?.[activity.place_id];
+      const normalizedDailyPlans = itineraryDataInner.daily_plans.map((plan: any) => {
+        const normalizedTransport = plan.transportation?.map((transport: any) => {
+          const titleFallback = [transport.from, transport.to]
+            .filter(Boolean)
+            .join(' → ');
+          const locationFallback = [transport.from, transport.to]
+            .filter(Boolean)
+            .join(' to ');
+          const costResult = convertCostToINR(transport.cost ?? transport.estimated_cost ?? '');
+
           return {
-            ...activity,
-            cost: activity.estimated_cost || 0,
-            type: activity.type || 'sightseeing',
-            location: placeDetails?.address || activity.location || itineraryDataInner.destination,
-            description: placeDetails?.description || activity.title
+            ...transport,
+            title: transport.title || (titleFallback ? `Travel: ${titleFallback}` : 'Transportation'),
+            description:
+              transport.description ||
+              (transport.method ? `Take ${transport.method}` : 'Getting around'),
+            location: transport.location || locationFallback || itineraryDataInner.destination,
+            cost: costResult.display,
+            costValue: costResult.numeric,
+            duration: transport.duration || transport.time || transport.estimated_duration || '',
           };
-        }),
-        meals: plan.meals?.map((meal: any) => {
-          const placeDetails = enhancedItineraryResponse?.place_details?.[meal.place_id];
-          return {
-            ...meal,
-            priceRange: meal.price_range || '$$',
-            description: placeDetails?.description || `Great ${meal.cuisine} cuisine`,
-            location: placeDetails?.address || meal.location || itineraryDataInner.destination,
-            rating: placeDetails?.rating || 4.0
-          };
-        }) || [],
-        transport: plan.transportation?.map((transport: any) => ({
-          ...transport,
-          cost: transport.cost || 0
-        })) || []
-      }));
+        }) || [];
+
+        return {
+          ...plan,
+          activities: plan.activities.map((activity: any) => {
+            const placeDetails = enhancedItineraryResponse?.place_details?.[activity.place_id];
+            const primaryCost = convertCostToINR(activity.estimated_cost ?? activity.cost ?? null);
+            const fallbackCost = !primaryCost.display && placeDetails?.price ? convertCostToINR(placeDetails.price) : { display: '', numeric: 0 };
+            const costDisplay = primaryCost.display || fallbackCost.display;
+            const costNumeric = primaryCost.display ? primaryCost.numeric : fallbackCost.numeric;
+
+            return {
+              ...activity,
+              cost: costDisplay,
+              costValue: costNumeric,
+              type: activity.type || 'sightseeing',
+              location: placeDetails?.address || activity.location || itineraryDataInner.destination,
+              description: placeDetails?.description || activity.title,
+            };
+          }),
+          meals: plan.meals?.map((meal: any) => {
+            const placeDetails = enhancedItineraryResponse?.place_details?.[meal.place_id];
+            const priceResult = convertCostToINR(meal.price_range || placeDetails?.price || meal.priceRange || meal.price);
+            return {
+              ...meal,
+              priceRange: priceResult.display || meal.price_range || '$$',
+              priceValue: priceResult.numeric,
+              description: placeDetails?.description || `Great ${meal.cuisine} cuisine`,
+              location: placeDetails?.address || meal.location || itineraryDataInner.destination,
+              rating: placeDetails?.rating || 4.0,
+            };
+          }) || [],
+          transport: normalizedTransport,
+          transportation: normalizedTransport,
+        };
+      });
 
       setDailyPlans(normalizedDailyPlans);
 
@@ -699,10 +924,11 @@ const ResultsPage: React.FC = () => {
       if (itineraryDataInner.accommodation_suggestions) {
         const hotelsFromAccommodation = itineraryDataInner.accommodation_suggestions.map((acc: any) => {
           const placeDetails = enhancedItineraryResponse?.place_details?.[acc.place_id];
+          const priceResult = convertCostToINR(acc.price_range || placeDetails?.price || acc.price);
           return {
             name: acc.name,
             rating: placeDetails?.rating || 4.0,
-            price_range: acc.price_range,
+            price_range: priceResult.display || acc.price_range,
             amenities: ['WiFi'],
             location: placeDetails?.address || acc.location,
             description: placeDetails?.description || `Great ${acc.type} in ${itineraryDataInner.destination}`,
@@ -808,9 +1034,9 @@ const ResultsPage: React.FC = () => {
                 </span>
               </div>
               <div className="flex items-center">
-                <DollarSign className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Budget: ${itineraryData.budget.toLocaleString()}</span>
-                <span className="sm:hidden">${itineraryData.budget.toLocaleString()}</span>
+                <IndianRupee className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Budget: {navbarBudgetDisplay}</span>
+                <span className="sm:hidden">{navbarBudgetDisplay}</span>
               </div>
             </div>
           </div>
@@ -844,6 +1070,12 @@ const ResultsPage: React.FC = () => {
                 <span>Selecting restaurants</span>
               </div>
             </div>
+            <button
+              onClick={handleCancelGeneration}
+              className="mt-10 inline-flex items-center px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 rounded-lg transition-all duration-200"
+            >
+              Cancel generation
+            </button>
           </div>
         ) : error ? (
           <div className="text-center py-20">
@@ -903,7 +1135,7 @@ const ResultsPage: React.FC = () => {
                     </div>
                     <div className="text-center">
                       <div className="text-sm font-bold text-green-600 dark:text-green-400 mb-1">
-                        {itinerarySummary.budget_estimate.toLocaleString()}
+                        {formatINR(itinerarySummary.budget_estimate)}
                       </div>
                       <div className="text-xs font-semibold text-gray-600 dark:text-gray-400">Budget</div>
                     </div>
@@ -1096,9 +1328,9 @@ const ResultsPage: React.FC = () => {
                                    <span>{activity.duration}</span>
                                  </span>
                                  {activity.cost && (
-                                   <span className="flex items-center space-x-1 text-green-600 dark:text-green-400 font-medium">
-                                     <DollarSign className="w-3 h-3" />
-                                     <span>{activity.cost}</span>
+                                  <span className="flex items-center space-x-1 text-green-600 dark:text-green-400 font-medium">
+                                    <IndianRupee className="w-3 h-3" />
+                                    <span>{activity.cost}</span>
                                    </span>
                                  )}
                                </div>
@@ -1128,7 +1360,7 @@ const ResultsPage: React.FC = () => {
                                  </div>
                                  <div className="text-right">
                                    {transport.cost && (
-                                     <p className="text-sm font-medium text-green-600 dark:text-green-400">${transport.cost}</p>
+                                     <p className="text-sm font-medium text-green-600 dark:text-green-400">{transport.cost}</p>
                                    )}
                                    {transport.duration && (
                                      <p className="text-xs text-gray-500 dark:text-gray-400">{transport.duration}</p>
@@ -1199,7 +1431,7 @@ const ResultsPage: React.FC = () => {
                   ))}
 
                                      {/* Total Cost Summary */}
-                   {dailyPlans.length > 0 && (
+                   {/* {dailyPlans.length > 0 && (
                      <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg border border-gray-200 dark:border-gray-700">
                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">💰 Cost Summary</h3>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -1208,73 +1440,26 @@ const ResultsPage: React.FC = () => {
                            <div className="space-y-3">
                              {dailyPlans.map((plan) => {
                                // Calculate activity costs from metadata
-                               const activityCost = plan.activities.reduce((sum, activity) => {
-                                 let cost = 0;
-                                 const enhancedActivity = activity as any;
-                                 
-                                 // First try to get cost from activity.estimated_cost
-                                 if (enhancedActivity.estimated_cost) {
-                                   const estimatedCost = typeof enhancedActivity.estimated_cost === 'string' ? 
-                                     parseFloat(enhancedActivity.estimated_cost.replace(/[^0-9.-]/g, '')) || 0 : 
-                                     (enhancedActivity.estimated_cost || 0);
-                                   cost = estimatedCost;
-                                 }
-                                 
-                                 // If no cost in activity, try to get from place_details metadata
-                                 if (cost === 0 && enhancedActivity.place_id && enhancedResponse?.place_details?.[enhancedActivity.place_id]) {
-                                   const placeDetails = enhancedResponse.place_details[enhancedActivity.place_id];
-                                   if (placeDetails.price) {
-                                     // Parse price range like "$10-20" or "$25"
-                                     const priceMatch = placeDetails.price.match(/\$(\d+(?:\.\d+)?)/);
-                                     if (priceMatch) {
-                                       cost = parseFloat(priceMatch[1]);
-                                     }
-                                   }
-                                 }
-                                 
-                                 return sum + cost;
-                               }, 0);
-                               
-                               // Calculate meal costs from metadata
-                               const mealCost = plan.meals.reduce((sum, meal) => {
-                                 let cost = 0;
-                                 const enhancedMeal = meal as any;
-                                 
-                                 // Parse price_range like "$20-30" or "$15"
-                                 if (enhancedMeal.price_range) {
-                                   const priceMatch = enhancedMeal.price_range.match(/\$(\d+(?:\.\d+)?)/);
-                                   if (priceMatch) {
-                                     cost = parseFloat(priceMatch[1]);
-                                   }
-                                 }
-                                 
-                                 // If no cost in meal, try to get from place_details metadata
-                                 if (cost === 0 && enhancedMeal.place_id && enhancedResponse?.place_details?.[enhancedMeal.place_id]) {
-                                   const placeDetails = enhancedResponse.place_details[enhancedMeal.place_id];
-                                   if (placeDetails.price) {
-                                     const priceMatch = placeDetails.price.match(/\$(\d+(?:\.\d+)?)/);
-                                     if (priceMatch) {
-                                       cost = parseFloat(priceMatch[1]);
-                                     }
-                                   }
-                                 }
-                                 
-                                 return sum + cost;
-                               }, 0);
-                               
-                               // Calculate transport costs
-                               const enhancedPlan = plan as any;
-                               const transportCost = enhancedPlan.transportation?.reduce((sum: number, transport: any) => {
-                                 const cost = typeof transport.cost === 'string' ? parseFloat(transport.cost.replace(/[^0-9.-]/g, '')) || 0 : (transport.cost || 0);
-                                 return sum + cost;
-                               }, 0) || 0;
-                               
-                               const dayCost = activityCost + mealCost + transportCost;
+                              const activityCost = plan.activities.reduce((sum, activity) => {
+                                const enhancedActivity = activity as Activity & { costValue?: number };
+                                return sum + (enhancedActivity.costValue || 0);
+                              }, 0);
+
+                              const mealCost = plan.meals.reduce((sum, meal) => {
+                                const enhancedMeal = meal as Restaurant & { priceValue?: number };
+                                return sum + (enhancedMeal.priceValue || 0);
+                              }, 0);
+
+                              const transportCost = (plan.transport || []).reduce((sum, transport: any) => {
+                                return sum + (transport.costValue || 0);
+                              }, 0);
+
+                              const dayCost = activityCost + mealCost + transportCost;
                                
                                return (
                                  <div key={plan.day} className="flex justify-between text-sm">
                                    <span className="font-medium text-gray-700 dark:text-gray-300">Day {plan.day}</span>
-                                   <span className="font-medium text-blue-600 dark:text-blue-400">${dayCost.toFixed(0)}</span>
+                                  <span className="font-medium text-blue-600 dark:text-blue-400">{formatINR(dayCost)}</span>
                                  </div>
                                );
                              })}
@@ -1283,77 +1468,31 @@ const ResultsPage: React.FC = () => {
                          <div>
                            <h4 className="font-medium text-gray-900 dark:text-white mb-4">Total Estimated Cost</h4>
                            <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                             ${dailyPlans.reduce((total, plan) => {
-                               // Calculate activity costs from metadata
-                               const activityCost = plan.activities.reduce((sum, activity) => {
-                                 let cost = 0;
-                                 const enhancedActivity = activity as any;
-                                 
-                                 // First try to get cost from activity.estimated_cost
-                                 if (enhancedActivity.estimated_cost) {
-                                   const estimatedCost = typeof enhancedActivity.estimated_cost === 'string' ? 
-                                     parseFloat(enhancedActivity.estimated_cost.replace(/[^0-9.-]/g, '')) || 0 : 
-                                     (enhancedActivity.estimated_cost || 0);
-                                   cost = estimatedCost;
-                                 }
-                                 
-                                 // If no cost in activity, try to get from place_details metadata
-                                 if (cost === 0 && enhancedActivity.place_id && enhancedResponse?.place_details?.[enhancedActivity.place_id]) {
-                                   const placeDetails = enhancedResponse.place_details[enhancedActivity.place_id];
-                                   if (placeDetails.price) {
-                                     // Parse price range like "$10-20" or "$25"
-                                     const priceMatch = placeDetails.price.match(/\$(\d+(?:\.\d+)?)/);
-                                     if (priceMatch) {
-                                       cost = parseFloat(priceMatch[1]);
-                                     }
-                                   }
-                                 }
-                                 
-                                 return sum + cost;
-                               }, 0);
-                               
-                               // Calculate meal costs from metadata
-                               const mealCost = plan.meals.reduce((sum, meal) => {
-                                 let cost = 0;
-                                 const enhancedMeal = meal as any;
-                                 
-                                 // Parse price_range like "$20-30" or "$15"
-                                 if (enhancedMeal.price_range) {
-                                   const priceMatch = enhancedMeal.price_range.match(/\$(\d+(?:\.\d+)?)/);
-                                   if (priceMatch) {
-                                     cost = parseFloat(priceMatch[1]);
-                                   }
-                                 }
-                                 
-                                 // If no cost in meal, try to get from place_details metadata
-                                 if (cost === 0 && enhancedMeal.place_id && enhancedResponse?.place_details?.[enhancedMeal.place_id]) {
-                                   const placeDetails = enhancedResponse.place_details[enhancedMeal.place_id];
-                                   if (placeDetails.price) {
-                                     const priceMatch = placeDetails.price.match(/\$(\d+(?:\.\d+)?)/);
-                                     if (priceMatch) {
-                                       cost = parseFloat(priceMatch[1]);
-                                     }
-                                   }
-                                 }
-                                 
-                                 return sum + cost;
-                               }, 0);
-                               
-                               // Calculate transport costs
-                               const enhancedPlan = plan as any;
-                               const transportCost = enhancedPlan.transportation?.reduce((sum: number, transport: any) => {
-                                 const cost = typeof transport.cost === 'string' ? parseFloat(transport.cost.replace(/[^0-9.-]/g, '')) || 0 : (transport.cost || 0);
-                                 return sum + cost;
-                               }, 0) || 0;
-                               
-                               return total + activityCost + mealCost + transportCost;
-                             }, 0).toFixed(0)}
+                            {formatINR(
+                              dailyPlans.reduce((total, plan) => {
+                                const activityCost = plan.activities.reduce((sum, activity) => {
+                                  const enhancedActivity = activity as Activity & { costValue?: number };
+                                  return sum + (enhancedActivity.costValue || 0);
+                                }, 0);
+
+                                const mealCost = plan.meals.reduce((sum, meal) => {
+                                  const enhancedMeal = meal as Restaurant & { priceValue?: number };
+                                  return sum + (enhancedMeal.priceValue || 0);
+                                }, 0);
+
+                                const transportCost = (plan.transport || []).reduce((sum, transport: any) => {
+                                  return sum + (transport.costValue || 0);
+                                }, 0);
+
+                                return total + activityCost + mealCost + transportCost;
+                              }, 0)
+                            )}
                            </div>
                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Activities, meals & transportation (excluding accommodation)</p>
                          </div>
                        </div>
                      </div>
-                   )}
+                   )} */}
 
                   {/* Action Buttons - Adjusted Size and Spacing */}
                   <div className="flex items-center justify-center gap-6 mt-8">
@@ -1545,7 +1684,7 @@ const ResultsPage: React.FC = () => {
                   </div>
                   {(hoveredItem as Activity).cost && (
                     <div className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
-                      <DollarSign className="w-3 h-3" />
+                      <IndianRupee className="w-3 h-3" />
                       <span>${(hoveredItem as Activity).cost}</span>
                     </div>
                   )}
@@ -1579,7 +1718,7 @@ const ResultsPage: React.FC = () => {
                   </div>
                   {(hoveredItem as Hotel).price && (
                     <div className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
-                      <DollarSign className="w-3 h-3" />
+                      <IndianRupee className="w-3 h-3" />
                       <span>${(hoveredItem as Hotel).price}/night</span>
                     </div>
                   )}
@@ -1632,7 +1771,7 @@ const ResultsPage: React.FC = () => {
                     <span>{(hoveredItem as Restaurant).cuisine}</span>
                   </div>
                   <div className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
-                    <DollarSign className="w-3 h-3" />
+                    <IndianRupee className="w-3 h-3" />
                     <span>{(hoveredItem as Restaurant).priceRange || (hoveredItem as Restaurant).price_range}</span>
                   </div>
                 </div>

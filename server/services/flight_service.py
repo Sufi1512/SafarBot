@@ -372,7 +372,7 @@ class FlightService:
                 return {
                     "id": flight_id,
                     "message": "Flight details retrieval requires booking token. Use booking options endpoint instead.",
-                    "suggestion": "Use /api/v1/flights/booking-options/{booking_token} for detailed flight information"
+                    "suggestion": "Use /flights/booking-options/{booking_token} for detailed flight information"
                 }
             else:
                 # Try to search for flights with this ID pattern
@@ -380,7 +380,7 @@ class FlightService:
                 return {
                     "id": flight_id,
                     "message": "Flight details not available. Please use flight search to get current flight information.",
-                    "suggestion": "Use /api/v1/flights/search to find current flights"
+                    "suggestion": "Use /flights/search to find current flights"
                 }
         except Exception as e:
             logger.error(f"Error getting flight details: {str(e)}")

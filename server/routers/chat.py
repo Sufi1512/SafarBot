@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 chat_service = ChatService()
 
-@router.options("/chat")
+@router.options("/")
 async def chat_options():
     """
     Handle OPTIONS requests for CORS preflight
@@ -24,7 +24,7 @@ async def chat_options():
         }
     )
 
-@router.post("/chat", response_model=ChatResponse)
+@router.post("/", response_model=ChatResponse)
 async def chat_with_bot(request: ChatRequest):
     """
     Chat with the AI travel planner
@@ -46,7 +46,7 @@ async def chat_with_bot(request: ChatRequest):
         logger.error(f"Error in chat: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Chat service error: {str(e)}")
 
-@router.get("/chat/history")
+@router.get("/history")
 async def get_chat_history():
     """
     Get chat history (for future implementation)

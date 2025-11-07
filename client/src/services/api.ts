@@ -3,8 +3,8 @@ import axios, { AxiosResponse } from 'axios';
 // Base URL for API - Render backend for production, localhost for development
 const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || (
   import.meta.env.PROD 
-    ? 'https://safarbot-n24f.onrender.com/api/v1' 
-    : 'http://localhost:8000/api/v1'
+    ? 'https://safarbot-n24f.onrender.com' 
+    : 'http://localhost:8000'
 );
 
 // Create axios instance
@@ -529,12 +529,29 @@ export interface ItineraryResponse {
 
 // API Functions
 export const itineraryAPI = {
-  // Enhanced itinerary generation with complete place metadata
-  generateEnhancedItinerary: async (data: ItineraryRequest): Promise<EnhancedItineraryResponse> => {
+  // Complete itinerary generation - AI + Place Details + Additional Places (2-3 minutes)
+  // This is the recommended endpoint for complete data
+  generateCompleteItinerary: async (data: ItineraryRequest, options?: { signal?: AbortSignal }): Promise<EnhancedItineraryResponse> => {
     try {
-      // Use a longer timeout for enhanced itinerary generation (3 minutes)
-      const response = await api.post('/generate-itinerary', data, {
-        timeout: 180000 // 3 minutes timeout for comprehensive data generation
+      // Use a longer timeout for complete itinerary generation (3 minutes)
+      const response = await api.post('/itinerary/generate-itinerary-complete', data, {
+        timeout: 180000, // 3 minutes timeout for comprehensive data generation
+        signal: options?.signal
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.userMessage || 'Failed to generate complete itinerary');
+    }
+  },
+
+  // Enhanced itinerary generation with complete place metadata (backward compatibility)
+  // This now uses the complete endpoint for consistency
+  generateEnhancedItinerary: async (data: ItineraryRequest, options?: { signal?: AbortSignal }): Promise<EnhancedItineraryResponse> => {
+    try {
+      // Use the complete endpoint - same data structure
+      const response = await api.post('/itinerary/generate-itinerary-complete', data, {
+        timeout: 180000, // 3 minutes timeout for comprehensive data generation
+        signal: options?.signal
       });
       return response.data;
     } catch (error: any) {
@@ -543,11 +560,12 @@ export const itineraryAPI = {
   },
 
   // Legacy function for backward compatibility
-  generateItinerary: async (data: ItineraryRequest): Promise<ItineraryResponse> => {
+  generateItinerary: async (data: ItineraryRequest, options?: { signal?: AbortSignal }): Promise<ItineraryResponse> => {
     try {
       // Use a longer timeout for itinerary generation (2 minutes)
-      const response = await api.post('/generate-itinerary', data, {
-        timeout: 120000 // 2 minutes timeout for AI generation
+      const response = await api.post('/itinerary/generate-itinerary', data, {
+        timeout: 120000, // 2 minutes timeout for AI generation
+        signal: options?.signal
       });
       return response.data;
     } catch (error: any) {
@@ -1362,7 +1380,7 @@ export const dashboardAPI = {
     updated_at?: string;
   }>> => {
     try {
-      const response = await api.get(`/saved-itinerary/?limit=${limit}`);
+      const response = await api.get(`/itineraries?limit=${limit}`);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Failed to load saved itineraries');
@@ -1542,7 +1560,7 @@ export const savedItineraryAPI = {
     updated_at: string;
   }>> => {
     try {
-      const response = await api.get('/saved-itinerary/', { params });
+      const response = await api.get('/itineraries', { params });
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Failed to load itineraries');
@@ -1600,7 +1618,7 @@ export const savedItineraryAPI = {
     is_public: boolean;
   }> => {
     try {
-      const response = await api.get(`/saved-itinerary/${itineraryId}`);
+      const response = await api.get(`/itineraries/${itineraryId}`);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Failed to load itinerary');
@@ -1671,7 +1689,7 @@ export const savedItineraryAPI = {
     is_public: boolean;
   }> => {
     try {
-      const response = await api.post('/saved-itinerary/', itineraryData);
+      const response = await api.post('/itineraries', itineraryData);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Failed to create itinerary');
@@ -1721,7 +1739,7 @@ export const savedItineraryAPI = {
     is_public: boolean;
   }> => {
     try {
-      const response = await api.put(`/saved-itinerary/${itineraryId}`, updateData);
+      const response = await api.put(`/itineraries/${itineraryId}`, updateData);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Failed to update itinerary');
@@ -1731,7 +1749,7 @@ export const savedItineraryAPI = {
   // Delete itinerary
   deleteItinerary: async (itineraryId: string): Promise<{ message: string }> => {
     try {
-      const response = await api.delete(`/saved-itinerary/${itineraryId}`);
+      const response = await api.delete(`/itineraries/${itineraryId}`);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Failed to delete itinerary');
@@ -1741,7 +1759,7 @@ export const savedItineraryAPI = {
   // Toggle favorite
   toggleFavorite: async (itineraryId: string): Promise<{ message: string }> => {
     try {
-      const response = await api.post(`/saved-itinerary/${itineraryId}/favorite`);
+      const response = await api.post(`/itineraries/${itineraryId}/favorite`);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Failed to toggle favorite');
@@ -1777,7 +1795,7 @@ export const savedItineraryAPI = {
     updated_at: string;
   }>> => {
     try {
-      const response = await api.get('/saved-itinerary/public/discover', { params });
+      const response = await api.get('/itineraries/public/discover', { params });
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Failed to discover itineraries');
@@ -1793,7 +1811,7 @@ export const savedItineraryAPI = {
     total_views: number;
   }> => {
     try {
-      const response = await api.get('/saved-itinerary/stats/summary');
+      const response = await api.get('/itineraries/stats/summary');
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Failed to load itinerary stats');
@@ -1807,7 +1825,7 @@ export const savedItineraryAPI = {
     share_token: string;
   }> => {
     try {
-      const response = await api.post(`/saved-itinerary/${itineraryId}/share`);
+      const response = await api.post(`/itineraries/${itineraryId}/share`);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Failed to share itinerary');
@@ -1840,7 +1858,7 @@ export const savedItineraryAPI = {
     is_public: boolean;
   }> => {
     try {
-      const response = await api.get(`/saved-itinerary/public/${shareToken}`);
+      const response = await api.get(`/itineraries/public/${shareToken}`);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Failed to load public itinerary');

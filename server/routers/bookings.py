@@ -37,7 +37,7 @@ class BookingStatus(BaseModel):
 # Mock database for bookings
 bookings_db = {}
 
-@router.post("/bookings/create", response_model=BookingResponse)
+@router.post("/create", response_model=BookingResponse)
 async def create_booking(request: BookingRequest):
     """Create a new booking for flight or hotel"""
     try:
@@ -99,7 +99,7 @@ async def create_booking(request: BookingRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating booking: {str(e)}")
 
-@router.get("/bookings/{booking_id}", response_model=BookingStatus)
+@router.get("/{booking_id}", response_model=BookingStatus)
 async def get_booking_status(booking_id: str):
     """Get booking status and details"""
     if booking_id not in bookings_db:
@@ -116,7 +116,7 @@ async def get_booking_status(booking_id: str):
         updated_at=booking["updated_at"]
     )
 
-@router.get("/bookings/reference/{booking_reference}", response_model=BookingStatus)
+@router.get("/reference/{booking_reference}", response_model=BookingStatus)
 async def get_booking_by_reference(booking_reference: str):
     """Get booking by reference number"""
     for booking in bookings_db.values():
@@ -133,7 +133,7 @@ async def get_booking_by_reference(booking_reference: str):
     
     raise HTTPException(status_code=404, detail="Booking not found")
 
-@router.put("/bookings/{booking_id}/cancel")
+@router.put("/{booking_id}/cancel")
 async def cancel_booking(booking_id: str):
     """Cancel a booking"""
     if booking_id not in bookings_db:
@@ -150,7 +150,7 @@ async def cancel_booking(booking_id: str):
         "status": "cancelled"
     }
 
-@router.get("/bookings", response_model=List[BookingStatus])
+@router.get("/", response_model=List[BookingStatus])
 async def get_all_bookings(limit: int = 10, offset: int = 0):
     """Get all bookings with pagination"""
     bookings_list = list(bookings_db.values())
@@ -169,7 +169,7 @@ async def get_all_bookings(limit: int = 10, offset: int = 0):
         for booking in paginated_bookings
     ]
 
-@router.post("/bookings/{booking_id}/payment")
+@router.post("/{booking_id}/payment")
 async def process_payment(booking_id: str, payment_method: str = "credit_card"):
     """Process payment for a booking"""
     if booking_id not in bookings_db:

@@ -149,7 +149,7 @@ Return this JSON structure:
 
 CRITICAL: You MUST provide exactly 10-12 travel tips. Do not provide fewer than 10 tips. The response will be rejected if you provide fewer than 10 travel tips.
 
-Generate {total_days} complete daily plans with 2-3 activities, 2-3 meals, and transportation for each day.""")
+Generate {total_days} complete daily plans with 2-3 activities, 3-4 meals, and transportation for each day.""")
 ])
 
 # Weather formatting function

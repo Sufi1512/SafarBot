@@ -4,7 +4,7 @@ import {
   MapPin, 
   Calendar, 
   Users, 
-  DollarSign, 
+  IndianRupee, 
   Heart, 
   Plane, 
   Hotel, 
@@ -22,17 +22,36 @@ import {
   Moon,
   Building,
   Waves,
-  MountainSnow
+  MountainSnow,
+  Briefcase
 } from 'lucide-react';
 import CustomDatePicker from '../components/ui/CustomDatePicker';
 import ModernButton from '../components/ui/ModernButton';
 import Dropdown, { DropdownOption } from '../components/ui/Dropdown';
+import CounterInput from '../components/ui/CounterInput';
 import PlacesAutocomplete from '../components/PlacesAutocomplete';
 import { useAuth } from '../contexts/AuthContext';
 import AuthModal from '../components/AuthModal';
 
+const USD_TO_INR_RATE = 83;
+
+const formatINR = (amount: number) => new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  maximumFractionDigits: 0
+}).format(Math.round(amount));
+
+const formatINRRange = (minUsd: number, maxUsd?: number) => {
+  const minInr = minUsd * USD_TO_INR_RATE;
+  if (typeof maxUsd === 'number') {
+    const maxInr = maxUsd * USD_TO_INR_RATE;
+    return `${formatINR(minInr)} - ${formatINR(maxInr)}`;
+  }
+  return `${formatINR(minInr)}+`;
+};
+
 type BudgetTier = 'low' | 'medium' | 'high';
-type TravelWith = 'solo' | 'couple' | 'family';
+type TravelWith = 'solo' | 'couple' | 'family' | 'friends' | 'group' | 'business';
 type FlightClass = 'economy' | 'premium' | 'business' | 'first';
 
 const TripPlannerPage: React.FC = () => {
@@ -56,26 +75,19 @@ const TripPlannerPage: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
 
-  // Dropdown options
-  const daysOptions: DropdownOption[] = [
-    { value: 3, label: '3 days', icon: <Clock className="w-4 h-4" /> },
-    { value: 5, label: '5 days', icon: <Clock className="w-4 h-4" /> },
-    { value: 7, label: '7 days', icon: <Clock className="w-4 h-4" /> },
-    { value: 10, label: '10 days', icon: <Clock className="w-4 h-4" /> },
-    { value: 14, label: '14 days', icon: <Clock className="w-4 h-4" /> },
-    { value: 21, label: '21 days', icon: <Clock className="w-4 h-4" /> },
-  ];
-
   const budgetOptions: DropdownOption[] = [
-    { value: 'low', label: 'Budget ($500 - $1,500)', icon: <DollarSign className="w-4 h-4" />, description: 'Hostels, budget hotels' },
-    { value: 'medium', label: 'Mid-range ($1,500 - $3,500)', icon: <DollarSign className="w-4 h-4" />, description: '3-4 star hotels' },
-    { value: 'high', label: 'Luxury ($3,500+)', icon: <DollarSign className="w-4 h-4" />, description: '5-star hotels, premium experiences' },
+    { value: 'low', label: `Budget (${formatINRRange(500, 1500)})`, icon: <IndianRupee className="w-4 h-4" />, description: 'Hostels, budget hotels' },
+    { value: 'medium', label: `Mid-range (${formatINRRange(1500, 3500)})`, icon: <IndianRupee className="w-4 h-4" />, description: '3-4 star hotels' },
+    { value: 'high', label: `Luxury (${formatINRRange(3500)})`, icon: <IndianRupee className="w-4 h-4" />, description: '5-star hotels, premium experiences' },
   ];
 
   const travelWithOptions: DropdownOption[] = [
     { value: 'solo', label: 'Solo Traveler', icon: <Users className="w-4 h-4" /> },
     { value: 'couple', label: 'Couple', icon: <Heart className="w-4 h-4" /> },
     { value: 'family', label: 'Family', icon: <Users className="w-4 h-4" /> },
+    { value: 'friends', label: 'Friends Trip', icon: <Users className="w-4 h-4" /> },
+    { value: 'group', label: 'Group Tour', icon: <Users className="w-4 h-4" /> },
+    { value: 'business', label: 'Business Travel', icon: <Briefcase className="w-4 h-4" /> },
   ];
 
   const tripPaceOptions: DropdownOption[] = [
@@ -429,22 +441,22 @@ const TripPlannerPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-900 dark:text-white">
                   How many days?
                 </label>
-                <Dropdown
-                  options={daysOptions}
+                <CounterInput
                   value={days}
-                  onChange={(value) => {
-                    setDays(value as number);
-                  }}
-                  placeholder="Select duration"
-                  size="md"
-                  variant="outline"
+                  min={1}
+                  max={60}
+                  onChange={(value) => setDays(value)}
                   className="w-full"
+                  aria-label="Trip duration in days"
                 />
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Auto-filled from your travel dates. Adjust if you want a longer or shorter stay.
+                </p>
               </div>
 
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-900 dark:text-white">
-                  What's your budget?
+                  What's your budget (INR)?
                 </label>
                 <Dropdown
                   options={budgetOptions}
@@ -552,16 +564,13 @@ const TripPlannerPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-900 dark:text-white">
                   Departure city
                 </label>
-                <div className="relative">
-                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    value={departureCity}
-                    onChange={e => setDepartureCity(e.target.value)}
-                    placeholder="e.g., London, New York"
-                    className="w-full pl-12 pr-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-green-500/20 focus:border-green-600 transition-all duration-200 text-sm"
-                  />
-                </div>
+                <PlacesAutocomplete
+                  value={departureCity}
+                  onChange={setDepartureCity}
+                  placeholder="e.g., London, New York"
+                  icon={<MapPin className="w-5 h-5" />}
+                  className="pl-12"
+                />
               </div>
 
               <div className="space-y-2">

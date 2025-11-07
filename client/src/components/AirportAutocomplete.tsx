@@ -39,6 +39,7 @@ const AirportAutocomplete: React.FC<AirportAutocompleteProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { isLoaded, loadError } = useJsApiLoader({
+    id: GOOGLE_MAPS_CONFIG.id,
     googleMapsApiKey: GOOGLE_MAPS_CONFIG.googleMapsApiKey,
     libraries: [...GOOGLE_MAPS_CONFIG.libraries] as any
   });

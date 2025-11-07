@@ -34,7 +34,7 @@ async def search_hotels(request: HotelSearchRequest):
         logger.error(f"Error searching hotels: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to search hotels: {str(e)}")
 
-@router.get("/hotels/{location}/popular")
+@router.get("/{location}/popular")
 async def get_popular_hotels(location: str):
     """
     Get popular hotels for a location

@@ -13,7 +13,7 @@ from routers.auth import get_current_user
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-@router.get("/ip/info")
+@router.get("/info")
 async def get_ip_info(request: Request):
     """
     Get information about the current request's IP address
@@ -27,7 +27,7 @@ async def get_ip_info(request: Request):
         "message": "IP information retrieved successfully"
     }
 
-@router.get("/ip/info/{ip_address}")
+@router.get("/info/{ip_address}")
 async def get_specific_ip_info(ip_address: str, current_user: dict = Depends(get_current_user)):
     """
     Get information about a specific IP address (admin only)
@@ -47,7 +47,7 @@ async def get_specific_ip_info(ip_address: str, current_user: dict = Depends(get
         "message": f"IP information for {ip_address} retrieved successfully"
     }
 
-@router.get("/ip/top")
+@router.get("/top")
 async def get_top_ips(limit: int = 10, current_user: dict = Depends(get_current_user)):
     """
     Get top IPs by request count (admin only)
@@ -73,7 +73,7 @@ async def get_top_ips(limit: int = 10, current_user: dict = Depends(get_current_
         "message": f"Top {len(top_ips)} IPs retrieved successfully"
     }
 
-@router.post("/ip/blacklist/{ip_address}")
+@router.post("/blacklist/{ip_address}")
 async def add_to_blacklist(ip_address: str, current_user: dict = Depends(get_current_user)):
     """
     Add IP to blacklist (admin only)
@@ -92,7 +92,7 @@ async def add_to_blacklist(ip_address: str, current_user: dict = Depends(get_cur
         "message": f"IP {ip_address} added to blacklist successfully"
     }
 
-@router.delete("/ip/blacklist/{ip_address}")
+@router.delete("/blacklist/{ip_address}")
 async def remove_from_blacklist(ip_address: str, current_user: dict = Depends(get_current_user)):
     """
     Remove IP from blacklist (admin only)
@@ -108,7 +108,7 @@ async def remove_from_blacklist(ip_address: str, current_user: dict = Depends(ge
         "message": f"IP {ip_address} removed from blacklist successfully"
     }
 
-@router.post("/ip/whitelist/{ip_address}")
+@router.post("/whitelist/{ip_address}")
 async def add_to_whitelist(ip_address: str, current_user: dict = Depends(get_current_user)):
     """
     Add IP to whitelist (admin only)
@@ -127,7 +127,7 @@ async def add_to_whitelist(ip_address: str, current_user: dict = Depends(get_cur
         "message": f"IP {ip_address} added to whitelist successfully"
     }
 
-@router.delete("/ip/whitelist/{ip_address}")
+@router.delete("/whitelist/{ip_address}")
 async def remove_from_whitelist(ip_address: str, current_user: dict = Depends(get_current_user)):
     """
     Remove IP from whitelist (admin only)
@@ -143,7 +143,7 @@ async def remove_from_whitelist(ip_address: str, current_user: dict = Depends(ge
         "message": f"IP {ip_address} removed from whitelist successfully"
     }
 
-@router.get("/ip/suspicious")
+@router.get("/suspicious")
 async def get_suspicious_ips(current_user: dict = Depends(get_current_user)):
     """
     Get list of suspicious IPs (admin only)
@@ -166,7 +166,7 @@ async def get_suspicious_ips(current_user: dict = Depends(get_current_user)):
         "message": f"Found {len(suspicious_ips)} suspicious IPs"
     }
 
-@router.get("/ip/stats")
+@router.get("/stats")
 async def get_ip_stats(current_user: dict = Depends(get_current_user)):
     """
     Get IP tracking statistics (admin only)

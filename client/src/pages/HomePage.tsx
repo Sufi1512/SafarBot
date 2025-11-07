@@ -3,10 +3,9 @@ import { motion } from 'framer-motion';
 // import { useNavigate } from 'react-router-dom';
 import CustomDatePicker from '../components/ui/CustomDatePicker';
 import ModernButton from '../components/ui/ModernButton';
-import Dropdown, { DropdownOption } from '../components/ui/Dropdown';
 import PlacesAutocomplete from '../components/PlacesAutocomplete';
+import CounterInput from '../components/ui/CounterInput';
 import bgVideo2 from '../asset/videos/bg-video2.mp4';
-import { Users } from 'lucide-react';
 import {
   StarIcon,
   ArrowRightIcon,
@@ -39,15 +38,6 @@ const HomePage: React.FC = () => {
     endDate: null,
     travelers: 1,
   });
-
-  // Travelers dropdown options
-  const travelersOptions: DropdownOption[] = Array.from({ length: 10 }, (_, i) => ({
-    value: i + 1,
-    label: `${i + 1} ${i === 0 ? 'Traveler' : 'Travelers'}`,
-    icon: <Users className="w-4 h-4" />,
-  }));
-
-
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -399,15 +389,17 @@ const HomePage: React.FC = () => {
                       <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                         👥 <span>Travelers</span>
                       </label>
-                      <Dropdown
-                        options={travelersOptions}
+                      <CounterInput
                         value={searchForm.travelers}
-                        onChange={(value) => setSearchForm(prev => ({ ...prev, travelers: value as number }))}
-                        placeholder="Select travelers"
-                        size="lg"
-                        variant="outline"
+                        min={1}
+                        max={10}
+                        onChange={(value) => setSearchForm((prev) => ({ ...prev, travelers: value }))}
                         className="w-full"
+                        aria-label="Number of travelers"
                       />
+                      <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+                        {searchForm.travelers === 1 ? 'Perfect for solo adventures' : `${searchForm.travelers} travelers ready to explore`}
+                      </p>
                     </div>
                   </div>
                 </div>

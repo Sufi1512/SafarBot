@@ -301,8 +301,8 @@ class PlacesSearchTool:
         serpapi_thumbnail = ""
         if photos and len(photos) > 0:
             first_photo = photos[0]
-            thumbnail = first_photo.get("thumbnail", "")
-            serpapi_thumbnail = first_photo.get("thumbnail", "")
+            thumbnail = first_photo.get("serpapi_thumbnail") or first_photo.get("image") or first_photo.get("thumbnail", "")
+            serpapi_thumbnail = first_photo.get("serpapi_thumbnail") or first_photo.get("image", "")
             print(f"            ✅ Extracted hotel photo: {thumbnail}")
         else:
             print(f"            ❌ No photos found for hotel {place.get('title', 'Unknown')}")
@@ -316,8 +316,8 @@ class PlacesSearchTool:
             "description": f"Well-rated hotel in {location}",
             "phone": place.get("phone"),
             "website": place.get("website"),
-            "thumbnail": thumbnail,
-            "serpapi_thumbnail": serpapi_thumbnail,
+            "thumbnail": place.get("serpapi_thumbnail") or place.get("thumbnail") or thumbnail,
+            "serpapi_thumbnail": serpapi_thumbnail or place.get("serpapi_thumbnail") or place.get("thumbnail", ""),
             "place_id": place.get("place_id", ""),
             "category": "hotel",
             "coordinates": {
@@ -334,8 +334,8 @@ class PlacesSearchTool:
         serpapi_thumbnail = ""
         if photos and len(photos) > 0:
             first_photo = photos[0]
-            thumbnail = first_photo.get("thumbnail", "")
-            serpapi_thumbnail = first_photo.get("thumbnail", "")
+            thumbnail = first_photo.get("serpapi_thumbnail") or first_photo.get("image") or first_photo.get("thumbnail", "")
+            serpapi_thumbnail = first_photo.get("serpapi_thumbnail") or first_photo.get("image", "")
         
         return {
             "name": place.get("title", "Local Restaurant"),
@@ -345,8 +345,8 @@ class PlacesSearchTool:
             "description": f"Popular restaurant in {location}",
             "place_id": place.get("place_id", ""),
             "category": "restaurant",
-            "thumbnail": thumbnail,
-            "serpapi_thumbnail": serpapi_thumbnail,
+            "thumbnail": place.get("serpapi_thumbnail") or place.get("thumbnail") or thumbnail,
+            "serpapi_thumbnail": serpapi_thumbnail or place.get("serpapi_thumbnail") or place.get("thumbnail", ""),
             "location": place.get("address", location),
             "phone": place.get("phone"),
             "hours": place.get("hours"),
@@ -364,8 +364,8 @@ class PlacesSearchTool:
         serpapi_thumbnail = ""
         if photos and len(photos) > 0:
             first_photo = photos[0]
-            thumbnail = first_photo.get("thumbnail", "")
-            serpapi_thumbnail = first_photo.get("thumbnail", "")
+            thumbnail = first_photo.get("serpapi_thumbnail") or first_photo.get("image") or first_photo.get("thumbnail", "")
+            serpapi_thumbnail = first_photo.get("serpapi_thumbnail") or first_photo.get("image", "")
         
         return {
             "name": place.get("title", "Local Cafe"),
@@ -375,8 +375,8 @@ class PlacesSearchTool:
             "description": f"Cozy cafe in {location}",
             "place_id": place.get("place_id", ""),
             "category": "cafe",
-            "thumbnail": thumbnail,
-            "serpapi_thumbnail": serpapi_thumbnail,
+            "thumbnail": place.get("serpapi_thumbnail") or place.get("thumbnail") or thumbnail,
+            "serpapi_thumbnail": serpapi_thumbnail or place.get("serpapi_thumbnail") or place.get("thumbnail", ""),
             "location": place.get("address", location),
             "speciality": "Coffee and light meals",
             "coordinates": {
@@ -393,8 +393,8 @@ class PlacesSearchTool:
         serpapi_thumbnail = ""
         if photos and len(photos) > 0:
             first_photo = photos[0]
-            thumbnail = first_photo.get("thumbnail", "")
-            serpapi_thumbnail = first_photo.get("thumbnail", "")
+            thumbnail = first_photo.get("serpapi_thumbnail") or first_photo.get("image") or first_photo.get("thumbnail", "")
+            serpapi_thumbnail = first_photo.get("serpapi_thumbnail") or first_photo.get("image", "")
         
         return {
             "name": place.get("title", "Local Attraction"),
@@ -403,8 +403,8 @@ class PlacesSearchTool:
             "description": f"Popular attraction in {location}",
             "place_id": place.get("place_id", ""),
             "category": "attraction",
-            "thumbnail": thumbnail,
-            "serpapi_thumbnail": serpapi_thumbnail,
+            "thumbnail": place.get("serpapi_thumbnail") or place.get("thumbnail") or thumbnail,
+            "serpapi_thumbnail": serpapi_thumbnail or place.get("serpapi_thumbnail") or place.get("thumbnail", ""),
             "location": place.get("address", location),
             "hours": place.get("hours"),
             "estimated_cost": self._estimate_attraction_cost(place),

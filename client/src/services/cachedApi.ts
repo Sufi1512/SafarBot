@@ -29,7 +29,7 @@ export const savedItineraryAPI = {
   }) => {
     return cacheService.cachedCall(
       () => originalSavedItineraryAPI.getItineraries(params),
-      '/saved-itinerary/',
+      '/itineraries',
       params,
       CACHE_CONFIGS.SAVED_ITINERARIES
     );
@@ -38,7 +38,7 @@ export const savedItineraryAPI = {
   getItinerary: async (itineraryId: string) => {
     return cacheService.cachedCall(
       () => originalSavedItineraryAPI.getItinerary(itineraryId),
-      `/saved-itinerary/${itineraryId}`,
+      `/itineraries/${itineraryId}`,
       { itineraryId },
       { ttl: 10 * 60 * 1000 } // 10 minutes for individual itinerary
     );
@@ -47,31 +47,31 @@ export const savedItineraryAPI = {
   createItinerary: async (itineraryData: any) => {
     const result = await originalSavedItineraryAPI.createItinerary(itineraryData);
     // Invalidate saved itineraries cache after creation
-    cacheService.invalidateCachePattern('/saved-itinerary/');
+    cacheService.invalidateCachePattern('/itineraries');
     return result;
   },
 
   updateItinerary: async (itineraryId: string, updateData: any) => {
     const result = await originalSavedItineraryAPI.updateItinerary(itineraryId, updateData);
     // Invalidate specific itinerary and list caches
-    cacheService.invalidateCache(`/saved-itinerary/${itineraryId}`);
-    cacheService.invalidateCachePattern('/saved-itinerary/');
+    cacheService.invalidateCache(`/itineraries/${itineraryId}`);
+    cacheService.invalidateCachePattern('/itineraries');
     return result;
   },
 
   deleteItinerary: async (itineraryId: string) => {
     const result = await originalSavedItineraryAPI.deleteItinerary(itineraryId);
     // Invalidate caches after deletion
-    cacheService.invalidateCache(`/saved-itinerary/${itineraryId}`);
-    cacheService.invalidateCachePattern('/saved-itinerary/');
+    cacheService.invalidateCache(`/itineraries/${itineraryId}`);
+    cacheService.invalidateCachePattern('/itineraries');
     return result;
   },
 
   toggleFavorite: async (itineraryId: string) => {
     const result = await originalSavedItineraryAPI.toggleFavorite(itineraryId);
     // Invalidate specific itinerary and list caches
-    cacheService.invalidateCache(`/saved-itinerary/${itineraryId}`);
-    cacheService.invalidateCachePattern('/saved-itinerary/');
+    cacheService.invalidateCache(`/itineraries/${itineraryId}`);
+    cacheService.invalidateCachePattern('/itineraries');
     return result;
   },
 
@@ -83,7 +83,7 @@ export const savedItineraryAPI = {
   }) => {
     return cacheService.cachedCall(
       () => originalSavedItineraryAPI.discoverItineraries(params),
-      '/saved-itinerary/public/discover',
+      '/itineraries/public/discover',
       params,
       { ttl: 15 * 60 * 1000 } // 15 minutes for public itineraries
     );
@@ -92,7 +92,7 @@ export const savedItineraryAPI = {
   getItineraryStats: async () => {
     return cacheService.cachedCall(
       () => originalSavedItineraryAPI.getItineraryStats(),
-      '/saved-itinerary/stats/summary',
+      '/itineraries/stats/summary',
       {},
       CACHE_CONFIGS.STATS
     );
@@ -101,14 +101,14 @@ export const savedItineraryAPI = {
   shareItinerary: async (itineraryId: string) => {
     const result = await originalSavedItineraryAPI.shareItinerary(itineraryId);
     // Invalidate specific itinerary cache
-    cacheService.invalidateCache(`/saved-itinerary/${itineraryId}`);
+    cacheService.invalidateCache(`/itineraries/${itineraryId}`);
     return result;
   },
 
   getPublicItinerary: async (shareToken: string) => {
     return cacheService.cachedCall(
       () => originalSavedItineraryAPI.getPublicItinerary(shareToken),
-      `/saved-itinerary/public/${shareToken}`,
+      `/itineraries/public/${shareToken}`,
       { shareToken },
       { ttl: 30 * 60 * 1000 } // 30 minutes for public itineraries
     );
@@ -376,14 +376,14 @@ export const restaurantAPI = {
 
 // Cached Itinerary API
 export const itineraryAPI = {
-  generateEnhancedItinerary: async (data: any) => {
+  generateEnhancedItinerary: async (data: any, options?: { signal?: AbortSignal }) => {
     // Don't cache itinerary generation as it's expensive and user-specific
-    return originalItineraryAPI.generateEnhancedItinerary(data);
+    return originalItineraryAPI.generateEnhancedItinerary(data, options);
   },
 
-  generateItinerary: async (data: any) => {
+  generateItinerary: async (data: any, options?: { signal?: AbortSignal }) => {
     // Don't cache itinerary generation as it's expensive and user-specific
-    return originalItineraryAPI.generateItinerary(data);
+    return originalItineraryAPI.generateItinerary(data, options);
   },
 
   placeById: async (place_id: string, gl?: string) => {

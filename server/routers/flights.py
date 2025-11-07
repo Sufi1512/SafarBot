@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 # Initialize flight service
 flight_service = FlightService()
 
-@router.get("/flights/popular", response_model=List[Flight])
+@router.get("/popular", response_model=List[Flight])
 async def get_popular_flights():
     """Get popular flight routes"""
     try:
@@ -21,7 +21,7 @@ async def get_popular_flights():
         logger.error(f"Error getting popular flights: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to get popular flights: {str(e)}")
 
-@router.post("/flights/search", response_model=FlightSearchResponse)
+@router.post("/search", response_model=FlightSearchResponse)
 async def search_flights(request: FlightSearchRequest):
     """Search for flights based on criteria"""
     try:
@@ -46,7 +46,7 @@ async def search_flights(request: FlightSearchRequest):
         logger.error(f"Error searching flights: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error searching flights: {str(e)}")
 
-@router.get("/flights/booking-options/{booking_token}")
+@router.get("/booking-options/{booking_token}")
 async def get_booking_options(booking_token: str):
     """Get booking options for a specific flight using booking token"""
     try:
@@ -65,7 +65,7 @@ async def get_booking_options(booking_token: str):
         logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error getting booking options: {str(e)}")
 
-@router.get("/flights/airports/suggestions")
+@router.get("/airports/suggestions")
 async def get_airport_suggestions(query: str):
     """Get airport suggestions for autocomplete"""
     try:
@@ -78,7 +78,7 @@ async def get_airport_suggestions(query: str):
         logger.error(f"Error getting airport suggestions: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error getting airport suggestions: {str(e)}")
 
-@router.get("/flights/{flight_id}", response_model=Flight)
+@router.get("/{flight_id}", response_model=Flight)
 async def get_flight_details(flight_id: str):
     """Get detailed information about a specific flight"""
     try:
@@ -92,7 +92,7 @@ async def get_flight_details(flight_id: str):
         logger.error(f"Error getting flight details: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error getting flight details: {str(e)}")
 
-@router.post("/flights/book")
+@router.post("/book")
 async def book_flight(flight_id: str, passengers: int = 1):
     """Book a flight"""
     try:

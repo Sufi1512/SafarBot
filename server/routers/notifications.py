@@ -8,7 +8,7 @@ from mongo_models import NotificationDocument, NotificationStatus, PyObjectId
 from routers.auth import get_current_user
 from models import APIResponse
 
-router = APIRouter(prefix="/notifications", tags=["notifications"])
+router = APIRouter()
 
 @router.get("/", response_model=APIResponse)
 async def get_notifications(

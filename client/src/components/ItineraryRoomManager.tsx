@@ -44,8 +44,8 @@ export const ItineraryRoomManager: React.FC<ItineraryRoomManagerProps> = ({
       
       const apiBaseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || (
         import.meta.env.PROD 
-          ? 'https://safarbot-n24f.onrender.com/api/v1' 
-          : 'http://localhost:8000/api/v1'
+          ? 'https://safarbot-n24f.onrender.com' 
+          : 'http://localhost:8000'
       );
       const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/collaboration/room/status/${itineraryId}`, {
         headers: {
@@ -79,8 +79,8 @@ export const ItineraryRoomManager: React.FC<ItineraryRoomManagerProps> = ({
 
       const apiBaseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || (
         import.meta.env.PROD 
-          ? 'https://safarbot-n24f.onrender.com/api/v1' 
-          : 'http://localhost:8000/api/v1'
+          ? 'https://safarbot-n24f.onrender.com' 
+          : 'http://localhost:8000'
       );
       const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/collaboration/room/create`, {
         method: 'POST',
@@ -128,8 +128,8 @@ export const ItineraryRoomManager: React.FC<ItineraryRoomManagerProps> = ({
 
       const apiBaseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || (
         import.meta.env.PROD 
-          ? 'https://safarbot-n24f.onrender.com/api/v1' 
-          : 'http://localhost:8000/api/v1'
+          ? 'https://safarbot-n24f.onrender.com' 
+          : 'http://localhost:8000'
       );
       const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/collaboration/room/${roomStatus.room_id}/join`, {
         method: 'POST',

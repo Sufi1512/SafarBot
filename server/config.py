@@ -4,8 +4,9 @@ import os
 
 class Settings(BaseSettings):
     # API Configuration
-    api_v1_prefix: str = "/api/v1"
+    # API prefix removed - endpoints now use clean paths without version prefix
     project_name: str = "SafarBot"
+    usd_to_inr_rate: float = float(os.getenv("USD_TO_INR_RATE", 83.0))
     
     # Google Gemini API (legacy)
     google_api_key: Optional[str] = None
@@ -61,7 +62,14 @@ class Settings(BaseSettings):
         if not self.serp_api_key:
             self.serp_api_key = os.getenv("SERP_API_KEY")
         if not self.open_weather_api_key:
-            self.open_weather_api_key = os.getenv("OPEN_WEATHER_API_KEY")
+            self.open_weather_api_key = (
+                os.getenv("OPEN_WEATHER_API_KEY")
+                or os.getenv("OPENWEATHER_API_KEY")
+                or os.getenv("OPEN_WEATHERMAP_API_KEY")
+                or os.getenv("WEATHER_API_KEY")
+            )
+        if self.open_weather_api_key == "":
+            self.open_weather_api_key = None
         if not self.langsmith_api_key:
             self.langsmith_api_key = os.getenv("LANGSMITH_API_KEY")
         if not self.brevo_api_key:

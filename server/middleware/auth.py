@@ -27,11 +27,11 @@ class AuthMiddleware:
             "/health",
             "/docs",
             "/openapi.json",
-            "/api/v1/auth/signup",
-            "/api/v1/auth/login",
-            "/api/v1/auth/forgot-password",
-            "/api/v1/auth/reset-password",
-            "/api/v1/chat",  # Chat might be public for demo
+            "/auth/signup",
+            "/auth/login",
+            "/auth/forgot-password",
+            "/auth/reset-password",
+            "/chat",  # Chat might be public for demo
         ]
         
         # Check if endpoint requires authentication

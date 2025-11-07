@@ -37,7 +37,7 @@ class ResendInvitationRequest(BaseModel):
             }
         }
 
-router = APIRouter(prefix="/collaboration", tags=["collaboration"])
+router = APIRouter()
 security = HTTPBearer()
 
 @router.post("/invite", response_model=APIResponse)

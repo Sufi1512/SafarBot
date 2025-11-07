@@ -226,17 +226,17 @@ class PlaceDetailsService:
     def _convert_price_level(self, price_str: str) -> str:
         """Convert SERP price format to our format"""
         if not price_str:
-            return "$"
+            return "₹"
         
         # Count dollar signs or convert descriptive text
         if '$' in price_str:
-            return price_str
+            return price_str.replace('$', '₹')
         elif any(word in price_str.lower() for word in ['expensive', 'luxury', 'high-end']):
-            return "$$$"
+            return "₹₹₹"
         elif any(word in price_str.lower() for word in ['moderate', 'mid-range']):
-            return "$$"
+            return "₹₹"
         else:
-            return "$"
+            return "₹"
     
     def _create_mock_hotel_details(self, place_id: str) -> PlaceDetails:
         """Create mock hotel details with realistic data"""

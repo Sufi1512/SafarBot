@@ -9,7 +9,7 @@ from services.weather_service import weather_service
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/weather", tags=["weather"])
+router = APIRouter()
 
 @router.get("/current")
 async def get_current_weather(

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
+import { getOptimizedImageUrl, ImageQuality } from '../utils/imagePrefetcher';
 
 interface OptimizedImageProps {
   src: string;
@@ -7,7 +8,7 @@ interface OptimizedImageProps {
   className?: string;
   fallbackSrc?: string;
   loading?: 'lazy' | 'eager';
-  quality?: 'low' | 'medium' | 'high';
+  quality?: ImageQuality;
   onLoad?: () => void;
   onError?: () => void;
 }
@@ -46,20 +47,6 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
     }
   }, [loading]);
 
-  // Generate optimized image URL based on quality
-  const getOptimizedSrc = (originalSrc: string) => {
-    if (!originalSrc) return '';
-    
-    // For Google Places photos, add size parameters
-    if (originalSrc.includes('maps.googleapis.com')) {
-      const size = quality === 'high' ? '400x300' : quality === 'medium' ? '300x200' : '200x150';
-      return originalSrc.replace(/=s\d+/, `=s${size.split('x')[0]}`);
-    }
-    
-    // For other images, you could add image optimization service here
-    return originalSrc;
-  };
-
   const handleLoad = () => {
     setImageState('loaded');
     onLoad?.();
@@ -75,7 +62,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
     }
   };
 
-  const optimizedSrc = isInView ? getOptimizedSrc(currentSrc) : '';
+  const optimizedSrc = isInView ? getOptimizedImageUrl(currentSrc, quality) : '';
 
   return (
     <div className={`relative overflow-hidden ${className}`}>

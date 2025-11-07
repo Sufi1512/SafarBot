@@ -33,7 +33,7 @@ async def recommend_restaurants(request: RestaurantRequest):
         logger.error(f"Error getting restaurant recommendations: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to get restaurant recommendations: {str(e)}")
 
-@router.get("/restaurants/{location}/popular")
+@router.get("/{location}/popular")
 async def get_popular_restaurants(location: str):
     """
     Get popular restaurants for a location

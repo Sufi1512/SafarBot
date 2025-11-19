@@ -8,7 +8,6 @@ from models import (
     ItineraryDetailsRequest,
 )
 from services.itinerary_service import ItineraryService
-from services.fast_itinerary_service import FastItineraryService
 from services.additional_places_service import AdditionalPlacesService
 import logging
 
@@ -16,83 +15,13 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 itinerary_service = ItineraryService()
-fast_itinerary_service = FastItineraryService()
 additional_places_service = AdditionalPlacesService()
 
 # ============================================================================
-# ITINERARY ENDPOINTS - Three main endpoints for different use cases
+# ITINERARY ENDPOINTS - Primary flows for itinerary generation
 # ============================================================================
 
-# 1. AI ITINERARY ONLY - Fast response (30-60 seconds)
-#    Returns AI-generated itinerary structure without place data
-#    Use this for quick itinerary generation
-
-@router.options("/generate-itinerary-ai")
-async def generate_itinerary_ai_options():
-    """Handle OPTIONS requests for CORS preflight"""
-    return Response(
-        status_code=200,
-        headers={
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST, OPTIONS",
-            "Access-Control-Allow-Headers": "*",
-            "Access-Control-Max-Age": "86400",
-        }
-    )
-
-@router.post("/generate-itinerary-ai")
-async def generate_itinerary_ai(request_body: ItineraryRequest, http_request: Request):
-    """
-    ⚡ FAST ENDPOINT - Generate AI itinerary only (30-60 seconds)
-    
-    Returns AI-generated itinerary structure without pre-fetching place data.
-    Perfect for quick itinerary generation when you don't need place details immediately.
-    
-    Returns:
-    ✅ AI-generated itinerary structure
-    ✅ Day-by-day travel plan
-    ✅ Accommodation suggestions
-    ✅ Travel tips and recommendations
-    ✅ Budget estimate
-    
-    Note: For place details and additional places, use /places/additional or /generate-itinerary-complete
-    """
-    try:
-        logger.info(f"Generating fast AI itinerary for {request_body.destination}")
-        
-        ai_response = await fast_itinerary_service.generate_ai_itinerary(
-            destination=request_body.destination,
-            start_date=request_body.start_date,
-            end_date=request_body.end_date,
-            budget=request_body.budget,
-            budget_range=request_body.budget_range,
-            interests=request_body.interests,
-            travelers=request_body.travelers,
-            travel_companion=request_body.travel_companion,
-            trip_pace=request_body.trip_pace,
-            departure_city=request_body.departure_city,
-            flight_class_preference=request_body.flight_class_preference,
-            hotel_rating_preference=request_body.hotel_rating_preference,
-            accommodation_type=request_body.accommodation_type,
-            email=request_body.email,
-            dietary_preferences=request_body.dietary_preferences,
-            halal_preferences=request_body.halal_preferences,
-            vegetarian_preferences=request_body.vegetarian_preferences,
-            request=http_request
-        )
-        
-        print(f"✅ AI ITINERARY ENDPOINT - Returning fast AI response:")
-        print(f"   📋 Days: {ai_response.get('total_days', 0)}")
-        print(f"   💰 Budget: ${ai_response.get('budget_estimate', 0)}")
-        
-        return ai_response
-        
-    except Exception as e:
-        logger.error(f"Error generating AI itinerary: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to generate AI itinerary: {str(e)}")
-
-
-# 1b. STRUCTURE-ONLY ITINERARY - Split response for faster payload delivery
+# 1. STRUCTURE-ONLY ITINERARY - Split response for faster payload delivery
 
 
 @router.options("/generate-itinerary-structure")
@@ -143,7 +72,7 @@ async def generate_itinerary_structure(request_body: ItineraryRequest, http_requ
         raise HTTPException(status_code=500, detail=f"Failed to generate itinerary structure: {str(e)}")
 
 
-# 1c. Fetch cached place details for itinerary (second step in split flow)
+# 1b. Fetch cached place details for itinerary (second step in split flow)
 
 
 @router.options("/generate-itinerary-details")

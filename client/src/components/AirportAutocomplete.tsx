@@ -44,11 +44,12 @@ const AirportAutocomplete: React.FC<AirportAutocompleteProps> = ({
     libraries: [...GOOGLE_MAPS_CONFIG.libraries] as any
   });
 
-  // Debug logging
+  // Debug logging (only in development, and don't log API key info)
   useEffect(() => {
-    console.log('AirportAutocomplete - Google Maps API Status:', { isLoaded, loadError });
-    console.log('AirportAutocomplete - API Key:', import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? 'Present' : 'Missing');
-  }, [isLoaded, loadError]);
+    if (import.meta.env.DEV && loadError) {
+      console.warn('AirportAutocomplete - Google Maps API Error:', loadError);
+    }
+  }, [loadError]);
 
   // Note: onPlaceChanged is not used as we handle input changes manually via handleInputChange
   // Airport data is now fetched from external API

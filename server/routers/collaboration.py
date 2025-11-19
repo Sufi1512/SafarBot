@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer
 from typing import List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import uuid
 
 from database import get_database
@@ -122,7 +122,7 @@ async def invite_collaborator(
             invited_email=email,
             role=role,
             invitation_token=str(uuid.uuid4()),
-            expires_at=datetime.utcnow() + timedelta(days=7),  # 7 days expiry
+            expires_at=datetime.now(timezone.utc) + timedelta(days=7),  # 7 days expiry
             message=message
         )
         
@@ -136,7 +136,7 @@ async def invite_collaborator(
                 "$set": {
                     "is_collaborative": True,
                     "owner_id": PyObjectId(current_user.id),
-                    "updated_at": datetime.utcnow()
+                    "updated_at": datetime.now(timezone.utc)
                 }
             }
         )
@@ -237,7 +237,7 @@ async def resend_invitation(
         
         # Update invitation with new token and expiry
         new_token = str(uuid.uuid4())
-        new_expires_at = datetime.utcnow() + timedelta(days=7)
+        new_expires_at = datetime.now(timezone.utc) + timedelta(days=7)
         
         await db.itinerary_invitations.update_one(
             {"_id": invitation_object_id},
@@ -245,9 +245,9 @@ async def resend_invitation(
                 "$set": {
                     "invitation_token": new_token,
                     "expires_at": new_expires_at,
-                    "invited_at": datetime.utcnow(),  # Update invitation time
+                    "invited_at": datetime.now(timezone.utc),  # Update invitation time
                     "message": request.message or invitation.get("message", ""),
-                    "updated_at": datetime.utcnow()
+                    "updated_at": datetime.now(timezone.utc)
                 }
             }
         )
@@ -308,7 +308,7 @@ async def get_user_invitations(
         cursor = db.itinerary_invitations.find({
             "invited_email": current_user.email,
             "status": InvitationStatus.PENDING,
-            "expires_at": {"$gt": datetime.utcnow()}
+            "expires_at": {"$gt": datetime.now(timezone.utc)}
         })
         
         async for invitation in cursor:
@@ -375,7 +375,7 @@ async def get_invitation_info(
             )
         
         # Check if invitation has expired
-        if datetime.utcnow() > invitation["expires_at"]:
+        if datetime.now(timezone.utc) > invitation["expires_at"]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invitation has expired"
@@ -444,7 +444,7 @@ async def accept_invitation(
             )
         
         # Check if invitation is expired
-        if invitation["expires_at"] < datetime.utcnow():
+        if invitation["expires_at"] < datetime.now(timezone.utc):
             # Mark as expired
             await db.itinerary_invitations.update_one(
                 {"_id": invitation["_id"]},
@@ -485,7 +485,7 @@ async def accept_invitation(
                 "$set": {
                     "status": InvitationStatus.ACCEPTED,
                     "invited_user_id": PyObjectId(current_user.id),
-                    "accepted_at": datetime.utcnow()
+                    "accepted_at": datetime.now(timezone.utc)
                 }
             }
         )
@@ -495,7 +495,7 @@ async def accept_invitation(
             {"_id": invitation["itinerary_id"]},
             {
                 "$addToSet": {"collaborators": PyObjectId(current_user.id)},
-                "$set": {"updated_at": datetime.utcnow()}
+                "$set": {"updated_at": datetime.now(timezone.utc)}
             }
         )
         
@@ -517,8 +517,8 @@ async def accept_invitation(
                 "is_collaborative": True,
                 "collaborators": [PyObjectId(current_user.id)],
                 "owner_id": invitation["owner_id"],  # Keep reference to original owner
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow()
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc)
             })
             
             # Insert the collaborator's copy
@@ -603,7 +603,7 @@ async def decline_invitation(
             {
                 "$set": {
                     "status": InvitationStatus.DECLINED,
-                    "declined_at": datetime.utcnow()
+                    "declined_at": datetime.now(timezone.utc)
                 }
             }
         )
@@ -705,7 +705,7 @@ async def get_itinerary_collaborators(
                     "email": user.get("email", ""),
                     "role": collaborator.get("role", "viewer"),
                     "status": "accepted",
-                    "joined_at": collaborator.get("joined_at", datetime.utcnow()).isoformat() if hasattr(collaborator.get("joined_at", datetime.utcnow()), 'isoformat') else datetime.utcnow().isoformat(),
+                    "joined_at": collaborator.get("joined_at", datetime.now(timezone.utc)).isoformat() if hasattr(collaborator.get("joined_at", datetime.now(timezone.utc)), 'isoformat') else datetime.now(timezone.utc).isoformat(),
                     "last_activity": collaborator.get("last_activity").isoformat() if collaborator.get("last_activity") and hasattr(collaborator.get("last_activity"), 'isoformat') else None
                 })
         
@@ -725,8 +725,8 @@ async def get_itinerary_collaborators(
                 "email": invitation.get("invited_email", ""),
                 "role": invitation.get("role", "viewer"),
                 "status": invitation.get("status", "pending"),
-                "invited_at": invitation.get("created_at", datetime.utcnow()).isoformat() if hasattr(invitation.get("created_at", datetime.utcnow()), 'isoformat') else datetime.utcnow().isoformat(),
-                "expires_at": invitation.get("expires_at", datetime.utcnow()).isoformat() if hasattr(invitation.get("expires_at", datetime.utcnow()), 'isoformat') else None,
+                "invited_at": invitation.get("created_at", datetime.now(timezone.utc)).isoformat() if hasattr(invitation.get("created_at", datetime.now(timezone.utc)), 'isoformat') else datetime.now(timezone.utc).isoformat(),
+                "expires_at": invitation.get("expires_at", datetime.now(timezone.utc)).isoformat() if hasattr(invitation.get("expires_at", datetime.now(timezone.utc)), 'isoformat') else None,
                 "message": invitation.get("message", ""),
                 "accepted_at": invitation.get("accepted_at", "").isoformat() if invitation.get("accepted_at") and hasattr(invitation.get("accepted_at"), 'isoformat') else None,
                 "declined_at": invitation.get("declined_at", "").isoformat() if invitation.get("declined_at") and hasattr(invitation.get("declined_at"), 'isoformat') else None
@@ -848,7 +848,7 @@ async def get_itinerary_collaborators(
                         "name": f"{current_user_info.get('first_name', '')} {current_user_info.get('last_name', '')}".strip(),
                         "email": current_user_info.get("email", ""),
                         "role": "owner",
-                        "joined_at": itinerary.get("created_at", datetime.utcnow()).isoformat() if hasattr(itinerary.get("created_at", datetime.utcnow()), 'isoformat') else datetime.utcnow().isoformat(),
+                        "joined_at": itinerary.get("created_at", datetime.now(timezone.utc)).isoformat() if hasattr(itinerary.get("created_at", datetime.now(timezone.utc)), 'isoformat') else datetime.now(timezone.utc).isoformat(),
                         "last_activity": None
                     }
                 else:
@@ -859,7 +859,7 @@ async def get_itinerary_collaborators(
                         "name": "Current User",
                         "email": "user@example.com",
                         "role": "owner",
-                        "joined_at": itinerary.get("created_at", datetime.utcnow()).isoformat() if hasattr(itinerary.get("created_at", datetime.utcnow()), 'isoformat') else datetime.utcnow().isoformat(),
+                        "joined_at": itinerary.get("created_at", datetime.now(timezone.utc)).isoformat() if hasattr(itinerary.get("created_at", datetime.now(timezone.utc)), 'isoformat') else datetime.now(timezone.utc).isoformat(),
                         "last_activity": None
                     }
             except Exception as e:
@@ -869,7 +869,7 @@ async def get_itinerary_collaborators(
                     "name": "Unknown User",
                     "email": "unknown@example.com",
                     "role": "owner",
-                    "joined_at": datetime.utcnow().isoformat(),
+                    "joined_at": datetime.now(timezone.utc).isoformat(),
                     "last_activity": None
                 }
         else:
@@ -987,7 +987,7 @@ async def remove_collaborator(
             {"_id": itinerary_object_id},
             {
                 "$pull": {"collaborators": user_object_id},
-                "$set": {"updated_at": datetime.utcnow()}
+                "$set": {"updated_at": datetime.now(timezone.utc)}
             }
         )
         
@@ -1063,7 +1063,7 @@ async def update_collaborator_role(
             {
                 "$set": {
                     "role": new_role,
-                    "updated_at": datetime.utcnow()
+                    "updated_at": datetime.now(timezone.utc)
                 }
             }
         )
@@ -1339,7 +1339,7 @@ async def join_room(
             {"room_id": room_id},
             {
                 "$addToSet": {"joined_users": user_id},
-                "$set": {"last_activity": datetime.utcnow()}
+                "$set": {"last_activity": datetime.now(timezone.utc)}
             }
         )
         

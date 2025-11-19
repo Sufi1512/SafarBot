@@ -1,7 +1,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from database import get_database
 from mongo_models import NotificationDocument, NotificationStatus, PyObjectId
@@ -100,7 +100,7 @@ async def mark_notification_as_read(
             {
                 "$set": {
                     "status": NotificationStatus.READ,
-                    "read_at": datetime.utcnow()
+                    "read_at": datetime.now(timezone.utc)
                 }
             }
         )
@@ -134,7 +134,7 @@ async def mark_all_notifications_as_read(
             {
                 "$set": {
                     "status": NotificationStatus.READ,
-                    "read_at": datetime.utcnow()
+                    "read_at": datetime.now(timezone.utc)
                 }
             }
         )

@@ -27,11 +27,31 @@ class AuthMiddleware:
             "/health",
             "/docs",
             "/openapi.json",
+            "/redoc",
             "/auth/signup",
             "/auth/login",
             "/auth/forgot-password",
             "/auth/reset-password",
-            "/chat",  # Chat might be public for demo
+            "/auth/refresh",
+            "/auth/send-verification-otp",
+            "/auth/verify-otp",
+            "/auth/resend-otp",
+            "/google/auth",
+            "/google/callback",
+            "/itinerary/generate-itinerary",  # Public for demo
+            "/itinerary/generate-itinerary-ai",  # Public for demo
+            "/itinerary/generate-itinerary-complete",  # Public for demo
+            "/itinerary/generate-itinerary-structure",  # Public for demo
+            "/itinerary/generate-itinerary-details",  # Public for demo
+            "/itinerary/places/additional",  # Public for demo
+            "/flights/search",  # Public for demo
+            "/flights/popular",  # Public for demo
+            "/flights/airports/suggestions",  # Public for demo
+            "/hotels/search-hotels",  # Public for demo
+            "/restaurants/recommend-restaurants",  # Public for demo
+            "/weather/current",  # Public for demo
+            "/weather/forecast",  # Public for demo
+            "/images/",  # Image proxy - public
         ]
         
         # Check if endpoint requires authentication
@@ -53,7 +73,14 @@ class AuthMiddleware:
         
         try:
             # Extract token from "Bearer <token>" format
-            scheme, token = authorization.split()
+            parts = authorization.split()
+            if len(parts) != 2:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid authorization header format",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            scheme, token = parts
             if scheme.lower() != "bearer":
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -116,7 +143,10 @@ class AuthMiddleware:
         
         if authorization:
             try:
-                scheme, token = authorization.split()
+                parts = authorization.split()
+                if len(parts) != 2:
+                    return await call_next(request)
+                scheme, token = parts
                 if scheme.lower() == "bearer":
                     payload = AuthService.verify_token(token)
                     

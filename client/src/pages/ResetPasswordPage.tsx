@@ -47,13 +47,23 @@ const ResetPasswordPage: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: Partial<ResetPasswordData> = {};
 
-    if (!formData.new_password) {
+    // Password validation - comprehensive edge cases
+    if (!formData.new_password.trim()) {
       newErrors.new_password = 'New password is required';
     } else if (formData.new_password.length < 8) {
       newErrors.new_password = 'Password must be at least 8 characters long';
+    } else if (formData.new_password.length > 128) {
+      newErrors.new_password = 'Password is too long (max 128 characters)';
+    } else if (!/(?=.*[a-z])/.test(formData.new_password)) {
+      newErrors.new_password = 'Password must contain at least one lowercase letter';
+    } else if (!/(?=.*[A-Z])/.test(formData.new_password)) {
+      newErrors.new_password = 'Password must contain at least one uppercase letter';
+    } else if (!/(?=.*\d)/.test(formData.new_password)) {
+      newErrors.new_password = 'Password must contain at least one number';
     }
 
-    if (!formData.confirm_password) {
+    // Confirm password validation
+    if (!formData.confirm_password.trim()) {
       newErrors.confirm_password = 'Please confirm your password';
     } else if (formData.new_password !== formData.confirm_password) {
       newErrors.confirm_password = 'Passwords do not match';

@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 
 from services.auth_service import AuthService
@@ -150,8 +150,8 @@ async def signup(user_data: UserSignupRequest):
             "status": "pending",
             "role": "user",
             "login_attempts": 0,
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow()
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc)
         }
         
         # Insert user
@@ -217,8 +217,8 @@ async def login(login_data: UserLoginRequest):
             {
                 "$set": {
                     "login_attempts": 0,
-                    "last_login": datetime.utcnow(),
-                    "updated_at": datetime.utcnow()
+                    "last_login": datetime.now(timezone.utc),
+                    "updated_at": datetime.now(timezone.utc)
                 }
             }
         )
@@ -338,7 +338,7 @@ async def update_user_info(
         
         # Prepare update data
         update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
-        update_dict["updated_at"] = datetime.utcnow()
+        update_dict["updated_at"] = datetime.now(timezone.utc)
         
         result = await collection.update_one(
             {"_id": current_user["_id"]},

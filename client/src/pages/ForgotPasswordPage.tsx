@@ -45,11 +45,15 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = () => {
   };
 
   const validateEmail = (email: string): string | null => {
-    if (!email.trim()) {
+    const emailTrimmed = email.trim();
+    if (!emailTrimmed) {
       return 'Please enter your email address';
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed)) {
       return 'Please enter a valid email address';
+    }
+    if (emailTrimmed.length > 254) {
+      return 'Email address is too long';
     }
     return null;
   };

@@ -118,14 +118,21 @@ const LoginPopup: React.FC<LoginPopupProps> = ({
   const validateForm = (): FormErrors => {
     const newErrors: FormErrors = {};
     
-    if (!formData.email.trim()) {
+    // Email validation - comprehensive edge cases
+    const emailTrimmed = formData.email.trim();
+    if (!emailTrimmed) {
       newErrors.email = 'Please enter your email address';
-    } else if (!formData.email.includes('@')) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed)) {
       newErrors.email = 'Please enter a valid email address';
+    } else if (emailTrimmed.length > 254) {
+      newErrors.email = 'Email address is too long';
     }
     
+    // Password validation - edge cases
     if (!formData.password.trim()) {
       newErrors.password = 'Please enter your password';
+    } else if (formData.password.length > 128) {
+      newErrors.password = 'Password is too long';
     }
     
     return newErrors;

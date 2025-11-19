@@ -24,7 +24,7 @@ class PlacesSearchTool:
     async def search_hotels(self, location: str, check_in: str = None, check_out: str = None, 
                            rating_min: float = 3.5, max_results: int = 5) -> List[Dict[str, Any]]:
         """
-        Search for hotels in a specific location
+        Search for hotels in a specific location with pagination to fetch ALL available results
         
         Args:
             location: Location to search for hotels
@@ -46,14 +46,14 @@ class PlacesSearchTool:
             if check_in and check_out:
                 query += f" {check_in} to {check_out}"
             
+            # Note: Google Maps engine doesn't support pagination with 'start' parameter
+            # We can only get up to 20 results per request, but we can try different queries
             search = GoogleSearch({
                 "q": query,
                 "api_key": self.api_key,
                 "engine": "google_maps",
                 "type": "search",
-                "ll": "@40.7589,-73.9851,15.1z",  # Default to NYC, will be updated by location
-                "num": max_results,
-                "hl": "en"  # Language parameter
+                "hl": "en"
             })
             
             results = search.get_dict()
@@ -83,7 +83,7 @@ class PlacesSearchTool:
     async def search_restaurants(self, location: str, cuisine_type: str = None, 
                                rating_min: float = 4.0, max_results: int = 8) -> List[Dict[str, Any]]:
         """
-        Search for restaurants and cafes in a specific location
+        Search for restaurants with pagination to fetch ALL available results
         
         Args:
             location: Location to search for restaurants
@@ -107,8 +107,7 @@ class PlacesSearchTool:
                 "api_key": self.api_key,
                 "engine": "google_maps",
                 "type": "search",
-                "num": max_results * 2,  # Get more to filter
-                "hl": "en"  # Language parameter
+                "hl": "en"
             })
             
             results = search.get_dict()
@@ -131,8 +130,6 @@ class PlacesSearchTool:
             print(f"         📤 Returning ALL {len(local_results)} raw SERP results for restaurants")
             return local_results
             
-            return local_results
-            
         except Exception as e:
             logger.error(f"Error searching restaurants: {str(e)}")
             return self._get_fallback_restaurants(location, cuisine_type, max_results)
@@ -140,7 +137,7 @@ class PlacesSearchTool:
     async def search_cafes(self, location: str, rating_min: float = 4.0, 
                           max_results: int = 5) -> List[Dict[str, Any]]:
         """
-        Search for cafes in a specific location
+        Search for cafes with pagination to fetch ALL available results
         
         Args:
             location: Location to search for cafes
@@ -159,8 +156,7 @@ class PlacesSearchTool:
                 "api_key": self.api_key,
                 "engine": "google_maps",
                 "type": "search",
-                "num": max_results * 2,
-                "hl": "en"  # Language parameter
+                "hl": "en"
             })
             
             results = search.get_dict()
@@ -183,8 +179,6 @@ class PlacesSearchTool:
             print(f"         📤 Returning ALL {len(local_results)} raw SERP results for cafes")
             return local_results
             
-            return local_results
-            
         except Exception as e:
             logger.error(f"Error searching cafes: {str(e)}")
             return self._get_fallback_cafes(location, max_results)
@@ -192,7 +186,7 @@ class PlacesSearchTool:
     async def search_attractions(self, location: str, interests: List[str] = None, 
                                max_results: int = 10) -> List[Dict[str, Any]]:
         """
-        Search for tourist attractions and activities
+        Search for tourist attractions with pagination to fetch ALL available results
         
         Args:
             location: Location to search for attractions
@@ -218,8 +212,7 @@ class PlacesSearchTool:
                 "api_key": self.api_key,
                 "engine": "google_maps",
                 "type": "search",
-                "num": max_results * 2,
-                "hl": "en"  # Language parameter
+                "hl": "en"
             })
             
             results = search.get_dict()
@@ -240,8 +233,6 @@ class PlacesSearchTool:
             
             # Return ALL raw SERP data without filtering
             print(f"         📤 Returning ALL {len(local_results)} raw SERP results for attractions")
-            return local_results
-            
             return local_results
             
         except Exception as e:

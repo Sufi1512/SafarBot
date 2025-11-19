@@ -71,16 +71,23 @@ const LoginPage: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!formData.email.trim()) {
+    // Email validation - comprehensive edge cases
+    const emailTrimmed = formData.email.trim();
+    if (!emailTrimmed) {
       newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed)) {
       newErrors.email = 'Please enter a valid email address';
+    } else if (emailTrimmed.length > 254) {
+      newErrors.email = 'Email address is too long';
     }
 
-    if (!formData.password) {
+    // Password validation - edge cases
+    if (!formData.password.trim()) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters';
+    } else if (formData.password.length > 128) {
+      newErrors.password = 'Password is too long';
     }
 
     setErrors(newErrors);

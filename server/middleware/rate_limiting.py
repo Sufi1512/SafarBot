@@ -21,7 +21,7 @@ class RateLimiter:
             # Rate limits (requests per time window) - Relaxed for testing
         self.limits = {
             "default": {"requests": 100, "window": 3600},   # 100 requests per hour
-            "auth": {"requests": 10, "window": 300},        # 10 auth attempts per 5 minutes
+            "auth": {"requests": 50, "window": 300},        # 50 auth attempts per 5 minutes (increased for dev)
             "chat": {"requests": 50, "window": 3600},       # 50 chat requests per hour
             "search": {"requests": 100, "window": 3600},    # 100 searches per hour
         }

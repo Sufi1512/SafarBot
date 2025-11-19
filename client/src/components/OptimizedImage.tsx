@@ -28,6 +28,14 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   const imgRef = useRef<HTMLImageElement>(null);
   const [isInView, setIsInView] = useState(false);
 
+  // Reset state when src changes (fixes hover image not updating)
+  useEffect(() => {
+    if (src !== currentSrc) {
+      setImageState('loading');
+      setCurrentSrc(src);
+    }
+  }, [src]);
+
   // Intersection Observer for lazy loading
   useEffect(() => {
     if (loading === 'lazy' && imgRef.current) {

@@ -6,12 +6,15 @@ import logging
 from fastapi import HTTPException
 from starlette.requests import Request
 from models import ItineraryResponse, DailyPlan
-from config import settings
 from workflows.optimized_prefetch_workflow import OptimizedPrefetchWorkflow
 from services.cache_service import cache_service
 from services.place_details_service import PlaceDetailsService
-from utils.currency_utils import convert_currency_payload, convert_currency_strings
+from utils.currency_utils import (
+    convert_currency_payload,
+    convert_currency_strings,
+)
 import json
+from prompts.itinerary_prompts import format_accommodation_type
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +29,7 @@ class ItineraryService:
             self.workflow = None
         self.place_details_service = PlaceDetailsService()
         self.details_cache_ttl = 1800  # 30 minutes
-        
+
     async def _generate_complete_response(
         self,
         destination: str,
@@ -330,24 +333,19 @@ class ItineraryService:
             end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
             total_days = (end_date_obj - start_date_obj).days + 1
             
-            from prompts.itinerary_prompts import PRICE_PREDICTION_PROMPT, format_accommodation_type
-            
-            # Prepare prompt variables
-            prompt_vars = {
-                "destination": destination,
-                "total_days": total_days,
-                "travelers": travelers,
-                "start_date": start_date,
-                "end_date": end_date,
-                "accommodation_type": format_accommodation_type(accommodation_type)
-            }
-            
-            # Use the workflow's LLM for consistency
             if not self.workflow.llm:
                 raise Exception("AI service not available in workflow")
-            
-            messages = PRICE_PREDICTION_PROMPT.format_messages(**prompt_vars)
-            response = await self.workflow.llm.ainvoke(messages)
+
+            prompt_text = (
+                "You are a travel cost estimation expert.\n"
+                f"Destination: {destination}.\n"
+                f"Dates: {start_date} to {end_date} ({total_days} days).\n"
+                f"Travelers: {travelers}.\n"
+                f"Preferred accommodation: {format_accommodation_type(accommodation_type)}.\n"
+                "Provide a JSON object with estimated costs (flights, accommodation, daily spending, activities, contingency) in USD."
+            )
+
+            response = await self.workflow.llm.ainvoke(prompt_text)
             
             # Clean and parse the response
             cleaned_text = self.workflow._clean_json_response(response.content)

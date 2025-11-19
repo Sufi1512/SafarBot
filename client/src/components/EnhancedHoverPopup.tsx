@@ -55,7 +55,8 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
     return metadata;
   };
 
-  const metadata = getPlaceMetadata();
+  // Use useMemo to recalculate metadata when place changes
+  const metadata = useMemo(() => getPlaceMetadata(), [place]);
 
   // Smart positioning logic to keep popup within viewport
   useEffect(() => {
@@ -222,6 +223,7 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
       {metadata.thumbnail ? (
         <div className="w-full h-44 bg-gray-200 dark:bg-gray-800 overflow-hidden relative">
           <OptimizedImage
+            key={metadata.thumbnail}
             src={metadata.thumbnail ?? ''}
             alt={metadata.title || ''}
             className="w-full h-full"

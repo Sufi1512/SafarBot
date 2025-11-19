@@ -327,7 +327,10 @@ class CacheService {
     if (!options?.forceRefresh) {
       const cachedData = this.getFromCache<T>(cacheKey);
       if (cachedData !== null) {
-        console.log(`Cache hit for ${endpoint}`);
+        // Only log cache hits in development for debugging
+        if (import.meta.env.DEV) {
+          console.debug(`Cache hit for ${endpoint}`);
+        }
         return cachedData;
       }
     }
@@ -336,7 +339,10 @@ class CacheService {
     const apiCallPromise = apiCall().then(data => {
       // Store in cache
       this.setCache(cacheKey, data, options?.ttl);
-      console.log(`Cache miss for ${endpoint}, data cached`);
+      // Only log cache misses in development for debugging
+      if (import.meta.env.DEV) {
+        console.debug(`Cache miss for ${endpoint}, data cached`);
+      }
       return data;
     }).catch(error => {
       // Remove from pending requests on error

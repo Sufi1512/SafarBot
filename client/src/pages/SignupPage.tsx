@@ -139,30 +139,50 @@ const SignupPage: React.FC = () => {
   const validateForm = (): FormErrors => {
     const newErrors: FormErrors = {};
     
-    if (!formData.firstName.trim()) {
+    // First name validation - edge cases
+    const firstNameTrimmed = formData.firstName.trim();
+    if (!firstNameTrimmed) {
       newErrors.firstName = 'Please enter your first name';
-    } else if (formData.firstName.trim().length < 2) {
+    } else if (firstNameTrimmed.length < 2) {
       newErrors.firstName = 'First name must be at least 2 characters long';
+    } else if (firstNameTrimmed.length > 50) {
+      newErrors.firstName = 'First name is too long (max 50 characters)';
+    } else if (!/^[a-zA-Z\s'-]+$/.test(firstNameTrimmed)) {
+      newErrors.firstName = 'First name contains invalid characters';
     }
     
-    if (!formData.lastName.trim()) {
+    // Last name validation - edge cases
+    const lastNameTrimmed = formData.lastName.trim();
+    if (!lastNameTrimmed) {
       newErrors.lastName = 'Please enter your last name';
-    } else if (formData.lastName.trim().length < 2) {
+    } else if (lastNameTrimmed.length < 2) {
       newErrors.lastName = 'Last name must be at least 2 characters long';
+    } else if (lastNameTrimmed.length > 50) {
+      newErrors.lastName = 'Last name is too long (max 50 characters)';
+    } else if (!/^[a-zA-Z\s'-]+$/.test(lastNameTrimmed)) {
+      newErrors.lastName = 'Last name contains invalid characters';
     }
     
-    if (!formData.email.trim()) {
+    // Email validation - comprehensive edge cases
+    const emailTrimmed = formData.email.trim();
+    if (!emailTrimmed) {
       newErrors.email = 'Please enter your email address';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed)) {
       newErrors.email = 'Please enter a valid email address';
+    } else if (emailTrimmed.length > 254) {
+      newErrors.email = 'Email address is too long';
     }
     
+    // Password validation - edge cases
     if (!formData.password.trim()) {
       newErrors.password = 'Please enter your password';
     } else if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters long';
+    } else if (formData.password.length > 128) {
+      newErrors.password = 'Password is too long (max 128 characters)';
     }
     
+    // Confirm password validation - edge cases
     if (!formData.confirmPassword.trim()) {
       newErrors.confirmPassword = 'Please confirm your password';
     } else if (formData.password !== formData.confirmPassword) {

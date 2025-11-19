@@ -69,10 +69,12 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({
     version: 'weekly'
   });
 
-  console.log('GoogleMaps component - isLoaded:', isLoaded, 'loadError:', loadError);
-  console.log('GoogleMaps component - locations:', locations);
-  console.log('GoogleMaps component - API key available:', !!import.meta.env.VITE_GOOGLE_MAPS_API_KEY);
-  console.log('GoogleMaps component - API key value:', import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? 'Present' : 'Missing');
+  // Only log errors in development, never log API key information
+  useEffect(() => {
+    if (import.meta.env.DEV && loadError) {
+      console.warn('GoogleMaps component - Load Error:', loadError);
+    }
+  }, [loadError]);
 
   const fitToLocations = useCallback((map: google.maps.Map, locs: Location[]) => {
     console.log('fitToLocations called with:', locs.length, 'locations');

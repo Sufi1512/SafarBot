@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Calendar, IndianRupee, Clock, Star, AlertCircle, Hotel, Utensils } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, IndianRupee, Clock, Star, AlertCircle, Hotel, Utensils, Share2, Download, Filter, LayoutGrid, List, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { itineraryAPI, EnhancedItineraryResponse, PlaceDetails, AdditionalPlace } from '../services/api';
-import api from '../services/api';
 import GoogleMaps from '../components/GoogleMaps';
 import PlaceDetailsModal from '../components/PlaceDetailsModal';
 import AdditionalPlaces from '../components/AdditionalPlaces';
@@ -11,8 +11,12 @@ import EnhancedHoverPopup from '../components/EnhancedHoverPopup';
 import WeatherCard from '../components/WeatherCard';
 import { WeatherDisplay } from '../components/WeatherDisplay';
 import ModernHeader from '../components/ModernHeader';
+import InteractiveTimeline from '../components/InteractiveTimeline';
+import BudgetBreakdown from '../components/BudgetBreakdown';
+import ShareItineraryModal from '../components/ShareItineraryModal';
 import { parseLocationForWeather } from '../utils/locationUtils';
 import { prefetchPlaceMedia } from '../utils/imagePrefetcher';
+import { photoPrefetcher } from '../utils/photoPrefetcher';
 
 // Import Location interface from GoogleMaps component
 interface Location {
@@ -77,6 +81,8 @@ interface Restaurant {
 
 const USD_TO_INR_RATE = 83;
 
+type BudgetTier = '0-50000' | '50000-100000' | '100000+';
+
 interface ItineraryData {
   destination: string;
   startDate: string;
@@ -84,6 +90,7 @@ interface ItineraryData {
   days: number;
   travelers: number;
   budget: number;
+  budgetTier?: BudgetTier;
   interests: string[];
   apiRequest?: {
     destination: string;
@@ -93,13 +100,14 @@ interface ItineraryData {
     interests: string[];
     travelers: number;
     accommodation_type: string;
+    budget_range?: string;
   };
 }
 
 const ResultsPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const [itineraryData, setItineraryData] = useState<ItineraryData | null>(null);
   const formatINR = useCallback((amount: number) => {
     if (!amount || Number.isNaN(amount)) return '₹0';
@@ -183,6 +191,9 @@ const ResultsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'itinerary' | 'additional' | 'map'>('itinerary');
+  const [viewMode, setViewMode] = useState<'timeline' | 'grid'>('timeline');
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [itinerarySummary, setItinerarySummary] = useState<{
     total_days: number;
     budget_estimate: number;
@@ -191,6 +202,7 @@ const ResultsPage: React.FC = () => {
   const [tips, setTips] = useState<string[]>([]);
   const hasGeneratedRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const previousLocationStateRef = useRef(location.state);
   const isInitializedRef = useRef(false);
 
   const itineraryBudgetDisplay = useMemo(() => {
@@ -475,29 +487,65 @@ const ResultsPage: React.FC = () => {
       console.log('Added destination:', destination, 'at coordinates:', defaultCoordinates);
     }
 
-    // Add places from enhanced response place details
-    if (enhancedResponse?.place_details) {
-      console.log('Processing enhanced place details...');
-      Object.entries(enhancedResponse.place_details).forEach(([placeId, placeDetails], index) => {
+    // Add places from allPlaceDetails (which contains all places used in itinerary)
+    if (allPlaceDetails && Object.keys(allPlaceDetails).length > 0) {
+      console.log('Processing allPlaceDetails...', Object.keys(allPlaceDetails).length, 'places');
+      Object.entries(allPlaceDetails).forEach(([placeId, placeDetails], index) => {
         // Skip places with invalid data
         if (!placeDetails.title || !placeDetails.title.trim()) {
           console.log(`Skipping place with invalid title: ${placeId}`);
           return;
         }
         
-        const position = getCoordinatesFromPlace(placeDetails, index);
+        // Try to get real GPS coordinates from place details
+        let position = defaultCoordinates;
+        
+        // Check for gps_coordinates object
+        if (placeDetails.gps_coordinates && 
+            typeof placeDetails.gps_coordinates.latitude === 'number' && 
+            typeof placeDetails.gps_coordinates.longitude === 'number') {
+          position = {
+            lat: placeDetails.gps_coordinates.latitude,
+            lng: placeDetails.gps_coordinates.longitude
+          };
+          console.log(`✅ Using real GPS for ${placeDetails.title}:`, position);
+        } 
+        // Check for coordinates object (alternative format)
+        else if ((placeDetails as any).coordinates && 
+                 typeof (placeDetails as any).coordinates.lat === 'number' && 
+                 typeof (placeDetails as any).coordinates.lng === 'number') {
+          position = {
+            lat: (placeDetails as any).coordinates.lat,
+            lng: (placeDetails as any).coordinates.lng
+          };
+          console.log(`✅ Using coordinates for ${placeDetails.title}:`, position);
+        }
+        // Fallback to destination with offset
+        else {
+          position = {
+            lat: defaultCoordinates.lat + (index * 0.01),
+            lng: defaultCoordinates.lng + (index * 0.01)
+          };
+          console.log(`⚠️  Using fallback coordinates for ${placeDetails.title}:`, position);
+        }
         
         // Validate coordinates before adding
         if (isNaN(position.lat) || isNaN(position.lng)) {
-          console.log(`Skipping place with invalid coordinates: ${placeDetails.title} at ${position}`);
+          console.log(`Skipping place with invalid coordinates: ${placeDetails.title}`);
           return;
+        }
+        
+        // Determine place type from category
+        let placeType: 'hotel' | 'restaurant' | 'activity' = 'activity';
+        if (placeDetails.category) {
+          if (placeDetails.category.includes('hotel')) placeType = 'hotel';
+          else if (placeDetails.category.includes('restaurant') || placeDetails.category.includes('cafe')) placeType = 'restaurant';
         }
         
         locations.push({
           id: placeId,
           name: placeDetails.title,
-          type: (placeDetails.category === 'hotels' ? 'hotel' : 
-                 placeDetails.category === 'restaurants' ? 'restaurant' : 'activity') as 'hotel' | 'restaurant' | 'activity',
+          type: placeType,
           position,
           description: placeDetails.description || placeDetails.address,
           rating: placeDetails.rating,
@@ -511,8 +559,33 @@ const ResultsPage: React.FC = () => {
           thumbnail: placeDetails.thumbnail || placeDetails.serpapi_thumbnail
         } as any);
         
-        console.log(`Added enhanced place: ${placeDetails.title} at`, position);
+        console.log(`✅ Added place to map: ${placeDetails.title} (${placeType}) at`, position);
       });
+    } else {
+      console.log('⚠️  No allPlaceDetails found, checking enhancedResponse...');
+      
+      // Fallback to enhancedResponse if allPlaceDetails is empty
+      if (enhancedResponse?.place_details) {
+        console.log('Using enhancedResponse.place_details as fallback');
+        Object.entries(enhancedResponse.place_details).forEach(([placeId, placeDetails], index) => {
+          if (!placeDetails.title || !placeDetails.title.trim()) return;
+          
+          const position = getCoordinatesFromPlace(placeDetails, index);
+          if (isNaN(position.lat) || isNaN(position.lng)) return;
+          
+          locations.push({
+            id: placeId,
+            name: placeDetails.title,
+            type: (placeDetails.category === 'hotels' ? 'hotel' : 
+                   placeDetails.category === 'restaurants' ? 'restaurant' : 'activity') as 'hotel' | 'restaurant' | 'activity',
+            position,
+            description: placeDetails.description || placeDetails.address,
+            rating: placeDetails.rating,
+            price: (placeDetails as any).price_range || (placeDetails as any).price,
+            thumbnail: placeDetails.thumbnail || placeDetails.serpapi_thumbnail
+          } as any);
+        });
+      }
     }
 
     // Add hotels with real coordinates based on their location
@@ -570,23 +643,20 @@ const ResultsPage: React.FC = () => {
     });
 
     // SERP restaurants functionality removed
-    console.log('Total locations extracted:', locations.length);
-    console.log('Locations:', locations);
+    // Only log in development for debugging
+    if (import.meta.env.DEV) {
+      console.debug('Total locations extracted:', locations.length);
+    }
     return locations;
   }, [enhancedResponse, allPlaceDetails, dailyPlans, hotels]); // Memoize based on dependencies
 
   useEffect(() => {
-    console.log('useEffect triggered:', { 
-      hasState: !!location.state, 
-      hasGenerated: hasGeneratedRef.current,
-      isLoading,
-      isInitialized: isInitializedRef.current,
-      locationState: location.state
-    });
+    if (authLoading) {
+      return;
+    }
     
     // Check authentication first
     if (!isAuthenticated || !user) {
-      console.log('User not authenticated, redirecting to login...');
       setError('Please log in to access your itinerary results.');
       navigate('/login', { 
         state: { 
@@ -599,26 +669,22 @@ const ResultsPage: React.FC = () => {
     
     // Prevent multiple initializations
     if (isInitializedRef.current) {
-      console.log('Component already initialized, skipping...');
       return;
     }
     
     // If no location state, redirect to home
     if (!location.state) {
-      console.log('No location state, redirecting to home');
       navigate('/');
       return;
     }
     
     // If we're already loading, don't start another process
     if (isLoading) {
-      console.log('Already loading, skipping...');
       return;
     }
     
     // If we already have the data, don't regenerate
     if (hasGeneratedRef.current) {
-      console.log('Itinerary already generated, skipping...');
       return;
     }
     
@@ -654,27 +720,21 @@ const ResultsPage: React.FC = () => {
     console.log('Starting itinerary generation...');
     setItineraryData(location.state as any);
     generateRealItinerary(location.state as any);
-  }, []); // Empty dependency array to run only once on mount
+  }, [authLoading, location.state]); // Empty dependency array to run only once on mount
   
-  // Separate useEffect for cleanup when location state changes
+  // Reset guards when location state changes (e.g., user runs planner again)
   useEffect(() => {
-    return () => {
+    if (previousLocationStateRef.current !== location.state) {
+      console.log('Location state changed, resetting generation guards');
+      previousLocationStateRef.current = location.state;
       hasGeneratedRef.current = false;
+      isInitializedRef.current = false;
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
         abortControllerRef.current = null;
       }
-    };
+    }
   }, [location.state]);
-
-  useEffect(() => {
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-        abortControllerRef.current = null;
-      }
-    };
-  }, []);
 
   // Scroll detection for ModernHeader visibility
   useEffect(() => {
@@ -688,11 +748,8 @@ const ResultsPage: React.FC = () => {
   }, []);
 
   const generateRealItinerary = async (data: ItineraryData) => {
-    console.log('generateRealItinerary called with data:', data);
-    
     // Check if user is authenticated before generating itinerary
     if (!isAuthenticated || !user) {
-      console.log('User not authenticated, redirecting to login...');
       setError('Please log in to generate your itinerary.');
       // Store the form data for after login
       localStorage.setItem('pendingItineraryData', JSON.stringify(data));
@@ -708,13 +765,11 @@ const ResultsPage: React.FC = () => {
     
     // Prevent duplicate API calls and add retry limit
     if (isLoading) {
-      console.log('API call already in progress, skipping...');
       return;
     }
     
     // Double-check with ref to prevent multiple calls
     if (hasGeneratedRef.current) {
-      console.log('Itinerary already generated (ref check), skipping...');
       return;
     }
     
@@ -727,9 +782,6 @@ const ResultsPage: React.FC = () => {
     // Mark as generated immediately to prevent race conditions
     hasGeneratedRef.current = true;
     
-    console.log(`Attempt 1 of 1`);
-    
-    console.log('Setting loading state and starting API call...');
     setIsLoading(true);
     setError(null);
 
@@ -750,39 +802,17 @@ const ResultsPage: React.FC = () => {
         }),
         dietary_preferences: (data.apiRequest as any)?.dietary_preferences || []
       };
-
-      console.log('Sending API request:', apiRequest);
-      console.log('API base URL:', import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || (
-        import.meta.env.PROD 
-          ? 'https://safarbot-n24f.onrender.com' 
-          : 'http://localhost:8000'
-      ));
-
-      // Generate enhanced itinerary
-      
-      console.log('About to call enhanced itineraryAPI...');
-      
-      // Fast health check (non-blocking)
-      api.get('/health', { timeout: 5000 }).then((resp) => {
-        console.log('Health check:', resp.status);
-      }).catch((healthError) => {
-        console.warn('Health check failed (non-blocking):', healthError?.message || healthError);
-      });
       
       let enhancedItineraryResponse;
       try {
         // Use the enhanced API with complete place metadata
         enhancedItineraryResponse = await itineraryAPI.generateEnhancedItinerary(apiRequest, { signal: controller.signal });
-        console.log('Enhanced itinerary response received:', enhancedItineraryResponse);
-        console.log('Response keys:', Object.keys(enhancedItineraryResponse || {}));
-        console.log('Itinerary structure:', enhancedItineraryResponse?.itinerary);
-        console.log('Place details count:', Object.keys(enhancedItineraryResponse?.place_details || {}).length);
-        console.log('Additional places:', enhancedItineraryResponse?.additional_places);
-        console.log('Metadata:', enhancedItineraryResponse?.metadata);
+        // Only log in development for debugging
+        if (import.meta.env.DEV) {
+          console.debug('Enhanced itinerary response received');
+        }
       } catch (apiError: any) {
-        console.error('Enhanced API call failed:', apiError);
         if (apiError?.code === 'ERR_CANCELED' || apiError?.name === 'CanceledError') {
-          console.log('Itinerary generation request cancelled');
           hasGeneratedRef.current = false;
           setError('Itinerary generation cancelled.');
           return;
@@ -792,7 +822,6 @@ const ResultsPage: React.FC = () => {
         if (apiError.message?.includes('Network Error') || 
             apiError.message?.includes('timeout') ||
             (apiError as any).code === 'ECONNABORTED') {
-          console.log('Network error detected.');
           setError('Network error while generating enhanced itinerary. Please check your connection and try again.');
           return;
         }
@@ -833,6 +862,14 @@ const ResultsPage: React.FC = () => {
     // Store the complete enhanced response
     setEnhancedResponse(enhancedItineraryResponse);
     setAllPlaceDetails(enhancedItineraryResponse?.place_details || {});
+    
+    // Automatically prefetch all photos from the response
+    if ((enhancedItineraryResponse as any)?.photo_prefetch) {
+      console.log('📸 Starting automatic photo prefetch...');
+      photoPrefetcher.prefetchPhotos((enhancedItineraryResponse as any).photo_prefetch)
+        .then(() => console.log('📸 Photo prefetch completed successfully'))
+        .catch(err => console.warn('⚠️  Photo prefetch failed:', err));
+    }
     
     // Extract weather data from response
     if (enhancedItineraryResponse?.weather) {
@@ -1033,8 +1070,8 @@ const ResultsPage: React.FC = () => {
                   {new Date(itineraryData.startDate).toLocaleDateString()}
                 </span>
               </div>
-              <div className="flex items-center">
-                <IndianRupee className="w-4 h-4 mr-2" />
+              <div className="flex items-center"> 
+              
                 <span className="hidden sm:inline">Budget: {navbarBudgetDisplay}</span>
                 <span className="sm:hidden">{navbarBudgetDisplay}</span>
               </div>
@@ -1180,27 +1217,71 @@ const ResultsPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Tabs - Only show when not loading and no error */}
+              {/* Modern Tabs with Glassmorphism */}
               <div className="mb-8">
-                <div className="flex space-x-1 bg-white dark:bg-gray-800 p-0.5 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                  {[
-                    { id: 'itinerary', label: 'Itinerary', icon: '🗓️' },
-                    { id: 'additional', label: 'Explore More', icon: '✨' },
-                    { id: 'map', label: 'Map View', icon: '🗺️' }
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id as any)}
-                      className={`flex-1 flex items-center justify-center px-2 py-1.5 rounded-md font-medium transition-all duration-300 text-xs ${
-                        activeTab === tab.id
-                          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
-                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      <span className="mr-1 text-xs">{tab.icon}</span>
-                      {tab.label}
-                    </button>
-                  ))}
+                <div className="flex items-center justify-between gap-4 mb-4">
+                  <div className="flex space-x-1 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-1 rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50">
+                    {[
+                      { id: 'itinerary', label: 'Itinerary', icon: '🗓️' },
+                      { id: 'additional', label: 'Explore', icon: '✨' },
+                      { id: 'map', label: 'Map', icon: '🗺️' }
+                    ].map((tab) => (
+                      <motion.button
+                        key={tab.id}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setActiveTab(tab.id as any)}
+                        className={`relative px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
+                          activeTab === tab.id
+                            ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg shadow-purple-500/50'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+                        }`}
+                      >
+                        <span className="mr-2">{tab.icon}</span>
+                        {tab.label}
+                      </motion.button>
+                    ))}
+                  </div>
+                  
+                  {/* View Mode Toggle & Actions */}
+                  {activeTab === 'itinerary' && (
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-1 rounded-xl shadow-lg border border-white/20 dark:border-gray-700/50">
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => setViewMode('timeline')}
+                          className={`p-2 rounded-lg transition-all ${
+                            viewMode === 'timeline'
+                              ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
+                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                          }`}
+                        >
+                          <List className="w-4 h-4" />
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => setViewMode('grid')}
+                          className={`p-2 rounded-lg transition-all ${
+                            viewMode === 'grid'
+                              ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
+                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                          }`}
+                        >
+                          <LayoutGrid className="w-4 h-4" />
+                        </motion.button>
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setIsShareModalOpen(true)}
+                        className="p-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl shadow-lg shadow-purple-500/50 hover:shadow-xl transition-all"
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </motion.button>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1225,8 +1306,32 @@ const ResultsPage: React.FC = () => {
                     </div>
                   )}
 
-                  {dailyPlans.map((plan) => (
-                    <div key={plan.day} className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300 w-full">
+                  {/* Modern Interactive Timeline or Grid View */}
+                  {viewMode === 'timeline' ? (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/20 dark:border-gray-700/50"
+                    >
+                      <InteractiveTimeline
+                        dailyPlans={dailyPlans}
+                        formatINR={formatINR}
+                        onActivityClick={(activity) => {
+                          // Handle activity click
+                          console.debug('Activity clicked:', activity);
+                        }}
+                      />
+                    </motion.div>
+                  ) : (
+                    <div className="space-y-6">
+                      {dailyPlans.map((plan) => (
+                        <motion.div
+                          key={plan.day}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          whileHover={{ scale: 1.01 }}
+                          className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/20 dark:border-gray-700/50 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 w-full"
+                        >
                       <div className="flex items-center justify-between mb-6">
                         <div>
                           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Day {plan.day}</h2>
@@ -1427,8 +1532,25 @@ const ResultsPage: React.FC = () => {
                          })}
                        </div>
                      </div>
+                    </motion.div>
+                      ))}
                     </div>
-                  ))}
+                  )}
+
+                  {/* Budget Breakdown Widget */}
+                  {dailyPlans.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      <BudgetBreakdown
+                        dailyPlans={dailyPlans}
+                        formatINR={formatINR}
+                        totalBudget={itineraryData?.budget}
+                      />
+                    </motion.div>
+                  )}
 
                                      {/* Total Cost Summary */}
                    {/* {dailyPlans.length > 0 && (
@@ -1808,6 +1930,13 @@ const ResultsPage: React.FC = () => {
         onClose={() => setIsPlaceModalOpen(false)}
         onAddToItinerary={handleAddToItinerary}
         showAddButton={true}
+      />
+
+      {/* Share Modal */}
+      <ShareItineraryModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        itineraryTitle={itinerarySummary?.destination || 'Travel Itinerary'}
       />
     </div>
   );

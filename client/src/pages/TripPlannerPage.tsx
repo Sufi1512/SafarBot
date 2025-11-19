@@ -33,24 +33,40 @@ import PlacesAutocomplete from '../components/PlacesAutocomplete';
 import { useAuth } from '../contexts/AuthContext';
 import AuthModal from '../components/AuthModal';
 
-const USD_TO_INR_RATE = 83;
-
 const formatINR = (amount: number) => new Intl.NumberFormat('en-IN', {
   style: 'currency',
   currency: 'INR',
   maximumFractionDigits: 0
 }).format(Math.round(amount));
 
-const formatINRRange = (minUsd: number, maxUsd?: number) => {
-  const minInr = minUsd * USD_TO_INR_RATE;
-  if (typeof maxUsd === 'number') {
-    const maxInr = maxUsd * USD_TO_INR_RATE;
-    return `${formatINR(minInr)} - ${formatINR(maxInr)}`;
-  }
-  return `${formatINR(minInr)}+`;
+type BudgetTier = '0-50000' | '50000-100000' | '100000+';
+
+const budgetTierConfig: Record<BudgetTier, {
+  label: string;
+  description: string;
+  amount: number;
+  apiValue: 'budget' | 'mid-range' | 'luxury';
+}> = {
+  '0-50000': {
+    label: `${formatINR(0)} - ${formatINR(50000)}`,
+    description: 'Budget-friendly stays and local travel',
+    amount: 40000,
+    apiValue: 'budget',
+  },
+  '50000-100000': {
+    label: `${formatINR(50000)} - ${formatINR(100000)}`,
+    description: 'Comfortable hotels and experiences',
+    amount: 75000,
+    apiValue: 'mid-range',
+  },
+  '100000+': {
+    label: `${formatINR(100000)}+`,
+    description: 'Premium stays and curated luxury',
+    amount: 125000,
+    apiValue: 'luxury',
+  },
 };
 
-type BudgetTier = 'low' | 'medium' | 'high';
 type TravelWith = 'solo' | 'couple' | 'family' | 'friends' | 'group' | 'business';
 type FlightClass = 'economy' | 'premium' | 'business' | 'first';
 
@@ -60,7 +76,7 @@ const TripPlannerPage: React.FC = () => {
   const [destination, setDestination] = useState<string>('');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [days, setDays] = useState<number>(7);
-  const [budget, setBudget] = useState<BudgetTier>('medium');
+  const [budget, setBudget] = useState<BudgetTier>('50000-100000');
   const [travelWith, setTravelWith] = useState<TravelWith>('couple');
   const [activities, setActivities] = useState<string[]>([]);
   const [halal, setHalal] = useState<boolean>(false);
@@ -75,11 +91,13 @@ const TripPlannerPage: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
 
-  const budgetOptions: DropdownOption[] = [
-    { value: 'low', label: `Budget (${formatINRRange(500, 1500)})`, icon: <IndianRupee className="w-4 h-4" />, description: 'Hostels, budget hotels' },
-    { value: 'medium', label: `Mid-range (${formatINRRange(1500, 3500)})`, icon: <IndianRupee className="w-4 h-4" />, description: '3-4 star hotels' },
-    { value: 'high', label: `Luxury (${formatINRRange(3500)})`, icon: <IndianRupee className="w-4 h-4" />, description: '5-star hotels, premium experiences' },
-  ];
+  const budgetOptions: DropdownOption[] = (Object.entries(budgetTierConfig) as [BudgetTier, typeof budgetTierConfig[BudgetTier]][])
+    .map(([value, config]) => ({
+      value,
+      label: config.label,
+      icon: <IndianRupee className="w-4 h-4" />,
+      description: config.description,
+    }));
 
   const travelWithOptions: DropdownOption[] = [
     { value: 'solo', label: 'Solo Traveler', icon: <Users className="w-4 h-4" /> },
@@ -202,7 +220,8 @@ const TripPlannerPage: React.FC = () => {
       endDate.setDate(startDate.getDate() + days - 1);
 
       // Convert budget tier to actual budget amount
-      const budgetAmount = budget === 'low' ? 1000 : budget === 'medium' ? 3000 : 8000;
+      const budgetAmount = budgetTierConfig[budget].amount;
+      const apiBudgetRange = budgetTierConfig[budget].apiValue;
 
       // Prepare API request with comprehensive data
       const apiRequest = {
@@ -212,7 +231,7 @@ const TripPlannerPage: React.FC = () => {
         end_date: endDate.toISOString().split('T')[0],
         total_days: days,
         budget: budgetAmount,
-        budget_range: budget === 'low' ? 'budget' : budget === 'medium' ? 'mid-range' : 'luxury',
+        budget_range: apiBudgetRange,
         
         // Travel Preferences
         travelers: travelWith === 'solo' ? 1 : travelWith === 'couple' ? 2 : travelWith === 'family' ? 4 : 2,
@@ -292,7 +311,7 @@ const TripPlannerPage: React.FC = () => {
           setDestination(data.destination || '');
           setStartDate(data.startDate ? new Date(data.startDate) : undefined);
           setDays(data.days || 7);
-          setBudget(data.budget || 'medium');
+          setBudget(data.budget || '50000-100000');
           setTravelWith(data.travelWith || 'couple');
           setActivities(data.activities || []);
           setHalal(data.halal || false);

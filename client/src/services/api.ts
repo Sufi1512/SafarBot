@@ -19,7 +19,12 @@ const api = axios.create({
 // Request interceptor for logging and authentication
 api.interceptors.request.use(
   (config) => {
-    console.log('API Request:', config.method?.toUpperCase(), config.url);
+    // API calls are visible in Network tab - no need to log to console
+    // Only log errors in development for debugging
+    if (import.meta.env.DEV && config.url && !config.url.includes('/health')) {
+      // Use console.debug for less intrusive logging
+      console.debug(`[API] ${config.method?.toUpperCase()} ${config.url}`);
+    }
     
     // Add Authorization header if token exists
     const token = localStorage.getItem('accessToken');
@@ -30,6 +35,7 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    // Only log actual errors
     console.error('API Request Error:', error);
     return Promise.reject(error);
   }
@@ -38,18 +44,28 @@ api.interceptors.request.use(
 // Response interceptor for error handling and token refresh
 api.interceptors.response.use(
   (response: AxiosResponse) => {
-    console.log('API Response:', response.status, response.config.url);
+    // API responses are visible in Network tab - no need to log to console
+    // Only log errors, not successful responses
     return response;
   },
   async (error) => {
-    console.error('API Error:', {
-      status: error.response?.status,
-      message: error.response?.data?.message || error.message,
-      url: error.config?.url
-    });
+    const isAuthEndpoint = error.config?.url?.includes('/auth/login') || 
+                          error.config?.url?.includes('/auth/signup') ||
+                          error.config?.url?.includes('/auth/forgot-password') ||
+                          error.config?.url?.includes('/auth/reset-password');
+    
+    // Only log non-auth errors to reduce noise
+    if (!isAuthEndpoint) {
+      console.error('API Error:', {
+        status: error.response?.status,
+        message: error.response?.data?.message || error.message,
+        url: error.config?.url
+      });
+    }
     
     // Handle 401 Unauthorized - try to refresh token
-    if (error.response?.status === 401 && !error.config._retry) {
+    // BUT skip token refresh for login/signup endpoints (they should fail normally)
+    if (error.response?.status === 401 && !error.config._retry && !isAuthEndpoint) {
       error.config._retry = true;
       
       const refreshToken = localStorage.getItem('refreshToken');
@@ -93,9 +109,18 @@ api.interceptors.response.use(
       }
     }
     
+    // Extract error message from response
+    const errorMessage = error.response?.data?.detail || 
+                        error.response?.data?.message || 
+                        error.message || 
+                        'An error occurred';
+    
     // Transform error for better user experience
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !isAuthEndpoint) {
       error.userMessage = 'Session expired. Please log in again.';
+    } else if (error.response?.status === 401 && isAuthEndpoint) {
+      // For auth endpoints, use the actual error message from backend
+      error.userMessage = errorMessage;
     } else if (error.response?.status === 403) {
       error.userMessage = 'Access denied. Please check your credentials.';
     } else if (error.response?.status === 404) {
@@ -111,8 +136,7 @@ api.interceptors.response.use(
     } else if (!error.response) {
       error.userMessage = 'Network error. Please check your connection.';
     } else {
-      // Handle FastAPI error format: {"detail": "error message"}
-      const errorMessage = error.response?.data?.detail || error.response?.data?.message || 'Something went wrong. Please try again.';
+      // Use the already extracted error message
       error.userMessage = errorMessage;
     }
     
@@ -930,7 +954,13 @@ export const authAPI = {
       const response = await api.post('/auth/login', data);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.userMessage || 'Login failed');
+      // Extract error message properly
+      const errorMessage = error.userMessage || 
+                          error.response?.data?.detail || 
+                          error.response?.data?.message || 
+                          error.message || 
+                          'Invalid email or password';
+      throw new Error(errorMessage);
     }
   },
 

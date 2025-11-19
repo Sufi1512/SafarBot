@@ -17,6 +17,7 @@ from routers.ip_tracking import router as ip_tracking_router
 from routers.collaboration import router as collaboration_router
 from routers.notifications import router as notifications_router
 from routers.google_auth import router as google_auth_router
+from routers.image_proxy import router as image_proxy_router
 from config import settings
 from database import Database
 
@@ -163,6 +164,9 @@ app.include_router(notifications_router, prefix="/notifications", tags=["notific
 
 # Admin & Monitoring
 app.include_router(ip_tracking_router, prefix="/admin/ip-tracking", tags=["admin", "ip-tracking"])
+
+# Image Proxy (to avoid Google rate limits)
+app.include_router(image_proxy_router, prefix="/images", tags=["images"])
 
 # Mount WebSocket app (Socket.IO - temporarily disabled)
 # from services.websocket_service import socketio_app

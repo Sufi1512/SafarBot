@@ -1,5 +1,6 @@
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api';
+import { GOOGLE_MAPS_LIBRARIES, GOOGLE_MAPS_CONFIG } from '../config/googleMapsConfig';
 
 interface Location {
   id: string; // this should be place_id if coming from Places API
@@ -62,10 +63,11 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({
   const hoverCloseTimer = useRef<NodeJS.Timeout | null>(null);
 
 
+  // Use static libraries array to prevent LoadScript reload warnings
   const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
-    libraries: ['places'],
+    id: GOOGLE_MAPS_CONFIG.id,
+    googleMapsApiKey: GOOGLE_MAPS_CONFIG.googleMapsApiKey,
+    libraries: GOOGLE_MAPS_LIBRARIES,
     version: 'weekly'
   });
 
@@ -77,8 +79,6 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({
   }, [loadError]);
 
   const fitToLocations = useCallback((map: google.maps.Map, locs: Location[]) => {
-    console.log('fitToLocations called with:', locs.length, 'locations');
-    
     const validLocations = locs.filter(
       (loc) =>
         loc &&
@@ -91,16 +91,11 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({
         Math.abs(loc.position.lng) <= 180
     );
 
-    console.log('Valid locations for map:', validLocations.length, validLocations);
-
     if (validLocations.length > 0) {
       const bounds = new google.maps.LatLngBounds();
-      validLocations.forEach((location, index) => {
-        console.log(`Adding location ${index} to bounds:`, location.position);
+      validLocations.forEach((location) => {
         bounds.extend(location.position);
       });
-      
-      console.log('Bounds created, fitting to map...');
       
       // Add some padding to the bounds
       map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
@@ -114,10 +109,8 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({
         } else {
           map.setZoom(12);
         }
-        console.log('Map zoom set to:', map.getZoom());
       }, 500);
     } else {
-      console.warn('No valid locations found, using default center');
       map.setCenter(defaultCenter);
       map.setZoom(defaultZoom);
     }
@@ -125,30 +118,35 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({
 
   // Calculate map center before using it
   const mapCenter = calculateCenter(locations);
-  console.log('Map center calculated:', mapCenter);
   
   // Fallback center if calculation fails
   const fallbackCenter = { lat: 15.3838, lng: 73.8162 }; // Vasco Da Gama, Goa
   const finalCenter = mapCenter.lat && mapCenter.lng ? mapCenter : fallbackCenter;
-  console.log('Final map center:', finalCenter);
 
   const onLoad = useCallback((map: google.maps.Map) => {
-    console.log('GoogleMaps onLoad called with map:', map);
-    console.log('GoogleMaps onLoad - locations:', locations);
     setMap(map);
     
     // Simple initialization
     map.setCenter(finalCenter);
     map.setZoom(12);
-    
-    console.log('Map initialized with center:', finalCenter);
   }, [finalCenter]);
 
   useEffect(() => {
-    if (map) {
-      fitToLocations(map, locations);
+    if (map && isLoaded && locations.length > 0) {
+      if (import.meta.env.DEV) {
+        console.debug(`Fitting map to ${locations.length} locations`);
+        console.debug('Sample locations:', locations.slice(0, 3).map(l => ({
+          name: l.name,
+          position: l.position,
+          type: l.type
+        })));
+      }
+      // Small delay to ensure map is fully rendered
+      setTimeout(() => {
+        fitToLocations(map, locations);
+      }, 100);
     }
-  }, [map, locations, fitToLocations]);
+  }, [map, isLoaded, locations, fitToLocations]);
 
   const onUnmount = useCallback(() => {
     setMap(null);
@@ -212,8 +210,6 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({
     return <div>Loading Maps...</div>;
   }
 
-  console.log('GoogleMaps rendering with locations:', locations.length);
-
   return (
     <div className="relative h-full w-full min-h-0">
       <GoogleMap
@@ -234,38 +230,88 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({
         }}
       >
         {locations.map((location, index) => {
-          console.log(`Rendering marker ${index}:`, {
-            id: location.id,
-            name: location.name,
-            type: location.type,
-            position: location.position,
-            hasValidPosition: !isNaN(location.position.lat) && !isNaN(location.position.lng)
-          });
-          
           // Skip invalid positions
-          if (isNaN(location.position.lat) || isNaN(location.position.lng)) {
-            console.warn(`Skipping marker with invalid position:`, location);
+          if (!location || !location.position || 
+              isNaN(location.position.lat) || isNaN(location.position.lng) ||
+              Math.abs(location.position.lat) > 90 || Math.abs(location.position.lng) > 180) {
+            if (import.meta.env.DEV) {
+              console.debug(`Skipping invalid location at index ${index}:`, location);
+            }
             return null;
           }
           
+          // Get marker icon color based on type - create SVG data URL for colored marker
+          const getMarkerIcon = (type: string): google.maps.Icon | undefined => {
+            if (!window.google?.maps) return undefined;
+            
+            // Use colored markers - create simple colored pin icon
+            const iconColors: Record<string, string> = {
+              destination: '#FF0000', // Red
+              hotel: '#4285F4', // Blue
+              restaurant: '#34A853', // Green
+              activity: '#FBBC05' // Yellow
+            };
+            
+            const color = iconColors[type] || '#FF0000';
+            
+            // Create SVG marker pin icon
+            const svgMarker = `
+              <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="20" cy="20" r="14" fill="${color}" stroke="#FFFFFF" stroke-width="3"/>
+              </svg>
+            `;
+            
+            return {
+              url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svgMarker)}`,
+              scaledSize: new google.maps.Size(40, 40),
+              anchor: new google.maps.Point(20, 20)
+            };
+          };
+          
+          // Get marker label text (single character or number)
+          const getMarkerLabel = (type: string, index: number): string => {
+            const labels: Record<string, string> = {
+              destination: 'D',
+              hotel: 'H',
+              restaurant: 'R',
+              activity: 'A'
+            };
+            return labels[type] || String(index + 1);
+          };
+          
+          const markerIcon = getMarkerIcon(location.type);
+          
+          if (import.meta.env.DEV && index === 0) {
+            console.debug('Creating first marker:', {
+              location: location.name,
+              position: location.position,
+              type: location.type,
+              hasIcon: !!markerIcon
+            });
+          }
+          
+          // Note: google.maps.Marker is deprecated in favor of AdvancedMarkerElement
+          // However, @react-google-maps/api doesn't support AdvancedMarkerElement yet
+          // This warning is informational - Marker will continue to work for at least 12 months
+          // We'll migrate when the library adds support for AdvancedMarkerElement
           return (
             <Marker
-              key={location.id || index}
+              key={location.id || `marker-${index}`}
               position={location.position}
               onClick={() => fetchPlaceDetails(location)}
               onMouseOver={() => handleMarkerMouseOver(location)}
               onMouseOut={handleMarkerMouseOut}
               title={location.name}
+              icon={markerIcon || undefined}
+              label={{
+                text: getMarkerLabel(location.type, index),
+                color: '#FFFFFF',
+                fontSize: '12px',
+                fontWeight: 'bold'
+              }}
             />
           );
         })}
-        
-        {/* Test marker to ensure map is working */}
-        <Marker
-          key="test-marker"
-          position={finalCenter}
-          title="Test Marker - Map Center"
-        />
 
         {selectedLocation && (
           <InfoWindow

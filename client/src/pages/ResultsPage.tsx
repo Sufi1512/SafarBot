@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Calendar, IndianRupee, Clock, Star, AlertCircle, Hotel, Utensils, Share2, Download, Filter, LayoutGrid, List, Sparkles } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, MapPin, Calendar, IndianRupee, Clock, Star, AlertCircle, Hotel, Utensils } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { itineraryAPI, EnhancedItineraryResponse, PlaceDetails, AdditionalPlace } from '../services/api';
 import GoogleMaps from '../components/GoogleMaps';
@@ -11,9 +10,6 @@ import EnhancedHoverPopup from '../components/EnhancedHoverPopup';
 import WeatherCard from '../components/WeatherCard';
 import { WeatherDisplay } from '../components/WeatherDisplay';
 import ModernHeader from '../components/ModernHeader';
-import InteractiveTimeline from '../components/InteractiveTimeline';
-import BudgetBreakdown from '../components/BudgetBreakdown';
-import ShareItineraryModal from '../components/ShareItineraryModal';
 import { parseLocationForWeather } from '../utils/locationUtils';
 import { prefetchPlaceMedia } from '../utils/imagePrefetcher';
 import { photoPrefetcher } from '../utils/photoPrefetcher';
@@ -191,9 +187,6 @@ const ResultsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'itinerary' | 'additional' | 'map'>('itinerary');
-  const [viewMode, setViewMode] = useState<'timeline' | 'grid'>('timeline');
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [itinerarySummary, setItinerarySummary] = useState<{
     total_days: number;
     budget_estimate: number;
@@ -356,8 +349,8 @@ const ResultsPage: React.FC = () => {
     const prefetch = async () => {
       try {
         const summary = await prefetchPlaceMedia({
-          placeDetails: placeDetailsList,
-          additionalPlaces: additionalPlacesList
+          placeDetails: placeDetailsList as PlaceDetails[],
+          additionalPlaces: additionalPlacesList as AdditionalPlace[]
         });
 
         console.debug('Prefetched hover media', summary);
@@ -371,17 +364,13 @@ const ResultsPage: React.FC = () => {
 
 
   // SERP API functionality for fetching restaurants has been removed
-  useEffect(() => {
-    console.log('SERP API functionality for restaurants has been removed');
-    // No longer fetching restaurants via SERP API
-  }, [itineraryData?.destination]);
+  // No longer fetching restaurants via SERP API
 
   // Helper functions for enhanced API
   // (Removed unused handlePlaceClick to satisfy linter)
 
-  const handleAddToItinerary = (place: PlaceDetails | AdditionalPlace) => {
+  const handleAddToItinerary = (_place: PlaceDetails | AdditionalPlace) => {
     // For now, just close the modal. In the future, this could add to itinerary
-    console.log('Adding place to itinerary:', place);
     setIsPlaceModalOpen(false);
     // TODO: Implement actual itinerary addition logic
   };
@@ -389,14 +378,6 @@ const ResultsPage: React.FC = () => {
   // Enhanced location extraction with place details - memoized to prevent unnecessary recalculations
   const extractLocations = useMemo(() => {
     const locations: Location[] = [];
-    
-    console.log('Enhanced extractLocations called with:', {
-      enhancedResponse: !!enhancedResponse,
-      placeDetailsCount: Object.keys(allPlaceDetails).length,
-      itineraryData,
-      hotels: hotels.length,
-      dailyPlans: dailyPlans.length
-    });
     
     // Default coordinates for fallback (will be updated based on destination)
     let defaultCoordinates = { lat: 40.7128, lng: -74.0060 }; // New York as global default
@@ -484,16 +465,13 @@ const ResultsPage: React.FC = () => {
         position: defaultCoordinates,
         description: 'Your travel destination'
       });
-      console.log('Added destination:', destination, 'at coordinates:', defaultCoordinates);
     }
 
     // Add places from allPlaceDetails (which contains all places used in itinerary)
     if (allPlaceDetails && Object.keys(allPlaceDetails).length > 0) {
-      console.log('Processing allPlaceDetails...', Object.keys(allPlaceDetails).length, 'places');
       Object.entries(allPlaceDetails).forEach(([placeId, placeDetails], index) => {
         // Skip places with invalid data
         if (!placeDetails.title || !placeDetails.title.trim()) {
-          console.log(`Skipping place with invalid title: ${placeId}`);
           return;
         }
         
@@ -508,7 +486,6 @@ const ResultsPage: React.FC = () => {
             lat: placeDetails.gps_coordinates.latitude,
             lng: placeDetails.gps_coordinates.longitude
           };
-          console.log(`✅ Using real GPS for ${placeDetails.title}:`, position);
         } 
         // Check for coordinates object (alternative format)
         else if ((placeDetails as any).coordinates && 
@@ -518,7 +495,6 @@ const ResultsPage: React.FC = () => {
             lat: (placeDetails as any).coordinates.lat,
             lng: (placeDetails as any).coordinates.lng
           };
-          console.log(`✅ Using coordinates for ${placeDetails.title}:`, position);
         }
         // Fallback to destination with offset
         else {
@@ -526,20 +502,20 @@ const ResultsPage: React.FC = () => {
             lat: defaultCoordinates.lat + (index * 0.01),
             lng: defaultCoordinates.lng + (index * 0.01)
           };
-          console.log(`⚠️  Using fallback coordinates for ${placeDetails.title}:`, position);
         }
         
         // Validate coordinates before adding
-        if (isNaN(position.lat) || isNaN(position.lng)) {
-          console.log(`Skipping place with invalid coordinates: ${placeDetails.title}`);
+        if (isNaN(position.lat) || isNaN(position.lng) || 
+            Math.abs(position.lat) > 90 || Math.abs(position.lng) > 180) {
           return;
         }
         
         // Determine place type from category
         let placeType: 'hotel' | 'restaurant' | 'activity' = 'activity';
         if (placeDetails.category) {
-          if (placeDetails.category.includes('hotel')) placeType = 'hotel';
-          else if (placeDetails.category.includes('restaurant') || placeDetails.category.includes('cafe')) placeType = 'restaurant';
+          const categoryLower = placeDetails.category.toLowerCase();
+          if (categoryLower.includes('hotel') || categoryLower.includes('lodging')) placeType = 'hotel';
+          else if (categoryLower.includes('restaurant') || categoryLower.includes('cafe') || categoryLower.includes('food')) placeType = 'restaurant';
         }
         
         locations.push({
@@ -558,31 +534,35 @@ const ResultsPage: React.FC = () => {
           hours: placeDetails.hours || (placeDetails as any).operating_hours,
           thumbnail: placeDetails.thumbnail || placeDetails.serpapi_thumbnail
         } as any);
-        
-        console.log(`✅ Added place to map: ${placeDetails.title} (${placeType}) at`, position);
       });
     } else {
-      console.log('⚠️  No allPlaceDetails found, checking enhancedResponse...');
-      
       // Fallback to enhancedResponse if allPlaceDetails is empty
       if (enhancedResponse?.place_details) {
-        console.log('Using enhancedResponse.place_details as fallback');
         Object.entries(enhancedResponse.place_details).forEach(([placeId, placeDetails], index) => {
-          if (!placeDetails.title || !placeDetails.title.trim()) return;
+          const place = placeDetails as PlaceDetails;
+          if (!place.title || !place.title.trim()) return;
           
-          const position = getCoordinatesFromPlace(placeDetails, index);
-          if (isNaN(position.lat) || isNaN(position.lng)) return;
+          const position = getCoordinatesFromPlace(place, index);
+          if (isNaN(position.lat) || isNaN(position.lng) || 
+              Math.abs(position.lat) > 90 || Math.abs(position.lng) > 180) return;
+          
+          // Determine place type
+          let placeType: 'hotel' | 'restaurant' | 'activity' = 'activity';
+          if (place.category) {
+            const categoryLower = place.category.toLowerCase();
+            if (categoryLower.includes('hotel') || categoryLower.includes('lodging')) placeType = 'hotel';
+            else if (categoryLower.includes('restaurant') || categoryLower.includes('cafe') || categoryLower.includes('food')) placeType = 'restaurant';
+          }
           
           locations.push({
             id: placeId,
-            name: placeDetails.title,
-            type: (placeDetails.category === 'hotels' ? 'hotel' : 
-                   placeDetails.category === 'restaurants' ? 'restaurant' : 'activity') as 'hotel' | 'restaurant' | 'activity',
+            name: place.title,
+            type: placeType,
             position,
-            description: placeDetails.description || placeDetails.address,
-            rating: placeDetails.rating,
-            price: (placeDetails as any).price_range || (placeDetails as any).price,
-            thumbnail: placeDetails.thumbnail || placeDetails.serpapi_thumbnail
+            description: place.description || place.address,
+            rating: place.rating,
+            price: place.price_range || place.price,
+            thumbnail: place.thumbnail || place.serpapi_thumbnail
           } as any);
         });
       }
@@ -591,64 +571,107 @@ const ResultsPage: React.FC = () => {
     // Add hotels with real coordinates based on their location
     hotels.forEach((hotel, index) => {
       if (hotel.location) {
-        console.log('Processing hotel location:', hotel.location);
-        
         // Use default coordinates with offset for hotels
         const position = {
           lat: defaultCoordinates.lat + (index * 0.01),
           lng: defaultCoordinates.lng + (index * 0.01)
         };
         
-        console.log(`Hotel "${hotel.name}" location "${hotel.location}" positioned at:`, position);
-        
-        locations.push({
-          id: `hotel-${index}`,
-          name: hotel.name,
-          type: 'hotel' as const,
-          position,
-          description: hotel.description,
-          rating: hotel.rating,
-          price: hotel.price
-        });
-        console.log('Added hotel:', hotel.name, 'at position:', position);
+        // Validate coordinates
+        if (!isNaN(position.lat) && !isNaN(position.lng) && 
+            Math.abs(position.lat) <= 90 && Math.abs(position.lng) <= 180) {
+          locations.push({
+            id: `hotel-${index}`,
+            name: hotel.name,
+            type: 'hotel' as const,
+            position,
+            description: hotel.description,
+            rating: hotel.rating,
+            price: hotel.price
+          });
+        }
       }
     });
-
-
 
     // Add activities from daily plans with real coordinates
     dailyPlans.forEach((plan, planIndex) => {
       plan.activities.forEach((activity, activityIndex) => {
         if (activity.location && activity.location !== destination) {
-          console.log('Processing activity location:', activity.location);
-          
           // Use default coordinates with offset for activities
           const position = {
             lat: defaultCoordinates.lat + (planIndex * 0.02) + (activityIndex * 0.005),
             lng: defaultCoordinates.lng + (planIndex * 0.02) + (activityIndex * 0.005)
           };
           
-          console.log(`Activity "${activity.title}" location "${activity.location}" positioned at:`, position);
+          // Validate coordinates
+          if (!isNaN(position.lat) && !isNaN(position.lng) && 
+              Math.abs(position.lat) <= 90 && Math.abs(position.lng) <= 180) {
+            locations.push({
+              id: `activity-${planIndex}-${activityIndex}`,
+              name: activity.title,
+              type: 'activity' as const,
+              position,
+              description: activity.description
+            });
+          }
+        }
+      });
+    });
+    
+    // Add restaurants from meals in daily plans
+    dailyPlans.forEach((plan, planIndex) => {
+      plan.meals.forEach((meal, mealIndex) => {
+        // Try to get place details for the meal
+        const mealPlaceId = (meal as any).place_id;
+        const mealPlaceDetails = enhancedResponse?.place_details?.[mealPlaceId] || allPlaceDetails[mealPlaceId];
+        
+        if (mealPlaceDetails && mealPlaceDetails.gps_coordinates) {
+          const position = {
+            lat: mealPlaceDetails.gps_coordinates.latitude,
+            lng: mealPlaceDetails.gps_coordinates.longitude
+          };
           
-          locations.push({
-            id: `activity-${planIndex}-${activityIndex}`,
-            name: activity.title,
-            type: 'activity' as const,
-            position,
-            description: activity.description
-          });
-          console.log('Added activity:', activity.title, 'at position:', position);
+          if (!isNaN(position.lat) && !isNaN(position.lng) && 
+              Math.abs(position.lat) <= 90 && Math.abs(position.lng) <= 180) {
+            locations.push({
+              id: `restaurant-${planIndex}-${mealIndex}`,
+              name: meal.name,
+              type: 'restaurant' as const,
+              position,
+              description: meal.description || mealPlaceDetails.description,
+              rating: meal.rating || mealPlaceDetails.rating,
+              price: meal.priceRange || meal.price_range
+            });
+          }
+        } else if (meal.location) {
+          // Fallback to offset coordinates
+          const position = {
+            lat: defaultCoordinates.lat + (planIndex * 0.015) + (mealIndex * 0.003),
+            lng: defaultCoordinates.lng + (planIndex * 0.015) + (mealIndex * 0.003)
+          };
+          
+          if (!isNaN(position.lat) && !isNaN(position.lng) && 
+              Math.abs(position.lat) <= 90 && Math.abs(position.lng) <= 180) {
+            locations.push({
+              id: `restaurant-${planIndex}-${mealIndex}`,
+              name: meal.name,
+              type: 'restaurant' as const,
+              position,
+              description: meal.description,
+              rating: meal.rating,
+              price: meal.priceRange || meal.price_range
+            });
+          }
         }
       });
     });
 
-    // SERP restaurants functionality removed
     // Only log in development for debugging
-    if (import.meta.env.DEV) {
-      console.debug('Total locations extracted:', locations.length);
+    if (import.meta.env.DEV && locations.length > 0) {
+      console.debug(`Extracted ${locations.length} locations for map`);
     }
     return locations;
-  }, [enhancedResponse, allPlaceDetails, dailyPlans, hotels]); // Memoize based on dependencies
+  }, [enhancedResponse, allPlaceDetails, dailyPlans, hotels, itineraryData]); // Include itineraryData in dependencies
 
   useEffect(() => {
     if (authLoading) {
@@ -694,7 +717,6 @@ const ResultsPage: React.FC = () => {
     // Support injecting a ready enhanced itinerary via navigation state
     const injected = (location.state as any)?.injectedEnhancedResponse as EnhancedItineraryResponse | undefined;
     if (injected) {
-      console.log('Detected injected enhanced itinerary in navigation state. Rendering without API call.');
       const injectedMeta = (location.state as any);
       // Build minimal ItineraryData from injected meta if available
       const dataFromInjected: ItineraryData = {
@@ -717,7 +739,6 @@ const ResultsPage: React.FC = () => {
     }
     
     // Start itinerary generation (API)
-    console.log('Starting itinerary generation...');
     setItineraryData(location.state as any);
     generateRealItinerary(location.state as any);
   }, [authLoading, location.state]); // Empty dependency array to run only once on mount
@@ -725,7 +746,6 @@ const ResultsPage: React.FC = () => {
   // Reset guards when location state changes (e.g., user runs planner again)
   useEffect(() => {
     if (previousLocationStateRef.current !== location.state) {
-      console.log('Location state changed, resetting generation guards');
       previousLocationStateRef.current = location.state;
       hasGeneratedRef.current = false;
       isInitializedRef.current = false;
@@ -865,23 +885,19 @@ const ResultsPage: React.FC = () => {
     
     // Automatically prefetch all photos from the response
     if ((enhancedItineraryResponse as any)?.photo_prefetch) {
-      console.log('📸 Starting automatic photo prefetch...');
       photoPrefetcher.prefetchPhotos((enhancedItineraryResponse as any).photo_prefetch)
-        .then(() => console.log('📸 Photo prefetch completed successfully'))
-        .catch(err => console.warn('⚠️  Photo prefetch failed:', err));
+        .catch(() => {
+          // Silently fail - prefetch is optional
+        });
     }
     
     // Extract weather data from response
     if (enhancedItineraryResponse?.weather) {
       setWeatherData(enhancedItineraryResponse.weather);
-      console.log('✅ Weather data extracted from response:', enhancedItineraryResponse.weather);
-    } else {
-      console.log('⚠️ No weather data found in response');
     }
 
     // Handle the itinerary part of the response
     const itineraryDataInner = enhancedItineraryResponse?.itinerary as any;
-    console.log('Processing itinerary data (helper):', itineraryDataInner);
     
     if (itineraryDataInner && itineraryDataInner.daily_plans !== undefined) {
       if (itineraryDataInner.daily_plans.length === 0) {
@@ -989,7 +1005,6 @@ const ResultsPage: React.FC = () => {
       setTips(allTips);
 
       hasGeneratedRef.current = true;
-      console.log('✅ Successfully processed enhanced itinerary (helper)');
     } else {
       console.error('❌ Invalid enhanced response format. Expected daily_plans but got:', {
         hasItinerary: !!enhancedItineraryResponse?.itinerary,
@@ -1006,9 +1021,16 @@ const ResultsPage: React.FC = () => {
   // Performance optimization: Memoize tab content to prevent unnecessary re-renders
   const memoizedTabContent = useMemo(() => {
     if (activeTab === 'additional' && enhancedResponse) {
+      const additionalPlaces = {
+        hotels: enhancedResponse.additional_places?.hotels || [],
+        restaurants: enhancedResponse.additional_places?.restaurants || [],
+        cafes: enhancedResponse.additional_places?.cafes || [],
+        attractions: enhancedResponse.additional_places?.attractions || [],
+        interest_based: enhancedResponse.additional_places?.interest_based || []
+      };
       return (
         <AdditionalPlaces
-          additionalPlaces={enhancedResponse.additional_places}
+          additionalPlaces={additionalPlaces}
           onAddToItinerary={handleAddToItinerary}
           onPlaceHover={handlePlaceHover}
           onPlaceHoverLeave={handlePlaceHoverLeave}
@@ -1217,71 +1239,27 @@ const ResultsPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Modern Tabs with Glassmorphism */}
+              {/* Tabs - Only show when not loading and no error */}
               <div className="mb-8">
-                <div className="flex items-center justify-between gap-4 mb-4">
-                  <div className="flex space-x-1 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-1 rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50">
-                    {[
-                      { id: 'itinerary', label: 'Itinerary', icon: '🗓️' },
-                      { id: 'additional', label: 'Explore', icon: '✨' },
-                      { id: 'map', label: 'Map', icon: '🗺️' }
-                    ].map((tab) => (
-                      <motion.button
-                        key={tab.id}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setActiveTab(tab.id as any)}
-                        className={`relative px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
-                          activeTab === tab.id
-                            ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg shadow-purple-500/50'
-                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
-                        }`}
-                      >
-                        <span className="mr-2">{tab.icon}</span>
-                        {tab.label}
-                      </motion.button>
-                    ))}
-                  </div>
-                  
-                  {/* View Mode Toggle & Actions */}
-                  {activeTab === 'itinerary' && (
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-1 rounded-xl shadow-lg border border-white/20 dark:border-gray-700/50">
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => setViewMode('timeline')}
-                          className={`p-2 rounded-lg transition-all ${
-                            viewMode === 'timeline'
-                              ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
-                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                          }`}
-                        >
-                          <List className="w-4 h-4" />
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => setViewMode('grid')}
-                          className={`p-2 rounded-lg transition-all ${
-                            viewMode === 'grid'
-                              ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
-                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                          }`}
-                        >
-                          <LayoutGrid className="w-4 h-4" />
-                        </motion.button>
-                      </div>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setIsShareModalOpen(true)}
-                        className="p-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl shadow-lg shadow-purple-500/50 hover:shadow-xl transition-all"
-                      >
-                        <Share2 className="w-4 h-4" />
-                      </motion.button>
-                    </div>
-                  )}
+                <div className="flex space-x-1 bg-white dark:bg-gray-800 p-0.5 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                  {[
+                    { id: 'itinerary', label: 'Itinerary', icon: '🗓️' },
+                    { id: 'additional', label: 'Explore More', icon: '✨' },
+                    { id: 'map', label: 'Map View', icon: '🗺️' }
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as any)}
+                      className={`flex-1 flex items-center justify-center px-2 py-1.5 rounded-md font-medium transition-all duration-300 text-xs ${
+                        activeTab === tab.id
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <span className="mr-1 text-xs">{tab.icon}</span>
+                      {tab.label}
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -1306,32 +1284,8 @@ const ResultsPage: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Modern Interactive Timeline or Grid View */}
-                  {viewMode === 'timeline' ? (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/20 dark:border-gray-700/50"
-                    >
-                      <InteractiveTimeline
-                        dailyPlans={dailyPlans}
-                        formatINR={formatINR}
-                        onActivityClick={(activity) => {
-                          // Handle activity click
-                          console.debug('Activity clicked:', activity);
-                        }}
-                      />
-                    </motion.div>
-                  ) : (
-                    <div className="space-y-6">
-                      {dailyPlans.map((plan) => (
-                        <motion.div
-                          key={plan.day}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          whileHover={{ scale: 1.01 }}
-                          className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/20 dark:border-gray-700/50 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 w-full"
-                        >
+                  {dailyPlans.map((plan) => (
+                    <div key={plan.day} className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300 w-full">
                       <div className="flex items-center justify-between mb-6">
                         <div>
                           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Day {plan.day}</h2>
@@ -1532,25 +1486,8 @@ const ResultsPage: React.FC = () => {
                          })}
                        </div>
                      </div>
-                    </motion.div>
-                      ))}
                     </div>
-                  )}
-
-                  {/* Budget Breakdown Widget */}
-                  {dailyPlans.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 }}
-                    >
-                      <BudgetBreakdown
-                        dailyPlans={dailyPlans}
-                        formatINR={formatINR}
-                        totalBudget={itineraryData?.budget}
-                      />
-                    </motion.div>
-                  )}
+                  ))}
 
                                      {/* Total Cost Summary */}
                    {/* {dailyPlans.length > 0 && (
@@ -1645,20 +1582,9 @@ const ResultsPage: React.FC = () => {
 
               {/* Map Tab - Full width map */}
               {activeTab === 'map' && (
-                <div className="bg-white rounded-3xl shadow-lg border border-gray-200 overflow-hidden">
+                <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                   <div className="h-96 lg:h-[600px]">
-                    {(() => {
-                      const locations = extractLocations;
-                      console.log('Map tab - locations:', locations);
-                      console.log('Map tab - locations length:', locations.length);
-                      console.log('Map tab - locations details:', locations.map(loc => ({
-                        id: loc.id,
-                        name: loc.name,
-                        type: loc.type,
-                        position: loc.position
-                      })));
-                      return <GoogleMaps locations={locations} />;
-                    })()}
+                    <GoogleMaps locations={extractLocations} />
                   </div>
                 </div>
               )}
@@ -1686,61 +1612,37 @@ const ResultsPage: React.FC = () => {
                   <div className="h-full w-full min-h-0 flex-1" style={{ minHeight: '500px' }}>
                     {(() => {
                       const locations = extractLocations;
-                      console.log('Passing locations to GoogleMaps:', locations);
-                      console.log('Locations length:', locations.length);
-                      console.log('Locations details:', locations.map(loc => ({
-                        id: loc.id,
-                        name: loc.name,
-                        type: loc.type,
-                        position: loc.position
-                      })));
-                      console.log('itineraryData:', itineraryData);
-                      console.log('hotels:', hotels);
-                      console.log('dailyPlans:', dailyPlans);
-                      console.log('Map container dimensions:', { height: 'h-full', minHeight: '600px' });
                       
                       // Always show at least the destination if we have itinerary data
                       if (locations.length === 0 && itineraryData?.destination) {
-                        console.log('No locations found, creating fallback destination location');
+                        const destination = itineraryData.destination;
+                        // Try to get coordinates for destination
+                        const getDestinationCoordinates = (dest: string) => {
+                          const cityCoordinates: Record<string, { lat: number; lng: number }> = {
+                            'new york': { lat: 40.7128, lng: -74.0060 },
+                            'london': { lat: 51.5074, lng: -0.1278 },
+                            'paris': { lat: 48.8566, lng: 2.3522 },
+                            'tokyo': { lat: 35.6762, lng: 139.6503 },
+                            'mumbai': { lat: 19.0760, lng: 72.8777 },
+                            'delhi': { lat: 28.7041, lng: 77.1025 },
+                            'dubai': { lat: 25.2048, lng: 55.2708 },
+                            'singapore': { lat: 1.3521, lng: 103.8198 }
+                          };
+                          return cityCoordinates[dest.toLowerCase().trim()] || { lat: 40.7128, lng: -74.0060 };
+                        };
+                        
                         const fallbackLocation = {
                           id: 'fallback-destination',
-                          name: itineraryData.destination,
+                          name: destination,
                           type: 'destination' as const,
-                          position: { lat: 40.7128, lng: -74.0060 },
+                          position: getDestinationCoordinates(destination),
                           description: 'Your travel destination'
                         };
                         return <GoogleMaps locations={[fallbackLocation]} />;
                       }
                       
-                      // If still no locations, show a test location to verify map is working
-                      if (locations.length === 0) {
-                        console.log('No locations at all, showing test location');
-                        const testLocation = {
-                          id: 'test-location',
-                          name: 'Test Location',
-                          type: 'destination' as const,
-                          position: { lat: 40.7128, lng: -74.0060 },
-                          description: 'Test location to verify map functionality'
-                        };
-                        return <GoogleMaps locations={[testLocation]} />;
-                      }
-                      
-                      // Ensure we always have at least one marker
-                      const locationsWithTest = [...locations];
-                      if (locationsWithTest.length === 0) {
-                        console.log('No locations at all, creating default marker');
-                        const defaultLocation = {
-                          id: 'default-marker',
-                          name: 'Default Center',
-                          type: 'destination' as const,
-                          position: { lat: 40.7128, lng: -74.0060 },
-                          description: 'Default location marker'
-                        };
-                        locationsWithTest.push(defaultLocation);
-                      }
-                      
-                      console.log('Final locations being passed to GoogleMaps:', locationsWithTest);
-                      return <GoogleMaps locations={locationsWithTest} />;
+                      // Return locations if available, otherwise empty array (map will show default)
+                      return <GoogleMaps locations={locations.length > 0 ? locations : []} />;
                     })()}
                   </div>
                 </div>
@@ -1930,13 +1832,6 @@ const ResultsPage: React.FC = () => {
         onClose={() => setIsPlaceModalOpen(false)}
         onAddToItinerary={handleAddToItinerary}
         showAddButton={true}
-      />
-
-      {/* Share Modal */}
-      <ShareItineraryModal
-        isOpen={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
-        itineraryTitle={itinerarySummary?.destination || 'Travel Itinerary'}
       />
     </div>
   );

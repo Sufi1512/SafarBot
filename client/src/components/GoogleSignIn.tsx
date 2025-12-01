@@ -26,9 +26,6 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({
     setIsLoading(true);
     
     try {
-      console.log('Starting Google sign-in process...');
-      console.log('Firebase auth object:', auth);
-      
       // Check if Firebase is properly initialized
       if (!auth) {
         throw new Error('Firebase authentication is not initialized');
@@ -39,25 +36,16 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({
       provider.addScope('email');
       provider.addScope('profile');
       
-      console.log('Calling signInWithPopup...');
       const result = await signInWithPopup(auth, provider);
-      console.log('Google sign-in successful:', result.user);
-      
       const idToken = await result.user.getIdToken();
-      console.log('Got ID token, sending to backend...');
       
       // Send the ID token to your backend
-      console.log('Sending request to backend...');
       const response = await api.post('google/google-signin', {
         id_token: idToken
       });
       
-      console.log('Backend response:', response.data);
-      
       if (response.data.success) {
         const { user, access_token } = response.data.data;
-        
-        console.log('Login successful, storing token and updating user...');
         
         // Store the JWT token
         localStorage.setItem('accessToken', access_token);
@@ -116,10 +104,7 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({
 
   return (
     <button
-      onClick={() => {
-        console.log('Google login button clicked');
-        handleGoogleSignIn();
-      }}
+      onClick={handleGoogleSignIn}
       disabled={isLoading}
       className={`
         w-full flex items-center justify-center px-4 py-2 border border-gray-300 

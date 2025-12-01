@@ -26,10 +26,9 @@ export default defineConfig({
       }
     }
   },
-  // In development, Vite serves source files for HMR (this is normal)
-  // In production, source maps are disabled in build config above
-  // To further reduce code exposure in dev, you can minify:
+  // Disable source maps in development to prevent code exposure
   esbuild: {
+    sourcemap: false, // Disable source maps in dev
     minifyIdentifiers: false, // Keep readable names in dev for debugging
     legalComments: 'none' // Remove comments
   }

@@ -45,7 +45,9 @@ const UpdatesPage: React.FC = () => {
       setError(null);
       
       const response = await notificationsAPI.getNotifications(50, 0);
-      console.log('Notifications API Response:', response);
+      if (import.meta.env.DEV) {
+        console.debug('Notifications API Response received');
+      }
       const notifications = response || [];
       console.log('Notifications array:', notifications);
       

@@ -255,7 +255,9 @@ const TripPlannerPage: React.FC = () => {
         vegetarian_preferences: vegetarian ? 'Vegetarian options preferred' : undefined
       };
 
-      console.log('Preparing to navigate with data:', apiRequest);
+      if (import.meta.env.DEV) {
+        console.debug('Preparing to navigate with data');
+      }
 
       // Immediately navigate to results page with the data
       // The ResultsPage will handle its own loading state and API call

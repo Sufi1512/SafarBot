@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useJsApiLoader } from '@react-google-maps/api';
 import { Plane } from 'lucide-react';
-import { GOOGLE_MAPS_CONFIG } from '../config/googleMapsConfig';
+import { GOOGLE_MAPS_CONFIG, GOOGLE_MAPS_LIBRARIES } from '../config/googleMapsConfig';
 
 interface AirportSuggestion {
   code: string;
@@ -41,7 +41,7 @@ const AirportAutocomplete: React.FC<AirportAutocompleteProps> = ({
   const { isLoaded, loadError } = useJsApiLoader({
     id: GOOGLE_MAPS_CONFIG.id,
     googleMapsApiKey: GOOGLE_MAPS_CONFIG.googleMapsApiKey,
-    libraries: [...GOOGLE_MAPS_CONFIG.libraries] as any
+    libraries: GOOGLE_MAPS_LIBRARIES
   });
 
   // Debug logging (only in development, and don't log API key info)
@@ -130,7 +130,9 @@ const AirportAutocomplete: React.FC<AirportAutocompleteProps> = ({
     onChange(inputValue);
     
     if (inputValue.length >= 2) {
-      console.log('Fetching airport suggestions from external API');
+      if (import.meta.env.DEV) {
+        console.debug('Fetching airport suggestions from external API');
+      }
       
       try {
         const suggestions = await getAirportSuggestions(inputValue);

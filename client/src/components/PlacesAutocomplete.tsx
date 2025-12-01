@@ -1,7 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
+import { GOOGLE_MAPS_LIBRARIES, GOOGLE_MAPS_CONFIG } from '../config/googleMapsConfig';
 
 // Add custom styles for Google Places Autocomplete
+// Note: This component uses google.maps.places.Autocomplete which is deprecated.
+// The @react-google-maps/api library doesn't support PlaceAutocompleteElement yet.
+// The deprecation warning is informational - Autocomplete will continue to work for at least 12 months.
 const addCustomStyles = () => {
   if (document.getElementById('places-autocomplete-styles')) return;
   
@@ -151,9 +155,9 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({
   }, []);
 
   const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
-    libraries: ['places']
+    id: GOOGLE_MAPS_CONFIG.id,
+    googleMapsApiKey: GOOGLE_MAPS_CONFIG.googleMapsApiKey,
+    libraries: GOOGLE_MAPS_LIBRARIES
   });
 
   const onLoad = (autocompleteInstance: google.maps.places.Autocomplete) => {
@@ -176,6 +180,10 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({
   };
 
   // Initialize autocomplete when Google Maps is loaded
+  // Note: google.maps.places.Autocomplete is deprecated in favor of PlaceAutocompleteElement
+  // However, @react-google-maps/api doesn't support PlaceAutocompleteElement yet
+  // This warning is informational - Autocomplete will continue to work for at least 12 months
+  // We'll migrate when the library adds support for PlaceAutocompleteElement
   useEffect(() => {
     if (isLoaded && inputRef.current && !autocomplete) {
       const autocompleteInstance = new google.maps.places.Autocomplete(inputRef.current, {
@@ -229,6 +237,9 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({
           {icon}
         </div>
       )}
+      {/* Note: The Autocomplete component from @react-google-maps/api uses the deprecated
+          google.maps.places.Autocomplete API. This is a library limitation - we'll migrate
+          to PlaceAutocompleteElement when the library adds support for it. */}
       <Autocomplete
         onLoad={onLoad}
         onPlaceChanged={onPlaceChanged}

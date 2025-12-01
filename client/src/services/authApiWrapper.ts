@@ -30,8 +30,8 @@ export const useAuthApiWrapper = () => {
 
     // Check if user is authenticated before making API call
     if (!isAuthenticated) {
-      if (showMessage) {
-        console.log('Authentication required before API call - redirecting to login');
+      if (showMessage && import.meta.env.DEV) {
+        console.debug('Authentication required before API call - redirecting to login');
       }
 
       // Preserve current state for redirect after login
@@ -66,7 +66,9 @@ export const useAuthApiWrapper = () => {
     } catch (error: any) {
       // If API call fails with 401, handle it
       if (error.response?.status === 401) {
-        console.log('API call failed with 401 - redirecting to login');
+        if (import.meta.env.DEV) {
+          console.debug('API call failed with 401 - redirecting to login');
+        }
         
         if (preserveState) {
           const currentPath = location.pathname + location.search;

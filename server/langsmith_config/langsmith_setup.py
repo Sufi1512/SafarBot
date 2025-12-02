@@ -32,6 +32,8 @@ def setup_langsmith() -> bool:
         
         if not api_key:
             logger.info("LangSmith API key not found - tracing disabled")
+            # Explicitly disable tracing
+            os.environ.pop("LANGCHAIN_TRACING_V2", None)
             return False
         
         # Set LangSmith environment variables
@@ -53,7 +55,9 @@ def setup_langsmith() -> bool:
         return True
         
     except Exception as e:
-        logger.error("LangSmith setup failed: %s", str(e))
+        logger.warning("LangSmith setup failed (tracing disabled): %s", str(e))
+        # Disable tracing if setup fails
+        os.environ.pop("LANGCHAIN_TRACING_V2", None)
         return False
 
 

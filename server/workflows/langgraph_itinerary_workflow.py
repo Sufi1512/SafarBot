@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, TypedDict, Annotated
@@ -44,15 +45,21 @@ LOGGER = logging.getLogger(__name__)
 # Initialize LangSmith tracing
 def _setup_langsmith() -> bool:
     """Configure LangSmith tracing if API key is available."""
-    if settings.langsmith_api_key:
-        os.environ["LANGCHAIN_TRACING_V2"] = "true"
-        os.environ["LANGCHAIN_API_KEY"] = settings.langsmith_api_key
-        os.environ["LANGCHAIN_PROJECT"] = settings.langsmith_project or "safarbot"
-        os.environ["LANGCHAIN_ENDPOINT"] = settings.langsmith_endpoint or "https://api.smith.langchain.com"
-        LOGGER.info("LangSmith tracing enabled for project: %s", settings.langsmith_project)
-        return True
-    LOGGER.warning("LangSmith API key not configured - tracing disabled")
-    return False
+    try:
+        if settings.langsmith_api_key:
+            os.environ["LANGCHAIN_TRACING_V2"] = "true"
+            os.environ["LANGCHAIN_API_KEY"] = settings.langsmith_api_key
+            os.environ["LANGCHAIN_PROJECT"] = settings.langsmith_project or "safarbot"
+            os.environ["LANGCHAIN_ENDPOINT"] = settings.langsmith_endpoint or "https://api.smith.langchain.com"
+            LOGGER.info("LangSmith tracing enabled for project: %s", settings.langsmith_project)
+            return True
+        LOGGER.warning("LangSmith API key not configured - tracing disabled")
+        return False
+    except Exception as e:
+        LOGGER.warning("LangSmith setup failed (tracing disabled): %s", str(e))
+        # Disable tracing if setup fails
+        os.environ.pop("LANGCHAIN_TRACING_V2", None)
+        return False
 
 _LANGSMITH_ENABLED = _setup_langsmith()
 
@@ -98,26 +105,62 @@ def _parse_itinerary_json(text: str) -> Dict[str, Any]:
     except json.JSONDecodeError:
         pass
     
-    # Try extracting JSON from markdown code block
-    if "```json" in text:
-        start = text.find("```json") + 7
-        end = text.find("```", start)
+    # Try extracting JSON from markdown code block (```json ... ```)
+    if "```json" in text.lower() or "``` json" in text.lower():
+        # Match ```json or ``` json followed by optional newline and then content until ```
+        pattern = r'```\s*json\s*\n(.*?)```'
+        matches = re.findall(pattern, text, re.DOTALL | re.IGNORECASE)
+        if matches:
+            for match in matches:
+                try:
+                    return json.loads(match.strip())
+                except json.JSONDecodeError:
+                    continue
+        
+        # Fallback: manual extraction
+        start_marker = text.lower().find("```json")
+        if start_marker == -1:
+            start_marker = text.lower().find("``` json")
+        if start_marker >= 0:
+            # Find the start of actual JSON (after ```json and newline)
+            json_start = text.find("\n", start_marker)
+            if json_start == -1:
+                json_start = text.find("{", start_marker)
+            else:
+                json_start += 1  # Skip the newline
+            
+            # Find the closing ```
+            closing_marker = text.find("```", json_start)
+            if closing_marker > json_start:
+                json_text = text[json_start:closing_marker].strip()
+                try:
+                    return json.loads(json_text)
+                except json.JSONDecodeError:
+                    pass
+    
+    # Try extracting any JSON object (find first { to last })
+    start = text.find("{")
+    if start >= 0:
+        # Find matching closing brace
+        brace_count = 0
+        end = start
+        for i in range(start, len(text)):
+            if text[i] == '{':
+                brace_count += 1
+            elif text[i] == '}':
+                brace_count -= 1
+                if brace_count == 0:
+                    end = i + 1
+                    break
+        
         if end > start:
             try:
-                return json.loads(text[start:end].strip())
+                return json.loads(text[start:end])
             except json.JSONDecodeError:
                 pass
     
-    # Try extracting any JSON object
-    start = text.find("{")
-    end = text.rfind("}") + 1
-    if start >= 0 and end > start:
-        try:
-            return json.loads(text[start:end])
-        except json.JSONDecodeError:
-            pass
-    
-    LOGGER.error("Failed to parse itinerary JSON: %s...", text[:500])
+    LOGGER.error("Failed to parse itinerary JSON. First 500 chars: %s", text[:500])
+    LOGGER.error("Last 200 chars: %s", text[-200:] if len(text) > 200 else text)
     raise ValueError("Invalid JSON response from AI model")
 
 
@@ -146,7 +189,7 @@ class AgenticItineraryWorkflow:
 
         # Initialize Gemini with optimized settings
         self.model = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash-exp",
+            model="gemini-2.5-flash",
             temperature=0.25,  # Lower for more consistent output
             max_output_tokens=4096,  # Enough for detailed itinerary
             top_p=0.9,

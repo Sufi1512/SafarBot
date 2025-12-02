@@ -21,6 +21,7 @@ class FirebaseAuthService:
     def __init__(self):
         """Initialize Firebase Admin SDK"""
         self.auth_service = AuthService()
+        self.firebase_initialized = False
         self._initialize_firebase()
     
     def _initialize_firebase(self):
@@ -39,7 +40,8 @@ class FirebaseAuthService:
                 firebase_client_id = os.getenv("FIREBASE_CLIENT_ID")
                 
                 if not all([firebase_project_id, firebase_private_key, firebase_client_email]):
-                    raise ValueError("Missing required Firebase environment variables")
+                    logger.warning("Firebase credentials not configured. Google Sign-In will be disabled.")
+                    return
                 
                 # Create credentials from environment variables
                 cred = credentials.Certificate({
@@ -59,8 +61,9 @@ class FirebaseAuthService:
             else:
                 logger.info("Firebase Admin SDK already initialized")
         except Exception as e:
-            logger.error(f"Failed to initialize Firebase: {str(e)}")
-            raise
+            logger.warning(f"Failed to initialize Firebase: {str(e)}")
+            logger.warning("Google Sign-In will be disabled. Server will continue without Firebase.")
+            self.firebase_initialized = False
     
     async def verify_firebase_token(self, id_token: str) -> Optional[Dict[str, Any]]:
         """

@@ -39,11 +39,6 @@ class AuthMiddleware:
             "/google/auth",
             "/google/callback",
             "/itinerary/generate-itinerary",  # Public for demo
-            "/itinerary/generate-itinerary-ai",  # Public for demo
-            "/itinerary/generate-itinerary-complete",  # Public for demo
-            "/itinerary/generate-itinerary-structure",  # Public for demo
-            "/itinerary/generate-itinerary-details",  # Public for demo
-            "/itinerary/places/additional",  # Public for demo
             "/flights/search",  # Public for demo
             "/flights/popular",  # Public for demo
             "/flights/airports/suggestions",  # Public for demo

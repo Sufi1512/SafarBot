@@ -25,6 +25,11 @@ system: |
 
   OUTPUT FORMAT:
   Return ONLY valid JSON matching this exact schema (no markdown, no explanation):
+  
+  IMPORTANT STRUCTURE RULES:
+  - The "metadata.tips" array MUST contain between 10 and 12 items.
+  - Each tip MUST be a short, practical, non-redundant sentence tailored to the destination and trip style.
+  - Do NOT return fewer than 10 tips, even for short trips.
 
 output_schema: |
   {
@@ -87,7 +92,7 @@ output_schema: |
       }
     ],
     "metadata": {
-      "tips": ["string (10-12 practical tips)"],
+      "tips": ["string (array of 10-12 practical, destination-specific tips)"],
       "best_time_to_visit": "string",
       "local_currency": "string",
       "emergency_contacts": {

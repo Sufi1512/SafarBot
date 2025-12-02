@@ -42,8 +42,8 @@ class Settings(BaseSettings):
     # ChromaDB Configuration
     chroma_persist_directory: str = "./chroma_db"
     
-    # CORS Origins
-    cors_origins: list = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173").split(",")
+    # CORS Origins - handle as string and convert to list
+    cors_origins: str = "http://localhost:3000,http://localhost:5173"
     
     class Config:
         env_file = ".env"
@@ -52,6 +52,9 @@ class Settings(BaseSettings):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        # Convert cors_origins string to list after initialization
+        if isinstance(self.cors_origins, str):
+            self.cors_origins = [origin.strip() for origin in self.cors_origins.split(",")]
         # Fallback to environment variable if not set
         if not self.google_api_key:
             self.google_api_key = os.getenv("GOOGLE_API_KEY")
@@ -72,6 +75,14 @@ class Settings(BaseSettings):
             self.open_weather_api_key = None
         if not self.langsmith_api_key:
             self.langsmith_api_key = os.getenv("LANGSMITH_API_KEY")
+        # Allow override of langsmith_project from env
+        langsmith_project_env = os.getenv("LANGSMITH_PROJECT")
+        if langsmith_project_env:
+            self.langsmith_project = langsmith_project_env
+        # Allow override of langsmith_endpoint from env
+        langsmith_endpoint_env = os.getenv("LANGSMITH_ENDPOINT")
+        if langsmith_endpoint_env:
+            self.langsmith_endpoint = langsmith_endpoint_env
         if not self.brevo_api_key:
             self.brevo_api_key = os.getenv("BREVO_API_KEY")
 

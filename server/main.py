@@ -20,9 +20,18 @@ load_dotenv('.env')
 # Initialize LangSmith tracing before importing AI services
 try:
     from langsmith_config.langsmith_setup import setup_langsmith
-    setup_langsmith()
+    langsmith_enabled = setup_langsmith()
+    if not langsmith_enabled:
+        # Suppress LangSmith errors if tracing is disabled
+        import logging
+        langsmith_logger = logging.getLogger("langsmith")
+        langsmith_logger.setLevel(logging.ERROR)  # Only show errors, suppress warnings
 except Exception as e:
     print(f"⚠️  LangSmith setup skipped: {e}")
+    # Suppress LangSmith errors if setup failed
+    import logging
+    langsmith_logger = logging.getLogger("langsmith")
+    langsmith_logger.setLevel(logging.CRITICAL)  # Suppress all LangSmith logs
 
 # Import routers
 from routers import flights, chat, itinerary, auth, dashboard
@@ -212,10 +221,7 @@ async def root():
         ],
         "endpoints": {
             "itinerary": {
-                "generate": "POST /itinerary/generate-itinerary",
-                "structure": "POST /itinerary/generate-itinerary-structure",
-                "details": "POST /itinerary/generate-itinerary-details",
-                "additional": "POST /itinerary/places/additional"
+                "generate": "POST /itinerary/generate-itinerary"
             },
             "auth": {
                 "login": "POST /auth/login",

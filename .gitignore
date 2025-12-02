@@ -28,7 +28,7 @@ MANIFEST
 venv/
 env/
 ENV/
-.venv/
+# .venv/ - commented out to allow pushing .venv
 
 # Node.js
 node_modules/

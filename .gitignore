@@ -29,7 +29,6 @@ venv/
 env/
 ENV/
 .venv/
-.env
 
 # Node.js
 node_modules/
@@ -139,7 +138,6 @@ temp/
 *.db
 *.sqlite3
 
-# API Keys (keep this for security)
-.env
+# API Keys - keep .env.local and .env.production ignored
 .env.local
 .env.production 

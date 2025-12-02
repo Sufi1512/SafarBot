@@ -1,10 +1,28 @@
-from fastapi import FastAPI, HTTPException
+"""
+SafarBot API - AI-powered Travel Planning Platform
+
+Optimized FastAPI application with:
+- LangGraph-based itinerary generation
+- Real-time collaboration via WebSocket
+- Comprehensive travel services
+- LangSmith tracing for AI debugging
+"""
+
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 import os
 from dotenv import load_dotenv
 
 # Load environment variables first
 load_dotenv('.env')
+
+# Initialize LangSmith tracing before importing AI services
+try:
+    from langsmith_config.langsmith_setup import setup_langsmith
+    setup_langsmith()
+except Exception as e:
+    print(f"⚠️  LangSmith setup skipped: {e}")
 
 # Import routers
 from routers import flights, chat, itinerary, auth, dashboard
@@ -13,11 +31,11 @@ from routers.hotels import router as hotels_router
 from routers.restaurants import router as restaurants_router
 from routers.saved_itinerary import router as saved_itinerary
 from routers.weather import router as weather_router
-from routers.ip_tracking import router as ip_tracking_router
 from routers.collaboration import router as collaboration_router
 from routers.notifications import router as notifications_router
 from routers.google_auth import router as google_auth_router
 from routers.image_proxy import router as image_proxy_router
+
 from config import settings
 from database import Database
 
@@ -27,72 +45,52 @@ from middleware.logging import LoggingMiddleware
 from middleware.rate_limiting import RateLimitingMiddleware
 from middleware.auth import AuthMiddleware
 from middleware.error_handling import ErrorHandlingMiddleware
-from middleware.ip_tracking import IPTrackingMiddleware
 
+# Create FastAPI app
 app = FastAPI(
     title="SafarBot API",
-    description="AI-powered travel planning and booking platform with MongoDB",
-    version="1.0.0"
+    description="AI-powered travel planning with LangGraph and LangSmith",
+    version="2.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 # =============================================================================
 # MIDDLEWARE SETUP (Order matters - they execute in reverse order)
 # =============================================================================
 
-# 1. Error Handling (should be first to catch all errors)
 @app.middleware("http")
 async def error_handling_middleware(request, call_next):
     return await ErrorHandlingMiddleware.handle_errors(request, call_next)
 
-# 2. Security Headers (add security headers to all responses)
 @app.middleware("http")
 async def security_headers_middleware(request, call_next):
     return await SecurityMiddleware.add_security_headers(request, call_next)
 
-# 3. Request Size Validation (prevent large payload attacks)
 @app.middleware("http")
 async def request_size_middleware(request, call_next):
     return await SecurityMiddleware.validate_request_size(request, call_next)
 
-# 4. Block Suspicious Requests (block known attack tools)
-@app.middleware("http")
-async def block_suspicious_middleware(request, call_next):
-    return await SecurityMiddleware.block_suspicious_requests(request, call_next)
-
-# 5. Rate Limiting (prevent API abuse)
 @app.middleware("http")
 async def rate_limiting_middleware(request, call_next):
     return await RateLimitingMiddleware.apply_rate_limiting(request, call_next)
 
-# 6. Request Logging (log all requests and responses)
 @app.middleware("http")
 async def logging_middleware(request, call_next):
     return await LoggingMiddleware.log_requests(request, call_next)
 
-# 7. API Usage Logging (log API usage for analytics)
-@app.middleware("http")
-async def api_usage_middleware(request, call_next):
-    return await LoggingMiddleware.log_api_usage(request, call_next)
-
-# 8. IP Tracking (track and analyze IP activity)
-@app.middleware("http")
-async def ip_tracking_middleware(request, call_next):
-    return await IPTrackingMiddleware.track_ip_activity(request, call_next)
-
-# 9. Authentication (validate JWT tokens for protected endpoints)
 @app.middleware("http")
 async def auth_middleware(request, call_next):
     return await AuthMiddleware.validate_token(request, call_next)
 
-# 10. CORS middleware - updated for Render backend + Vercel frontend
+# CORS configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000", 
+        "http://localhost:3000",
         "http://localhost:5173",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
-        "null",  # Allow local file:// origins for testing
         "https://safarbot.vercel.app",
         "https://safarbot-git-main-sufi1512.vercel.app",
         "https://safarbot-sufi1512.vercel.app",
@@ -105,252 +103,150 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-# Database events
+# =============================================================================
+# DATABASE LIFECYCLE
+# =============================================================================
+
 @app.on_event("startup")
 async def startup_db_client():
     """Connect to MongoDB on startup."""
     try:
         await Database.connect_db()
-        print("✅ Database connection established")
+        print("✅ Database connected")
     except Exception as e:
-        print(f"❌ Database connection failed: {e}")
-        print("⚠️  Application will start without database connection")
-        # Don't raise the exception to allow the app to start
-        # This is important for deployment when MongoDB might not be available
-    
-    # Initialize WebSocket service (Socket.IO - currently disabled)
-    # try:
-    #     from services.websocket_service import websocket_service
-    #     await websocket_service.initialize()
-    #     print("✅ WebSocket service initialized")
-    # except Exception as e:
-    #     print(f"❌ WebSocket initialization failed: {e}")
-    #     print("⚠️  Real-time features will be limited")
+        print(f"⚠️  Database connection failed: {e}")
+        print("   Application will start without database")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
     """Close MongoDB connection on shutdown."""
     await Database.close_db()
-    print("✅ Database connection closed")
+    print("✅ Database disconnected")
 
 # =============================================================================
-# ROUTER SETUP - Clean, organized endpoint structure
+# ROUTER CONFIGURATION
 # =============================================================================
 
-# Authentication & User Management
-app.include_router(auth, prefix="/auth", tags=["authentication"])
-app.include_router(google_auth_router, prefix="/google", tags=["google-auth"])
+# Authentication
+app.include_router(auth, prefix="/auth", tags=["Authentication"])
+app.include_router(google_auth_router, prefix="/google", tags=["Google Auth"])
 
-# Dashboard & User Data
-app.include_router(dashboard, prefix="/dashboard", tags=["dashboard"])
-app.include_router(saved_itinerary, prefix="/itineraries", tags=["saved-itineraries"])
+# User Data
+app.include_router(dashboard, prefix="/dashboard", tags=["Dashboard"])
+app.include_router(saved_itinerary, prefix="/itineraries", tags=["Saved Itineraries"])
 
 # Travel Services
-app.include_router(flights, prefix="/flights", tags=["flights"])
-app.include_router(hotels_router, prefix="/hotels", tags=["hotels"])
-app.include_router(restaurants_router, prefix="/restaurants", tags=["restaurants"])
-app.include_router(weather_router, prefix="/weather", tags=["weather"])
+app.include_router(flights, prefix="/flights", tags=["Flights"])
+app.include_router(hotels_router, prefix="/hotels", tags=["Hotels"])
+app.include_router(restaurants_router, prefix="/restaurants", tags=["Restaurants"])
+app.include_router(weather_router, prefix="/weather", tags=["Weather"])
 
-# Itinerary & Planning
-app.include_router(itinerary, prefix="/itinerary", tags=["itinerary"])
-app.include_router(chat, prefix="/chat", tags=["chat"])
+# AI Itinerary Generation
+app.include_router(itinerary, prefix="/itinerary", tags=["Itinerary"])
+app.include_router(chat, prefix="/chat", tags=["Chat"])
 
-# Bookings & Payments
-app.include_router(bookings_router, prefix="/bookings", tags=["bookings"])
+# Bookings
+app.include_router(bookings_router, prefix="/bookings", tags=["Bookings"])
 
-# Collaboration & Social
-app.include_router(collaboration_router, prefix="/collaboration", tags=["collaboration"])
-app.include_router(notifications_router, prefix="/notifications", tags=["notifications"])
+# Collaboration
+app.include_router(collaboration_router, prefix="/collaboration", tags=["Collaboration"])
+app.include_router(notifications_router, prefix="/notifications", tags=["Notifications"])
 
-# Admin & Monitoring
-app.include_router(ip_tracking_router, prefix="/admin/ip-tracking", tags=["admin", "ip-tracking"])
+# Utilities
+app.include_router(image_proxy_router, prefix="/images", tags=["Images"])
 
-# Image Proxy (to avoid Google rate limits)
-app.include_router(image_proxy_router, prefix="/images", tags=["images"])
+# =============================================================================
+# WEBSOCKET ENDPOINTS
+# =============================================================================
 
-# Mount WebSocket app (Socket.IO - temporarily disabled)
-# from services.websocket_service import socketio_app
-# app.mount("/socket.io", socketio_app)
-
-# Chat Collaboration WebSocket endpoints
-from fastapi import WebSocket
 from services.chat_collaboration_service import chat_service
 
 @app.websocket("/chat/{user_id}")
-async def chat_websocket_endpoint(websocket: WebSocket, user_id: str, user_name: str = None):
-    """Chat collaboration WebSocket endpoint for authenticated users"""
+async def chat_websocket(websocket: WebSocket, user_id: str, user_name: str = None):
+    """WebSocket endpoint for real-time chat collaboration."""
     await chat_service.handle_websocket(websocket, user_id, user_name)
 
 @app.websocket("/chat/{user_id}/{user_name}")
 async def chat_websocket_with_name(websocket: WebSocket, user_id: str, user_name: str):
-    """Chat collaboration WebSocket endpoint with user name"""
+    """WebSocket endpoint with explicit user name."""
     await chat_service.handle_websocket(websocket, user_id, user_name)
+
+# =============================================================================
+# HEALTH & INFO ENDPOINTS
+# =============================================================================
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint."""
-    try:
-        # Test database connection if client exists
-        if Database.client:
+    """Health check endpoint for monitoring."""
+    db_status = "not_initialized"
+    
+    if Database.client:
+        try:
             await Database.client.admin.command('ping')
             db_status = "connected"
-        else:
-            db_status = "not_initialized"
-    except Exception as e:
-        db_status = f"disconnected: {str(e)[:100]}"
+        except Exception as e:
+            db_status = f"error: {str(e)[:50]}"
     
     return {
         "status": "healthy",
-        "message": "SafarBot API is running",
+        "service": "SafarBot API",
         "database": db_status,
-        "version": "1.0.0"
+        "version": "2.0.0"
     }
-
-@app.get("/socket.io/")
-async def socket_io_blocked():
-    """Block Socket.IO requests completely"""
-    from fastapi import Response
-    # Return a response that makes Socket.IO clients stop retrying
-    return Response(
-        content="Socket.IO service discontinued. Use native WebSocket at ws://localhost:8000/ws/",
-        status_code=410,  # 410 Gone - service permanently discontinued
-        headers={
-            "Connection": "close",
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Pragma": "no-cache",
-            "Expires": "0"
-        }
-    )
 
 @app.get("/")
 async def root():
+    """API information endpoint."""
     return {
-        "message": "Welcome to SafarBot API!",
-        "version": "1.0.0",
-        "database": "MongoDB",
+        "service": "SafarBot API",
+        "version": "2.0.0",
+        "description": "AI-powered travel planning platform",
+        "docs": "/docs",
+        "health": "/health",
         "features": [
-            "AI-powered travel planning",
-            "Flight & hotel booking",
-            "Price alerts & predictions",
+            "AI itinerary generation (LangGraph + Gemini)",
+            "Real-time collaboration",
+            "Flight & hotel search",
             "Weather integration",
-            "User authentication"
+            "LangSmith tracing"
         ],
         "endpoints": {
-            "health": "/health",
-          "authentication": {
-                "base": "/auth",
-                "login": "/auth/login",
-                "signup": "/auth/signup",
-                "logout": "/auth/logout",
-                "me": "/auth/me",
-                "otp_verification": "/auth/send-verification-otp"
-            },
-            "dashboard": {
-                "base": "/dashboard",
-                "stats": "/dashboard/stats",
-                "bookings": "/dashboard/bookings",
-                "trips": "/dashboard/trips",
-                "itineraries": "/dashboard/itineraries"
-            },
-            "itineraries": {
-                "base": "/itineraries",
-                "list": "/itineraries",
-                "create": "/itineraries",
-                "get": "/itineraries/{itinerary_id}",
-                "update": "/itineraries/{itinerary_id}",
-                "delete": "/itineraries/{itinerary_id}"
-            },
-            "flights": {
-                "base": "/flights",
-                "search": "/flights/search",
-                "popular": "/flights/popular",
-                "airports": "/flights/airports/suggestions",
-                "booking_options": "/flights/booking-options/{booking_token}",
-                "details": "/flights/{flight_id}",
-                "book": "/flights/book"
-            },
-            "hotels": {
-                "base": "/hotels",
-                "search": "/hotels/search-hotels",
-                "popular": "/hotels/{location}/popular"
-            },
-            "restaurants": {
-                "base": "/restaurants",
-                "recommend": "/restaurants/recommend-restaurants",
-                "popular": "/restaurants/{location}/popular"
-            },
             "itinerary": {
-                "base": "/itinerary",
-                "generate_ai": "/itinerary/generate-itinerary-ai",
-                "generate_complete": "/itinerary/generate-itinerary-complete",
-                "generate": "/itinerary/generate-itinerary",
-                "additional_places": "/itinerary/places/additional"
+                "generate": "POST /itinerary/generate-itinerary",
+                "structure": "POST /itinerary/generate-itinerary-structure",
+                "details": "POST /itinerary/generate-itinerary-details",
+                "additional": "POST /itinerary/places/additional"
             },
-            "chat": {
-                "base": "/chat",
-                "send": "/chat",
-                "history": "/chat/history",
-                "websocket": "/chat/{user_id}"
+            "auth": {
+                "login": "POST /auth/login",
+                "signup": "POST /auth/signup",
+                "me": "GET /auth/me"
             },
-            "bookings": {
-                "base": "/bookings",
-                "create": "/bookings/create",
-                "list": "/bookings",
-                "get": "/bookings/{booking_id}",
-                "get_by_reference": "/bookings/reference/{booking_reference}",
-                "cancel": "/bookings/{booking_id}/cancel",
-                "payment": "/bookings/{booking_id}/payment"
-            },
-            "weather": {
-                "base": "/weather",
-                "current": "/weather/current",
-                "forecast": "/weather/forecast",
-                "coordinates": "/weather/coordinates",
-                "itinerary_format": "/weather/itinerary-format"
+            "travel": {
+                "flights": "POST /flights/search",
+                "hotels": "POST /hotels/search-hotels",
+                "weather": "GET /weather/current"
             },
             "collaboration": {
-                "base": "/collaboration",
-                "invite": "/collaboration/invite",
-                "resend_invitation": "/collaboration/resend-invitation",
-                "invitations": "/collaboration/invitations",
-                "invitation_info": "/collaboration/invitation/{token}/info",
-                "accept": "/collaboration/invitation/{token}/accept",
-                "decline": "/collaboration/invitation/{token}/decline",
-                "collaborators": "/collaboration/itinerary/{itinerary_id}/collaborators",
-                "remove_collaborator": "/collaboration/itinerary/{itinerary_id}/collaborator/{user_id}",
-                "update_role": "/collaboration/itinerary/{itinerary_id}/collaborator/{user_id}/role",
-                "my_collaborations": "/collaboration/my-collaborations",
-                "room_status": "/collaboration/room/status/{itinerary_id}",
-                "room_create": "/collaboration/room/create",
-                "room_join": "/collaboration/room/{room_id}/join",
-                "room_info": "/collaboration/room/{room_id}/info"
-            },
-            "notifications": {
-                "base": "/notifications",
-                "list": "/notifications",
-                "count": "/notifications/count",
-                "mark_read": "/notifications/{notification_id}/read",
-                "mark_all_read": "/notifications/read-all",
-                "delete": "/notifications/{notification_id}"
-            },
-            "admin": {
-                "ip_tracking": {
-                    "base": "/admin/ip-tracking",
-                    "info": "/admin/ip-tracking/info",
-                    "info_by_ip": "/admin/ip-tracking/info/{ip_address}",
-                    "top": "/admin/ip-tracking/top",
-                    "blacklist": "/admin/ip-tracking/blacklist/{ip_address}",
-                    "whitelist": "/admin/ip-tracking/whitelist/{ip_address}",
-                    "suspicious": "/admin/ip-tracking/suspicious",
-                    "stats": "/admin/ip-tracking/stats"
-                }
-            },
-            "websocket": {
-                "chat": "/chat/{user_id}"
+                "invite": "POST /collaboration/invite",
+                "rooms": "POST /collaboration/room/create"
             }
         }
     }
 
+# Block deprecated Socket.IO endpoint
+@app.get("/socket.io/")
+async def socket_io_blocked():
+    return Response(
+        content="Socket.IO discontinued. Use WebSocket at /chat/{user_id}",
+        status_code=410,
+        headers={"Connection": "close"}
+    )
+
+# =============================================================================
+# RUN SERVER
+# =============================================================================
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    uvicorn.run(app, host="0.0.0.0", port=8000)

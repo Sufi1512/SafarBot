@@ -1,8 +1,13 @@
-# Core FastAPI dependencies
+# =============================================================================
+# SafarBot Backend Dependencies
+# =============================================================================
+
+# Core Framework
 fastapi
 uvicorn[standard]
 python-multipart
 python-dotenv
+pydantic
 pydantic-settings
 
 # Database
@@ -10,48 +15,61 @@ motor
 pymongo
 certifi
 
-# Authentication and Security
+# Authentication & Security
 python-jose[cryptography]
 passlib[bcrypt]
 
-# HTTP & API
+# HTTP Clients
 httpx
 requests
 aiofiles
 
 # Email Services
 secure-smtplib
-email-validator  
+email-validator
 
-# Google AI Services
-google-generativeai>=0.8.0
+# =============================================================================
+# AI/ML Stack - LangChain + LangGraph + LangSmith
+# =============================================================================
 
-# SERP API (Google Search Results)
+# Google Gemini (Primary AI)
+google-generativeai
+langchain-google-genai
+
+# LangChain Core
+langchain-core
+
+# LangGraph (Agentic Workflows)
+langgraph
+
+# LangSmith (Tracing & Debugging)
+langsmith
+
+# YAML Prompts
+pyyaml
+
+# =============================================================================
+# External APIs
+# =============================================================================
+
+# SERP API (Google Search/Places)
 google-search-results
 
 # Firebase Admin SDK
 firebase-admin
 
-# LangChain (if using AI workflows)
-langchain-core
-langchain-google-genai
-langsmith
+# =============================================================================
+# Utilities
+# =============================================================================
 
-# Data Processing (minimal)
+# Date/Time
 python-dateutil
 
-# Logging and Monitoring
+# Logging
 structlog
 
-# CORS and Middleware
-fastapi-cors
-
-# WebSocket suppor
+# WebSocket
 python-socketio
 
-# OpenAI GPT-4
-openai
-
-# Additional utilities
+# Type Extensions
 typing-extensions
-pydantic

@@ -10,6 +10,7 @@ import logging
 import asyncio
 import json
 import re
+import time
 from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime, timedelta
 
@@ -19,6 +20,8 @@ import google.generativeai as genai
 from models import ItineraryResponse, DailyPlan
 from config import settings
 from services.serp_cache_service import cached_places_tool
+from services.ai_tracking_service import ai_tracking_service
+from mongo_models import AIProvider, AITaskType
 
 logger = logging.getLogger(__name__)
 
@@ -348,7 +351,15 @@ CRITICAL RULES (MUST FOLLOW):
 
 15. VERIFY before finalizing: Count all place_ids used - each should appear only once (except hotel for check-in/out)
 
-RESPONSE FORMAT: Return ONLY valid JSON with this structure:
+RESPONSE FORMAT: 
+CRITICAL: You MUST return ONLY valid JSON. No markdown, no comments, no explanations.
+- Start with {{ and end with }}
+- Use double quotes for all strings
+- No trailing commas
+- No comments (// or /* */)
+- Escape all quotes in string values
+
+Return ONLY valid JSON with this structure:
 {{
   "destination": "{destination}",
   "total_days": {total_days},
@@ -440,31 +451,156 @@ RESPONSE FORMAT: Return ONLY valid JSON with this structure:
 
 Generate the itinerary now:"""
 
+        start_time = time.time()
+        prompt_text = prompt
+        response_text = ""
+        success = True
+        error_message = None
+        
         try:
             await self._check_request(request)
             print(f"   🤖 Sending prompt to LLM (places available: {sum(len(places) for places in all_places_data.values())})")
             response = self.model.generate_content(prompt)
             response_text = response.text.strip()
+            response_time_ms = (time.time() - start_time) * 1000
             
-            # Clean up the response
-            if response_text.startswith('```json'):
-                response_text = response_text[7:]
-            if response_text.endswith('```'):
-                response_text = response_text[:-3]
+            # Extract token usage from Gemini response
+            # Gemini API provides usage_metadata in response
+            prompt_tokens = 0
+            completion_tokens = 0
             
-            # Parse JSON response
-            itinerary_data = json.loads(response_text.strip())
+            if hasattr(response, 'usage_metadata'):
+                usage = response.usage_metadata
+                prompt_tokens = getattr(usage, 'prompt_token_count', 0)
+                completion_tokens = getattr(usage, 'candidates_token_count', 0)
+            elif hasattr(response, 'prompt_feedback'):
+                # Fallback: estimate tokens (rough approximation: 1 token ≈ 4 characters)
+                prompt_tokens = len(prompt) // 4
+                completion_tokens = len(response_text) // 4
+            
+            # Clean up the response with robust JSON cleaning
+            response_text = self._clean_json_response(response_text)
+            
+            # Parse JSON response with better error handling
+            try:
+                itinerary_data = json.loads(response_text)
+            except json.JSONDecodeError as e:
+                # Log the problematic JSON for debugging
+                error_position = e.pos if hasattr(e, 'pos') else 0
+                context_start = max(0, error_position - 200)
+                context_end = min(len(response_text), error_position + 200)
+                error_context = response_text[context_start:context_end]
+                
+                logger.error(f"JSON parsing error at position {error_position}: {str(e)}")
+                logger.error(f"Error context: ...{error_context}...")
+                
+                # Try to fix common JSON issues
+                fixed_json = self._fix_json_errors(response_text)
+                try:
+                    itinerary_data = json.loads(fixed_json)
+                    logger.info("✅ Successfully fixed JSON errors and parsed response")
+                except json.JSONDecodeError as e2:
+                    logger.error(f"Failed to fix JSON: {str(e2)}")
+                    # Save the problematic response for debugging
+                    import os
+                    debug_dir = "debug_responses"
+                    os.makedirs(debug_dir, exist_ok=True)
+                    debug_file = os.path.join(debug_dir, f"failed_response_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
+                    with open(debug_file, 'w', encoding='utf-8') as f:
+                        f.write(f"Error: {str(e)}\n")
+                        f.write(f"Original Response:\n{response_text}\n")
+                        f.write(f"Fixed Attempt:\n{fixed_json}\n")
+                    logger.error(f"Saved problematic response to {debug_file}")
+                    raise
             
             # Validate and fix duplicate place_ids
             itinerary_data = self._validate_and_fix_duplicates(itinerary_data, all_places_data)
             
             print(f"   ✅ LLM generated itinerary with {len(itinerary_data.get('place_ids_used', []))} places")
             
+            # Log AI usage for Gemini
+            if request:
+                # Extract user info from request if available
+                user_id = None
+                user_email = None
+                if hasattr(request.state, 'user_id'):
+                    user_id = request.state.user_id
+                if hasattr(request.state, 'user_email'):
+                    user_email = request.state.user_email
+                
+                await ai_tracking_service.log_ai_usage(
+                    provider=AIProvider.GEMINI,
+                    model="gemini-2.5-flash",
+                    task_type=AITaskType.ITINERARY_GENERATION,
+                    prompt_tokens=prompt_tokens,
+                    completion_tokens=completion_tokens,
+                    prompt_text=prompt_text,
+                    response_text=response_text[:1000],  # Limit response text for storage
+                    api_endpoint=request.url.path if request else "/itinerary/generate-itinerary-complete",
+                    http_method="POST",
+                    request=request,
+                    user_id=user_id,
+                    user_email=user_email,
+                    request_params={
+                        "destination": destination,
+                        "start_date": start_date,
+                        "end_date": end_date,
+                        "total_days": total_days,
+                        "budget": budget,
+                        "interests": interests,
+                        "travelers": travelers,
+                        "places_prefetched": sum(len(places) for places in all_places_data.values())
+                    },
+                    response_metadata={
+                        "place_ids_used": len(itinerary_data.get('place_ids_used', [])),
+                        "daily_plans": len(itinerary_data.get('daily_plans', [])),
+                        "accommodation_suggestions": len(itinerary_data.get('accommodation_suggestions', []))
+                    },
+                    success=True,
+                    response_time_ms=response_time_ms
+                )
+            
             return itinerary_data, weather_data
             
         except Exception as e:
+            success = False
+            error_message = str(e)
+            response_time_ms = (time.time() - start_time) * 1000
             print(f"   ❌ Error generating itinerary: {str(e)}")
             logger.error(f"LLM generation error: {str(e)}")
+            
+            # Log failed request
+            if request:
+                user_id = None
+                user_email = None
+                if hasattr(request.state, 'user_id'):
+                    user_id = request.state.user_id
+                if hasattr(request.state, 'user_email'):
+                    user_email = request.state.user_email
+                
+                await ai_tracking_service.log_ai_usage(
+                    provider=AIProvider.GEMINI,
+                    model="gemini-2.5-flash",
+                    task_type=AITaskType.ITINERARY_GENERATION,
+                    prompt_tokens=len(prompt_text) // 4,  # Rough estimate
+                    completion_tokens=0,
+                    prompt_text=prompt_text,
+                    response_text="",
+                    api_endpoint=request.url.path if request else "/itinerary/generate-itinerary-complete",
+                    http_method="POST",
+                    request=request,
+                    user_id=user_id,
+                    user_email=user_email,
+                    request_params={
+                        "destination": destination,
+                        "start_date": start_date,
+                        "end_date": end_date,
+                        "total_days": total_days
+                    },
+                    success=False,
+                    error_message=error_message,
+                    response_time_ms=response_time_ms
+                )
             
             # Return basic fallback itinerary
             return {
@@ -952,3 +1088,71 @@ Generate the itinerary now:"""
         print(f"   📈 Dynamic limits for {total_days}-day trip: {dynamic_limits}, summary limit: {summary_limit}")
 
         return dynamic_limits, summary_limit
+    
+    def _clean_json_response(self, text: str) -> str:
+        """
+        Clean LLM response to extract valid JSON
+        Removes markdown code blocks, comments, and other non-JSON content
+        """
+        if not text:
+            return "{}"
+        
+        # Remove markdown code blocks
+        text = text.strip()
+        if text.startswith('```json'):
+            text = text[7:]
+        elif text.startswith('```'):
+            text = text[3:]
+        if text.endswith('```'):
+            text = text[:-3]
+        
+        text = text.strip()
+        
+        # Find JSON object boundaries
+        first_brace = text.find('{')
+        last_brace = text.rfind('}')
+        
+        if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+            text = text[first_brace:last_brace + 1]
+        
+        # Remove single-line comments (// ...)
+        lines = text.split('\n')
+        cleaned_lines = []
+        for line in lines:
+            # Remove // comments but preserve URLs
+            if '://' not in line:
+                line = re.sub(r'//.*$', '', line)
+            cleaned_lines.append(line)
+        text = '\n'.join(cleaned_lines)
+        
+        # Remove multi-line comments (/* ... */)
+        text = re.sub(r'/\*.*?\*/', '', text, flags=re.DOTALL)
+        
+        return text.strip()
+    
+    def _fix_json_errors(self, text: str) -> str:
+        """
+        Attempt to fix common JSON errors:
+        - Trailing commas
+        - Unescaped quotes in strings
+        - Missing commas
+        """
+        if not text:
+            return "{}"
+        
+        # Remove trailing commas before closing braces/brackets
+        text = re.sub(r',\s*}', '}', text)
+        text = re.sub(r',\s*]', ']', text)
+        
+        # Fix unescaped quotes in string values (basic attempt)
+        # This is tricky, so we'll be conservative
+        # Only fix obvious cases where quotes appear in the middle of what looks like a string value
+        
+        # Try to fix missing commas between object properties
+        # Match: "key": value "next_key" (missing comma)
+        text = re.sub(r'("\s*:\s*[^,}\]]+)\s*"', r'\1, "', text)
+        
+        # Remove duplicate commas
+        text = re.sub(r',\s*,', ',', text)
+        
+        return text.strip()

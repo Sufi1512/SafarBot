@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional, Dict, Any
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from bson import ObjectId
 from enum import Enum
 import uuid
@@ -578,4 +578,62 @@ class EnhancedUser(User):
     last_session_id: Optional[str] = None
     is_premium: bool = False
     referral_code: str = Field(default_factory=lambda: str(uuid.uuid4())[:8].upper())
-    referred_by: Optional[str] = None 
+    referred_by: Optional[str] = None
+
+# AI Usage Tracking Models
+class AIProvider(str, Enum):
+    OPENAI = "openai"
+    GEMINI = "gemini"
+    ANTHROPIC = "anthropic"
+
+class AITaskType(str, Enum):
+    ITINERARY_GENERATION = "itinerary_generation"
+    CHAT_RESPONSE = "chat_response"
+    TRAVEL_ADVICE = "travel_advice"
+    IMAGE_ANALYSIS = "image_analysis"
+    PRICE_PREDICTION = "price_prediction"
+    ITINERARY_ENHANCEMENT = "itinerary_enhancement"
+
+class AIUsageDocument(MongoBaseModel):
+    """Model for tracking AI API usage, tokens, and costs"""
+    # Request identification
+    request_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    api_endpoint: str  # e.g., "/itinerary/generate-itinerary-complete"
+    http_method: str  # GET, POST, etc.
+    
+    # User information
+    user_id: Optional[PyObjectId] = None
+    user_email: Optional[str] = None
+    session_id: Optional[str] = None
+    
+    # AI provider details
+    ai_provider: AIProvider  # openai, gemini, etc.
+    model_name: str  # e.g., "gpt-4-turbo-preview", "gemini-2.5-flash"
+    task_type: AITaskType  # itinerary_generation, chat_response, etc.
+    
+    # Token usage
+    prompt_tokens: int = 0  # Input tokens
+    completion_tokens: int = 0  # Output tokens
+    total_tokens: int = 0  # Total tokens used
+    
+    # Cost tracking (in USD)
+    estimated_cost: Optional[float] = None  # Estimated cost for this request
+    
+    # Request/Response metadata
+    prompt_length: int = 0  # Character count of prompt
+    response_length: int = 0  # Character count of response
+    request_timestamp: datetime = Field(default_factory=datetime.utcnow)
+    response_time_ms: Optional[float] = None  # Time taken in milliseconds
+    
+    # Request context
+    destination: Optional[str] = None  # For itinerary requests
+    request_params: Dict[str, Any] = Field(default_factory=dict)  # Request parameters
+    response_metadata: Dict[str, Any] = Field(default_factory=dict)  # Response metadata
+    
+    # Status
+    success: bool = True
+    error_message: Optional[str] = None
+    
+    # Client information
+    client_ip: Optional[str] = None
+    user_agent: Optional[str] = None 

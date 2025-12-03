@@ -1,10 +1,20 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import os
+import logging
 from dotenv import load_dotenv
 
 # Load environment variables first
 load_dotenv('.env')
+
+# Configure logging to suppress MongoDB background task errors
+# These are expected during network issues and don't affect functionality
+logging.getLogger("pymongo").setLevel(logging.WARNING)
+logging.getLogger("pymongo.synchronous").setLevel(logging.ERROR)
+logging.getLogger("pymongo.synchronous.mongo_client").setLevel(logging.ERROR)
+logging.getLogger("pymongo.synchronous.pool").setLevel(logging.ERROR)
+logging.getLogger("pymongo.synchronous.topology").setLevel(logging.ERROR)
+logging.getLogger("pymongo.network_layer").setLevel(logging.ERROR)
 
 # Import routers
 from routers import flights, chat, itinerary, auth, dashboard

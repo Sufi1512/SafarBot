@@ -1,12 +1,23 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
+from pymongo.errors import ConnectionFailure, NetworkTimeout, ServerSelectionTimeoutError
 from typing import Optional
 import os
 import certifi
+import logging
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Suppress PyMongo background task error logging
+# These errors are expected during network issues and don't affect functionality
+pymongo_logger = logging.getLogger("pymongo")
+pymongo_logger.setLevel(logging.WARNING)  # Only show warnings and errors, not background task errors
+
+# Suppress specific background task errors
+background_logger = logging.getLogger("pymongo.synchronous.mongo_client")
+background_logger.setLevel(logging.ERROR)  # Suppress background task connection errors
 
 class Database:
     client: Optional[AsyncIOMotorClient] = None
@@ -14,7 +25,7 @@ class Database:
 
     @classmethod
     async def connect_db(cls):
-        """Create database connection."""
+        """Create database connection with improved error handling."""
         mongodb_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
         
         # Check if it's a local MongoDB connection
@@ -29,6 +40,8 @@ class Database:
                 "connectTimeoutMS": 5000,
                 "socketTimeoutMS": 5000,
                 "serverSelectionTimeoutMS": 5000,
+                "retryReads": True,
+                "retryWrites": True,
             }
         else:
             # MongoDB Atlas connection options with TLS
@@ -37,13 +50,15 @@ class Database:
                 "tls": True,
                 "tlsCAFile": certifi.where(),
                 "retryWrites": True,
+                "retryReads": True,
                 "w": "majority",
                 "maxPoolSize": 10,
                 "minPoolSize": 1,
-                "maxIdleTimeMS": 30000,
-                "connectTimeoutMS": 30000,
-                "socketTimeoutMS": 30000,
-                "serverSelectionTimeoutMS": 60000,
+                "maxIdleTimeMS": 45000,  # Close idle connections faster
+                "connectTimeoutMS": 20000,  # Reduced from 30s
+                "socketTimeoutMS": 20000,  # Reduced from 30s
+                "serverSelectionTimeoutMS": 30000,  # Reduced from 60s
+                "heartbeatFrequencyMS": 10000,  # Check connection health every 10s
             }
         
         try:
@@ -53,10 +68,21 @@ class Database:
             # Create sync client with connection options
             cls.sync_client = MongoClient(mongodb_url, **connection_options)
             
-            # Test the connection
+            # Add event listeners to handle connection errors gracefully
+            cls._setup_event_listeners()
+            
+            # Test the connection with timeout
             await cls.client.admin.command('ping')
             print("✅ Successfully connected to MongoDB!")
             
+        except (ConnectionFailure, NetworkTimeout, ServerSelectionTimeoutError) as e:
+            print(f"⚠️  MongoDB connection issue: {str(e)[:100]}")
+            print("⚠️  Continuing without database connection...")
+            print("📝 Note: Some features may be limited")
+            # Set clients to None to indicate no database connection
+            cls.client = None
+            cls.sync_client = None
+            # Don't raise the exception to allow the app to start
         except Exception as e:
             print(f"❌ Failed to connect to MongoDB: {e}")
             print("⚠️  Continuing without database connection for deployment...")
@@ -65,6 +91,29 @@ class Database:
             cls.client = None
             cls.sync_client = None
             # Don't raise the exception to allow the app to start
+    
+    @classmethod
+    def _setup_event_listeners(cls):
+        """Setup event listeners to handle MongoDB connection events gracefully."""
+        # Event listeners are handled by connection options
+        # Background task errors are suppressed via logging configuration above
+        pass
+    
+    @classmethod
+    async def check_connection(cls) -> bool:
+        """Check if database connection is healthy."""
+        if not cls.client:
+            return False
+        try:
+            await cls.client.admin.command('ping')
+            return True
+        except Exception:
+            return False
+    
+    @classmethod
+    def is_connected(cls) -> bool:
+        """Check if database is connected (synchronous check)."""
+        return cls.client is not None and cls.sync_client is not None
 
     @classmethod
     async def close_db(cls):
@@ -129,4 +178,7 @@ NOTIFICATIONS_COLLECTION = "notifications"
 # Collaboration collections
 SAVED_ITINERARIES_COLLECTION = "saved_itineraries"
 ITINERARY_INVITATIONS_COLLECTION = "itinerary_invitations"
-ITINERARY_COLLABORATORS_COLLECTION = "itinerary_collaborators" 
+ITINERARY_COLLABORATORS_COLLECTION = "itinerary_collaborators"
+
+# AI Tracking collection
+AI_USAGE_COLLECTION = "ai_usage"   

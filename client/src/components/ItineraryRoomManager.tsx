@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MessageCircle, Users, Plus, ExternalLink, Copy, Check } from 'lucide-react';
+import { getApiBaseUrl } from '../config/apiConfig';
 // import { useAuth } from '../contexts/AuthContext'; // Currently unused but may be needed for future features
 
 interface RoomStatus {
@@ -42,11 +43,7 @@ export const ItineraryRoomManager: React.FC<ItineraryRoomManagerProps> = ({
       setLoading(true);
       setError(null);
       
-      const apiBaseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || (
-        import.meta.env.PROD 
-          ? 'https://safarbot-n24f.onrender.com' 
-          : 'http://localhost:8000'
-      );
+      const apiBaseUrl = getApiBaseUrl();
       const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/collaboration/room/status/${itineraryId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -77,11 +74,7 @@ export const ItineraryRoomManager: React.FC<ItineraryRoomManagerProps> = ({
       setCreating(true);
       setError(null);
 
-      const apiBaseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || (
-        import.meta.env.PROD 
-          ? 'https://safarbot-n24f.onrender.com' 
-          : 'http://localhost:8000'
-      );
+      const apiBaseUrl = getApiBaseUrl();
       const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/collaboration/room/create`, {
         method: 'POST',
         headers: {
@@ -126,11 +119,7 @@ export const ItineraryRoomManager: React.FC<ItineraryRoomManagerProps> = ({
       setJoining(true);
       setError(null);
 
-      const apiBaseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || (
-        import.meta.env.PROD 
-          ? 'https://safarbot-n24f.onrender.com' 
-          : 'http://localhost:8000'
-      );
+      const apiBaseUrl = getApiBaseUrl();
       const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/collaboration/room/${roomStatus.room_id}/join`, {
         method: 'POST',
         headers: {

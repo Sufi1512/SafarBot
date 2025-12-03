@@ -6,9 +6,13 @@ Superior AI responses compared to Google Gemini for travel planning
 import asyncio
 import logging
 import os
+import time
 from typing import Dict, Any, Optional, List
 from openai import AsyncOpenAI
 from config import settings
+from fastapi import Request
+from services.ai_tracking_service import ai_tracking_service
+from mongo_models import AIProvider, AITaskType
 import json
 
 logger = logging.getLogger(__name__)
@@ -47,7 +51,12 @@ class OpenAIService:
         context: Optional[Dict[str, Any]] = None,
         system_prompt: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 1500
+        max_tokens: int = 1500,
+        request: Optional[Request] = None,
+        api_endpoint: str = "/chat",
+        task_type: AITaskType = AITaskType.CHAT_RESPONSE,
+        user_id: Optional[str] = None,
+        user_email: Optional[str] = None
     ) -> str:
         """
         Get AI response for user message with advanced prompting
@@ -56,6 +65,12 @@ class OpenAIService:
             await self.initialize()
             if not self.client:
                 return "I apologize, but the AI service is not properly configured. Please check the API configuration."
+        
+        start_time = time.time()
+        prompt_text = message
+        response_text = ""
+        success = True
+        error_message = None
         
         try:
             # Default travel-focused system prompt
@@ -95,6 +110,9 @@ Provide detailed, personalized, and actionable travel advice. Be enthusiastic bu
                 "content": message
             })
             
+            # Build full prompt for tracking
+            full_prompt = "\n".join([msg["content"] for msg in messages])
+            
             # Make API call
             response = await self.client.chat.completions.create(
                 model=self.model,
@@ -106,10 +124,61 @@ Provide detailed, personalized, and actionable travel advice. Be enthusiastic bu
                 presence_penalty=0.1
             )
             
-            return response.choices[0].message.content
+            response_text = response.choices[0].message.content
+            response_time_ms = (time.time() - start_time) * 1000
+            
+            # Extract token usage
+            usage = response.usage
+            prompt_tokens = usage.prompt_tokens if usage else 0
+            completion_tokens = usage.completion_tokens if usage else 0
+            
+            # Log AI usage
+            await ai_tracking_service.log_ai_usage(
+                provider=AIProvider.OPENAI,
+                model=self.model,
+                task_type=task_type,
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                prompt_text=full_prompt,
+                response_text=response_text,
+                api_endpoint=api_endpoint,
+                http_method="POST",
+                request=request,
+                user_id=user_id,
+                user_email=user_email,
+                request_params={"message_length": len(message), "has_context": context is not None},
+                response_metadata={"temperature": temperature, "max_tokens": max_tokens},
+                success=True,
+                response_time_ms=response_time_ms
+            )
+            
+            return response_text
             
         except Exception as e:
+            success = False
+            error_message = str(e)
+            response_time_ms = (time.time() - start_time) * 1000
             logger.error(f"OpenAI API error: {str(e)}")
+            
+            # Log failed request
+            await ai_tracking_service.log_ai_usage(
+                provider=AIProvider.OPENAI,
+                model=self.model,
+                task_type=task_type,
+                prompt_tokens=0,
+                completion_tokens=0,
+                prompt_text=prompt_text,
+                response_text="",
+                api_endpoint=api_endpoint,
+                http_method="POST",
+                request=request,
+                user_id=user_id,
+                user_email=user_email,
+                success=False,
+                error_message=error_message,
+                response_time_ms=response_time_ms
+            )
+            
             return "I apologize, but I'm experiencing technical difficulties. Please try again in a moment."
     
     async def generate_itinerary(
@@ -120,7 +189,11 @@ Provide detailed, personalized, and actionable travel advice. Be enthusiastic bu
         interests: List[str] = [],
         travel_style: str = "balanced",
         travelers: int = 1,
-        additional_context: Optional[Dict[str, Any]] = None
+        additional_context: Optional[Dict[str, Any]] = None,
+        request: Optional[Request] = None,
+        api_endpoint: str = "/itinerary/generate-itinerary-ai",
+        user_id: Optional[str] = None,
+        user_email: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Generate detailed travel itinerary using GPT-4
@@ -208,7 +281,12 @@ Make sure to:
                 itinerary_prompt,
                 context=additional_context,
                 temperature=0.3,  # Lower temperature for more consistent structure
-                max_tokens=4000
+                max_tokens=4000,
+                request=request,
+                api_endpoint=api_endpoint,
+                task_type=AITaskType.ITINERARY_GENERATION,
+                user_id=user_id,
+                user_email=user_email
             )
             
             # Try to parse as JSON, fallback to structured text
@@ -280,7 +358,11 @@ Make sure to:
         self,
         destination: str,
         question: str,
-        context: Optional[Dict[str, Any]] = None
+        context: Optional[Dict[str, Any]] = None,
+        request: Optional[Request] = None,
+        api_endpoint: str = "/chat",
+        user_id: Optional[str] = None,
+        user_email: Optional[str] = None
     ) -> str:
         """
         Get specific travel advice for a destination
@@ -302,7 +384,12 @@ Context: {json.dumps(context, indent=2) if context else 'None'}"""
         return await self.get_response(
             specialized_prompt,
             context=context,
-            temperature=0.4  # Balanced creativity and accuracy
+            temperature=0.4,  # Balanced creativity and accuracy
+            request=request,
+            api_endpoint=api_endpoint,
+            task_type=AITaskType.TRAVEL_ADVICE,
+            user_id=user_id,
+            user_email=user_email
         )
     
     async def enhance_itinerary_description(

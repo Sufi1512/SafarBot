@@ -42,7 +42,20 @@ async def generate_itinerary_structure(request_body: ItineraryRequest, http_requ
     """Generate itinerary structure only and cache heavy place details for secondary retrieval."""
 
     try:
-        logger.info(f"Generating itinerary structure for {request_body.destination}")
+        user_id = getattr(http_request.state, 'user_id', None)
+        user_email = getattr(http_request.state, 'user_email', None)
+        
+        logger.info("="*80)
+        logger.info("🚀 ITINERARY API - Structure Generation Request")
+        logger.info(f"   📍 Endpoint: /itinerary/generate-itinerary-structure")
+        logger.info(f"   🌍 Destination: {request_body.destination}")
+        logger.info(f"   📅 Dates: {request_body.start_date} to {request_body.end_date}")
+        logger.info(f"   👥 Travelers: {request_body.travelers}")
+        logger.info(f"   💰 Budget: ${request_body.budget if request_body.budget else 'Flexible'}")
+        logger.info(f"   🎯 Interests: {', '.join(request_body.interests) if request_body.interests else 'General'}")
+        logger.info(f"   👤 User: {user_id or 'Anonymous'} ({user_email or 'No email'})")
+        logger.info(f"   🌐 IP: {http_request.client.host if http_request.client else 'Unknown'}")
+        logger.info("="*80)
 
         structure_response = await itinerary_service.generate_itinerary_structure(
             destination=request_body.destination,
@@ -65,10 +78,12 @@ async def generate_itinerary_structure(request_body: ItineraryRequest, http_requ
             request=http_request
         )
 
+        logger.info("✅ ITINERARY API - Structure generation completed successfully")
+        
         return structure_response
 
     except Exception as e:
-        logger.error(f"Error generating itinerary structure: {str(e)}")
+        logger.error(f"❌ ITINERARY API - Error generating structure: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to generate itinerary structure: {str(e)}")
 
 
@@ -201,7 +216,24 @@ async def generate_itinerary_complete(request_body: ItineraryRequest, http_reque
     For faster response, use /generate-itinerary-ai + /places/additional separately.
     """
     try:
-        logger.info(f"Generating complete itinerary for {request_body.destination}")
+        user_id = getattr(http_request.state, 'user_id', None)
+        user_email = getattr(http_request.state, 'user_email', None)
+        
+        logger.info("="*80)
+        logger.info("🚀 ITINERARY API - Complete Generation Request")
+        logger.info(f"   📍 Endpoint: /itinerary/generate-itinerary-complete")
+        logger.info(f"   🌍 Destination: {request_body.destination}")
+        logger.info(f"   📅 Dates: {request_body.start_date} to {request_body.end_date}")
+        logger.info(f"   👥 Travelers: {request_body.travelers} ({request_body.travel_companion or 'General'})")
+        logger.info(f"   💰 Budget: ${request_body.budget if request_body.budget else 'Flexible'} ({request_body.budget_range or 'Not specified'})")
+        logger.info(f"   🎯 Interests: {', '.join(request_body.interests) if request_body.interests else 'General'}")
+        logger.info(f"   🏨 Accommodation: {request_body.hotel_rating_preference or request_body.accommodation_type or 'Standard'}")
+        logger.info(f"   🚶 Trip Pace: {request_body.trip_pace or 'Balanced'}")
+        logger.info(f"   🍽️ Dietary: {', '.join(request_body.dietary_preferences) if request_body.dietary_preferences else 'No restrictions'}")
+        logger.info(f"   👤 User: {user_id or 'Anonymous'} ({user_email or 'No email'})")
+        logger.info(f"   🌐 IP: {http_request.client.host if http_request.client else 'Unknown'}")
+        logger.info(f"   📧 Email: {request_body.email or 'Not provided'}")
+        logger.info("="*80)
         
         complete_response = await itinerary_service.generate_itinerary(
             destination=request_body.destination,
@@ -228,16 +260,22 @@ async def generate_itinerary_complete(request_body: ItineraryRequest, http_reque
         itinerary = complete_response.get('itinerary', {})
         place_details = complete_response.get('place_details', {})
         additional_places = complete_response.get('additional_places', {})
+        metadata = complete_response.get('metadata', {})
         
-        print(f"✅ COMPLETE ITINERARY ENDPOINT - Returning full data:")
-        print(f"   📋 Itinerary: {len(itinerary.get('daily_plans', []))} days")
-        print(f"   🗺️  Place details: {len(place_details)} places with full metadata")
-        print(f"   🎯 Additional places: {sum(len(places) for places in additional_places.values())}")
+        logger.info("="*80)
+        logger.info("✅ ITINERARY API - Complete generation finished")
+        logger.info(f"   📋 Itinerary: {len(itinerary.get('daily_plans', []))} days")
+        logger.info(f"   🗺️  Place details: {len(place_details)} places with full metadata")
+        logger.info(f"   🎯 Additional places: {sum(len(places) for places in additional_places.values())} places")
+        logger.info(f"   📊 Total places prefetched: {metadata.get('total_places_prefetched', 0)}")
+        logger.info(f"   📊 Places used in itinerary: {metadata.get('places_used_in_itinerary', 0)}")
+        logger.info(f"   🌤️  Weather included: {metadata.get('weather_included', False)}")
+        logger.info("="*80)
         
         return complete_response
         
     except Exception as e:
-        logger.error(f"Error generating complete itinerary: {str(e)}")
+        logger.error(f"❌ ITINERARY API - Error generating complete itinerary: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to generate complete itinerary: {str(e)}")
 
 

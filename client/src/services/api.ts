@@ -88,15 +88,10 @@ export interface EnhancedItineraryResponse {
   [key: string]: any; // Allow additional properties
 }
 
-// Base URL for API - Render backend for production, localhost for development
-// Note: Vite exposes VITE_* environment variables to the client-side code.
-// This is by design for client-side API keys (Google Maps, Firebase, etc.)
-// These keys are secured by domain restrictions on the service provider side.
-const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || (
-  import.meta.env.PROD 
-    ? 'https://safarbot-n24f.onrender.com' 
-    : 'http://localhost:8000'
-);
+// Base URL for API - Uses centralized config
+import { getApiBaseUrl } from '../config/apiConfig';
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Create axios instance
 const api = axios.create({

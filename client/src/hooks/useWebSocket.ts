@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { getApiBaseUrlWithoutProtocol } from '../config/apiConfig';
 
 interface WebSocketOptions {
   autoConnect?: boolean;
@@ -57,9 +58,7 @@ export const useWebSocket = (options: WebSocketOptions = {}) => {
     if (!user || socketRef.current?.connected) return;
 
     try {
-      const socketUrl = process.env.NODE_ENV === 'development' 
-        ? 'http://localhost:8000' 
-        : 'https://safarbot-n24f.onrender.com';
+      const socketUrl = getApiBaseUrlWithoutProtocol();
 
       socketRef.current = io(socketUrl, {
         auth: {

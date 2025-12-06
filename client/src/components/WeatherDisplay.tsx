@@ -42,7 +42,7 @@ export const WeatherDisplay: React.FC<WeatherDisplayProps> = ({
       <div className={`bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800 ${className}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <span className="text-2xl">{getWeatherIcon(current.description)}</span>
+            <span className="text-2xl">{getWeatherIcon(current.description || current.condition)}</span>
             <div>
               <p className="font-semibold text-gray-900 dark:text-white">
                 {location.city}, {location.country}
@@ -57,7 +57,7 @@ export const WeatherDisplay: React.FC<WeatherDisplayProps> = ({
               {Math.round(current.temperature)}°C
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Feels like {Math.round(current.feels_like)}°C
+              Feels like {current.feels_like ? Math.round(current.feels_like) : Math.round(current.temperature)}°C
             </p>
           </div>
         </div>
@@ -83,7 +83,7 @@ export const WeatherDisplay: React.FC<WeatherDisplayProps> = ({
             </div>
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400">
-            <span className="font-medium">Location:</span> {location.coordinates.lat.toFixed(2)}, {location.coordinates.lon.toFixed(2)}
+            <span className="font-medium">Location:</span> {location.coordinates ? `${location.coordinates.lat.toFixed(2)}, ${location.coordinates.lon.toFixed(2)}` : (location.lat && location.lon ? `${location.lat.toFixed(2)}, ${location.lon.toFixed(2)}` : 'N/A')}
           </div>
         </div>
       </div>
@@ -96,7 +96,7 @@ export const WeatherDisplay: React.FC<WeatherDisplayProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-4">
-            <span className="text-4xl">{getWeatherIcon(current.description)}</span>
+            <span className="text-4xl">{getWeatherIcon(current.description || current.condition)}</span>
             <div>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                 {location.city}, {location.country}
@@ -111,7 +111,7 @@ export const WeatherDisplay: React.FC<WeatherDisplayProps> = ({
               {Math.round(current.temperature)}°C
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Feels like {Math.round(current.feels_like)}°C
+              Feels like {current.feels_like ? Math.round(current.feels_like) : Math.round(current.temperature)}°C
             </p>
           </div>
         </div>
@@ -151,10 +151,10 @@ export const WeatherDisplay: React.FC<WeatherDisplayProps> = ({
               💡 Weather Recommendations
             </h4>
             <ul className="space-y-1">
-              {recommendations.map((recommendation, index) => (
+              {recommendations.map((recommendation: { type?: string; message: string; priority?: string } | string, index: number) => (
                 <li key={index} className="text-sm text-amber-700 dark:text-amber-300 flex items-start">
                   <span className="mr-2">•</span>
-                  {recommendation}
+                  {typeof recommendation === 'string' ? recommendation : recommendation.message}
                 </li>
               ))}
             </ul>
@@ -163,7 +163,7 @@ export const WeatherDisplay: React.FC<WeatherDisplayProps> = ({
 
         {/* Coordinates */}
         <div className="mt-4 text-xs text-gray-500 dark:text-gray-400 text-center">
-          📍 {location.coordinates.lat.toFixed(4)}, {location.coordinates.lon.toFixed(4)}
+          📍 {location.coordinates ? `${location.coordinates.lat.toFixed(4)}, ${location.coordinates.lon.toFixed(4)}` : (location.lat && location.lon ? `${location.lat.toFixed(4)}, ${location.lon.toFixed(4)}` : 'N/A')}
         </div>
       </div>
     </Card>

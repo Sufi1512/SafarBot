@@ -890,7 +890,7 @@ const FlightBookingPage: React.FC = () => {
                           </div>
                         )}
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {flight.flight_segments[0]?.airline || 'Multiple Airlines'}
+                          {flight.flight_segments?.[0]?.airline || flight.airline || 'Multiple Airlines'}
                         </div>
                         <div className="text-xs text-gray-600 dark:text-gray-300">{flight.flight_type}</div>
                       </div>
@@ -899,13 +899,13 @@ const FlightBookingPage: React.FC = () => {
                       <div className="flex items-center space-x-4">
                         <div className="text-center">
                           <div className="text-lg font-bold text-gray-900 dark:text-white">
-                            {flight.flight_segments[0]?.departure.time}
+                            {flight.flight_segments?.[0]?.departure.time || flight.departure.time}
                           </div>
                           <div className="text-sm text-gray-600 dark:text-gray-300">
-                            {flight.flight_segments[0]?.departure.airport}
+                            {flight.flight_segments?.[0]?.departure.airport || flight.departure.airport}
                           </div>
                           <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {flight.flight_segments[0]?.departure.airport_name}
+                            {flight.flight_segments?.[0]?.departure.airport_name || flight.departure.airport}
                           </div>
                         </div>
                         <div className="flex flex-col items-center">
@@ -917,13 +917,13 @@ const FlightBookingPage: React.FC = () => {
                         </div>
                         <div className="text-center">
                           <div className="text-lg font-bold text-gray-900 dark:text-white">
-                            {flight.flight_segments[flight.flight_segments.length - 1]?.arrival.time}
+                            {flight.flight_segments?.[flight.flight_segments.length - 1]?.arrival.time || flight.arrival.time}
                           </div>
                           <div className="text-sm text-gray-600 dark:text-gray-300">
-                            {flight.flight_segments[flight.flight_segments.length - 1]?.arrival.airport}
+                            {flight.flight_segments?.[flight.flight_segments.length - 1]?.arrival.airport || flight.arrival.airport}
                           </div>
                           <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {flight.flight_segments[flight.flight_segments.length - 1]?.arrival.airport_name}
+                            {flight.flight_segments?.[flight.flight_segments.length - 1]?.arrival.airport_name || flight.arrival.airport}
                           </div>
                         </div>
                       </div>
@@ -932,14 +932,16 @@ const FlightBookingPage: React.FC = () => {
                       <div className="text-center">
                         <div className="text-xs text-gray-500 dark:text-gray-400">Carbon Emissions</div>
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {Math.round(flight.carbon_emissions.this_flight / 1000)}kg CO₂
+                          {flight.carbon_emissions ? `${Math.round(flight.carbon_emissions.this_flight / 1000)}kg CO₂` : 'N/A'}
                         </div>
-                        <div className={`text-xs ${
-                          flight.carbon_emissions.difference_percent < 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                        }`}>
-                          {flight.carbon_emissions.difference_percent > 0 ? '+' : ''}
-                          {flight.carbon_emissions.difference_percent}% vs typical
-                        </div>
+                        {flight.carbon_emissions && (
+                          <div className={`text-xs ${
+                            flight.carbon_emissions.difference_percent < 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                          }`}>
+                            {flight.carbon_emissions.difference_percent > 0 ? '+' : ''}
+                            {flight.carbon_emissions.difference_percent}% vs typical
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -985,7 +987,7 @@ const FlightBookingPage: React.FC = () => {
                   {/* Flight Segments Details */}
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                     <div className="space-y-3">
-                      {flight.flight_segments.map((segment, _index) => (
+                      {flight.flight_segments?.map((segment: any, _index: number) => (
                         <div key={segment.id} className="flex items-center justify-between">
                           <div className="flex items-center space-x-4">
                             {/* Segment Route */}
@@ -1028,7 +1030,7 @@ const FlightBookingPage: React.FC = () => {
 
                           {/* Amenities */}
                           <div className="flex space-x-1">
-                            {segment.amenities.slice(0, 3).map((amenity, _amenityIndex) => (
+                            {segment.amenities.slice(0, 3).map((amenity: string, _amenityIndex: number) => (
                               <span
                                 key={_amenityIndex}
                                 className="px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 text-xs rounded-full border border-green-200 dark:border-green-800"
@@ -1047,11 +1049,11 @@ const FlightBookingPage: React.FC = () => {
                       ))}
 
                       {/* Layovers */}
-                      {flight.layovers.length > 0 && (
+                      {flight.layovers && flight.layovers.length > 0 && (
                         <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
                           <div className="text-sm font-medium text-gray-900 dark:text-white mb-2">Layovers:</div>
                           <div className="space-y-2">
-                            {flight.layovers.map((layover, index) => (
+                            {flight.layovers.map((layover: any, index: number) => (
                               <div key={index} className="flex items-center space-x-2 text-xs text-gray-600 dark:text-gray-300">
                                 <Clock className="w-3 h-3" />
                                 <span>
@@ -1089,10 +1091,10 @@ const FlightBookingPage: React.FC = () => {
               <div>
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Selected Flight</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">
-                      {selectedFlight.flight_segments[0]?.airline} {selectedFlight.flight_segments[0]?.flight_number}
+                      {selectedFlight.flight_segments?.[0]?.airline || selectedFlight.airline} {selectedFlight.flight_segments?.[0]?.flight_number || selectedFlight.flight_number}
                     </p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
-                  {selectedFlight.flight_segments[0]?.departure.airport} → {selectedFlight.flight_segments[selectedFlight.flight_segments.length - 1]?.arrival.airport}
+                  {selectedFlight.flight_segments?.[0]?.departure.airport || selectedFlight.departure.airport} → {selectedFlight.flight_segments?.[selectedFlight.flight_segments.length - 1]?.arrival.airport || selectedFlight.arrival.airport}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {selectedFlight.total_duration} • {selectedFlight.stops === 0 ? 'Direct' : `${selectedFlight.stops} stop${selectedFlight.stops > 1 ? 's' : ''}`}

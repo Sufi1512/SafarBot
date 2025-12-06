@@ -459,7 +459,7 @@ const BookingOptionsPage: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
         >
-          {bookingData?.selected_flights?.map((flight) => renderFlightDetails(flight))}
+          {bookingData?.selected_flights?.map((flight: any) => renderFlightDetails(flight))}
         </motion.div>
 
         {/* Booking Options */}
@@ -474,7 +474,7 @@ const BookingOptionsPage: React.FC = () => {
             <p className="text-secondary-600 dark:text-secondary-300 text-lg">Select the most convenient way to book your flight</p>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {bookingData?.booking_options?.map((option, index) => renderBookingOption(option, index))}
+            {bookingData?.booking_options?.map((option: BookingOption, index: number) => renderBookingOption(option, index))}
           </div>
         </motion.div>
 

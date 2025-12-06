@@ -82,8 +82,8 @@ export const WeatherCard: React.FC<WeatherCardProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <img
-              src={getWeatherIcon(weatherData.current.icon)}
-              alt={weatherData.current.description}
+              src={getWeatherIcon(weatherData.current.icon || weatherData.current.condition || '')}
+              alt={weatherData.current.description || weatherData.current.condition}
               className="w-8 h-8"
             />
             <div>
@@ -122,7 +122,7 @@ export const WeatherCard: React.FC<WeatherCardProps> = ({
             </div>
           </div>
           <div className="text-xs text-gray-500">
-            <span className="font-medium">Feels like:</span> {Math.round(weatherData.current.feels_like)}°C
+            <span className="font-medium">Feels like:</span> {weatherData.current.feels_like ? Math.round(weatherData.current.feels_like) : Math.round(weatherData.current.temperature)}°C
           </div>
         </div>
       </Card>
@@ -141,8 +141,8 @@ export const WeatherCard: React.FC<WeatherCardProps> = ({
           </p>
         </div>
         <img
-          src={getWeatherIcon(weatherData.current.icon)}
-          alt={weatherData.current.description}
+          src={getWeatherIcon(weatherData.current.icon || weatherData.current.condition || '')}
+          alt={weatherData.current.description || weatherData.current.condition || ''}
           className="w-12 h-12"
         />
       </div>
@@ -153,7 +153,7 @@ export const WeatherCard: React.FC<WeatherCardProps> = ({
             {Math.round(weatherData.current.temperature)}°C
           </div>
           <div className="text-sm text-gray-600">
-            Feels like {Math.round(weatherData.current.feels_like)}°C
+            Feels like {weatherData.current.feels_like ? Math.round(weatherData.current.feels_like) : Math.round(weatherData.current.temperature)}°C
           </div>
         </div>
         <div className="text-right">
@@ -186,7 +186,9 @@ export const WeatherCard: React.FC<WeatherCardProps> = ({
         <div className="mt-3 p-2 bg-blue-50 rounded-lg">
           <div className="text-xs font-medium text-blue-800 mb-1">💡 Travel Tip</div>
           <div className="text-xs text-blue-700">
-            {weatherData.recommendations[0]}
+            {typeof weatherData.recommendations[0] === 'string' 
+              ? weatherData.recommendations[0] 
+              : weatherData.recommendations[0]?.message}
           </div>
         </div>
       )}

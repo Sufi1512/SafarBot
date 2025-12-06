@@ -78,9 +78,9 @@ const ItineraryPage: React.FC = () => {
           type: 'checkin',
           title: 'Hotel Check-in',
           description: 'Arrive at your accommodation',
-          location: data.itinerary.accommodation_suggestions[0]?.location || 'Hotel',
+          location: data.itinerary.accommodation_suggestions?.[0]?.location || 'Hotel',
           cost: '0',
-          placeId: data.itinerary.accommodation_suggestions[0]?.place_id
+          placeId: data.itinerary.accommodation_suggestions?.[0]?.place_id
         });
       }
 
@@ -91,15 +91,15 @@ const ItineraryPage: React.FC = () => {
           type: 'checkout',
           title: 'Hotel Check-out',
           description: 'Depart from your accommodation',
-          location: data.itinerary.accommodation_suggestions[0]?.location || 'Hotel',
+          location: data.itinerary.accommodation_suggestions?.[0]?.location || 'Hotel',
           cost: '0',
-          placeId: data.itinerary.accommodation_suggestions[0]?.place_id
+          placeId: data.itinerary.accommodation_suggestions?.[0]?.place_id
         });
       }
 
       // Add activities
-      plan.activities.forEach((activity) => {
-        const placeDetails = data.place_details[activity.place_id];
+      plan.activities.forEach((activity: any) => {
+        const placeDetails = data.place_details?.[activity.place_id];
         events.push({
           time: activity.time,
           type: 'activity',
@@ -120,8 +120,8 @@ const ItineraryPage: React.FC = () => {
       });
 
       // Add meals
-      plan.meals.forEach((meal) => {
-        const placeDetails = data.place_details[meal.place_id];
+      plan.meals.forEach((meal: any) => {
+        const placeDetails = data.place_details?.[meal.place_id];
         events.push({
           time: meal.time,
           type: 'meal',
@@ -142,7 +142,7 @@ const ItineraryPage: React.FC = () => {
       });
 
       // Add transportation
-      plan.transportation.forEach((transport) => {
+      plan.transportation.forEach((transport: any) => {
         events.push({
           time: transport.from === 'Hotel' ? 'Before next activity' : 'After previous activity',
           type: 'transport',
@@ -209,12 +209,12 @@ const ItineraryPage: React.FC = () => {
     if (!itineraryData) return 0;
     
     let total = 0;
-    itineraryData.itinerary.daily_plans.forEach(plan => {
-      plan.activities.forEach(activity => {
+    itineraryData.itinerary.daily_plans.forEach((plan: any) => {
+      plan.activities.forEach((activity: any) => {
         const cost = parseFloat(activity.estimated_cost.replace('$', '')) || 0;
         total += cost;
       });
-      plan.transportation.forEach(transport => {
+      plan.transportation.forEach((transport: any) => {
         const cost = parseFloat(transport.cost.replace('$', '')) || 0;
         total += cost;
       });

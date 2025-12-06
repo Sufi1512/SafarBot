@@ -119,6 +119,11 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_db_client():
     """Connect to MongoDB on startup."""
+    from config import settings
+    
+    mode = "DEVELOPMENT" if settings.local_dev else "PRODUCTION"
+    print(f"🚀 Starting SafarBot API in {mode} mode")
+    
     try:
         await Database.connect_db()
         print("✅ Database connection established")

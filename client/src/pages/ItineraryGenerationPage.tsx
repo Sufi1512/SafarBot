@@ -94,9 +94,9 @@ const ItineraryGenerationPage: React.FC = () => {
           type: 'checkin',
           title: 'Hotel Check-in',
           description: 'Arrive at your accommodation',
-          location: data.itinerary.accommodation_suggestions[0]?.location || 'Hotel',
+          location: data.itinerary.accommodation_suggestions?.[0]?.location || 'Hotel',
           cost: '0',
-          placeId: data.itinerary.accommodation_suggestions[0]?.place_id
+          placeId: data.itinerary.accommodation_suggestions?.[0]?.place_id
         });
       }
 
@@ -107,15 +107,15 @@ const ItineraryGenerationPage: React.FC = () => {
           type: 'checkout',
           title: 'Hotel Check-out',
           description: 'Depart from your accommodation',
-          location: data.itinerary.accommodation_suggestions[0]?.location || 'Hotel',
+          location: data.itinerary.accommodation_suggestions?.[0]?.location || 'Hotel',
           cost: '0',
-          placeId: data.itinerary.accommodation_suggestions[0]?.place_id
+          placeId: data.itinerary.accommodation_suggestions?.[0]?.place_id
         });
       }
 
       // Add activities
-      plan.activities.forEach((activity) => {
-        const placeDetails = data.place_details[activity.place_id];
+      plan.activities.forEach((activity: any) => {
+        const placeDetails = data.place_details?.[activity.place_id];
         events.push({
           time: activity.time,
           type: 'activity',
@@ -136,8 +136,8 @@ const ItineraryGenerationPage: React.FC = () => {
       });
 
       // Add meals
-      plan.meals.forEach((meal) => {
-        const placeDetails = data.place_details[meal.place_id];
+      plan.meals.forEach((meal: any) => {
+        const placeDetails = data.place_details?.[meal.place_id];
         events.push({
           time: meal.time,
           type: 'meal',
@@ -158,7 +158,7 @@ const ItineraryGenerationPage: React.FC = () => {
       });
 
       // Add transportation
-      plan.transportation.forEach((transport) => {
+      plan.transportation.forEach((transport: any) => {
         events.push({
           time: transport.from === 'Hotel' ? 'Before next activity' : 'After previous activity',
           type: 'transport',
@@ -225,12 +225,12 @@ const ItineraryGenerationPage: React.FC = () => {
     if (!itineraryData) return 0;
     
     let total = 0;
-    itineraryData.itinerary.daily_plans.forEach(plan => {
-      plan.activities.forEach(activity => {
+    itineraryData.itinerary.daily_plans.forEach((plan: any) => {
+      plan.activities.forEach((activity: any) => {
         const cost = parseFloat(activity.estimated_cost.replace('$', '')) || 0;
         total += cost;
       });
-      plan.transportation.forEach(transport => {
+      plan.transportation.forEach((transport: any) => {
         const cost = parseFloat(transport.cost.replace('$', '')) || 0;
         total += cost;
       });
@@ -268,14 +268,14 @@ const ItineraryGenerationPage: React.FC = () => {
         days: itineraryData.itinerary.daily_plans.map((plan) => ({
           day_number: plan.day,
           date: null, // Backend expects None/null, not a string date
-          activities: plan.activities.map(activity => ({
+          activities: plan.activities.map((activity: any) => ({
             name: activity.title,
             time: activity.time,
             location: activity.title,
             description: activity.title,
             cost: parseFloat(activity.estimated_cost.replace('$', '')) || 0
           })),
-          meals: plan.meals.map(meal => ({
+          meals: plan.meals.map((meal: any) => ({
             name: meal.name,
             time: meal.time,
             location: meal.name,
@@ -291,9 +291,9 @@ const ItineraryGenerationPage: React.FC = () => {
             cost: parseFloat(plan.transportation[0].cost.replace('$', '')) || 0,
             all_transportation: plan.transportation // Keep all transportation data in a nested field
           } : null,
-          estimated_cost: plan.activities.reduce((sum, activity) => 
+          estimated_cost: plan.activities.reduce((sum: number, activity: any) => 
             sum + (parseFloat(activity.estimated_cost.replace('$', '')) || 0), 0
-          ) + plan.transportation.reduce((sum, transport) => 
+          ) + plan.transportation.reduce((sum: number, transport: any) => 
             sum + (parseFloat(transport.cost.replace('$', '')) || 0), 0
           )
         }))

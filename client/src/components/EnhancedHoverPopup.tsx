@@ -377,7 +377,7 @@ const EnhancedHoverPopup: React.FC<EnhancedHoverPopupProps> = ({
                 .map(([day, hours]) => (
                   <div key={day} className="flex items-center justify-between gap-3 capitalize">
                     <span className="font-medium text-gray-500 dark:text-gray-400">{day}</span>
-                    <span>{hours}</span>
+                    <span>{hours as React.ReactNode}</span>
                   </div>
                 ))}
             </div>

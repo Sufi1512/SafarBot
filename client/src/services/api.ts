@@ -88,6 +88,197 @@ export interface EnhancedItineraryResponse {
   [key: string]: any; // Allow additional properties
 }
 
+// Weather types
+export interface WeatherData {
+  location: {
+    name: string;
+    city?: string;
+    country?: string;
+    region?: string;
+    lat?: number;
+    lon?: number;
+    coordinates?: {
+      lat: number;
+      lon: number;
+    };
+  };
+  current: {
+    temperature: number;
+    condition: string;
+    description?: string;
+    humidity?: number;
+    wind_speed?: number;
+    wind_direction?: string;
+    pressure?: number;
+    visibility?: number;
+    uv_index?: number;
+    feels_like?: number;
+    icon?: string;
+  };
+  forecast?: WeatherForecast[];
+  forecasts?: WeatherForecast[];
+  recommendations?: Array<{
+    type: string;
+    message: string;
+    priority?: 'high' | 'medium' | 'low';
+  } | string>;
+  timestamp?: string;
+}
+
+export interface WeatherForecast {
+  date?: string;
+  datetime?: string;
+  day?: {
+    condition: string;
+    temperature: number;
+    max_temp?: number;
+    min_temp?: number;
+    humidity?: number;
+    wind_speed?: number;
+    icon?: string;
+  };
+  night?: {
+    condition: string;
+    temperature: number;
+    icon?: string;
+  };
+  description?: string;
+  icon?: string;
+  temperature?: {
+    max: number;
+    min: number;
+  };
+  humidity?: number;
+  forecasts?: WeatherForecast[];
+}
+
+// Flight types
+export interface Flight {
+  id: string;
+  airline: string;
+  airline_logo?: string;
+  flight_number: string;
+  departure: {
+    airport: string;
+    airport_code: string;
+    airport_name?: string;
+    city: string;
+    time: string;
+    date: string;
+  };
+  arrival: {
+    airport: string;
+    airport_code: string;
+    airport_name?: string;
+    city: string;
+    time: string;
+    date: string;
+  };
+  duration: string;
+  total_duration?: string;
+  stops: number;
+  price: number;
+  currency: string;
+  booking_token?: string;
+  segments?: FlightSegment[];
+  flight_segments?: FlightSegment[];
+  amenities?: string[];
+  layovers?: Layover[];
+  flight_type?: string;
+  rating?: number;
+  carbon_emissions?: {
+    this_flight: number;
+    difference_percent: number;
+  };
+}
+
+export interface FlightSegment {
+  id?: string;
+  departure: {
+    airport: string;
+    airport_code: string;
+    airport_name?: string;
+    time: string;
+    date: string;
+  };
+  arrival: {
+    airport: string;
+    airport_code: string;
+    airport_name?: string;
+    time: string;
+    date: string;
+  };
+  duration: string;
+  airline: string;
+  flight_number: string;
+  aircraft?: string;
+  travel_class?: string;
+  overnight?: boolean;
+  often_delayed?: boolean;
+  amenities?: string[];
+}
+
+export interface Layover {
+  airport: string;
+  airport_code: string;
+  duration: string;
+  city?: string;
+}
+
+export interface FlightSearchRequest {
+  from?: string;
+  from_location?: string;
+  to?: string;
+  to_location?: string;
+  departure_date: string;
+  return_date?: string;
+  adults?: number;
+  children?: number;
+  infants?: number;
+  passengers?: number;
+  cabin_class?: 'economy' | 'business' | 'first';
+  class_type?: string;
+  currency?: string;
+}
+
+export interface AirportSuggestion {
+  id: string;
+  name: string;
+  code: string;
+  city: string;
+  country: string;
+  country_code: string;
+}
+
+// Booking types
+export interface BookingOption {
+  id: string;
+  type: 'flight' | 'hotel' | 'activity';
+  title: string;
+  description?: string;
+  price: number;
+  currency: string;
+  provider: string;
+  booking_url: string;
+  image?: string;
+  rating?: number;
+  reviews_count?: number;
+  together?: {
+    booking_request?: {
+      url: string;
+    };
+    booking_phone?: string;
+  };
+}
+
+export interface BookingOptionsResponse {
+  options?: BookingOption[];
+  booking_options?: BookingOption[];
+  selected_flights?: any[];
+  total?: number;
+  currency?: string;
+}
+
 // Base URL for API - Uses centralized config
 import { getApiBaseUrl } from '../config/apiConfig';
 
@@ -587,6 +778,10 @@ export const collaborationAPI = {
     const response = await api.get('/collaboration/invitations');
     return response.data;
   },
+  getInvitationInfo: async (invitationToken: string) => {
+    const response = await api.get(`/collaboration/invitations/${invitationToken}`);
+    return response.data;
+  },
   acceptInvitation: async (invitationToken: string) => {
     const response = await api.post(`/collaboration/invitations/${invitationToken}/accept`);
     return response.data;
@@ -601,6 +796,14 @@ export const collaborationAPI = {
   },
   removeCollaborator: async (itineraryId: string, userId: string) => {
     const response = await api.delete(`/collaboration/itinerary/${itineraryId}/collaborators/${userId}`);
+    return response.data;
+  },
+  updateCollaboratorRole: async (itineraryId: string, userId: string, role: 'viewer' | 'editor' | 'admin') => {
+    const response = await api.put(`/collaboration/itinerary/${itineraryId}/collaborators/${userId}`, { role });
+    return response.data;
+  },
+  resendInvitation: async (data: { invitation_id: string; itinerary_id: string; email: string; message?: string }) => {
+    const response = await api.post('/collaboration/invitations/resend', data);
     return response.data;
   },
   getMyCollaborations: async () => {

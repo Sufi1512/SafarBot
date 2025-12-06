@@ -18,7 +18,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({
   className = ''
 }) => {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
-  const [forecastData, setForecastData] = useState<WeatherForecast | null>(null);
+  const [forecastData, setForecastData] = useState<{ forecasts?: WeatherForecast[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -103,12 +103,12 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({
               {weatherData.location.city}, {weatherData.location.country}
             </h3>
             <p className="text-sm text-gray-600">
-              Updated {formatTime(weatherData.timestamp)}
+              {weatherData.timestamp && `Updated ${formatTime(weatherData.timestamp)}`}
             </p>
           </div>
           <img
-            src={getWeatherIcon(weatherData.current.icon)}
-            alt={weatherData.current.description}
+            src={getWeatherIcon(weatherData.current.icon || weatherData.current.condition)}
+            alt={weatherData.current.description || weatherData.current.condition}
             className="w-16 h-16"
           />
         </div>
@@ -119,7 +119,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({
               {Math.round(weatherData.current.temperature)}°C
             </div>
             <div className="text-sm text-gray-600">
-              Feels like {Math.round(weatherData.current.feels_like)}°C
+              Feels like {weatherData.current.feels_like ? Math.round(weatherData.current.feels_like) : Math.round(weatherData.current.temperature)}°C
             </div>
           </div>
           <div className="text-right">
@@ -153,10 +153,10 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({
         <Card className="p-4">
           <h4 className="text-sm font-semibold text-gray-800 mb-2">💡 Travel Tips</h4>
           <ul className="space-y-1">
-            {weatherData.recommendations.map((recommendation, index) => (
+            {weatherData.recommendations.map((recommendation: { type?: string; message: string; priority?: string } | string, index: number) => (
               <li key={index} className="text-sm text-gray-600 flex items-start">
                 <span className="mr-2">•</span>
-                <span>{recommendation}</span>
+                <span>{typeof recommendation === 'string' ? recommendation : recommendation.message}</span>
               </li>
             ))}
           </ul>
@@ -168,17 +168,17 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({
         <Card className="p-4">
           <h4 className="text-sm font-semibold text-gray-800 mb-3">5-Day Forecast</h4>
           <div className="space-y-2">
-            {forecastData.forecasts.slice(0, 5).map((forecast, index) => (
+            {forecastData.forecasts?.slice(0, 5).map((forecast: WeatherForecast, index: number) => (
               <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                 <div className="flex items-center space-x-3">
                   <img
-                    src={getWeatherIcon(forecast.icon)}
-                    alt={forecast.description}
+                    src={getWeatherIcon(forecast.icon || forecast.day?.icon || forecast.description || '')}
+                    alt={forecast.description || forecast.day?.condition || ''}
                     className="w-8 h-8"
                   />
                   <div>
                     <div className="text-sm font-medium text-gray-800">
-                      {new Date(forecast.datetime).toLocaleDateString('en-US', {
+                      {new Date(forecast.datetime || forecast.date || '').toLocaleDateString('en-US', {
                         weekday: 'short',
                         month: 'short',
                         day: 'numeric'
@@ -191,7 +191,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-medium text-gray-800">
-                    {Math.round(forecast.temperature.max)}° / {Math.round(forecast.temperature.min)}°
+                    {forecast.temperature ? `${Math.round(forecast.temperature.max)}° / ${Math.round(forecast.temperature.min)}°` : (forecast.day ? `${Math.round(forecast.day.max_temp || forecast.day.temperature)}° / ${Math.round(forecast.day.min_temp || forecast.day.temperature)}°` : 'N/A')}
                   </div>
                   <div className="text-xs text-gray-600">
                     {forecast.humidity}% humidity

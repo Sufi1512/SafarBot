@@ -2,13 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { useJsApiLoader } from '@react-google-maps/api';
 import { Plane } from 'lucide-react';
 import { GOOGLE_MAPS_CONFIG, GOOGLE_MAPS_LIBRARIES } from '../config/googleMapsConfig';
-
-interface AirportSuggestion {
-  code: string;
-  name: string;
-  city: string;
-  country: string;
-}
+import { AirportSuggestion } from '../services/api';
 
 interface AirportAutocompleteProps {
   value: string;
@@ -181,10 +175,12 @@ const AirportAutocomplete: React.FC<AirportAutocompleteProps> = ({
       // Convert to our suggestion format
       matchingAirports.forEach((airport: any) => {
         suggestions.push({
+          id: airport.iata,
           code: airport.iata,
           name: airport.name,
           city: airport.city,
-          country: airport.country
+          country: airport.country,
+          country_code: ''
         });
       });
       

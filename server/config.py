@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     project_name: str = "SafarBot"
     usd_to_inr_rate: float = float(os.getenv("USD_TO_INR_RATE", 83.0))
     
+    # Environment Mode
+    local_dev: bool = os.getenv("LOCAL_DEV", "true").lower() in ("true", "1", "yes")
+    
     # Google Gemini API (legacy)
     google_api_key: Optional[str] = None
     

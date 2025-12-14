@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException
-from typing import List, Optional
+from fastapi import APIRouter, HTTPException, Body
+from typing import List, Optional, Dict, Any
 from datetime import date
 from services.flight_service import FlightService
 from models import FlightSearchRequest, FlightSearchResponse, Flight, BookingOptionsResponse
+from pydantic import BaseModel
 import logging
 
 router = APIRouter()
@@ -92,17 +93,117 @@ async def get_flight_details(flight_id: str):
         logger.error(f"Error getting flight details: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error getting flight details: {str(e)}")
 
-@router.post("/book")
-async def book_flight(flight_id: str, passengers: int = 1):
-    """Book a flight"""
+# AirIQ endpoints for backward compatibility (also available at /airiq/*)
+from AIRIQBackend import AirIQService, AirIQMapper
+from AIRIQBackend.models import AirIQLoginResponse
+
+# Initialize AirIQ service (singleton - same instance as in AIRIQBackend)
+airiq_service = AirIQService()
+
+@router.post("/airiq/login", response_model=AirIQLoginResponse)
+async def airiq_login():
+    """Login to AirIQ API and get authentication token (backward compatibility endpoint)"""
     try:
-        # Mock booking response
-        booking_reference = f"SB{flight_id.upper()}{passengers}2025"
+        login_response = await airiq_service.login()
+        
+        # Get the token from the service (it's stored after login)
+        token = airiq_service.token or login_response.get("Token", "")
+        
+        return AirIQLoginResponse(
+            success=True,
+            agent_id=login_response.get("AgentID", ""),
+            username=login_response.get("UserName", ""),
+            token=token,
+            token_received=bool(token),
+            status=login_response.get("Status", {}),
+            message="Login successful"
+        )
+    except Exception as e:
+        logger.error(f"AirIQ login error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"AirIQ login failed: {str(e)}")
+
+@router.post("/airiq/availability")
+async def test_airiq_availability(
+    from_location: str = Body(...),
+    to_location: str = Body(...),
+    departure_date: str = Body(...),
+    return_date: Optional[str] = Body(None),
+    passengers: int = Body(1),
+    child_count: int = Body(0),
+    infant_count: int = Body(0),
+    class_type: str = Body("economy"),
+    airline_id: str = Body(""),
+    fare_type: str = Body("N"),
+    only_direct: bool = Body(False)
+):
+    """Test AirIQ Availability endpoint (backward compatibility endpoint)"""
+    try:
+        from datetime import datetime
+        
+        # Parse dates
+        dep_date = datetime.strptime(departure_date, "%Y-%m-%d").date()
+        ret_date = None
+        if return_date:
+            ret_date = datetime.strptime(return_date, "%Y-%m-%d").date()
+        
+        # Call availability
+        response = await airiq_service.search_availability(
+            from_location=from_location,
+            to_location=to_location,
+            departure_date=dep_date,
+            return_date=ret_date,
+            passengers=passengers,
+            child_count=child_count,
+            infant_count=infant_count,
+            class_type=class_type,
+            airline_id=airline_id,
+            fare_type=fare_type,
+            only_direct=only_direct
+        )
+        
         return {
             "success": True,
-            "booking_reference": booking_reference,
-            "message": f"Flight {flight_id} booked successfully for {passengers} passenger(s)",
-            "total_price": 850.0 * passengers
+            "track_id": response.get("Trackid", ""),
+            "itinerary_count": len(response.get("ItineraryFlightList", [])),
+            "status": response.get("Status", {}),
+            "response": response
         }
     except Exception as e:
+        logger.error(f"AirIQ availability error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"AirIQ availability failed: {str(e)}")
+
+class FlightBookingRequest(BaseModel):
+    track_id: str
+    flight_details: List[Dict[str, Any]]
+    passenger_details: List[Dict[str, Any]]
+    contact_info: Dict[str, Any]
+    trip_type: str = "O"
+    base_origin: str
+    base_destination: str
+    block_pnr: bool = False
+
+@router.post("/book")
+async def book_flight(booking_data: FlightBookingRequest = Body(...)):
+    """Book a flight using AirIQ API"""
+    try:
+        logger.info(f"Booking flight with track_id: {booking_data.track_id}")
+        
+        # Book the flight
+        booking_result = await flight_service.book_flight_airiq(
+            track_id=booking_data.track_id,
+            flight_details=booking_data.flight_details,
+            passenger_details=booking_data.passenger_details,
+            contact_info=booking_data.contact_info,
+            trip_type=booking_data.trip_type,
+            base_origin=booking_data.base_origin,
+            base_destination=booking_data.base_destination,
+            block_pnr=booking_data.block_pnr
+        )
+        
+        return booking_result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error booking flight: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error booking flight: {str(e)}") 

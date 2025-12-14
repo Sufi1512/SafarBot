@@ -4,17 +4,29 @@ import logging
 from typing import List, Dict, Any, Optional
 from datetime import date, datetime
 from config import settings
+from AIRIQBackend import AirIQService, AirIQMapper
 
 logger = logging.getLogger(__name__)
 
 class FlightService:
     def __init__(self):
-        self.serp_api_key = settings.serp_api_key
-        self.use_real_api = bool(self.serp_api_key and self.serp_api_key != "your_serp_api_key_here")
+        # AirIQ Configuration (Primary - for actual booking)
+        self.airiq_service = None
+        try:
+            self.airiq_service = AirIQService()
+            self.use_airiq = True
+            logger.info("AirIQ service initialized successfully from AIRIQBackend")
+        except Exception as e:
+            logger.warning(f"AirIQ service not available: {str(e)}")
+            self.use_airiq = False
         
-        if not self.use_real_api:
-            logger.error("No valid SERP API key found. Please set SERP_API_KEY in your environment variables.")
-            raise ValueError("SERP_API_KEY is required. Please set it in your environment variables.")
+        # SERP API Configuration (Fallback - for search only)
+        self.serp_api_key = settings.serp_api_key
+        self.use_serp = bool(self.serp_api_key and self.serp_api_key != "your_serp_api_key_here")
+        
+        if not self.use_airiq and not self.use_serp:
+            logger.error("No flight API configured. Please set AIRIQ credentials or SERP_API_KEY.")
+            raise ValueError("Flight API configuration required. Set AIRIQ credentials or SERP_API_KEY.")
     
     async def search_flights(
         self,
@@ -26,15 +38,71 @@ class FlightService:
         class_type: str = "economy"
     ) -> List[Dict[str, Any]]:
         """
-        Search for flights using Google SERP API
+        Search for flights using AirIQ API (primary) or SERP API (fallback)
         """
         try:
-            return await self._search_with_serp_api(
-                from_location, to_location, departure_date, return_date, passengers, class_type
-            )
+            # Try AirIQ first (for actual booking)
+            if self.use_airiq:
+                try:
+                    return await self._search_with_airiq(
+                        from_location, to_location, departure_date, return_date, passengers, class_type
+                    )
+                except Exception as e:
+                    logger.warning(f"AirIQ search failed, falling back to SERP: {str(e)}")
+            
+            # Fallback to SERP API
+            if self.use_serp:
+                return await self._search_with_serp_api(
+                    from_location, to_location, departure_date, return_date, passengers, class_type
+                )
+            
+            logger.error("No flight search API available")
+            return []
+            
         except Exception as e:
             logger.error(f"Error searching flights: {str(e)}")
             return []
+    
+    async def _search_with_airiq(
+        self,
+        from_location: str,
+        to_location: str,
+        departure_date: date,
+        return_date: Optional[date] = None,
+        passengers: int = 1,
+        class_type: str = "economy"
+    ) -> List[Dict[str, Any]]:
+        """Search flights using AirIQ Availability API"""
+        try:
+            # Extract airport codes (handle both codes and full names)
+            # If input is longer than 3 chars, try to extract code
+            dep_code = from_location.upper().strip()[:3] if len(from_location) >= 3 else from_location.upper()
+            arr_code = to_location.upper().strip()[:3] if len(to_location) >= 3 else to_location.upper()
+            
+            # Call AirIQ Availability API
+            availability_response = await self.airiq_service.search_availability(
+                from_location=dep_code,
+                to_location=arr_code,
+                departure_date=departure_date,
+                return_date=return_date,
+                passengers=passengers,
+                child_count=0,  # Can be extended later
+                infant_count=0,  # Can be extended later
+                class_type=class_type,
+                airline_id="",  # All airlines
+                fare_type="N",  # Normal fare
+                only_direct=False,  # Include all flights
+                trip_type_special=False  # Normal trip type
+            )
+            
+            # Map AirIQ response to frontend format
+            flights = AirIQMapper.map_availability_to_flights(availability_response)
+            logger.info(f"Found {len(flights)} flights using AirIQ API")
+            return flights
+            
+        except Exception as e:
+            logger.error(f"AirIQ search error: {str(e)}")
+            raise
     
     async def _search_with_serp_api(
         self,
@@ -648,14 +716,87 @@ class FlightService:
 
     async def get_booking_options(self, booking_token: str) -> Dict[str, Any]:
         """
-        Get booking options for a specific flight using booking token
+        Get booking options for a specific flight using booking token (TrackId from AirIQ)
         """
         try:
             logger.info(f"Getting booking options for token: {booking_token}")
+            
+            # For AirIQ, booking_token is actually TrackId
+            # We need to retrieve the booking details or provide pricing info
+            if self.use_airiq:
+                # Return booking options structure compatible with frontend
+                return {
+                    "selected_flights": [],
+                    "booking_options": [{
+                        "together": {
+                            "book_with": "AirIQ",
+                            "booking_request": {
+                                "url": f"/flights/book",
+                                "method": "POST"
+                            },
+                            "booking_phone": "",
+                            "price": 0
+                        }
+                    }]
+                }
+            
+            # Fallback to SERP
             return await self._get_booking_options_with_serp_api(booking_token)
         except Exception as e:
             logger.error(f"Error getting booking options: {str(e)}")
             raise e
+    
+    async def book_flight_airiq(
+        self,
+        track_id: str,
+        flight_details: List[Dict[str, Any]],
+        passenger_details: List[Dict[str, Any]],
+        contact_info: Dict[str, Any],
+        trip_type: str,
+        base_origin: str,
+        base_destination: str,
+        block_pnr: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Book a flight using AirIQ API
+        """
+        try:
+            if not self.use_airiq:
+                raise Exception("AirIQ service not available")
+            
+            # Prepare itinerary flights info
+            itinerary_flights_info = [{
+                "Token": track_id,
+                "FlightsInfo": flight_details,
+                "PaymentMode": "T",  # Agent Deposit
+                "SeatsSSRInfo": [],
+                "BaggSSRInfo": [],
+                "MealsSSRInfo": [],
+                "OtherSSRInfo": [],
+                "PaymentInfo": [{
+                    "TotalAmount": "0"  # Will be updated from pricing
+                }]
+            }]
+            
+            # Book the flight
+            booking_response = await self.airiq_service.book_flight(
+                track_id=track_id,
+                itinerary_flights_info=itinerary_flights_info,
+                pax_details_info=passenger_details,
+                address_details=contact_info,
+                trip_type=trip_type,
+                base_origin=base_origin,
+                base_destination=base_destination,
+                block_pnr=block_pnr
+            )
+            
+            # Map response
+            mapped_response = AirIQMapper.map_booking_response(booking_response)
+            return mapped_response
+            
+        except Exception as e:
+            logger.error(f"Error booking flight with AirIQ: {str(e)}")
+            raise
 
     async def _get_booking_options_with_serp_api(self, booking_token: str) -> Dict[str, Any]:
         """

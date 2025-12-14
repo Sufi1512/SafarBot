@@ -28,6 +28,9 @@ from routers.collaboration import router as collaboration_router
 from routers.notifications import router as notifications_router
 from routers.google_auth import router as google_auth_router
 from routers.image_proxy import router as image_proxy_router
+
+# Import AirIQ Backend
+from AIRIQBackend import airiq_router
 from config import settings
 from database import Database
 
@@ -162,6 +165,7 @@ app.include_router(saved_itinerary, prefix="/itineraries", tags=["saved-itinerar
 
 # Travel Services
 app.include_router(flights, prefix="/flights", tags=["flights"])
+app.include_router(airiq_router, tags=["AirIQ"])  # AirIQ Backend endpoints at /airiq/*
 app.include_router(hotels_router, prefix="/hotels", tags=["hotels"])
 app.include_router(restaurants_router, prefix="/restaurants", tags=["restaurants"])
 app.include_router(weather_router, prefix="/weather", tags=["weather"])

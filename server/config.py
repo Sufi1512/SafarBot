@@ -23,6 +23,12 @@ class Settings(BaseSettings):
     # Google SERP API (for flight search)
     serp_api_key: Optional[str] = None
     
+    # AirIQ API Configuration (for actual flight booking)
+    airiq_url: Optional[str] = None
+    airiq_agent_id: Optional[str] = None
+    airiq_username: Optional[str] = None
+    airiq_password: Optional[str] = None
+    
     # OpenWeatherMap API
     open_weather_api_key: Optional[str] = None
     
@@ -77,6 +83,14 @@ class Settings(BaseSettings):
             self.langsmith_api_key = os.getenv("LANGSMITH_API_KEY")
         if not self.brevo_api_key:
             self.brevo_api_key = os.getenv("BREVO_API_KEY")
+        if not self.airiq_url:
+            self.airiq_url = os.getenv("AIRIQ_URL")
+        if not self.airiq_agent_id:
+            self.airiq_agent_id = os.getenv("AIRIQ_AGENT_ID")
+        if not self.airiq_username:
+            self.airiq_username = os.getenv("AIRIQ_USERNAME")
+        if not self.airiq_password:
+            self.airiq_password = os.getenv("AIRIQ_PASSWORD")
 
 
     def validate_required_env_vars(self):

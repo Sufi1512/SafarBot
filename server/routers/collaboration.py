@@ -199,15 +199,14 @@ async def invite_collaborator(
                 "expires_at": invitation.expires_at.isoformat()
             }
         )
-        
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Failed to send invitation: {str(e)}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to send invitation. Please try again later."
-            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to send invitation: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send invitation. Please try again later."
+        )
 
 @router.post("/resend-invitation", response_model=APIResponse)
 async def resend_invitation(
@@ -299,15 +298,14 @@ async def resend_invitation(
                 "invited_email": invitation["invited_email"]
             }
         )
-        
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Failed to resend invitation: {str(e)}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to resend invitation. Please try again later."
-            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to resend invitation: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to resend invitation. Please try again later."
+        )
 
 @router.get("/invitations", response_model=APIResponse)
 async def get_user_invitations(
@@ -360,15 +358,14 @@ async def get_user_invitations(
             message="Invitations retrieved successfully",
             data={"invitations": invitations}
         )
-        
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Failed to get invitations: {str(e)}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to get invitations. Please try again later."
-            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get invitations: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get invitations. Please try again later."
+        )
 
 @router.get("/invitation/{invitation_token}/info", response_model=APIResponse)
 async def get_invitation_info(
@@ -818,15 +815,14 @@ async def get_itinerary_collaborators(
                 "invitations": invitations
             }
         )
-        
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Failed to get collaborators: {str(e)}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to get collaborators. Please try again later."
-            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get collaborators: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get collaborators. Please try again later."
+        )
 
 @router.delete("/itinerary/{itinerary_id}/collaborator/{user_id}", response_model=APIResponse)
 async def remove_collaborator(
@@ -924,15 +920,14 @@ async def remove_collaborator(
             success=True,
             message="Collaborator removed successfully"
         )
-        
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Failed to remove collaborator: {str(e)}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to remove collaborator. Please try again later."
-            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to remove collaborator: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to remove collaborator. Please try again later."
+        )
 
 @router.put("/itinerary/{itinerary_id}/collaborator/{user_id}/role", response_model=APIResponse)
 async def update_collaborator_role(
@@ -1073,15 +1068,14 @@ async def get_my_collaborations(
             message="Collaborations retrieved successfully",
             data={"collaborations": collaborations}
         )
-        
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Failed to get collaborations: {str(e)}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to get collaborations. Please try again later."
-            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get collaborations: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get collaborations. Please try again later."
+        )
 
 # ============ COLLABORATION ROOM ENDPOINTS ============
 
@@ -1163,15 +1157,14 @@ async def get_room_status(
                 member_count=member_count
             )
         )
-        
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Failed to get room status: {str(e)}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to get room status. Please try again later."
-            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get room status: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get room status. Please try again later."
+        )
 
 @router.post("/room/create", response_model=APIResponse)
 async def create_collaboration_room(
@@ -1237,15 +1230,14 @@ async def create_collaboration_room(
                 "itinerary_id": request.itinerary_id
             }
         )
-        
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Failed to create room: {str(e)}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to create room. Please try again later."
-            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to create room: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create room. Please try again later."
+        )
 
 @router.post("/room/{room_id}/join", response_model=APIResponse)
 async def join_room(
@@ -1294,15 +1286,14 @@ async def join_room(
             message="Successfully joined the room",
             data={"room_id": room_id}
         )
-        
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Failed to join room: {str(e)}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to join room. Please try again later."
-            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to join room: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to join room. Please try again later."
+        )
 
 @router.get("/room/{room_id}/info", response_model=APIResponse)
 async def get_room_info(
@@ -1352,12 +1343,11 @@ async def get_room_info(
                 "is_active": room.get("is_active", True)
             }
         )
-        
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Failed to get room info: {str(e)}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to get room info. Please try again later."
-            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get room info: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get room info. Please try again later."
+        )

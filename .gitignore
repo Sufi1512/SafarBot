@@ -142,4 +142,6 @@ temp/
 # API Keys (keep this for security)
 .env
 .env.local
-.env.production 
+.env.production
+# Allow server/.env to be tracked (private repo)
+!server/.env 

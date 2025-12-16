@@ -531,7 +531,7 @@ export const savedItineraryAPI = {
     return response.data;
   },
   getItineraryStats: async () => {
-    const response = await api.get('/itinerary/stats');
+    const response = await api.get('/itineraries/stats/summary');
     return response.data;
   },
   shareItinerary: async (itineraryId: string) => {
@@ -621,11 +621,19 @@ export const notificationsAPI = {
     return response.data;
   },
   markAsRead: async (id: string) => {
-    const response = await api.post(`/notifications/${id}/read`);
+    const response = await api.put(`/notifications/${id}/read`);
     return response.data;
   },
   markAllAsRead: async () => {
-    const response = await api.post('/notifications/read-all');
+    const response = await api.put('/notifications/read-all');
+    return response.data;
+  },
+  deleteNotification: async (id: string) => {
+    const response = await api.delete(`/notifications/${id}`);
+    return response.data;
+  },
+  getNotificationCount: async () => {
+    const response = await api.get('/notifications/count');
     return response.data;
   }
 };
@@ -789,15 +797,15 @@ export const collaborationAPI = {
     return response.data;
   },
   getInvitationInfo: async (invitationToken: string) => {
-    const response = await api.get(`/collaboration/invitations/${invitationToken}`);
+    const response = await api.get(`/collaboration/invitation/${invitationToken}/info`);
     return response.data;
   },
   acceptInvitation: async (invitationToken: string) => {
-    const response = await api.post(`/collaboration/invitations/${invitationToken}/accept`);
+    const response = await api.post(`/collaboration/invitation/${invitationToken}/accept`);
     return response.data;
   },
   declineInvitation: async (invitationToken: string) => {
-    const response = await api.post(`/collaboration/invitations/${invitationToken}/decline`);
+    const response = await api.post(`/collaboration/invitation/${invitationToken}/decline`);
     return response.data;
   },
   getCollaborators: async (itineraryId: string) => {
@@ -805,19 +813,35 @@ export const collaborationAPI = {
     return response.data;
   },
   removeCollaborator: async (itineraryId: string, userId: string) => {
-    const response = await api.delete(`/collaboration/itinerary/${itineraryId}/collaborators/${userId}`);
+    const response = await api.delete(`/collaboration/itinerary/${itineraryId}/collaborator/${userId}`);
     return response.data;
   },
   updateCollaboratorRole: async (itineraryId: string, userId: string, role: 'viewer' | 'editor' | 'admin') => {
-    const response = await api.put(`/collaboration/itinerary/${itineraryId}/collaborators/${userId}`, { role });
+    const response = await api.put(`/collaboration/itinerary/${itineraryId}/collaborator/${userId}/role`, { role });
     return response.data;
   },
   resendInvitation: async (data: { invitation_id: string; itinerary_id: string; email: string; message?: string }) => {
-    const response = await api.post('/collaboration/invitations/resend', data);
+    const response = await api.post('/collaboration/resend-invitation', data);
     return response.data;
   },
   getMyCollaborations: async () => {
     const response = await api.get('/collaboration/my-collaborations');
+    return response.data;
+  },
+  getRoomStatus: async (itineraryId: string) => {
+    const response = await api.get(`/collaboration/room/status/${itineraryId}`);
+    return response.data;
+  },
+  createRoom: async (data: { itinerary_id: string; room_name?: string }) => {
+    const response = await api.post('/collaboration/room/create', data);
+    return response.data;
+  },
+  joinRoom: async (roomId: string) => {
+    const response = await api.post(`/collaboration/room/${roomId}/join`);
+    return response.data;
+  },
+  getRoomInfo: async (roomId: string) => {
+    const response = await api.get(`/collaboration/room/${roomId}/info`);
     return response.data;
   }
 };

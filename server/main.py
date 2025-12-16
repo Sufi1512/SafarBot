@@ -54,7 +54,10 @@ from middleware.ip_tracking import IPTrackingMiddleware
 app = FastAPI(
     title="SafarBot API",
     description="AI-powered travel planning and booking platform with MongoDB",
-    version="1.0.0"
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
 )
 
 # =============================================================================

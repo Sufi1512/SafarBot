@@ -296,6 +296,16 @@ const api = axios.create({
 // Request interceptor for logging and authentication
 api.interceptors.request.use(
   (config) => {
+    // Normalize URL to prevent double slashes
+    if (config.url) {
+      // Ensure URL starts with a single slash (remove leading slashes and add one)
+      config.url = '/' + config.url.replace(/^\/+/, '');
+      
+      // Normalize any double slashes in the path (but preserve protocol slashes)
+      // This handles cases like //auth/login -> /auth/login
+      config.url = config.url.replace(/([^:]\/)\/+/g, '$1');
+    }
+    
     // API calls are visible in Network tab - no need to log to console
     // Only log errors in development for debugging
     if (import.meta.env.DEV && config.url && !config.url.includes('/health')) {

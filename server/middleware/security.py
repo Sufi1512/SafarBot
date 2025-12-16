@@ -19,17 +19,30 @@ class SecurityMiddleware:
         """Add security headers to all responses"""
         response = await call_next(request)
         
+        # Allow Swagger/OpenAPI docs to load properly
+        path = request.url.path
+        is_docs_path = path in ["/docs", "/redoc", "/openapi.json"]
+        
         # Security headers
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
+        # Allow Swagger UI to be embedded if needed
+        response.headers["X-Frame-Options"] = "SAMEORIGIN" if is_docs_path else "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
-        # Additional security headers
-        response.headers["Content-Security-Policy"] = "default-src 'self'"
-        response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
-        response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+        
+        # Relaxed CSP for Swagger docs
+        if is_docs_path:
+            response.headers["Content-Security-Policy"] = "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
+        else:
+            response.headers["Content-Security-Policy"] = "default-src 'self'"
+        
+        # Relaxed COEP/COOP for Swagger
+        if not is_docs_path:
+            response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
+            response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+        
         response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
         
         return response

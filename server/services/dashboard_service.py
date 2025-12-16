@@ -3,9 +3,15 @@ Dashboard Service
 Aggregates user data for dashboard display and analytics
 """
 
+"""
+Dashboard Service
+Aggregates user data for dashboard display and analytics
+"""
+
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 from bson import ObjectId
+import asyncio
 import logging
 
 from database import get_collection
@@ -29,8 +35,6 @@ class DashboardService:
         """Get comprehensive dashboard data for a user."""
         try:
             # Run all queries in parallel for better performance
-            import asyncio
-            
             tasks = [
                 DashboardService._get_user_stats(user_id),
                 DashboardService._get_recent_bookings(user_id, limit=5),
@@ -251,14 +255,14 @@ class DashboardService:
         """Get recent notifications for the user."""
         try:
             collection = get_collection(DashboardService.NOTIFICATIONS_COLLECTION)
-            print(f"DEBUG: Getting notifications for user_id: {user_id}")
+            logger.debug(f"Getting notifications for user_id: {user_id}")
             
             cursor = collection.find({
                 "user_id": ObjectId(user_id)
             }).sort("created_at", -1).limit(limit)
             
             notifications = await cursor.to_list(length=limit)
-            print(f"DEBUG: Found {len(notifications)} notifications for user {user_id}")
+            logger.debug(f"Found {len(notifications)} notifications for user {user_id}")
             
             return [
                 {

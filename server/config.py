@@ -1,33 +1,31 @@
+"""
+Application Configuration Settings
+Manages environment variables and application settings
+"""
+
 from pydantic_settings import BaseSettings
 from typing import Optional
 import os
 
+
 class Settings(BaseSettings):
-    # API Configuration
-    # API prefix removed - endpoints now use clean paths without version prefix
+    """Application settings with environment variable support"""
+    
+    # Application Configuration
     project_name: str = "SafarBot"
-    usd_to_inr_rate: float = float(os.getenv("USD_TO_INR_RATE", 83.0))
+    usd_to_inr_rate: float = float(os.getenv("USD_TO_INR_RATE", "83.0"))
     
     # Environment Mode
     local_dev: bool = os.getenv("LOCAL_DEV", "true").lower() in ("true", "1", "yes")
     
-    # Google Gemini API (legacy)
+    # API Keys
     google_api_key: Optional[str] = None
-    
-    # OpenAI API (primary AI service)
     openai_api_key: Optional[str] = None
-    
-    # Redis Configuration
     redis_url: Optional[str] = None
-    
-    # Google SERP API (for flight search)
     serp_api_key: Optional[str] = None
-    
-    # OpenWeatherMap API
     open_weather_api_key: Optional[str] = None
-    
-    # Brevo API for email OTP
     brevo_api_key: Optional[str] = None
+    langsmith_api_key: Optional[str] = None
     
     # Email Configuration
     smtp_server: str = "smtp.gmail.com"
@@ -38,7 +36,6 @@ class Settings(BaseSettings):
     app_url: str = os.getenv("APP_URL", "http://localhost:3000")
     
     # LangSmith Configuration
-    langsmith_api_key: Optional[str] = None
     langsmith_project: str = "safarbot"
     langsmith_endpoint: str = "https://api.smith.langchain.com"
     
@@ -51,11 +48,14 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = False
-        extra = "ignore"  # Ignore extra fields not defined in the model
+        extra = "ignore"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Fallback to environment variable if not set
+        self._load_env_fallbacks()
+
+    def _load_env_fallbacks(self):
+        """Load environment variables as fallbacks for optional settings"""
         if not self.google_api_key:
             self.google_api_key = os.getenv("GOOGLE_API_KEY")
         if not self.openai_api_key:
@@ -78,20 +78,19 @@ class Settings(BaseSettings):
         if not self.brevo_api_key:
             self.brevo_api_key = os.getenv("BREVO_API_KEY")
 
-
-    def validate_required_env_vars(self):
+    def validate_required_env_vars(self) -> bool:
         """Validate that all required environment variables are set"""
         required_vars = [
-            "OPENAI_API_KEY",  # Primary AI service
-            "SERP_API_KEY", 
+            "OPENAI_API_KEY",
+            "SERP_API_KEY",
             "OPEN_WEATHER_API_KEY",
             "BREVO_API_KEY",
             "MONGODB_URL"
         ]
-        # Optional: REDIS_URL, GOOGLE_API_KEY (legacy)
         missing = [var for var in required_vars if not os.getenv(var)]
         if missing:
             raise ValueError(f"Missing required environment variables: {missing}")
         return True
+
 
 settings = Settings() 

@@ -1,14 +1,24 @@
-from fastapi import FastAPI, HTTPException
+"""
+SafarBot API - Main Application Entry Point
+Production-ready FastAPI application for AI-powered travel planning platform
+"""
+
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-import os
+from fastapi.responses import Response
 import logging
 from dotenv import load_dotenv
 
-# Load environment variables first
+# Configure root logger
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+# Load environment variables
 load_dotenv('.env')
 
-# Configure logging to suppress MongoDB background task errors
-# These are expected during network issues and don't affect functionality
+# Configure logging - suppress MongoDB background task errors
 logging.getLogger("pymongo").setLevel(logging.WARNING)
 logging.getLogger("pymongo.synchronous").setLevel(logging.ERROR)
 logging.getLogger("pymongo.synchronous.mongo_client").setLevel(logging.ERROR)
@@ -122,31 +132,23 @@ async def startup_db_client():
     from config import settings
     
     mode = "DEVELOPMENT" if settings.local_dev else "PRODUCTION"
-    print(f"🚀 Starting SafarBot API in {mode} mode")
+    logging.info(f"Starting SafarBot API in {mode} mode")
     
     try:
         await Database.connect_db()
-        print("✅ Database connection established")
+        logging.info("Database connection established")
     except Exception as e:
-        print(f"❌ Database connection failed: {e}")
-        print("⚠️  Application will start without database connection")
+        logging.error(f"Database connection failed: {e}")
+        logging.warning("Application will start without database connection")
         # Don't raise the exception to allow the app to start
         # This is important for deployment when MongoDB might not be available
     
-    # Initialize WebSocket service (Socket.IO - currently disabled)
-    # try:
-    #     from services.websocket_service import websocket_service
-    #     await websocket_service.initialize()
-    #     print("✅ WebSocket service initialized")
-    # except Exception as e:
-    #     print(f"❌ WebSocket initialization failed: {e}")
-    #     print("⚠️  Real-time features will be limited")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
     """Close MongoDB connection on shutdown."""
     await Database.close_db()
-    print("✅ Database connection closed")
+    logging.info("Database connection closed")
 
 # =============================================================================
 # ROUTER SETUP - Clean, organized endpoint structure
@@ -183,12 +185,7 @@ app.include_router(ip_tracking_router, prefix="/admin/ip-tracking", tags=["admin
 # Image Proxy (to avoid Google rate limits)
 app.include_router(image_proxy_router, prefix="/images", tags=["images"])
 
-# Mount WebSocket app (Socket.IO - temporarily disabled)
-# from services.websocket_service import socketio_app
-# app.mount("/socket.io", socketio_app)
-
 # Chat Collaboration WebSocket endpoints
-from fastapi import WebSocket
 from services.chat_collaboration_service import chat_service
 
 @app.websocket("/chat/{user_id}")
@@ -223,12 +220,10 @@ async def health_check():
 
 @app.get("/socket.io/")
 async def socket_io_blocked():
-    """Block Socket.IO requests completely"""
-    from fastapi import Response
-    # Return a response that makes Socket.IO clients stop retrying
+    """Block Socket.IO requests - service discontinued"""
     return Response(
-        content="Socket.IO service discontinued. Use native WebSocket at ws://localhost:8000/ws/",
-        status_code=410,  # 410 Gone - service permanently discontinued
+        content="Socket.IO service discontinued. Use native WebSocket endpoints.",
+        status_code=410,
         headers={
             "Connection": "close",
             "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -252,7 +247,7 @@ async def root():
         ],
         "endpoints": {
             "health": "/health",
-          "authentication": {
+            "authentication": {
                 "base": "/auth",
                 "login": "/auth/login",
                 "signup": "/auth/signup",

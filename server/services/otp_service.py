@@ -41,47 +41,14 @@ class OTPService:
             msg['From'] = "SafarBot Team <ksufiyan38@gmail.com>"
             msg['To'] = receiver_email
             
-            # HTML content
-            html_content = f"""
-            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
-                <div style="background: white; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                    <div style="text-align: center; margin-bottom: 30px;">
-                        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
-                            <div style="position: absolute; top: -10px; left: -10px; width: 40px; height: 40px; background: rgba(255, 255, 255, 0.2); border-radius: 50%;"></div>
-                            <div style="position: absolute; bottom: -5px; right: -5px; width: 30px; height: 30px; background: rgba(255, 255, 255, 0.15); border-radius: 50%;"></div>
-                            <div style="color: white; font-size: 28px; font-weight: bold; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); z-index: 1;">✈️</div>
-                        </div>
-                        <h1 style="color: #1f2937; margin: 0; font-size: 28px; font-weight: 700;">SafarBot</h1>
-                        <p style="color: #6b7280; margin: 5px 0; font-size: 16px;">Your AI Travel Planning Assistant</p>
-                    </div>
-                    
-                    <div style="background: #f3f4f6; padding: 30px; border-radius: 12px; text-align: center; margin: 20px 0;">
-                        <h2 style="color: #1f2937; margin: 0 0 20px 0; font-size: 24px; font-weight: 600;">Verification Code</h2>
-                        <p style="color: #4b5563; margin: 0 0 20px 0; font-size: 16px;">Hello {user_name},</p>
-                        <p style="color: #4b5563; margin: 0 0 30px 0; font-size: 16px;">Your verification code is:</p>
-                        
-                        <div style="background: #ffffff; border: 2px solid #e5e7eb; border-radius: 12px; padding: 25px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);">
-                            <span style="font-size: 36px; font-weight: bold; color: #667eea; letter-spacing: 8px; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);">{otp}</span>
-                        </div>
-                        
-                        <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 15px; margin: 20px 0;">
-                            <p style="color: #dc2626; font-size: 14px; margin: 0; font-weight: 500;">
-                                ⏰ This code will expire in {OTPService.OTP_EXPIRE_MINUTES} minutes
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-                        <p style="color: #6b7280; font-size: 14px; margin: 0;">
-                            If you didn't request this code, please ignore this email.
-                        </p>
-                        <p style="color: #6b7280; font-size: 14px; margin: 5px 0 0 0;">
-                            © 2024 SafarBot. All rights reserved.
-                        </p>
-                    </div>
-                </div>
-            </div>
-            """
+            # Load HTML template
+            from utils.template_loader import template_loader
+            html_content = template_loader.render_template(
+                'otp_verification.html',
+                user_name=user_name,
+                otp_code=otp,
+                expiry_minutes=OTPService.OTP_EXPIRE_MINUTES
+            )
             
             # Attach HTML content
             html_part = MIMEText(html_content, 'html')

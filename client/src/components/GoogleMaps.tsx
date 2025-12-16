@@ -1,6 +1,8 @@
-import React, { useCallback, useRef, useState, useEffect } from 'react';
-import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api';
-import { GOOGLE_MAPS_LIBRARIES, GOOGLE_MAPS_CONFIG } from '../config/googleMapsConfig';
+import React, { useCallback, useState, useEffect, useRef, useMemo } from 'react';
+import { Map, AdvancedMarker, InfoWindow, useMap } from '@vis.gl/react-google-maps';
+import { MarkerClusterer } from '@googlemaps/markerclusterer';
+import type { Marker } from '@googlemaps/markerclusterer';
+import { GOOGLE_MAPS_MAP_ID } from '../config/googleMapsConfig';
 
 interface Location {
   id: string; // this should be place_id if coming from Places API
@@ -24,14 +26,9 @@ interface Location {
 
 interface GoogleMapsProps {
   locations: Location[];
+  hoveredLocationId?: string | null; // ID of location being hovered from external source (e.g., itinerary cards)
+  onLocationHover?: (locationId: string | null) => void; // Callback when location is hovered on map
 }
-
-const containerStyle = {
-  width: '100%',
-  height: '100%',
-  minWidth: '100%',
-  minHeight: '100%'
-};
 
 const defaultCenter = {
   lat: 40.7128,
@@ -54,31 +51,233 @@ const calculateCenter = (locations: Location[]) => {
 
 const defaultZoom = 12;
 
-const GoogleMaps: React.FC<GoogleMapsProps> = ({
-  locations
+// Get marker color based on type
+const getMarkerColor = (type: string): string => {
+  const iconColors: Record<string, string> = {
+    destination: '#FF0000', // Red
+    hotel: '#4285F4', // Blue
+    restaurant: '#34A853', // Green
+    activity: '#FBBC05' // Yellow
+  };
+  return iconColors[type] || '#FF0000';
+};
+
+// Get unique emoji icon based on type
+const getMarkerIcon = (type: string): string => {
+  const icons: Record<string, string> = {
+    destination: '🎯', // Target/bullseye for destination
+    hotel: '🏨', // Hotel icon
+    restaurant: '🍽️', // Restaurant/food icon
+    activity: '🎢' // Activity/entertainment icon
+  };
+  return icons[type] || '📍';
+};
+
+
+// Component for rendering markers with clustering
+const LocationMarkers: React.FC<{ 
+  locations: Location[]; 
+  onMarkerClick: (location: Location) => void;
+  hoveredLocationId: string | null;
+  onMarkerHover: (locationId: string | null) => void;
+}> = ({ 
+  locations, 
+  onMarkerClick,
+  hoveredLocationId,
+  onMarkerHover
 }) => {
-  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
-  const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
-  const [map, setMap] = useState<google.maps.Map | null>(null);
-  const hoverCloseTimer = useRef<NodeJS.Timeout | null>(null);
+  const map = useMap();
+  const [markers, setMarkers] = useState<{[key: string]: Marker}>({});
+  const clusterer = useRef<MarkerClusterer | null>(null);
 
-
-  // Use static libraries array to prevent LoadScript reload warnings
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: GOOGLE_MAPS_CONFIG.id,
-    googleMapsApiKey: GOOGLE_MAPS_CONFIG.googleMapsApiKey,
-    libraries: GOOGLE_MAPS_LIBRARIES,
-    version: 'weekly'
-  });
-
-  // Only log errors in development, never log API key information
+  // Initialize MarkerClusterer
   useEffect(() => {
-    if (import.meta.env.DEV && loadError) {
-      console.warn('GoogleMaps component - Load Error:', loadError);
+    if (!map) return;
+    if (!clusterer.current) {
+      clusterer.current = new MarkerClusterer({ map });
     }
-  }, [loadError]);
+  }, [map]);
 
-  const fitToLocations = useCallback((map: google.maps.Map, locs: Location[]) => {
+  // Update markers when the markers list changes
+  useEffect(() => {
+    clusterer.current?.clearMarkers();
+    clusterer.current?.addMarkers(Object.values(markers));
+  }, [markers]);
+
+  const setMarkerRef = (marker: Marker | null, key: string): void => {
+    if (marker && markers[key]) return;
+    if (!marker && !markers[key]) return;
+
+    setMarkers(prev => {
+      if (marker) {
+        return {...prev, [key]: marker};
+      } else {
+        const newMarkers = {...prev};
+        delete newMarkers[key];
+        return newMarkers;
+      }
+    });
+  };
+
+  const validLocations = locations.filter(
+    (loc) =>
+      loc &&
+      loc.position &&
+      !isNaN(loc.position.lat) &&
+      !isNaN(loc.position.lng) &&
+      loc.position.lat !== 0 &&
+      loc.position.lng !== 0 &&
+      Math.abs(loc.position.lat) <= 90 &&
+      Math.abs(loc.position.lng) <= 180
+  );
+
+  return (
+    <>
+      {validLocations.map((location, index) => {
+        const locationId = location.id || `marker-${index}`;
+        const isHovered = hoveredLocationId === locationId;
+        
+        return (
+          <AdvancedMarker
+            key={locationId}
+            position={location.position}
+            onClick={() => onMarkerClick(location)}
+            onMouseEnter={() => onMarkerHover(locationId)}
+            onMouseLeave={() => onMarkerHover(null)}
+            ref={marker => setMarkerRef(marker, locationId)}
+            title={location.name}
+          >
+            <div
+              style={{
+                transform: isHovered ? 'scale(1.4)' : 'scale(1)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                cursor: 'pointer',
+                position: 'relative',
+                zIndex: isHovered ? 1000 : 1,
+              }}
+            >
+              {/* Outer glow/halo on hover */}
+              {isHovered && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '50%',
+                    backgroundColor: getMarkerColor(location.type),
+                    opacity: 0.3,
+                    animation: 'pulse 1.5s ease-in-out infinite',
+                  }}
+                />
+              )}
+              {/* Custom marker icon */}
+              <div
+                style={{
+                  backgroundColor: getMarkerColor(location.type),
+                  borderRadius: '50%',
+                  width: '48px',
+                  height: '48px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: `3px solid ${isHovered ? '#FFFFFF' : getMarkerColor(location.type)}`,
+                  boxShadow: isHovered 
+                    ? `0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 4px ${getMarkerColor(location.type)}40`
+                    : '0 4px 12px rgba(0, 0, 0, 0.3)',
+                  position: 'relative',
+                  fontSize: '24px',
+                }}
+              >
+                <span style={{ 
+                  filter: 'drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3))',
+                  transform: isHovered ? 'scale(1.1)' : 'scale(1)',
+                  transition: 'transform 0.3s ease',
+                }}>
+                  {getMarkerIcon(location.type)}
+                </span>
+              </div>
+              {/* Bottom pointer/shadow */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: 0,
+                  height: 0,
+                  borderLeft: '12px solid transparent',
+                  borderRight: '12px solid transparent',
+                  borderTop: `16px solid ${getMarkerColor(location.type)}`,
+                  filter: isHovered ? 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4))' : 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))',
+                  transition: 'all 0.3s ease',
+                }}
+              />
+            </div>
+          </AdvancedMarker>
+        );
+      })}
+      {/* Add CSS animation for pulse effect */}
+      <style>{`
+        @keyframes pulse {
+          0%, 100% {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0.3;
+          }
+          50% {
+            transform: translate(-50%, -50%) scale(1.2);
+            opacity: 0.15;
+          }
+        }
+      `}</style>
+    </>
+  );
+};
+
+// Component to fetch place details - must be inside Map component to access map instance
+const PlaceDetailsFetcher: React.FC<{ 
+  location: Location | null;
+  onPlaceDetailsFetched: (location: Location, photos: string[]) => void;
+}> = ({ location, onPlaceDetailsFetched }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!location || !map || !location.id) return;
+
+    const service = new google.maps.places.PlacesService(map);
+    service.getDetails(
+      {
+        placeId: location.id,
+        fields: ['name', 'photos', 'rating', 'formatted_address']
+      },
+      (place, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+          const updatedLocation: Location = {
+            ...location,
+            description: place.formatted_address || location.description,
+            rating: place.rating || location.rating
+          };
+
+          const photos = place.photos
+            ? place.photos.map((p) => p.getUrl({ maxWidth: 300, maxHeight: 200 }))
+            : [];
+
+          onPlaceDetailsFetched(updatedLocation, photos);
+        }
+      }
+    );
+  }, [location, map, onPlaceDetailsFetched]);
+
+  return null;
+};
+
+// Component to handle map fitting - must be inside Map component
+const MapController: React.FC<{ locations: Location[] }> = ({ locations }) => {
+  const map = useMap();
+
+  const fitToLocations = useCallback((mapInstance: google.maps.Map, locs: Location[]) => {
     const validLocations = locs.filter(
       (loc) =>
         loc &&
@@ -98,41 +297,27 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({
       });
       
       // Add some padding to the bounds
-      map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
+      mapInstance.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
       
       // Set appropriate zoom level based on number of locations
       setTimeout(() => {
         if (validLocations.length === 1) {
-          map.setZoom(15);
+          mapInstance.setZoom(15);
         } else if (validLocations.length <= 3) {
-          map.setZoom(13);
+          mapInstance.setZoom(13);
         } else {
-          map.setZoom(12);
+          mapInstance.setZoom(12);
         }
       }, 500);
     } else {
-      map.setCenter(defaultCenter);
-      map.setZoom(defaultZoom);
+      mapInstance.setCenter(defaultCenter);
+      mapInstance.setZoom(defaultZoom);
     }
-  }, [defaultCenter, defaultZoom]);
+  }, []);
 
-  // Calculate map center before using it
-  const mapCenter = calculateCenter(locations);
-  
-  // Fallback center if calculation fails
-  const fallbackCenter = { lat: 15.3838, lng: 73.8162 }; // Vasco Da Gama, Goa
-  const finalCenter = mapCenter.lat && mapCenter.lng ? mapCenter : fallbackCenter;
-
-  const onLoad = useCallback((map: google.maps.Map) => {
-    setMap(map);
-    
-    // Simple initialization
-    map.setCenter(finalCenter);
-    map.setZoom(12);
-  }, [finalCenter]);
-
+  // Fit map to locations when locations change
   useEffect(() => {
-    if (map && isLoaded && locations.length > 0) {
+    if (map && locations.length > 0) {
       if (import.meta.env.DEV) {
         console.debug(`Fitting map to ${locations.length} locations`);
         console.debug('Sample locations:', locations.slice(0, 3).map(l => ({
@@ -146,173 +331,117 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({
         fitToLocations(map, locations);
       }, 100);
     }
-  }, [map, isLoaded, locations, fitToLocations]);
+  }, [map, locations, fitToLocations]);
 
-  const onUnmount = useCallback(() => {
-    setMap(null);
+  return null;
+};
+
+const GoogleMaps: React.FC<GoogleMapsProps> = ({
+  locations,
+  hoveredLocationId: externalHoveredLocationId = null,
+  onLocationHover
+}) => {
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+  const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
+  const [internalHoveredLocationId, setInternalHoveredLocationId] = useState<string | null>(null);
+  
+  // Use external hover ID if provided, otherwise use internal state
+  const hoveredLocationId = externalHoveredLocationId !== null ? externalHoveredLocationId : internalHoveredLocationId;
+  
+  // Find the hovered location for showing metadata
+  const hoveredLocation = useMemo(() => {
+    if (!hoveredLocationId) return null;
+    return locations.find(loc => (loc.id || '') === hoveredLocationId);
+  }, [hoveredLocationId, locations]);
+
+  // Calculate map center before using it
+  const mapCenter = calculateCenter(locations);
+  
+  // Fallback center if calculation fails
+  const fallbackCenter = { lat: 15.3838, lng: 73.8162 }; // Vasco Da Gama, Goa
+  const finalCenter = mapCenter.lat && mapCenter.lng ? mapCenter : fallbackCenter;
+
+  const handleMarkerClick = useCallback((location: Location) => {
+    // Set location immediately; PlaceDetailsFetcher will fetch details
+    setSelectedLocation(location);
   }, []);
 
-  // 🔹 Fetch place details with photos when a marker is clicked
-  const fetchPlaceDetails = (location: Location) => {
-    if (!map) return;
-
-    const service = new google.maps.places.PlacesService(map);
-
-    service.getDetails(
-      {
-        placeId: location.id, // assumes id = place_id
-        fields: ['name', 'photos', 'rating', 'formatted_address']
-      },
-      (place, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK && place) {
-          setSelectedLocation({
-            ...location,
-            description: place.formatted_address || location.description,
-            rating: place.rating || location.rating
-          });
-
-          if (place.photos) {
-            const urls = place.photos.map((p) =>
-              p.getUrl({ maxWidth: 300, maxHeight: 200 })
-            );
-            setSelectedPhotos(urls);
-          } else {
-            setSelectedPhotos([]);
-          }
-        }
-      }
-    );
-  };
-
-  const handleMarkerMouseOver = (location: Location) => {
-    if (hoverCloseTimer.current) {
-      clearTimeout(hoverCloseTimer.current);
-      hoverCloseTimer.current = null;
-    }
-    // Show basic metadata immediately on hover; photos only on click to avoid quota hits
+  const handlePlaceDetailsFetched = useCallback((location: Location, photos: string[]) => {
     setSelectedLocation(location);
-  };
+    setSelectedPhotos(photos);
+  }, []);
 
-  const handleMarkerMouseOut = () => {
-    // Delay closing a bit to allow smooth movement
-    hoverCloseTimer.current = setTimeout(() => {
-      setSelectedLocation(null);
-      setSelectedPhotos([]);
-    }, 150);
-  };
-
-  if (loadError) {
-    console.error('Google Maps load error:', loadError);
-    return <div>Error loading maps: {loadError.message}</div>;
-  }
-
-  if (!isLoaded) {
-    return <div>Loading Maps...</div>;
-  }
 
   return (
     <div className="relative h-full w-full min-h-0">
-      <GoogleMap
-        mapContainerStyle={containerStyle}
-        center={finalCenter}
-        zoom={12}
-        onLoad={onLoad}
-        onUnmount={onUnmount}
-        options={{
-          zoomControl: true,
-          mapTypeControl: true,
-          scaleControl: true,
-          streetViewControl: false,
-          rotateControl: false,
-          fullscreenControl: true,
-          disableDefaultUI: false,
-          gestureHandling: 'auto'
-        }}
+      <Map
+        defaultZoom={defaultZoom}
+        defaultCenter={finalCenter}
+        mapId={GOOGLE_MAPS_MAP_ID}
+        style={{ width: '100%', height: '100%' }}
+        gestureHandling="greedy"
+        disableDefaultUI={false}
       >
-        {locations.map((location, index) => {
-          // Skip invalid positions
-          if (!location || !location.position || 
-              isNaN(location.position.lat) || isNaN(location.position.lng) ||
-              Math.abs(location.position.lat) > 90 || Math.abs(location.position.lng) > 180) {
-            if (import.meta.env.DEV) {
-              console.debug(`Skipping invalid location at index ${index}:`, location);
-            }
-            return null;
-          }
-          
-          // Get marker icon color based on type - create SVG data URL for colored marker
-          const getMarkerIcon = (type: string): google.maps.Icon | undefined => {
-            if (!window.google?.maps) return undefined;
-            
-            // Use colored markers - create simple colored pin icon
-            const iconColors: Record<string, string> = {
-              destination: '#FF0000', // Red
-              hotel: '#4285F4', // Blue
-              restaurant: '#34A853', // Green
-              activity: '#FBBC05' // Yellow
-            };
-            
-            const color = iconColors[type] || '#FF0000';
-            
-            // Create SVG marker pin icon
-            const svgMarker = `
-              <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="20" cy="20" r="14" fill="${color}" stroke="#FFFFFF" stroke-width="3"/>
-              </svg>
-            `;
-            
-            return {
-              url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svgMarker)}`,
-              scaledSize: new google.maps.Size(40, 40),
-              anchor: new google.maps.Point(20, 20)
-            };
-          };
-          
-          // Get marker label text (single character or number)
-          const getMarkerLabel = (type: string, index: number): string => {
-            const labels: Record<string, string> = {
-              destination: 'D',
-              hotel: 'H',
-              restaurant: 'R',
-              activity: 'A'
-            };
-            return labels[type] || String(index + 1);
-          };
-          
-          const markerIcon = getMarkerIcon(location.type);
-          
-          if (import.meta.env.DEV && index === 0) {
-            console.debug('Creating first marker:', {
-              location: location.name,
-              position: location.position,
-              type: location.type,
-              hasIcon: !!markerIcon
-            });
-          }
-          
-          // Note: google.maps.Marker is deprecated in favor of AdvancedMarkerElement
-          // However, @react-google-maps/api doesn't support AdvancedMarkerElement yet
-          // This warning is informational - Marker will continue to work for at least 12 months
-          // We'll migrate when the library adds support for AdvancedMarkerElement
-          return (
-            <Marker
-              key={location.id || `marker-${index}`}
-              position={location.position}
-              onClick={() => fetchPlaceDetails(location)}
-              onMouseOver={() => handleMarkerMouseOver(location)}
-              onMouseOut={handleMarkerMouseOut}
-              title={location.name}
-              icon={markerIcon || undefined}
-              label={{
-                text: getMarkerLabel(location.type, index),
-                color: '#FFFFFF',
-                fontSize: '12px',
-                fontWeight: 'bold'
-              }}
-            />
-          );
-        })}
+        <MapController locations={locations} />
+        <LocationMarkers 
+          locations={locations} 
+          onMarkerClick={handleMarkerClick}
+          hoveredLocationId={hoveredLocationId}
+          onMarkerHover={(id) => {
+            setInternalHoveredLocationId(id);
+            onLocationHover?.(id);
+          }}
+        />
+        <PlaceDetailsFetcher 
+          location={selectedLocation}
+          onPlaceDetailsFetched={handlePlaceDetailsFetched}
+        />
 
+        {/* Hover InfoWindow - shows when hovering over a location */}
+        {hoveredLocation && hoveredLocation !== selectedLocation && (
+          <InfoWindow
+            position={hoveredLocation.position}
+            zIndex={999}
+          >
+            <div className="p-2 min-w-[200px] max-w-[280px]">
+              <div className="flex items-start gap-2">
+                {hoveredLocation.thumbnail && (
+                  <img
+                    src={hoveredLocation.thumbnail}
+                    alt={hoveredLocation.name}
+                    className="w-12 h-12 rounded-md object-cover flex-shrink-0"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                )}
+                <div className="flex-1">
+                  <div className="text-[9px] uppercase tracking-wide text-gray-500 mb-0.5">
+                    {hoveredLocation.type}
+                  </div>
+                  <h4 className="font-semibold text-gray-900 text-sm mb-1">
+                    {hoveredLocation.name}
+                  </h4>
+                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                    {hoveredLocation.rating !== undefined && (
+                      <span className="text-amber-500">⭐ {hoveredLocation.rating}</span>
+                    )}
+                    {hoveredLocation.price !== undefined && (
+                      <span className="text-green-600">
+                        {typeof hoveredLocation.price === 'number' ? `$${hoveredLocation.price}` : hoveredLocation.price}
+                      </span>
+                    )}
+                  </div>
+                  {hoveredLocation.description && (
+                    <div className="text-xs text-gray-600 mt-1 line-clamp-2">
+                      {hoveredLocation.description}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </InfoWindow>
+        )}
+
+        {/* Click InfoWindow - shows when clicking on a location */}
         {selectedLocation && (
           <InfoWindow
             position={selectedLocation.position}
@@ -320,6 +449,7 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({
               setSelectedLocation(null);
               setSelectedPhotos([]);
             }}
+            zIndex={1000}
           >
             <div className="p-3 min-w-[280px] max-w-[320px]">
               <div className="flex items-start gap-3">
@@ -390,7 +520,7 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({
             </div>
           </InfoWindow>
         )}
-      </GoogleMap>
+      </Map>
     </div>
   );
 };

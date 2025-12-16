@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
+import { APIProvider } from '@vis.gl/react-google-maps';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
@@ -8,6 +9,7 @@ import Footer from './components/Footer';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoadingSpinner from './components/LoadingSpinner';
+import { GOOGLE_MAPS_API_KEY } from './config/googleMapsConfig';
 
 // Lazy load all page components to prevent eager loading
 const HomePage = lazy(() => import('./pages/HomePage'));
@@ -32,6 +34,7 @@ const ChatPage = lazy(() => import('./pages/ChatPage').then(module => ({ default
 const PublicItineraryPage = lazy(() => import('./pages/PublicItineraryPage'));
 const ItineraryRedirectPage = lazy(() => import('./pages/ItineraryRedirectPage'));
 const SavedItineraryViewPage = lazy(() => import('./pages/SavedItineraryViewPage'));
+const MapTestPage = lazy(() => import('./pages/MapTestPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const SignupPage = lazy(() => import('./pages/SignupPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
@@ -81,10 +84,15 @@ const ConditionalFooter: React.FC = () => {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider>
-        <AuthProvider>
-          <ToastProvider>
-            <Router>
+      <APIProvider 
+        apiKey={GOOGLE_MAPS_API_KEY} 
+        libraries={['places']}
+        onLoad={() => console.log('Maps API has loaded.')}
+      >
+        <ThemeProvider>
+          <AuthProvider>
+            <ToastProvider>
+              <Router>
             <div className="min-h-screen w-full bg-secondary-50 dark:bg-dark-bg text-secondary-900 dark:text-dark-text">
               <ConditionalHeader />
               <main className="mt-0 pt-0 w-full">
@@ -149,6 +157,7 @@ function App() {
                         <ChatPage />
                       </ProtectedRoute>
                     } />
+                    <Route path="/map-test" element={<MapTestPage />} />
                     
                     {/* Error Pages */}
                     <Route path="/404" element={<NotFoundPage />} />
@@ -166,6 +175,7 @@ function App() {
           </ToastProvider>
         </AuthProvider>
       </ThemeProvider>
+      </APIProvider>
     </ErrorBoundary>
   );
 }

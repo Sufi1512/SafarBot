@@ -38,6 +38,7 @@ class AuthMiddleware:
             "/auth/resend-otp",
             "/google/auth",
             "/google/callback",
+            "/google/google-signin",
             "/itinerary/generate-itinerary",  # Public for demo
             "/itinerary/generate-itinerary-ai",  # Public for demo
             "/itinerary/generate-itinerary-complete",  # Public for demo

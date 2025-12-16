@@ -6,6 +6,7 @@ import requests
 import logging
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
+from urllib.parse import unquote
 from config import settings
 from utils.location_utils import parse_location_for_weather
 
@@ -33,9 +34,14 @@ class WeatherService:
             logger.warning("OpenWeatherMap API key not configured")
             return {"error": "OpenWeatherMap API key not configured"}
         
+        # Decode URL-encoded city name and clean it up
+        decoded_city = unquote(city).replace('+', ' ').strip()
+        # Replace multiple spaces with single space
+        decoded_city = ' '.join(decoded_city.split())
+        
         # Parse the city name if it's a full formatted address
-        parsed_city, parsed_country_code = parse_location_for_weather(city)
-        final_city = parsed_city if parsed_city != city else city
+        parsed_city, parsed_country_code = parse_location_for_weather(decoded_city)
+        final_city = parsed_city if parsed_city != decoded_city else decoded_city
         final_country_code = parsed_country_code if parsed_country_code else country_code
             
         try:
@@ -102,9 +108,14 @@ class WeatherService:
             logger.warning("OpenWeatherMap API key not configured")
             return {"error": "OpenWeatherMap API key not configured"}
         
+        # Decode URL-encoded city name and clean it up
+        decoded_city = unquote(city).replace('+', ' ').strip()
+        # Replace multiple spaces with single space
+        decoded_city = ' '.join(decoded_city.split())
+        
         # Parse the city name if it's a full formatted address
-        parsed_city, parsed_country_code = parse_location_for_weather(city)
-        final_city = parsed_city if parsed_city != city else city
+        parsed_city, parsed_country_code = parse_location_for_weather(decoded_city)
+        final_city = parsed_city if parsed_city != decoded_city else decoded_city
         final_country_code = parsed_country_code if parsed_country_code else country_code
             
         try:

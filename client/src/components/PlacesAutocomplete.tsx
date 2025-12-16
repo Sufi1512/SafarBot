@@ -1,6 +1,4 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
-import { GOOGLE_MAPS_LIBRARIES, GOOGLE_MAPS_CONFIG } from '../config/googleMapsConfig';
 
 // Add custom styles for Google Places Autocomplete
 // Note: This component uses google.maps.places.Autocomplete which is deprecated.
@@ -63,6 +61,12 @@ const addCustomStyles = () => {
     .pac-icon {
       margin-right: 8px;
       opacity: 0.6;
+    }
+    
+    /* Ensure no duplicate icons appear in the input field */
+    .pac-target-input::before,
+    .pac-target-input::after {
+      display: none !important;
     }
     
     .pac-logo {
@@ -147,6 +151,7 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({
   id
 }) => {
   const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Add custom styles when component mounts
@@ -154,48 +159,61 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({
     addCustomStyles();
   }, []);
 
-  const { isLoaded } = useJsApiLoader({
-    id: GOOGLE_MAPS_CONFIG.id,
-    googleMapsApiKey: GOOGLE_MAPS_CONFIG.googleMapsApiKey,
-    libraries: GOOGLE_MAPS_LIBRARIES
-  });
-
-  const onLoad = (autocompleteInstance: google.maps.places.Autocomplete) => {
-    setAutocomplete(autocompleteInstance);
-  };
-
-  const onPlaceChanged = () => {
-    if (autocomplete !== null) {
-      const place = autocomplete.getPlace();
-      
-      if (place.formatted_address) {
-        onChange(place.formatted_address);
-        
-        // Call the onPlaceSelect callback if provided
-        if (onPlaceSelect) {
-          onPlaceSelect(place);
+  // Check if Google Maps API is loaded (via APIProvider)
+  useEffect(() => {
+    let retryCount = 0;
+    const maxRetries = 50; // 5 seconds max wait time (50 * 100ms)
+    
+    const checkGoogleMaps = () => {
+      if (window.google?.maps?.places) {
+        setIsLoaded(true);
+        if (import.meta.env.DEV) {
+          console.log('Google Maps Places API loaded successfully');
         }
+      } else if (retryCount < maxRetries) {
+        retryCount++;
+        // Retry after a short delay if not loaded yet
+        setTimeout(checkGoogleMaps, 100);
+      } else {
+        console.error('Google Maps Places API failed to load after multiple retries');
       }
-    }
-  };
+    };
+    checkGoogleMaps();
+  }, []);
 
   // Initialize autocomplete when Google Maps is loaded
   // Note: google.maps.places.Autocomplete is deprecated in favor of PlaceAutocompleteElement
-  // However, @react-google-maps/api doesn't support PlaceAutocompleteElement yet
   // This warning is informational - Autocomplete will continue to work for at least 12 months
-  // We'll migrate when the library adds support for PlaceAutocompleteElement
   useEffect(() => {
-    if (isLoaded && inputRef.current && !autocomplete) {
+    if (!isLoaded || !inputRef.current || autocomplete || !window.google?.maps?.places) {
+      return;
+    }
+
+    try {
       const autocompleteInstance = new google.maps.places.Autocomplete(inputRef.current, {
         types: ['(cities)'], // Use only cities for travel destinations
         componentRestrictions: { country: [] }, // Allow all countries
         fields: ['place_id', 'formatted_address', 'name', 'geometry', 'address_components', 'types']
       });
 
-      autocompleteInstance.addListener('place_changed', onPlaceChanged);
+      autocompleteInstance.addListener('place_changed', () => {
+        const place = autocompleteInstance.getPlace();
+        
+        if (place.formatted_address) {
+          onChange(place.formatted_address);
+          
+          // Call the onPlaceSelect callback if provided
+          if (onPlaceSelect) {
+            onPlaceSelect(place);
+          }
+        }
+      });
+      
       setAutocomplete(autocompleteInstance);
+    } catch (error) {
+      console.error('Error initializing Places Autocomplete:', error);
     }
-  }, [isLoaded, autocomplete]);
+  }, [isLoaded, autocomplete, onChange, onPlaceSelect]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -224,7 +242,7 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({
           required={required}
           name={name}
           id={id}
-           className={`w-full py-3 px-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-4 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-sm font-medium hover:border-cyan-400 shadow-sm hover:shadow-md ${className}`}
+          className={`pac-target-input w-full py-3 ${icon ? 'pl-12 pr-4' : 'px-4'} border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-4 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-sm font-medium hover:border-cyan-400 shadow-sm hover:shadow-md ${className}`}
         />
       </div>
     );
@@ -237,31 +255,20 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({
           {icon}
         </div>
       )}
-      {/* Note: The Autocomplete component from @react-google-maps/api uses the deprecated
-          google.maps.places.Autocomplete API. This is a library limitation - we'll migrate
-          to PlaceAutocompleteElement when the library adds support for it. */}
-      <Autocomplete
-        onLoad={onLoad}
-        onPlaceChanged={onPlaceChanged}
-        options={{
-          types: ['(cities)'],
-          componentRestrictions: { country: [] },
-          fields: ['place_id', 'formatted_address', 'name', 'geometry', 'address_components', 'types']
-        }}
-      >
-        <input
-          ref={inputRef}
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          disabled={disabled}
-          required={required}
-          name={name}
-          id={id}
-           className={`w-full py-3 px-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-4 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-sm font-medium hover:border-cyan-400 shadow-sm hover:shadow-md ${className}`}
-        />
-      </Autocomplete>
+      {/* Note: Using native google.maps.places.Autocomplete API (deprecated but still supported)
+          Will migrate to PlaceAutocompleteElement in the future */}
+      <input
+        ref={inputRef}
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        disabled={disabled || !isLoaded}
+        required={required}
+        name={name}
+        id={id}
+        className={`w-full py-3 px-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-4 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-sm font-medium hover:border-cyan-400 shadow-sm hover:shadow-md ${className}`}
+      />
     </div>
   );
 };

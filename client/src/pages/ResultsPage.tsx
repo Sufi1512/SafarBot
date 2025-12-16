@@ -249,6 +249,7 @@ const ResultsPage: React.FC = () => {
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
   const [isHoverPopupVisible, setIsHoverPopupVisible] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [hoveredLocationId, setHoveredLocationId] = useState<string | null>(null); // For map highlighting
   const [isScrolled, setIsScrolled] = useState(false);
   
 
@@ -291,7 +292,18 @@ const ResultsPage: React.FC = () => {
     setHoveredPlace(place);
     setHoveredPlaceType(type);
     setIsHoverPopupVisible(true);
-  }, []); // Empty dependency array since it only uses refs and setters
+    
+    // Find matching location ID for map highlighting
+    // Try place_id first, then title/name matching
+    const placeId = (place as PlaceDetails).place_id || (place as any).id;
+    if (placeId && allPlaceDetails[placeId]) {
+      setHoveredLocationId(placeId);
+    } else {
+      // Try to match by title/name in extractLocations
+      // This will be handled in a useEffect that watches hoveredPlace
+      setHoveredLocationId(null);
+    }
+  }, [allPlaceDetails]); // Include allPlaceDetails to find matching location
 
   const handlePlaceHoverLeave = useCallback(() => {
     hoverTimeoutRef.current = setTimeout(() => {
@@ -299,83 +311,12 @@ const ResultsPage: React.FC = () => {
       setHoveredPlaceType(null);
       setHoverPosition(null);
       setIsHoverPopupVisible(false);
+      setHoveredLocationId(null); // Clear map highlight
     }, 150); // Reduced delay for more responsive feel
   }, []); // Empty dependency array since it only uses refs and setters
-
-  // Legacy helper function for hover events (for backward compatibility)
-  const handleMouseEnter = (e: React.MouseEvent, item: Activity | Hotel | Restaurant, type: 'activity' | 'hotel' | 'restaurant') => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-    }
-    const rect = e.currentTarget.getBoundingClientRect();
-    setHoverPosition({ x: rect.right + 10, y: rect.top });
-    setHoveredItem(item);
-    setHoveredItemType(type);
-  };
-
-  const handleMouseLeave = () => {
-    hoverTimeoutRef.current = setTimeout(() => {
-      setHoveredItem(null);
-      setHoveredItemType(null);
-      setHoverPosition(null);
-    }, 300);
-  };
-
-
-  // SERP image cache state removed since SERP API functionality was removed
-
-
-
-  useEffect(() => {
-    if (!enhancedResponse) {
-      return;
-    }
-
-    const placeDetailsList = Object.values(enhancedResponse.place_details || {});
-    const additionalPlacesList: AdditionalPlace[] = [];
-
-    if (enhancedResponse.additional_places) {
-      Object.values(enhancedResponse.additional_places).forEach((group) => {
-        if (Array.isArray(group)) {
-          additionalPlacesList.push(...group);
-        }
-      });
-    }
-
-    if (placeDetailsList.length === 0 && additionalPlacesList.length === 0) {
-      return;
-    }
-
-    const prefetch = async () => {
-      try {
-        const summary = await prefetchPlaceMedia({
-          placeDetails: placeDetailsList as PlaceDetails[],
-          additionalPlaces: additionalPlacesList as AdditionalPlace[]
-        });
-
-        console.debug('Prefetched hover media', summary);
-      } catch (prefetchError) {
-        console.warn('Image prefetch skipped:', prefetchError);
-      }
-    };
-
-    prefetch();
-  }, [enhancedResponse]);
-
-
-  // SERP API functionality for fetching restaurants has been removed
-  // No longer fetching restaurants via SERP API
-
-  // Helper functions for enhanced API
-  // (Removed unused handlePlaceClick to satisfy linter)
-
-  const handleAddToItinerary = (_place: PlaceDetails | AdditionalPlace) => {
-    // For now, just close the modal. In the future, this could add to itinerary
-    setIsPlaceModalOpen(false);
-    // TODO: Implement actual itinerary addition logic
-  };
-
+  
   // Enhanced location extraction with place details - memoized to prevent unnecessary recalculations
+  // Moved here before useEffects that use it to avoid "before initialization" error
   const extractLocations = useMemo(() => {
     const locations: Location[] = [];
     
@@ -672,6 +613,115 @@ const ResultsPage: React.FC = () => {
     }
     return locations;
   }, [enhancedResponse, allPlaceDetails, dailyPlans, hotels, itineraryData]); // Include itineraryData in dependencies
+  
+  // Sync hovered place with location ID for map highlighting
+  useEffect(() => {
+    if (!hoveredPlace) {
+      setHoveredLocationId(null);
+      return;
+    }
+    
+    // Try to find matching location by place_id
+    const placeId = (hoveredPlace as PlaceDetails).place_id || (hoveredPlace as any).id;
+    if (placeId) {
+      // Check if this place_id exists in allPlaceDetails or extractLocations
+      const matchingLocation = extractLocations.find(loc => loc.id === placeId);
+      if (matchingLocation) {
+        setHoveredLocationId(placeId);
+        return;
+      }
+    }
+    
+    // Try matching by title/name
+    const placeTitle = (hoveredPlace as PlaceDetails).title || (hoveredPlace as AdditionalPlace).title || (hoveredPlace as AdditionalPlace).name;
+    if (placeTitle) {
+      const matchingLocation = extractLocations.find(loc => 
+        loc.name.toLowerCase() === placeTitle.toLowerCase() ||
+        loc.name.toLowerCase().includes(placeTitle.toLowerCase()) ||
+        placeTitle.toLowerCase().includes(loc.name.toLowerCase())
+      );
+      if (matchingLocation) {
+        setHoveredLocationId(matchingLocation.id);
+        return;
+      }
+    }
+    
+    // If no match found, clear the highlight
+    setHoveredLocationId(null);
+  }, [hoveredPlace, extractLocations]);
+
+  // Legacy helper function for hover events (for backward compatibility)
+  const handleMouseEnter = (e: React.MouseEvent, item: Activity | Hotel | Restaurant, type: 'activity' | 'hotel' | 'restaurant') => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setHoverPosition({ x: rect.right + 10, y: rect.top });
+    setHoveredItem(item);
+    setHoveredItemType(type);
+  };
+
+  const handleMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredItem(null);
+      setHoveredItemType(null);
+      setHoverPosition(null);
+    }, 300);
+  };
+
+
+  // SERP image cache state removed since SERP API functionality was removed
+
+
+
+  useEffect(() => {
+    if (!enhancedResponse) {
+      return;
+    }
+
+    const placeDetailsList = Object.values(enhancedResponse.place_details || {});
+    const additionalPlacesList: AdditionalPlace[] = [];
+
+    if (enhancedResponse.additional_places) {
+      Object.values(enhancedResponse.additional_places).forEach((group) => {
+        if (Array.isArray(group)) {
+          additionalPlacesList.push(...group);
+        }
+      });
+    }
+
+    if (placeDetailsList.length === 0 && additionalPlacesList.length === 0) {
+      return;
+    }
+
+    const prefetch = async () => {
+      try {
+        const summary = await prefetchPlaceMedia({
+          placeDetails: placeDetailsList as PlaceDetails[],
+          additionalPlaces: additionalPlacesList as AdditionalPlace[]
+        });
+
+        console.debug('Prefetched hover media', summary);
+      } catch (prefetchError) {
+        console.warn('Image prefetch skipped:', prefetchError);
+      }
+    };
+
+    prefetch();
+  }, [enhancedResponse]);
+
+
+  // SERP API functionality for fetching restaurants has been removed
+  // No longer fetching restaurants via SERP API
+
+  // Helper functions for enhanced API
+  // (Removed unused handlePlaceClick to satisfy linter)
+
+  const handleAddToItinerary = (_place: PlaceDetails | AdditionalPlace) => {
+    // For now, just close the modal. In the future, this could add to itinerary
+    setIsPlaceModalOpen(false);
+    // TODO: Implement actual itinerary addition logic
+  };
 
   useEffect(() => {
     if (authLoading) {
@@ -1584,7 +1634,11 @@ const ResultsPage: React.FC = () => {
               {activeTab === 'map' && (
                 <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                   <div className="h-96 lg:h-[600px]">
-                    <GoogleMaps locations={extractLocations} />
+                    <GoogleMaps 
+                      locations={extractLocations} 
+                      hoveredLocationId={hoveredLocationId}
+                      onLocationHover={setHoveredLocationId}
+                    />
                   </div>
                 </div>
               )}
@@ -1642,7 +1696,13 @@ const ResultsPage: React.FC = () => {
                       }
                       
                       // Return locations if available, otherwise empty array (map will show default)
-                      return <GoogleMaps locations={locations.length > 0 ? locations : []} />;
+                      return (
+                        <GoogleMaps 
+                          locations={locations.length > 0 ? locations : []} 
+                          hoveredLocationId={hoveredLocationId}
+                          onLocationHover={setHoveredLocationId}
+                        />
+                      );
                     })()}
                   </div>
                 </div>

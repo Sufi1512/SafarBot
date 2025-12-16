@@ -1,7 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { useJsApiLoader } from '@react-google-maps/api';
+import React, { useRef, useState } from 'react';
 import { Plane } from 'lucide-react';
-import { GOOGLE_MAPS_CONFIG, GOOGLE_MAPS_LIBRARIES } from '../config/googleMapsConfig';
 import { AirportSuggestion } from '../services/api';
 
 interface AirportAutocompleteProps {
@@ -31,19 +29,6 @@ const AirportAutocomplete: React.FC<AirportAutocompleteProps> = ({
   const [suggestions, setSuggestions] = useState<AirportSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: GOOGLE_MAPS_CONFIG.id,
-    googleMapsApiKey: GOOGLE_MAPS_CONFIG.googleMapsApiKey,
-    libraries: GOOGLE_MAPS_LIBRARIES
-  });
-
-  // Debug logging (only in development, and don't log API key info)
-  useEffect(() => {
-    if (import.meta.env.DEV && loadError) {
-      console.warn('AirportAutocomplete - Google Maps API Error:', loadError);
-    }
-  }, [loadError]);
 
   // Note: onPlaceChanged is not used as we handle input changes manually via handleInputChange
   // Airport data is now fetched from external API
@@ -208,29 +193,6 @@ const AirportAutocomplete: React.FC<AirportAutocompleteProps> = ({
       onAirportSelect(airport);
     }
   };
-
-  if (!isLoaded) {
-    return (
-      <div className="relative">
-        <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 z-10">
-          <Plane className="h-5 w-5" />
-        </div>
-        <input
-          ref={inputRef}
-          type="text"
-          value={value}
-          onChange={(e) => handleInputChange(e.target.value)}
-          placeholder={placeholder}
-          disabled={disabled}
-          required={required}
-          name={name}
-          id={id}
-          className={`w-full py-3 pl-12 pr-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-4 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-sm font-medium hover:border-cyan-400 shadow-sm hover:shadow-md ${className}`}
-        />
-        <div className="text-xs text-gray-500 mt-1">Loading Google Maps API...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="relative">

@@ -65,6 +65,8 @@ def extract_country_code(formatted_address: str) -> str:
         'Vietnam': 'VN',
         'Turkey': 'TR',
         'Egypt': 'EG',
+        'United Arab Emirates': 'AE',
+        'UAE': 'AE',
         'South Africa': 'ZA',
         'Nigeria': 'NG',
         'Kenya': 'KE',

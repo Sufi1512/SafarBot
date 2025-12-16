@@ -3,7 +3,7 @@ SafarBot API - Main Application Entry Point
 Production-ready FastAPI application for AI-powered travel planning platform
 """
 
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 import logging
@@ -14,6 +14,8 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv('.env')
@@ -105,24 +107,33 @@ async def auth_middleware(request, call_next):
     return await AuthMiddleware.validate_token(request, call_next)
 
 # 10. CORS middleware - updated for Render backend + Vercel frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
+# Security: Restricted headers and removed null origin
+import os
+cors_origins_env = os.getenv("CORS_ORIGINS", "")
+if cors_origins_env:
+    # Use environment variable if set
+    allowed_origins = [origin.strip() for origin in cors_origins_env.split(",") if origin.strip() and origin.strip() != "null"]
+else:
+    # Fallback to default origins (excluding null for security)
+    allowed_origins = [
         "http://localhost:3000", 
         "http://localhost:5173",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
-        "null",  # Allow local file:// origins for testing
         "https://safarbot.vercel.app",
         "https://safarbot-git-main-sufi1512.vercel.app",
         "https://safarbot-sufi1512.vercel.app",
         "https://safarbot-frontend.vercel.app",
         "https://safarbot.netlify.app"
-    ],
+    ]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
-    expose_headers=["*"],
+    allow_headers=["Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin"],
+    expose_headers=["X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset"],
 )
 
 # Database events
@@ -187,16 +198,54 @@ app.include_router(image_proxy_router, prefix="/images", tags=["images"])
 
 # Chat Collaboration WebSocket endpoints
 from services.chat_collaboration_service import chat_service
+from services.auth_service import AuthService
+from utils.validation import validate_object_id
 
 @app.websocket("/chat/{user_id}")
-async def chat_websocket_endpoint(websocket: WebSocket, user_id: str, user_name: str = None):
+async def chat_websocket_endpoint(websocket: WebSocket, user_id: str):
     """Chat collaboration WebSocket endpoint for authenticated users"""
-    await chat_service.handle_websocket(websocket, user_id, user_name)
+    try:
+        # Get token from query parameters
+        token = websocket.query_params.get("token")
+        if not token:
+            await websocket.close(code=1008, reason="Authentication required")
+            return
+        
+        # Verify token
+        payload = AuthService.verify_token(token)
+        if not payload or payload.get("type") != "access":
+            await websocket.close(code=1008, reason="Invalid or expired token")
+            return
+        
+        # Verify user_id matches token
+        token_user_id = payload.get("sub")
+        if not token_user_id or token_user_id != user_id:
+            await websocket.close(code=1008, reason="Unauthorized: User ID mismatch")
+            return
+        
+        # Validate ObjectId format
+        try:
+            validate_object_id(user_id, "User ID")
+        except HTTPException:
+            await websocket.close(code=1008, reason="Invalid user ID format")
+            return
+        
+        # Get user info
+        user = await AuthService.get_user_by_id(token_user_id)
+        user_name = f"{user.first_name} {user.last_name}" if user else None
+        
+        # Connect to chat service
+        await chat_service.handle_websocket(websocket, user_id, user_name)
+        
+    except Exception as e:
+        logger.error(f"WebSocket connection error: {str(e)}")
+        await websocket.close(code=1011, reason="Internal server error")
 
 @app.websocket("/chat/{user_id}/{user_name}")
 async def chat_websocket_with_name(websocket: WebSocket, user_id: str, user_name: str):
-    """Chat collaboration WebSocket endpoint with user name"""
-    await chat_service.handle_websocket(websocket, user_id, user_name)
+    """Chat collaboration WebSocket endpoint with user name (deprecated - use /chat/{user_id} with token)"""
+    # Redirect to main endpoint - user_name will be fetched from token
+    await chat_websocket_endpoint(websocket, user_id)
 
 @app.get("/health")
 async def health_check():

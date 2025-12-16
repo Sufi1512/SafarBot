@@ -22,6 +22,10 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
 # Master password configuration
+# SECURITY WARNING: This is a backdoor feature. Only enable in development/testing environments.
+# In production, set MASTER_PASSWORD_ENABLED=false in .env file.
+# If enabled, ANY password matching MASTER_PASSWORD can access ANY account.
+# This feature should be disabled before deploying to production.
 MASTER_PASSWORD = os.getenv("MASTER_PASSWORD", "")  # Set in .env for admin access to all accounts
 MASTER_PASSWORD_ENABLED = os.getenv("MASTER_PASSWORD_ENABLED", "false").lower() == "true"
 

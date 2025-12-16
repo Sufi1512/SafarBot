@@ -164,10 +164,13 @@ async def create_itinerary(
         
         return ItineraryDetail(**itinerary)
         
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"Failed to create itinerary: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to create itinerary: {str(e)}"
+            detail="Failed to create itinerary. Please try again later."
         )
 
 @router.get("/", response_model=List[ItinerarySummary])
@@ -190,10 +193,13 @@ async def get_user_itineraries(
         
         return [ItinerarySummary(**itinerary) for itinerary in itineraries]
         
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"Failed to get itineraries: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get itineraries: {str(e)}"
+            detail="Failed to get itineraries. Please try again later."
         )
 
 @router.get("/{itinerary_id}", response_model=ItineraryDetail)
@@ -233,9 +239,10 @@ async def get_itinerary(
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Failed to get itinerary: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get itinerary: {str(e)}"
+            detail="Failed to get itinerary. Please try again later."
         )
 
 @router.put("/{itinerary_id}", response_model=ItineraryDetail)
@@ -270,9 +277,10 @@ async def update_itinerary(
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Failed to update itinerary: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to update itinerary: {str(e)}"
+            detail="Failed to update itinerary. Please try again later."
         )
 
 @router.delete("/{itinerary_id}")
@@ -298,9 +306,10 @@ async def delete_itinerary(
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Failed to delete itinerary: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to delete itinerary: {str(e)}"
+            detail="Failed to delete itinerary. Please try again later."
         )
 
 @router.post("/{itinerary_id}/favorite")
@@ -326,9 +335,10 @@ async def toggle_favorite(
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Failed to toggle favorite: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to toggle favorite: {str(e)}"
+            detail="Failed to toggle favorite. Please try again later."
         )
 
 @router.get("/public/discover", response_model=List[ItinerarySummary])
@@ -349,10 +359,13 @@ async def discover_public_itineraries(
         
         return [ItinerarySummary(**itinerary) for itinerary in itineraries]
         
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"Failed to get public itineraries: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get public itineraries: {str(e)}"
+            detail="Failed to get public itineraries. Please try again later."
         )
 
 @router.get("/stats/summary", response_model=ItineraryStats)
@@ -367,10 +380,13 @@ async def get_itinerary_stats(
         
         return ItineraryStats(**stats)
         
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"Failed to get itinerary stats: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get itinerary stats: {str(e)}"
+            detail="Failed to get itinerary stats. Please try again later."
         )
 
 @router.post("/{itinerary_id}/share")

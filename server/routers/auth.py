@@ -96,7 +96,7 @@ class UserSignupRequest(BaseModel):
     @field_validator('password')
     @classmethod
     def validate_password(cls, v: str) -> str:
-        """Validate password strength."""
+        """Validate password strength with enhanced security checks."""
         if not v:
             raise ValueError("Password cannot be empty")
         
@@ -111,10 +111,32 @@ class UserSignupRequest(BaseModel):
         if v.strip() != v or not v.strip():
             raise ValueError("Password cannot be only whitespace")
         
+        # Enhanced password strength validation
+        has_upper = any(c.isupper() for c in v)
+        has_lower = any(c.islower() for c in v)
+        has_digit = any(c.isdigit() for c in v)
+        has_special = any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in v)
+        
         # Check for common weak passwords
-        weak_passwords = ['password', '12345678', 'qwerty', 'abc12345']
+        weak_passwords = [
+            'password', '12345678', 'qwerty', 'abc12345', 'password123',
+            'admin123', 'letmein', 'welcome', 'monkey', '1234567890',
+            'password1', 'qwerty123', 'admin', 'root', 'toor'
+        ]
         if v.lower() in weak_passwords:
             raise ValueError("Password is too weak. Please choose a stronger password")
+        
+        # Require at least 3 of: uppercase, lowercase, digit, special
+        strength_count = sum([has_upper, has_lower, has_digit, has_special])
+        if strength_count < 3:
+            raise ValueError(
+                "Password must contain at least 3 of the following: "
+                "uppercase letters, lowercase letters, numbers, special characters"
+            )
+        
+        # Check for repeated characters (e.g., "aaaaaa")
+        if len(set(v)) < len(v) * 0.5:
+            raise ValueError("Password contains too many repeated characters")
         
         return v
     
@@ -863,7 +885,10 @@ async def resend_otp(request: ResendOTPRequest):
     except HTTPException:
         raise
     except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to resend OTP: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to resend OTP: {str(e)}"
+            detail="Failed to resend OTP. Please try again later."
         ) 

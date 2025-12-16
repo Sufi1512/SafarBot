@@ -503,7 +503,7 @@ export const itineraryAPI = {
 
 export const savedItineraryAPI = {
   getItineraries: async (params?: { limit?: number; offset?: number; skip?: number; status?: string; is_favorite?: boolean }) => {
-    const response = await api.get('/itinerary/saved', { params });
+    const response = await api.get('/itineraries', { params });
     return response.data;
   },
   getItinerary: async (itineraryId: string) => {
@@ -523,7 +523,7 @@ export const savedItineraryAPI = {
     return response.data;
   },
   toggleFavorite: async (itineraryId: string) => {
-    const response = await api.post(`/itineraries/${itineraryId}/toggle-favorite`);
+    const response = await api.post(`/itineraries/${itineraryId}/favorite`);
     return response.data;
   },
   discoverItineraries: async (params?: { limit?: number; skip?: number; destination?: string; travel_style?: string }) => {
@@ -542,17 +542,19 @@ export const savedItineraryAPI = {
     const response = await api.get(`/itineraries/public/${shareToken}`);
     return response.data;
   },
+  // Note: saveItinerary, favoriteItinerary, and unfavoriteItinerary are deprecated
+  // Use createItinerary and toggleFavorite instead
   saveItinerary: async (data: any) => {
-    const response = await api.post('/itinerary/save', data);
-    return response.data;
+    // Redirect to createItinerary for consistency
+    return savedItineraryAPI.createItinerary(data);
   },
   favoriteItinerary: async (id: string) => {
-    const response = await api.post(`/itinerary/${id}/favorite`);
-    return response.data;
+    // Use toggleFavorite instead (backend only has toggle endpoint)
+    return savedItineraryAPI.toggleFavorite(id);
   },
   unfavoriteItinerary: async (id: string) => {
-    const response = await api.post(`/itinerary/${id}/unfavorite`);
-    return response.data;
+    // Use toggleFavorite instead (backend only has toggle endpoint)
+    return savedItineraryAPI.toggleFavorite(id);
   }
 };
 

@@ -5,7 +5,8 @@
  * It automatically switches between localhost (development) and Render (production).
  * 
  * Environment Variables:
- * - VITE_API_URL or VITE_API_BASE_URL: Override the default API URL
+ * - VITE_API_URL: Override the default API URL
+ * - VITE_DEV_MODE: Set to 'true' to use localhost, 'false' to use production URL
  * 
  * Usage:
  *   import { getApiBaseUrl, getWebSocketUrl } from '@/config/apiConfig';
@@ -16,23 +17,38 @@
 /**
  * Get the base API URL
  * Priority:
- * 1. VITE_API_URL environment variable
- * 2. VITE_API_BASE_URL environment variable
- * 3. Production: Render URL
- * 4. Development: localhost:8000
+ * 1. VITE_API_URL environment variable (if explicitly set)
+ * 2. VITE_DEV_MODE flag:
+ *    - 'true': localhost:8000
+ *    - 'false': Production URL (https://safarbot-n24f.onrender.com)
+ * 3. Default: Based on Vite's PROD mode (PROD=true uses production, DEV mode uses localhost)
  */
 export const getApiBaseUrl = (): string => {
-  // Check for environment variable override
-  const envUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
+  // Check for explicit API URL override
+  const envUrl = import.meta.env.VITE_API_URL;
   if (envUrl) {
     return envUrl.replace(/\/$/, ''); // Remove trailing slash
   }
 
-  // Default based on environment
+  // Check dev mode flag (string comparison for environment variables)
+  const devModeEnv = import.meta.env.VITE_DEV_MODE;
+  
+  if (devModeEnv !== undefined) {
+    // VITE_DEV_MODE is explicitly set
+    const devMode = devModeEnv.toLowerCase() === 'true';
+    if (devMode) {
+      return 'http://localhost:8000';
+    } else {
+      return 'https://safarbot-n24f.onrender.com';
+    }
+  }
+  
+  // If VITE_DEV_MODE is not set, fall back to Vite's PROD mode
   if (import.meta.env.PROD) {
     return 'https://safarbot-n24f.onrender.com';
   }
   
+  // Development mode (default)
   return 'http://localhost:8000';
 };
 

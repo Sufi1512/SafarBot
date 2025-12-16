@@ -3,11 +3,15 @@ Logging middleware for SafarBot API
 Handles request/response logging and performance monitoring
 """
 
+"""
+Logging middleware for SafarBot API
+Handles request/response logging and performance monitoring
+"""
+
 from fastapi import Request
 import time
 import logging
 import json
-from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +32,9 @@ class LoggingMiddleware:
         
         # Log request
         logger.info(
-            f"📥 REQUEST: {method} {path} | "
+            f"REQUEST: {method} {path} | "
             f"IP: {client_ip} | "
-            f"UA: {user_agent[:50]}..."
+            f"UA: {user_agent[:50]}"
         )
         
         # Process request
@@ -40,7 +44,7 @@ class LoggingMiddleware:
             
             # Log successful response
             logger.info(
-                f"📤 RESPONSE: {method} {path} | "
+                f"RESPONSE: {method} {path} | "
                 f"Status: {response.status_code} | "
                 f"Time: {process_time:.3f}s | "
                 f"IP: {client_ip}"
@@ -56,7 +60,7 @@ class LoggingMiddleware:
             
             # Log error
             logger.error(
-                f"❌ ERROR: {method} {path} | "
+                f"ERROR: {method} {path} | "
                 f"Error: {str(e)} | "
                 f"Time: {process_time:.3f}s | "
                 f"IP: {client_ip}"

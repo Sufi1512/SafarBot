@@ -8,7 +8,7 @@ from firebase_admin import credentials, auth
 from google.auth.exceptions import GoogleAuthError
 from typing import Optional, Dict, Any
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 
 from database import get_collection, USERS_COLLECTION
@@ -135,6 +135,7 @@ class FirebaseAuthService:
     async def create_or_update_user_from_firebase(self, firebase_user: Dict[str, Any]) -> Optional[User]:
         """
         Create or update MongoDB user from Firebase user data
+        Handles ALL edge cases for account linking and creation.
         
         Args:
             firebase_user: User data from Firebase
@@ -144,28 +145,63 @@ class FirebaseAuthService:
         """
         try:
             users_collection = get_collection(USERS_COLLECTION)
-            firebase_uid = firebase_user['uid']
+            
+            # EDGE CASE 1: Database unavailable
+            if not users_collection:
+                logger.error("Database unavailable during Firebase auth")
+                return None
+            
+            firebase_uid = firebase_user.get('uid')
+            email = firebase_user.get('email', '').strip().lower()
+            
+            # EDGE CASE 2: Missing required fields
+            if not firebase_uid:
+                logger.error("Firebase UID missing")
+                return None
+            
+            if not email:
+                logger.error("Email missing from Firebase user")
+                return None
             
             # Split the name into first and last name
             full_name = firebase_user.get('name', '')
             first_name, last_name = self._split_name(full_name)
             
-            # Check if user already exists
-            existing_user = await users_collection.find_one({"firebase_uid": firebase_uid})
+            # EDGE CASE 3: Check if user exists by firebase_uid
+            existing_user_by_uid = await users_collection.find_one({"firebase_uid": firebase_uid})
             
-            if existing_user:
+            # EDGE CASE 4: Check if user exists by email
+            existing_user_by_email = await users_collection.find_one({"email": email})
+            
+            # Handle different scenarios
+            if existing_user_by_uid:
+                # EDGE CASE 5: User exists with this Firebase UID - update info
+                user_status = existing_user_by_uid.get("status")
+                
+                # Check if account is suspended
+                if user_status == UserStatus.SUSPENDED:
+                    logger.warning(f"Attempted login to suspended account: {email}")
+                    return None
+                
                 # Update existing user
                 update_data = {
-                    "email": firebase_user['email'],
-                    "first_name": first_name,
-                    "last_name": last_name,
-                    "name": full_name,  # Keep full name as well for backward compatibility
-                    "photo_url": firebase_user.get('photo_url'),
-                    "email_verified": firebase_user.get('email_verified', False),
-                    "phone_number": firebase_user.get('phone_number'),
-                    "last_login": datetime.now(),
-                    "updated_at": datetime.now()
+                    "email": email,
+                    "first_name": first_name or existing_user_by_uid.get("first_name"),
+                    "last_name": last_name or existing_user_by_uid.get("last_name"),
+                    "name": full_name or existing_user_by_uid.get("name"),
+                    "photo_url": firebase_user.get('photo_url') or existing_user_by_uid.get("photo_url"),
+                    "email_verified": True,  # Google emails are verified
+                    "is_email_verified": True,
+                    "phone_number": firebase_user.get('phone_number') or existing_user_by_uid.get("phone_number"),
+                    "last_login": datetime.now(timezone.utc),
+                    "updated_at": datetime.now(timezone.utc)
                 }
+                
+                # Ensure auth_methods includes google
+                auth_methods = existing_user_by_uid.get("auth_methods", [])
+                if "google" not in auth_methods:
+                    auth_methods.append("google")
+                update_data["auth_methods"] = auth_methods
                 
                 # Remove None values
                 update_data = {k: v for k, v in update_data.items() if v is not None}
@@ -175,37 +211,131 @@ class FirebaseAuthService:
                     {"$set": update_data}
                 )
                 
-                # Return updated user
                 updated_user = await users_collection.find_one({"firebase_uid": firebase_uid})
                 return User(**updated_user)
             
-            else:
-                # Create new user
-                user_data = {
+            elif existing_user_by_email:
+                # EDGE CASE 6: Email exists but not linked to Google - LINK ACCOUNTS
+                logger.info(f"Linking Google account to existing email account: {email}")
+                
+                user_status = existing_user_by_email.get("status")
+                
+                # Check if account is suspended
+                if user_status == UserStatus.SUSPENDED:
+                    logger.warning(f"Attempted to link Google to suspended account: {email}")
+                    return None
+                
+                # Check if account is locked
+                locked_until = existing_user_by_email.get("locked_until")
+                if locked_until and locked_until > datetime.now(timezone.utc):
+                    logger.warning(f"Attempted to link Google to locked account: {email}")
+                    return None
+                
+                # Check if email account has password
+                has_password = bool(existing_user_by_email.get("hashed_password"))
+                
+                # Prepare update data
+                update_data = {
                     "firebase_uid": firebase_uid,
-                    "email": firebase_user['email'],
-                    "first_name": first_name,
-                    "last_name": last_name,
-                    "name": full_name,  # Keep full name as well for backward compatibility
-                    "photo_url": firebase_user.get('photo_url'),
-                    "email_verified": firebase_user.get('email_verified', False),
-                    "phone_number": firebase_user.get('phone_number'),
-                    "status": UserStatus.ACTIVE,
-                    "role": UserRole.USER,
-                    "created_at": datetime.now(),
-                    "last_login": datetime.now(),
-                    "updated_at": datetime.now(),
-                    "preferences": {},
-                    "provider_data": firebase_user.get('provider_data', [])
+                    "email_verified": True,
+                    "is_email_verified": True,
+                    "last_login": datetime.now(timezone.utc),
+                    "updated_at": datetime.now(timezone.utc)
                 }
                 
+                # Update name if not set or if Google has better data
+                if not existing_user_by_email.get("first_name") and first_name:
+                    update_data["first_name"] = first_name
+                if not existing_user_by_email.get("last_name") and last_name:
+                    update_data["last_name"] = last_name
+                if not existing_user_by_email.get("name") and full_name:
+                    update_data["name"] = full_name
+                
+                # Update photo if not set
+                if not existing_user_by_email.get("photo_url") and firebase_user.get('photo_url'):
+                    update_data["photo_url"] = firebase_user.get('photo_url')
+                
+                # Track auth methods
+                auth_methods = existing_user_by_email.get("auth_methods", [])
+                if "google" not in auth_methods:
+                    auth_methods.append("google")
+                if has_password and "password" not in auth_methods:
+                    auth_methods.append("password")
+                update_data["auth_methods"] = auth_methods
+                
+                # Add linked account info
+                linked_accounts = existing_user_by_email.get("linked_accounts", [])
+                linked_accounts.append({
+                    "provider": "google",
+                    "uid": firebase_uid,
+                    "linked_at": datetime.now(timezone.utc)
+                })
+                update_data["linked_accounts"] = linked_accounts
+                
+                # Update provider data
+                provider_data = existing_user_by_email.get("provider_data", [])
+                provider_data.extend(firebase_user.get('provider_data', []))
+                update_data["provider_data"] = provider_data
+                
+                # Update status if pending
+                if existing_user_by_email.get("status") in ["pending", UserStatus.PENDING_VERIFICATION]:
+                    update_data["status"] = UserStatus.ACTIVE
+                
                 # Remove None values
+                update_data = {k: v for k, v in update_data.items() if v is not None}
+                
+                await users_collection.update_one(
+                    {"_id": existing_user_by_email["_id"]},
+                    {"$set": update_data}
+                )
+                
+                linked_user = await users_collection.find_one({"_id": existing_user_by_email["_id"]})
+                logger.info(f"Successfully linked Google account to existing user: {email}")
+                return User(**linked_user)
+            
+            else:
+                # EDGE CASE 7: New user - create account
+                user_data = {
+                    "firebase_uid": firebase_uid,
+                    "email": email,
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "name": full_name,
+                    "photo_url": firebase_user.get('photo_url'),
+                    "email_verified": firebase_user.get('email_verified', False),
+                    "is_email_verified": firebase_user.get('email_verified', False),
+                    "phone_number": firebase_user.get('phone_number'),
+                    "auth_methods": ["google"],
+                    "status": UserStatus.ACTIVE,
+                    "role": UserRole.USER,
+                    "created_at": datetime.now(timezone.utc),
+                    "last_login": datetime.now(timezone.utc),
+                    "updated_at": datetime.now(timezone.utc),
+                    "preferences": {},
+                    "provider_data": firebase_user.get('provider_data', []),
+                    "linked_accounts": [{
+                        "provider": "google",
+                        "uid": firebase_uid,
+                        "linked_at": datetime.now(timezone.utc)
+                    }]
+                }
+                
                 user_data = {k: v for k, v in user_data.items() if v is not None}
                 
-                result = await users_collection.insert_one(user_data)
-                user_data['_id'] = result.inserted_id
-                
-                return User(**user_data)
+                try:
+                    result = await users_collection.insert_one(user_data)
+                    user_data['_id'] = result.inserted_id
+                    logger.info(f"Created new Google user: {email}")
+                    return User(**user_data)
+                except Exception as e:
+                    # EDGE CASE 8: Race condition - user created between checks
+                    if "duplicate key" in str(e).lower() or "E11000" in str(e):
+                        # Try to find the user that was just created
+                        existing = await users_collection.find_one({"email": email})
+                        if existing:
+                            return User(**existing)
+                    logger.error(f"Error creating Google user: {str(e)}")
+                    return None
                 
         except Exception as e:
             logger.error(f"Error creating/updating user from Firebase: {str(e)}")

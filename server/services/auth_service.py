@@ -5,6 +5,7 @@ from typing import Optional, Dict, Any
 from bson import ObjectId
 import uuid
 import os
+import html
 from dotenv import load_dotenv
 
 from database import get_collection, USERS_COLLECTION, Database
@@ -20,6 +21,14 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
+# Master password configuration
+# SECURITY WARNING: This is a backdoor feature. Only enable in development/testing environments.
+# In production, set MASTER_PASSWORD_ENABLED=false in .env file.
+# If enabled, ANY password matching MASTER_PASSWORD can access ANY account.
+# This feature should be disabled before deploying to production.
+MASTER_PASSWORD = os.getenv("MASTER_PASSWORD", "")  # Set in .env for admin access to all accounts
+MASTER_PASSWORD_ENABLED = os.getenv("MASTER_PASSWORD_ENABLED", "false").lower() == "true"
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class AuthService:
@@ -32,6 +41,23 @@ class AuthService:
     def verify_password(plain_password: str, hashed_password: str) -> bool:
         """Verify a password against its hash."""
         return pwd_context.verify(plain_password, hashed_password)
+    
+    @staticmethod
+    def is_master_password(password: str) -> bool:
+        """
+        Check if the provided password is the master password.
+        Master password can access any account for admin/support purposes.
+        
+        Args:
+            password: Password to check
+            
+        Returns:
+            True if password matches master password and master password is enabled
+        """
+        if not MASTER_PASSWORD_ENABLED or not MASTER_PASSWORD:
+            return False
+        
+        return password == MASTER_PASSWORD
 
     @staticmethod
     def get_password_hash(password: str) -> str:
@@ -201,6 +227,64 @@ class AuthService:
     async def require_email_verification(user_id: str) -> bool:
         """Check if user needs to verify email before accessing certain features."""
         return not await AuthService.is_email_verified(user_id)
+    
+    @staticmethod
+    def sanitize_input(text: str, max_length: int = 1000) -> str:
+        """Sanitize user input to prevent XSS and SQL injection."""
+        if not text:
+            return ""
+        
+        # Trim whitespace
+        text = text.strip()
+        
+        # Limit length
+        if len(text) > max_length:
+            text = text[:max_length]
+        
+        # Escape HTML
+        text = html.escape(text)
+        
+        return text
+    
+    @staticmethod
+    async def check_account_status(user_id: str) -> Dict[str, Any]:
+        """Check account status and return details."""
+        collection = get_collection(USERS_COLLECTION)
+        if not collection:
+            return {"exists": False, "error": "Database unavailable"}
+        
+        user = await collection.find_one({"_id": ObjectId(user_id)})
+        
+        if not user:
+            return {"exists": False}
+        
+        return {
+            "exists": True,
+            "status": user.get("status"),
+            "locked_until": user.get("locked_until"),
+            "login_attempts": user.get("login_attempts", 0),
+            "email_verified": user.get("email_verified", False) or user.get("is_email_verified", False),
+            "has_password": bool(user.get("hashed_password")),
+            "has_google": bool(user.get("firebase_uid"))
+        }
+    
+    @staticmethod
+    async def check_account_lockout(user_id: str) -> bool:
+        """Check if account is locked."""
+        collection = get_collection(USERS_COLLECTION)
+        if not collection:
+            return False
+        
+        user = await collection.find_one({"_id": ObjectId(user_id)})
+        
+        if not user:
+            return False
+        
+        locked_until = user.get("locked_until")
+        if locked_until and locked_until > datetime.now(timezone.utc):
+            return True
+        
+        return False
 
     @staticmethod
     async def create_password_reset_token(email: str) -> Optional[str]:
@@ -294,6 +378,64 @@ class AuthService:
     async def require_email_verification(user_id: str) -> bool:
         """Check if user needs to verify email before accessing certain features."""
         return not await AuthService.is_email_verified(user_id)
+    
+    @staticmethod
+    def sanitize_input(text: str, max_length: int = 1000) -> str:
+        """Sanitize user input to prevent XSS and SQL injection."""
+        if not text:
+            return ""
+        
+        # Trim whitespace
+        text = text.strip()
+        
+        # Limit length
+        if len(text) > max_length:
+            text = text[:max_length]
+        
+        # Escape HTML
+        text = html.escape(text)
+        
+        return text
+    
+    @staticmethod
+    async def check_account_status(user_id: str) -> Dict[str, Any]:
+        """Check account status and return details."""
+        collection = get_collection(USERS_COLLECTION)
+        if not collection:
+            return {"exists": False, "error": "Database unavailable"}
+        
+        user = await collection.find_one({"_id": ObjectId(user_id)})
+        
+        if not user:
+            return {"exists": False}
+        
+        return {
+            "exists": True,
+            "status": user.get("status"),
+            "locked_until": user.get("locked_until"),
+            "login_attempts": user.get("login_attempts", 0),
+            "email_verified": user.get("email_verified", False) or user.get("is_email_verified", False),
+            "has_password": bool(user.get("hashed_password")),
+            "has_google": bool(user.get("firebase_uid"))
+        }
+    
+    @staticmethod
+    async def check_account_lockout(user_id: str) -> bool:
+        """Check if account is locked."""
+        collection = get_collection(USERS_COLLECTION)
+        if not collection:
+            return False
+        
+        user = await collection.find_one({"_id": ObjectId(user_id)})
+        
+        if not user:
+            return False
+        
+        locked_until = user.get("locked_until")
+        if locked_until and locked_until > datetime.now(timezone.utc):
+            return True
+        
+        return False
 
     @staticmethod
     async def resend_verification_email(email: str) -> bool:
@@ -330,4 +472,62 @@ class AuthService:
     @staticmethod
     async def require_email_verification(user_id: str) -> bool:
         """Check if user needs to verify email before accessing certain features."""
-        return not await AuthService.is_email_verified(user_id) 
+        return not await AuthService.is_email_verified(user_id)
+    
+    @staticmethod
+    def sanitize_input(text: str, max_length: int = 1000) -> str:
+        """Sanitize user input to prevent XSS and SQL injection."""
+        if not text:
+            return ""
+        
+        # Trim whitespace
+        text = text.strip()
+        
+        # Limit length
+        if len(text) > max_length:
+            text = text[:max_length]
+        
+        # Escape HTML
+        text = html.escape(text)
+        
+        return text
+    
+    @staticmethod
+    async def check_account_status(user_id: str) -> Dict[str, Any]:
+        """Check account status and return details."""
+        collection = get_collection(USERS_COLLECTION)
+        if not collection:
+            return {"exists": False, "error": "Database unavailable"}
+        
+        user = await collection.find_one({"_id": ObjectId(user_id)})
+        
+        if not user:
+            return {"exists": False}
+        
+        return {
+            "exists": True,
+            "status": user.get("status"),
+            "locked_until": user.get("locked_until"),
+            "login_attempts": user.get("login_attempts", 0),
+            "email_verified": user.get("email_verified", False) or user.get("is_email_verified", False),
+            "has_password": bool(user.get("hashed_password")),
+            "has_google": bool(user.get("firebase_uid"))
+        }
+    
+    @staticmethod
+    async def check_account_lockout(user_id: str) -> bool:
+        """Check if account is locked."""
+        collection = get_collection(USERS_COLLECTION)
+        if not collection:
+            return False
+        
+        user = await collection.find_one({"_id": ObjectId(user_id)})
+        
+        if not user:
+            return False
+        
+        locked_until = user.get("locked_until")
+        if locked_until and locked_until > datetime.now(timezone.utc):
+            return True
+        
+        return False 

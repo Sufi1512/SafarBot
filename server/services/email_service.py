@@ -112,6 +112,30 @@ class EmailService:
         message: Optional[str] = None
     ) -> str:
         """Create HTML content for invitation email"""
+        from utils.template_loader import template_loader
+        
+        role_display = role.title()
+        
+        html = template_loader.render_template(
+            'collaboration_invitation.html',
+            owner_name=owner_name,
+            itinerary_title=itinerary_title,
+            role=role_display,
+            invitation_url=invitation_url,
+            personal_message=message
+        )
+        
+        return html
+    
+    def _create_invitation_html_old(
+        self, 
+        owner_name: str, 
+        itinerary_title: str, 
+        role: str, 
+        invitation_url: str,
+        message: Optional[str] = None
+    ) -> str:
+        """Create HTML content for invitation email (OLD - kept for reference)"""
         role_display = role.title()
         
         html = f"""
@@ -418,6 +442,22 @@ If you have any questions, please contact our support team.
         reset_url: str
     ) -> str:
         """Create HTML content for password reset email"""
+        from utils.template_loader import template_loader
+        
+        html = template_loader.render_template(
+            'password_reset.html',
+            user_name=user_name,
+            reset_url=reset_url
+        )
+        
+        return html
+    
+    def _create_password_reset_html_old(
+        self, 
+        user_name: str, 
+        reset_url: str
+    ) -> str:
+        """Create HTML content for password reset email (OLD - kept for reference)"""
         html = f"""
         <!DOCTYPE html>
         <html>

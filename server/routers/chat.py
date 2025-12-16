@@ -30,10 +30,13 @@ async def chat_with_bot(request_body: ChatRequest, http_request: Request):
     Chat with the AI travel planner
     """
     try:
-        logger.info(f"💬 CHAT API - Request received: {request_body.message[:50]}...")
-        logger.info(f"   📍 Endpoint: /chat | Method: POST")
-        logger.info(f"   👤 User: {getattr(http_request.state, 'user_id', 'Anonymous')}")
-        logger.info(f"   📝 Message length: {len(request_body.message)} chars")
+        user_id = getattr(http_request.state, 'user_id', 'Anonymous')
+        logger.info(
+            f"CHAT API - Request received | "
+            f"Endpoint: /chat | Method: POST | "
+            f"User: {user_id} | "
+            f"Message length: {len(request_body.message)} chars"
+        )
         
         response = await chat_service.get_response(
             message=request_body.message,
@@ -41,7 +44,7 @@ async def chat_with_bot(request_body: ChatRequest, http_request: Request):
             request=http_request
         )
         
-        logger.info(f"✅ CHAT API - Response generated: {len(response)} chars")
+        logger.info(f"CHAT API - Response generated: {len(response)} chars")
         
         return ChatResponse(
             response=response,
@@ -49,7 +52,7 @@ async def chat_with_bot(request_body: ChatRequest, http_request: Request):
         )
         
     except Exception as e:
-        logger.error(f"❌ CHAT API - Error: {str(e)}")
+        logger.error(f"CHAT API - Error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Chat service error: {str(e)}")
 
 @router.get("/history")

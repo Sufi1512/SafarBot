@@ -1,3 +1,8 @@
+"""
+Database Connection Management
+Handles MongoDB connections with proper error handling and connection pooling
+"""
+
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
@@ -10,14 +15,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Suppress PyMongo background task error logging
-# These errors are expected during network issues and don't affect functionality
+# Configure logging - suppress MongoDB background task errors
 pymongo_logger = logging.getLogger("pymongo")
-pymongo_logger.setLevel(logging.WARNING)  # Only show warnings and errors, not background task errors
+pymongo_logger.setLevel(logging.WARNING)
 
-# Suppress specific background task errors
 background_logger = logging.getLogger("pymongo.synchronous.mongo_client")
-background_logger.setLevel(logging.ERROR)  # Suppress background task connection errors
+background_logger.setLevel(logging.ERROR)
 
 class Database:
     client: Optional[AsyncIOMotorClient] = None
@@ -73,30 +76,22 @@ class Database:
             
             # Test the connection with timeout
             await cls.client.admin.command('ping')
-            print("✅ Successfully connected to MongoDB!")
+            logging.info("Successfully connected to MongoDB")
             
         except (ConnectionFailure, NetworkTimeout, ServerSelectionTimeoutError) as e:
-            print(f"⚠️  MongoDB connection issue: {str(e)[:100]}")
-            print("⚠️  Continuing without database connection...")
-            print("📝 Note: Some features may be limited")
-            # Set clients to None to indicate no database connection
+            logging.warning(f"MongoDB connection issue: {str(e)[:100]}")
+            logging.warning("Continuing without database connection - some features may be limited")
             cls.client = None
             cls.sync_client = None
-            # Don't raise the exception to allow the app to start
         except Exception as e:
-            print(f"❌ Failed to connect to MongoDB: {e}")
-            print("⚠️  Continuing without database connection for deployment...")
-            print("📝 Note: Authentication and user features will be disabled")
-            # Set clients to None to indicate no database connection
+            logging.error(f"Failed to connect to MongoDB: {e}")
+            logging.warning("Continuing without database connection - authentication features disabled")
             cls.client = None
             cls.sync_client = None
-            # Don't raise the exception to allow the app to start
     
     @classmethod
     def _setup_event_listeners(cls):
         """Setup event listeners to handle MongoDB connection events gracefully."""
-        # Event listeners are handled by connection options
-        # Background task errors are suppressed via logging configuration above
         pass
     
     @classmethod
@@ -144,7 +139,7 @@ def get_collection(collection_name: str):
     """Get a specific collection from the database."""
     db = Database.get_db()
     if db is None:
-        print(f"⚠️  Cannot get collection '{collection_name}': Database not connected")
+        logging.warning(f"Cannot get collection '{collection_name}': Database not connected")
         return None
     return db[collection_name]
 
@@ -152,7 +147,7 @@ def get_sync_collection(collection_name: str):
     """Get a specific collection from the synchronous database."""
     db = Database.get_sync_db()
     if db is None:
-        print(f"⚠️  Cannot get collection '{collection_name}': Database not connected")
+        logging.warning(f"Cannot get collection '{collection_name}': Database not connected")
         return None
     return db[collection_name]
 

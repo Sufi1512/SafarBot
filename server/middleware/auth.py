@@ -21,6 +21,17 @@ class AuthMiddleware:
         """Validate JWT tokens for protected endpoints"""
         path = request.url.path
         
+        # Allow all Swagger/OpenAPI docs and static assets without authentication
+        if (
+            path.startswith("/docs") or 
+            path.startswith("/redoc") or 
+            path.startswith("/openapi.json") or
+            path.startswith("/static") or
+            "/swagger" in path.lower() or
+            path == "/favicon.ico"
+        ):
+            return await call_next(request)
+        
         # Public endpoints that don't require authentication
         public_endpoints = [
             "/",
@@ -28,6 +39,7 @@ class AuthMiddleware:
             "/docs",
             "/openapi.json",
             "/redoc",
+            "/favicon.ico",
             "/auth/signup",
             "/auth/login",
             "/auth/forgot-password",

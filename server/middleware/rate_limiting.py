@@ -87,8 +87,15 @@ class RateLimitingMiddleware:
         path = request.url.path
         endpoint_type = RateLimitingMiddleware.get_endpoint_type(path)
         
-        # Skip rate limiting for health checks but still add headers
-        if path in ["/health", "/", "/docs", "/openapi.json"]:
+        # Skip rate limiting for health checks and Swagger docs but still add headers
+        if (
+            path in ["/health", "/"] or
+            path.startswith("/docs") or
+            path.startswith("/redoc") or
+            path.startswith("/openapi.json") or
+            path.startswith("/static") or
+            "/swagger" in path.lower()
+        ):
             response = await call_next(request)
             # Add rate limit headers even for health checks
             remaining = rate_limiter.get_remaining_requests(client_ip, endpoint_type)

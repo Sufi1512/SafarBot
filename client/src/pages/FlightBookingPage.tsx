@@ -17,7 +17,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
-import { flightAPI, Flight, FlightSearchRequest, AirportSuggestion } from '../services/api';
+import { flightAPI, Flight, FlightSearchRequest, AirportSuggestion, AirIQSearchResponse } from '../services/api';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import AirportAutocomplete from '../components/AirportAutocomplete';
@@ -31,8 +31,13 @@ const FlightBookingPage: React.FC = () => {
     departureDate: '',
     returnDate: '',
     passengers: 1,
+    children: 0,
+    infants: 0,
     class: 'economy',
-    tripType: 'round-trip' // 'one-way' or 'round-trip'
+    tripType: 'round-trip', // 'one-way' or 'round-trip'
+    airlineId: '',
+    fareType: 'N', // N: Normal, C: Corporate, R: Retail
+    onlyDirect: false
   });
   const [isSearching, setIsSearching] = useState(false);
   const [flights, setFlights] = useState<Flight[]>([]);
@@ -95,15 +100,6 @@ const FlightBookingPage: React.FC = () => {
     }));
   };
 
-  const popularDestinations = [
-    { name: 'New York', code: 'JFK', country: 'USA' },
-    { name: 'London', code: 'LHR', country: 'UK' },
-    { name: 'Paris', code: 'CDG', country: 'France' },
-    { name: 'Tokyo', code: 'NRT', country: 'Japan' },
-    { name: 'Dubai', code: 'DXB', country: 'UAE' },
-    { name: 'Singapore', code: 'SIN', country: 'Singapore' }
-  ];
-
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -127,11 +123,20 @@ const FlightBookingPage: React.FC = () => {
         departure_date: searchForm.departureDate,
         return_date: searchForm.tripType === 'round-trip' ? searchForm.returnDate : undefined,
         passengers: searchForm.passengers,
-        class_type: searchForm.class
+        child_count: searchForm.children,
+        infant_count: searchForm.infants,
+        class_type: searchForm.class,
+        airline_id: searchForm.airlineId,
+        fare_type: searchForm.fareType,
+        only_direct: searchForm.onlyDirect,
+        trip_type_special: false
       };
       
-      const response = await flightAPI.searchFlights(searchRequest);
-      setFlights(response?.flights || []);
+      const response: AirIQSearchResponse = await flightAPI.searchFlights(searchRequest);
+      
+      // Convert AirIQ response to Flight format for display
+      const convertedFlights = convertAirIQToFlights(response);
+      setFlights(convertedFlights);
     } catch (error: any) {
       console.error('Flight search error:', error);
       // Show error message instead of fallback
@@ -140,6 +145,107 @@ const FlightBookingPage: React.FC = () => {
     } finally {
       setIsSearching(false);
     }
+  };
+  
+  // Helper function to convert AirIQ response to Flight format
+  const convertAirIQToFlights = (airiqResponse: AirIQSearchResponse): Flight[] => {
+    const flights: Flight[] = [];
+    
+    try {
+      const { ItineraryFlightList, Trackid } = airiqResponse;
+      
+      if (!ItineraryFlightList || ItineraryFlightList.length === 0) {
+        return [];
+      }
+      
+      ItineraryFlightList.forEach((itinerary, itinIndex) => {
+        itinerary.Items.forEach((item, itemIndex) => {
+          const { FlightDetails, Fares } = item;
+          
+          if (!FlightDetails || FlightDetails.length === 0) return;
+          
+          // Get fare information
+          let price = 0;
+          let currency = 'INR';
+          
+          if (Fares && Fares.length > 0 && Fares[0].Faredescription && Fares[0].Faredescription.length > 0) {
+            price = parseFloat(Fares[0].Faredescription[0].GrossAmount || '0');
+            currency = Fares[0].Currency || 'INR';
+          }
+          
+          // Get first flight details
+          const firstFlight = FlightDetails[0];
+          const lastFlight = FlightDetails[FlightDetails.length - 1];
+          
+          // Parse departure time
+          const depParts = firstFlight.DepartureDateTime.split(' ');
+          const depTime = depParts.length >= 4 ? depParts[3] : '';
+          const depDate = depParts.length >= 3 ? `${depParts[0]} ${depParts[1]} ${depParts[2]}` : '';
+          
+          // Parse arrival time
+          const arrParts = lastFlight.ArrivalDateTime.split(' ');
+          const arrTime = arrParts.length >= 4 ? arrParts[3] : '';
+          const arrDate = arrParts.length >= 3 ? `${arrParts[0]} ${arrParts[1]} ${arrParts[2]}` : '';
+          
+          // Calculate total duration
+          let totalMinutes = 0;
+          FlightDetails.forEach(fd => {
+            totalMinutes += parseInt(fd.JourneyTime || '0');
+          });
+          const hours = Math.floor(totalMinutes / 60);
+          const minutes = totalMinutes % 60;
+          const duration = `${hours}h ${minutes}m`;
+          
+          // Create flight object
+          const flight: Flight = {
+            id: `${Trackid}_${itinIndex}_${itemIndex}`,
+            airline: firstFlight.AirlineDescription || '',
+            airline_logo: '',
+            flight_number: firstFlight.FlightNumber || '',
+            departure: {
+              airport: firstFlight.Origin,
+              airport_code: firstFlight.Origin,
+              airport_name: '',
+              city: firstFlight.Origin,
+              time: depTime,
+              date: depDate
+            },
+            arrival: {
+              airport: lastFlight.Destination,
+              airport_code: lastFlight.Destination,
+              airport_name: '',
+              city: lastFlight.Destination,
+              time: arrTime,
+              date: arrDate
+            },
+            duration: duration,
+            price: price,
+            currency: currency,
+            stops: FlightDetails.length - 1,
+            layovers: FlightDetails.length > 1 ? FlightDetails.slice(0, -1).map((fd) => ({
+              airport: fd.Destination,
+              airport_code: fd.Destination,
+              duration: `${parseInt(fd.JourneyTime || '0')}m`,
+              city: fd.Destination
+            })) : [],
+            amenities: firstFlight.Baggage ? [firstFlight.Baggage] : [],
+            booking_token: Trackid,
+            // Store raw AirIQ data for booking
+            airiq_data: {
+              FlightDetails,
+              Fares,
+              Trackid
+            }
+          };
+          
+          flights.push(flight);
+        });
+      });
+    } catch (error) {
+      console.error('Error converting AirIQ response:', error);
+    }
+    
+    return flights;
   };
 
   const handleFlightSelect = (flight: Flight) => {
@@ -315,7 +421,7 @@ const FlightBookingPage: React.FC = () => {
                   </motion.div>
               
               {/* Form Fields Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 {/* From */}
                 <div className="relative">
                   <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
@@ -347,37 +453,63 @@ const FlightBookingPage: React.FC = () => {
                 </div>
 
 
-                {/* Passengers */}
+                {/* Adults */}
                 <div className="relative">
                       <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
                         <Users className="w-3 h-3 text-cyan-500" />
-                        <span>Passengers</span>
+                        <span>Adults</span>
                   </label>
                       <div className="relative group">
-                  <select
-                    value={searchForm.passengers}
-                    onChange={(e) => setSearchForm(prev => ({ ...prev, passengers: parseInt(e.target.value) }))}
-                          className="w-full pl-10 pr-8 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-sm font-medium appearance-none hover:border-cyan-400 shadow-sm hover:shadow-md cursor-pointer"
-                          aria-label="Select number of passengers"
-                  >
-                    {[1, 2, 3, 4, 5, 6].map(num => (
-                            <option key={num} value={num} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                              {num} {num === 1 ? 'Passenger' : 'Passengers'}
-                            </option>
-                    ))}
-                  </select>
-                        <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-cyan-500 group-hover:text-blue-500 transition-colors z-10" />
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                          <svg 
-                            className="w-4 h-4 text-gray-400 group-hover:text-cyan-500 transition-colors" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            viewBox="0 0 24 24"
-                            aria-hidden="true"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </div>
+                        <input
+                          type="number"
+                          min="1"
+                          max="9"
+                          value={searchForm.passengers}
+                          onChange={(e) => setSearchForm(prev => ({ ...prev, passengers: Math.max(1, Math.min(9, parseInt(e.target.value) || 1)) }))}
+                          className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-sm font-medium hover:border-cyan-400 shadow-sm hover:shadow-md"
+                          aria-label="Number of adults"
+                        />
+                        <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-cyan-500 group-hover:text-blue-500 transition-colors z-10 pointer-events-none" />
+                      </div>
+                </div>
+
+                {/* Children */}
+                <div className="relative">
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+                        <Users className="w-3 h-3 text-purple-500" />
+                        <span>Children</span>
+                  </label>
+                      <div className="relative group">
+                        <input
+                          type="number"
+                          min="0"
+                          max="9"
+                          value={searchForm.children}
+                          onChange={(e) => setSearchForm(prev => ({ ...prev, children: Math.max(0, Math.min(9, parseInt(e.target.value) || 0)) }))}
+                          className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 text-sm font-medium hover:border-purple-400 shadow-sm hover:shadow-md"
+                          aria-label="Number of children"
+                        />
+                        <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-purple-500 group-hover:text-purple-600 transition-colors z-10 pointer-events-none" />
+                      </div>
+                </div>
+
+                {/* Infants */}
+                <div className="relative">
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+                        <Users className="w-3 h-3 text-pink-500" />
+                        <span>Infants</span>
+                  </label>
+                      <div className="relative group">
+                        <input
+                          type="number"
+                          min="0"
+                          max="4"
+                          value={searchForm.infants}
+                          onChange={(e) => setSearchForm(prev => ({ ...prev, infants: Math.max(0, Math.min(4, parseInt(e.target.value) || 0)) }))}
+                          className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-300 text-sm font-medium hover:border-pink-400 shadow-sm hover:shadow-md"
+                          aria-label="Number of infants"
+                        />
+                        <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-pink-500 group-hover:text-pink-600 transition-colors z-10 pointer-events-none" />
                       </div>
                 </div>
 
@@ -391,25 +523,22 @@ const FlightBookingPage: React.FC = () => {
                     <select
                       value={searchForm.class}
                       onChange={(e) => setSearchForm(prev => ({ ...prev, class: e.target.value }))}
-                      className="w-full pl-10 pr-8 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-sm font-medium appearance-none hover:border-cyan-400 shadow-sm hover:shadow-md cursor-pointer"
+                      className="w-full px-3 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-sm font-medium hover:border-cyan-400 shadow-sm hover:shadow-md cursor-pointer group-hover:bg-white dark:group-hover:bg-gray-700"
+                      style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'right 0.5rem center',
+                        backgroundSize: '1rem',
+                        appearance: 'none',
+                        WebkitAppearance: 'none',
+                        MozAppearance: 'none'
+                      }}
                     >
-                      <option value="economy">Economy</option>
-                      <option value="premium">Premium Economy</option>
-                      <option value="business">Business</option>
-                      <option value="first">First Class</option>
+                      <option value="economy" className="py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">Economy</option>
+                      <option value="premium" className="py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">Premium Economy</option>
+                      <option value="business" className="py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">Business</option>
+                      <option value="first" className="py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">First Class</option>
                     </select>
-                    <Star className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-cyan-500 group-hover:text-yellow-500 transition-colors z-10" />
-                    <div className="absolute right-2.5 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                      <svg 
-                        className="w-3 h-3 text-gray-400 group-hover:text-cyan-500 transition-colors" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -483,6 +612,81 @@ const FlightBookingPage: React.FC = () => {
                   </div>
                 </div>
               </motion.div>
+
+              {/* Advanced Options */}
+              {/* <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 2.2 }}
+                className="mt-4"
+              >
+                <details className="group">
+                  <summary className="flex items-center justify-center gap-2 text-xs font-semibold text-gray-600 dark:text-gray-400 cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                    <Filter className="w-3 h-3" />
+                    <span>Advanced Options</span>
+                    <svg className="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </summary>
+                  
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="relative">
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+                        <Plane className="w-3 h-3 text-cyan-500" />
+                        <span>Airline (Optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={searchForm.airlineId}
+                        onChange={(e) => setSearchForm(prev => ({ ...prev, airlineId: e.target.value.toUpperCase().slice(0, 2) }))}
+                        placeholder="e.g., AI, 6E"
+                        maxLength={2}
+                        className="w-full px-3 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-sm placeholder:text-gray-400"
+                      />
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">2-letter airline code</p>
+                    </div>
+
+                    <div className="relative">
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+                        <Star className="w-3 h-3 text-cyan-500" />
+                        <span>Fare Type</span>
+                      </label>
+                      <div className="relative group">
+                        <select
+                          value={searchForm.fareType}
+                          onChange={(e) => setSearchForm(prev => ({ ...prev, fareType: e.target.value }))}
+                          className="w-full pl-3 pr-8 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-300 text-sm font-medium appearance-none hover:border-cyan-400 shadow-sm hover:shadow-md cursor-pointer"
+                        >
+                          <option value="N">Normal Fare</option>
+                          <option value="C">Corporate Fare</option>
+                          <option value="R">Retail Fare</option>
+                        </select>
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                          <svg className="w-4 h-4 text-gray-400 group-hover:text-cyan-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="relative">
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+                        <Plane className="w-3 h-3 text-cyan-500" />
+                        <span>Flight Type</span>
+                      </label>
+                      <label className="flex items-center justify-between px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm cursor-pointer hover:border-cyan-400 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">Direct flights only</span>
+                        <input
+                          type="checkbox"
+                          checked={searchForm.onlyDirect}
+                          onChange={(e) => setSearchForm(prev => ({ ...prev, onlyDirect: e.target.checked }))}
+                          className="w-5 h-5 text-cyan-600 bg-gray-100 border-gray-300 rounded focus:ring-cyan-500 dark:focus:ring-cyan-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </details>
+              </motion.div> */}
 
 
               {/* Search Button Section */}
@@ -716,58 +920,6 @@ const FlightBookingPage: React.FC = () => {
        )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-        {/* Popular Destinations */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className="mb-16"
-        >
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 text-purple-700 dark:text-purple-300 px-4 py-2 rounded-full text-sm font-medium mb-6">
-              <Flame className="w-4 h-4" />
-              <span>🌟 Popular Destinations</span>
-            </div>
-            <h2 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-6">
-              Fly to Amazing Places
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
-              Discover the world's most popular destinations with our curated flight deals
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {popularDestinations.map((dest, index) => (
-              <motion.div
-                key={dest.code}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="group cursor-pointer"
-              >
-                <motion.div
-                  whileHover={{ y: -8, scale: 1.02 }}
-                  className="relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50 p-6 text-center"
-                onClick={() => setSearchForm(prev => ({ ...prev, to: dest.name }))}
-              >
-                  <div className="w-16 h-16 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <Plane className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-cyan-600 transition-colors">
-                    {dest.name}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-300 text-sm">
-                    {dest.country}
-                  </p>
-                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
-                </motion.div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
 
         {/* Search Results */}
         {flights.length > 0 && (

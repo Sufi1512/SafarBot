@@ -120,11 +120,11 @@ async def airiq_login():
         raise HTTPException(status_code=500, detail=f"AirIQ login failed: {str(e)}")
 
 
-@router.post("/availability", response_model=AirIQAvailabilityResponse)
+@router.post("/availability")
 async def search_availability(
     request: AirIQAvailabilityRequest,
     token: str = Depends(verify_token)
-):
+) -> Dict[str, Any]:
     """
     Search for available flights using AirIQ Availability API
     
@@ -134,7 +134,7 @@ async def search_availability(
     Headers:
         TOKEN: Valid login token (required)
     
-    Returns flight options with pricing and details
+    Returns raw AirIQ response with Trackid, ItineraryFlightList, and Status
     """
     try:
         logger.info(f"Searching availability: {request.from_location} -> {request.to_location} on {request.departure_date}")
@@ -156,23 +156,17 @@ async def search_availability(
             provided_token=token  # Pass token from header, no auto-login
         )
         
-        # Get raw AirIQ response structure
+        # Return raw AirIQ response only
         track_id = response.get("Trackid", "")
         itinerary_flight_list = response.get("ItineraryFlightList", [])
+        status = response.get("Status", {})
         
-        # Map response to frontend format (optional, for backward compatibility)
-        flights = AirIQMapper.map_availability_to_flights(response)
-        
-        return AirIQAvailabilityResponse(
-            success=True,
-            track_id=track_id,
-            itinerary_count=len(itinerary_flight_list),
-            flights=flights,  # Mapped format for backward compatibility
-            status=response.get("Status", {}),
-            message=f"Found {len(itinerary_flight_list)} itinerary options",
-            raw_response=response,  # Complete raw response
-            ItineraryFlightList=itinerary_flight_list  # Raw AirIQ structure as requested
-        )
+        # Return response matching exact AirIQ structure
+        return {
+            "Trackid": track_id,
+            "ItineraryFlightList": itinerary_flight_list,
+            "Status": status
+        }
         
     except ValueError as e:
         logger.error(f"Validation error in availability search: {str(e)}")

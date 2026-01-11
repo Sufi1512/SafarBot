@@ -29,14 +29,30 @@ class AuthService:
         return Database.client is not None
 
     @staticmethod
+    def _truncate_password(password: str, max_bytes: int = 72) -> str:
+        """Safely truncate password to max bytes without breaking UTF-8 encoding."""
+        if len(password.encode('utf-8')) <= max_bytes:
+            return password
+        
+        # Truncate character by character until it fits
+        truncated = password
+        while len(truncated.encode('utf-8')) > max_bytes:
+            truncated = truncated[:-1]
+        return truncated
+
+    @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
         """Verify a password against its hash."""
-        return pwd_context.verify(plain_password, hashed_password)
+        # Truncate password to 72 bytes (bcrypt limitation)
+        truncated_password = AuthService._truncate_password(plain_password, 72)
+        return pwd_context.verify(truncated_password, hashed_password)
 
     @staticmethod
     def get_password_hash(password: str) -> str:
         """Generate password hash."""
-        return pwd_context.hash(password)
+        # Truncate password to 72 bytes (bcrypt limitation)
+        truncated_password = AuthService._truncate_password(password, 72)
+        return pwd_context.hash(truncated_password)
 
     @staticmethod
     def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:

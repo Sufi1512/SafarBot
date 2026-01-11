@@ -190,6 +190,12 @@ export interface Flight {
     this_flight: number;
     difference_percent: number;
   };
+  // Store raw AirIQ data for booking
+  airiq_data?: {
+    FlightDetails: AirIQFlightDetail[];
+    Fares: AirIQFare[];
+    Trackid: string;
+  };
 }
 
 export interface FlightSegment {
@@ -226,19 +232,103 @@ export interface Layover {
 }
 
 export interface FlightSearchRequest {
-  from?: string;
-  from_location?: string;
-  to?: string;
-  to_location?: string;
+  from_location: string;
+  to_location: string;
   departure_date: string;
   return_date?: string;
-  adults?: number;
-  children?: number;
-  infants?: number;
   passengers?: number;
-  cabin_class?: 'economy' | 'business' | 'first';
+  child_count?: number;
+  infant_count?: number;
   class_type?: string;
-  currency?: string;
+  airline_id?: string;
+  fare_type?: string;
+  only_direct?: boolean;
+  trip_type_special?: boolean;
+}
+
+// AirIQ Response Types
+export interface AirIQFlightDetail {
+  FlightID: string;
+  AirlineDescription: string;
+  FlightNumber: string;
+  Origin: string;
+  Destination: string;
+  DepartureTerminal: string;
+  ArrivalTerminal: string;
+  DepartureDateTime: string;
+  ArrivalDateTime: string;
+  Class: string;
+  JourneyTime: string;
+  ReferenceToken: string;
+  SegRef: string;
+  ItinRef: string;
+  ConnectionFlag: string;
+  FareId: string;
+  Cabin: string;
+  FareBasisCode: string;
+  Stops: string;
+  Via: string;
+  AirlineCategory: string;
+  CNX: string;
+  PlatingCarrier: string;
+  OperatingCarrier: string;
+  SegmentDetails: string;
+  FlyingTime: string;
+  OfflineIndicator: boolean;
+  MultiClass: string;
+  AllowFQT: boolean;
+  AvailSeat: string;
+  PromoCode: string;
+  PromoCodeDesc: string;
+  FareTypeDescription: string;
+  FareDescription: string;
+  FareRuleInfo: string;
+  Refundable: string;
+  Baggage: string;
+  CabinBaggage: string;
+}
+
+export interface AirIQFare {
+  Currency: string;
+  FareType: string;
+  Faredescription: Array<{
+    Paxtype: string;
+    BaseAmount: string;
+    TotalTaxAmount: string;
+    GrossAmount: string;
+    NetAmount: string;
+    Incentive: string;
+    Servicecharge: string;
+    TDS: string;
+    Discount: string;
+    PLBAmount: string;
+    SF: string;
+    SFGST: string;
+    Taxes: Array<{
+      Amount: string;
+      Code: string;
+    }>;
+  }>;
+  FlightId: string;
+}
+
+export interface AirIQItineraryItem {
+  FlightDetails: AirIQFlightDetail[];
+  Fares: AirIQFare[];
+}
+
+export interface AirIQItinerary {
+  Items: AirIQItineraryItem[];
+}
+
+export interface AirIQSearchResponse {
+  Trackid: string;
+  ItineraryFlightList: AirIQItinerary[];
+  Status: {
+    Error: string;
+    ResultCode: string;
+    SequenceID: string;
+  };
 }
 
 export interface AirportSuggestion {
@@ -644,8 +734,9 @@ export const weatherAPI = {
 };
 
 export const flightAPI = {
-  searchFlights: async (data: any) => {
-    const response = await api.post('/flights/search', data);
+  searchFlights: async (data: FlightSearchRequest): Promise<AirIQSearchResponse> => {
+    // Call AirIQ availability endpoint directly
+    const response = await api.post('/airiq/availability', data);
     return response.data;
   },
   getPopularFlights: async () => {

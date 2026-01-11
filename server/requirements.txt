@@ -13,11 +13,13 @@ certifi
 # Authentication and Security
 python-jose[cryptography]
 passlib[bcrypt]
+bcrypt==4.0.1
 
 # HTTP & API
 httpx
 requests
 aiofiles
+aiohttp
 
 # Email Services
 secure-smtplib

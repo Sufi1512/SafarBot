@@ -3,6 +3,7 @@ Authentication middleware for SafarBot API
 Handles JWT token validation and user authentication
 """
 
+import os
 from fastapi import Request, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional, Dict, Any
@@ -12,6 +13,8 @@ from services.auth_service import AuthService
 
 logger = logging.getLogger(__name__)
 security = HTTPBearer(auto_error=False)
+LOCAL_DEV = os.getenv("LOCAL_DEV", "true").lower() in ("true", "1", "yes")
+
 
 class AuthMiddleware:
     """Authentication middleware for JWT token validation"""
@@ -48,6 +51,7 @@ class AuthMiddleware:
             "/auth/send-verification-otp",
             "/auth/verify-otp",
             "/auth/resend-otp",
+            "/auth/dev-login",  # Dev only: localhost + LOCAL_DEV
             "/google/auth",
             "/google/callback",
             "/google/google-signin",
@@ -69,6 +73,12 @@ class AuthMiddleware:
         
         # Check if endpoint requires authentication
         requires_auth = not any(path.startswith(endpoint) for endpoint in public_endpoints)
+        
+        # Development: skip auth for localhost
+        if requires_auth and LOCAL_DEV:
+            client_ip = request.client.host if request.client else "unknown"
+            if client_ip in ("127.0.0.1", "::1", "localhost"):
+                return await call_next(request)
         
         if not requires_auth:
             return await call_next(request)

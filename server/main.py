@@ -3,6 +3,7 @@ SafarBot API - Main Application Entry Point
 Production-ready FastAPI application for AI-powered travel planning platform
 """
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
@@ -43,6 +44,25 @@ from routers.image_proxy import router as image_proxy_router
 from config import settings
 from database import Database
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan handler for startup and shutdown events."""
+    # Startup
+    mode = "DEVELOPMENT" if settings.local_dev else "PRODUCTION"
+    logging.info(f"Starting SafarBot API in {mode} mode")
+    try:
+        await Database.connect_db()
+        logging.info("Database connection established")
+    except Exception as e:
+        logging.error(f"Database connection failed: {e}")
+        logging.warning("Application will start without database connection")
+    yield
+    # Shutdown
+    await Database.close_db()
+    logging.info("Database connection closed")
+
+
 # Import middleware
 from middleware.security import SecurityMiddleware
 from middleware.logging import LoggingMiddleware
@@ -57,7 +77,8 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url="/openapi.json"
+    openapi_url="/openapi.json",
+    lifespan=lifespan,
 )
 
 # =============================================================================
@@ -138,31 +159,6 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin"],
     expose_headers=["X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset"],
 )
-
-# Database events
-@app.on_event("startup")
-async def startup_db_client():
-    """Connect to MongoDB on startup."""
-    from config import settings
-    
-    mode = "DEVELOPMENT" if settings.local_dev else "PRODUCTION"
-    logging.info(f"Starting SafarBot API in {mode} mode")
-    
-    try:
-        await Database.connect_db()
-        logging.info("Database connection established")
-    except Exception as e:
-        logging.error(f"Database connection failed: {e}")
-        logging.warning("Application will start without database connection")
-        # Don't raise the exception to allow the app to start
-        # This is important for deployment when MongoDB might not be available
-    
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    """Close MongoDB connection on shutdown."""
-    await Database.close_db()
-    logging.info("Database connection closed")
 
 # =============================================================================
 # ROUTER SETUP - Clean, organized endpoint structure

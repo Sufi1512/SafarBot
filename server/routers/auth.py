@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+import os
+from fastapi import APIRouter, HTTPException, Depends, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr, field_validator, model_validator
 from typing import Optional
@@ -192,6 +193,12 @@ class OTPVerificationRequest(BaseModel):
 
 class ResendOTPRequest(BaseModel):
     email: EmailStr
+
+
+class DevLoginRequest(BaseModel):
+    """Dev-only: login with email only when LOCAL_DEV and from localhost."""
+    email: EmailStr
+
 
 # Dependency to get current user
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
@@ -528,6 +535,43 @@ async def login(login_data: UserLoginRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Login failed. Please try again later."
         )
+
+
+@router.post("/dev-login", response_model=TokenResponse)
+async def dev_login(req: DevLoginRequest, request: Request):
+    """
+    Development-only: Login with email only when LOCAL_DEV=true and request from localhost.
+    No password needed. Add LOCAL_DEV=true to .env for development.
+    """
+    local_dev = os.getenv("LOCAL_DEV", "true").lower() in ("true", "1", "yes")
+    client_ip = request.client.host if request.client else ""
+    if not local_dev or client_ip not in ("127.0.0.1", "::1", "localhost"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Dev login only from localhost when LOCAL_DEV=true")
+
+    collection = get_collection(USERS_COLLECTION)
+    if not collection:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Database unavailable")
+    email = req.email.strip().lower()
+    user_doc = await collection.find_one({"email": email})
+    if not user_doc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found. Sign up first, or use an existing email.")
+    if user_doc.get("status") == UserStatus.SUSPENDED:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account suspended")
+    access_token = AuthService.create_access_token(data={"sub": str(user_doc["_id"]), "email": user_doc["email"]})
+    refresh_token = AuthService.create_refresh_token(data={"sub": str(user_doc["_id"])})
+    user_response = UserResponse(
+        id=str(user_doc["_id"]),
+        first_name=user_doc.get("first_name", ""),
+        last_name=user_doc.get("last_name", ""),
+        email=user_doc["email"],
+        phone=user_doc.get("phone"),
+        is_email_verified=user_doc.get("email_verified", False) or user_doc.get("is_email_verified", False),
+        status=str(user_doc.get("status", "pending")),
+        created_at=user_doc.get("created_at", datetime.now(timezone.utc)),
+        updated_at=user_doc.get("updated_at", datetime.now(timezone.utc)),
+    )
+    return TokenResponse(access_token=access_token, refresh_token=refresh_token, user=user_response)
+
 
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(refresh_token: str):

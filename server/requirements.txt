@@ -23,8 +23,9 @@ aiofiles
 secure-smtplib
 email-validator  
 
-# Google AI Services
-google-generativeai>=0.8.0
+# Google AI Services (new google-genai SDK - google-generativeai deprecated)
+google-genai
+google-genai
 
 # SERP API (Google Search Results)
 google-search-results

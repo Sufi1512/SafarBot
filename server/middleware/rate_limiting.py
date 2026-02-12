@@ -6,11 +6,13 @@ Prevents abuse of expensive AI and external API calls
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 import time
+import os
 from typing import Dict, Optional
 import logging
 from collections import defaultdict, deque
 
 logger = logging.getLogger(__name__)
+LOCAL_DEV = os.getenv("LOCAL_DEV", "true").lower() in ("true", "1", "yes")
 
 class RateLimiter:
     """Simple in-memory rate limiter"""
@@ -86,6 +88,10 @@ class RateLimitingMiddleware:
         client_ip = request.client.host if request.client else "unknown"
         path = request.url.path
         endpoint_type = RateLimitingMiddleware.get_endpoint_type(path)
+
+        # Skip rate limiting for localhost in development mode
+        if LOCAL_DEV and client_ip in ("127.0.0.1", "::1", "localhost"):
+            return await call_next(request)
         
         # Skip rate limiting for health checks and Swagger docs but still add headers
         if (

@@ -177,7 +177,7 @@ async def create_itinerary(
 async def get_user_itineraries(
     limit: int = Query(20, ge=1, le=100),
     skip: int = Query(0, ge=0),
-    status: Optional[str] = Query(None, regex="^(draft|published|archived)$"),
+    status: Optional[str] = Query(None, pattern="^(draft|published|archived)$"),
     is_favorite: Optional[bool] = None,
     current_user: User = Depends(get_current_user)
 ):

@@ -6,7 +6,7 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
+
 downloads/
 eggs/
 .eggs/
@@ -111,7 +111,7 @@ jspm_packages/
 
 # Nuxt.js build / generate output
 .nuxt
-dist
+
 
 # Gatsby files
 .cache/
@@ -140,7 +140,7 @@ temp/
 *.sqlite3
 
 # API Keys (keep this for security)
-.env
+
 .env.local
 .env.production
 # Allow server/.env to be tracked (private repo)

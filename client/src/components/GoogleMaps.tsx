@@ -144,7 +144,7 @@ const LocationMarkers: React.FC<{
             onClick={() => onMarkerClick(location)}
             onMouseEnter={() => onMarkerHover(locationId)}
             onMouseLeave={() => onMarkerHover(null)}
-            ref={marker => setMarkerRef(marker, locationId)}
+            ref={(marker: Marker | null) => setMarkerRef(marker, locationId)}
             title={location.name}
           >
             <div
